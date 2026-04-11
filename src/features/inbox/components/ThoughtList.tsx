@@ -4,9 +4,10 @@ import { ThoughtCard } from './ThoughtCard'
 interface ThoughtListProps {
   thoughts: Thought[]
   loading: boolean
+  onThoughtTap: (thought: Thought) => void
 }
 
-export function ThoughtList({ thoughts, loading }: ThoughtListProps) {
+export function ThoughtList({ thoughts, loading, onThoughtTap }: ThoughtListProps) {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -28,7 +29,11 @@ export function ThoughtList({ thoughts, loading }: ThoughtListProps) {
   return (
     <div className="flex-1 overflow-y-auto px-3 py-2">
       {thoughts.map((thought) => (
-        <ThoughtCard key={thought.id} thought={thought} />
+        <ThoughtCard
+          key={thought.id}
+          thought={thought}
+          onClick={() => onThoughtTap(thought)}
+        />
       ))}
     </div>
   )
