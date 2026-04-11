@@ -82,5 +82,44 @@ export function useThoughts() {
     return true
   }
 
-  return { thoughts, loading, addThought, classifyThought, count: thoughts.length }
+  async function updateThought(
+    thoughtId: string,
+    updates: { body?: string; type?: 'idea' | 'task' | 'note' | null; project_id?: string | null }
+  ) {
+    const prev = thoughts
+    setThoughts((t) =>
+      t.map((th) => (th.id === thoughtId ? { ...th, ...updates } : th))
+    )
+
+    const { error } = await supabase
+      .from('huginn_thoughts')
+      .update(updates)
+      .eq('id', thoughtId)
+
+    if (error) {
+      console.error('Failed to update thought:', error)
+      setThoughts(prev)
+      return false
+    }
+    return true
+  }
+
+  async function deleteThought(thoughtId: string) {
+    const prev = thoughts
+    setThoughts((t) => t.filter((th) => th.id !== thoughtId))
+
+    const { error } = await supabase
+      .from('huginn_thoughts')
+      .delete()
+      .eq('id', thoughtId)
+
+    if (error) {
+      console.error('Failed to delete thought:', error)
+      setThoughts(prev)
+      return false
+    }
+    return true
+  }
+
+  return { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, count: thoughts.length }
 }
