@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useAuth } from '../shared/hooks/useAuth'
-import { ThoughtInput, ThoughtList, ClassifyDrawer, useThoughts } from '../features/inbox'
+import { ThoughtInput, ThoughtList, ClassifyDrawer, ThoughtDetailDrawer, useThoughts } from '../features/inbox'
+import type { Thought } from '../shared/lib/types'
 
 export function InboxPage() {
   const { signOut } = useAuth()
-  const { thoughts, loading, addThought, classifyThought, count } = useThoughts()
+  const { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, count } = useThoughts()
   const [classifyThoughtId, setClassifyThoughtId] = useState<string | null>(null)
+  const [editingThought, setEditingThought] = useState<Thought | null>(null)
 
   async function handleSubmit(body: string, source: 'text' | 'voice') {
     const thought = await addThought(body, source)
@@ -34,17 +36,31 @@ export function InboxPage() {
       </header>
 
       {/* Thought list */}
-      <ThoughtList thoughts={thoughts} loading={loading} />
+      <ThoughtList
+        thoughts={thoughts}
+        loading={loading}
+        onThoughtTap={setEditingThought}
+      />
 
       {/* Input bar */}
       <ThoughtInput onSubmit={handleSubmit} />
 
-      {/* Classify drawer */}
+      {/* Classify drawer (post-save) */}
       {classifyThoughtId && (
         <ClassifyDrawer
           thoughtId={classifyThoughtId}
           onClassify={classifyThought}
           onDone={() => setClassifyThoughtId(null)}
+        />
+      )}
+
+      {/* Detail drawer (tap to edit) */}
+      {editingThought && (
+        <ThoughtDetailDrawer
+          thought={editingThought}
+          onUpdate={updateThought}
+          onDelete={deleteThought}
+          onDone={() => setEditingThought(null)}
         />
       )}
     </div>
