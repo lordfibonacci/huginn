@@ -1,7 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../shared/hooks/useAuth'
+import { Layout } from '../shared/components/Layout'
 import { LoginPage } from '../pages/LoginPage'
 import { InboxPage } from '../pages/InboxPage'
+import { ProjectsPage } from '../pages/ProjectsPage'
+import { ProjectDetailPage } from '../pages/ProjectDetailPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -46,13 +49,16 @@ export function AppRouter() {
           }
         />
         <Route
-          path="/"
           element={
             <ProtectedRoute>
-              <InboxPage />
+              <Layout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<InboxPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

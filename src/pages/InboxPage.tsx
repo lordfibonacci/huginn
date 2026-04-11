@@ -18,7 +18,7 @@ export function InboxPage() {
   }
 
   return (
-    <div className="h-[100dvh] bg-[#1a1a2e] text-white flex flex-col">
+    <>
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a]">
         <div>
@@ -63,6 +63,6 @@ export function InboxPage() {
           onDone={() => setEditingThought(null)}
         />
       )}
-    </div>
+    </>
   )
 }
