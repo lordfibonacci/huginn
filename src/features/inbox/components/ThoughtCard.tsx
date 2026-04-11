@@ -11,9 +11,17 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`
 }
 
-export function ThoughtCard({ thought }: { thought: Thought }) {
+interface ThoughtCardProps {
+  thought: Thought
+  onClick?: () => void
+}
+
+export function ThoughtCard({ thought, onClick }: ThoughtCardProps) {
   return (
-    <div className="bg-[#2a2a4a] rounded-xl p-3 mb-2">
+    <div
+      className="bg-[#2a2a4a] rounded-xl p-3 mb-2 cursor-pointer active:bg-[#3a3a5a] transition-colors"
+      onClick={onClick}
+    >
       <div className="flex items-start gap-2">
         {thought.source === 'voice' && (
           <span className="text-xs mt-0.5 shrink-0" title="Voice note">
