@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../shared/lib/supabase'
-import type { Project, Thought, ThoughtType } from '../../../shared/lib/types'
+import type { Project, Thought, ThoughtType, ThoughtPriority } from '../../../shared/lib/types'
 
 interface ThoughtDetailDrawerProps {
   thought: Thought
-  onUpdate: (id: string, updates: { body?: string; type?: ThoughtType | null; project_id?: string | null }) => Promise<boolean>
+  onUpdate: (id: string, updates: {
+    body?: string
+    type?: ThoughtType | null
+    project_id?: string | null
+    priority?: ThoughtPriority | null
+    due_date?: string | null
+  }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
+  onArchive: (id: string) => Promise<boolean>
   onDone: () => void
 }
 
@@ -15,10 +22,18 @@ const TYPE_OPTIONS: { value: ThoughtType; label: string }[] = [
   { value: 'note', label: 'Note' },
 ]
 
-export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onDone }: ThoughtDetailDrawerProps) {
+const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
+  { value: 'low', label: 'Low', color: 'bg-gray-500' },
+  { value: 'medium', label: 'Medium', color: 'bg-[#fdcb6e]' },
+  { value: 'high', label: 'High', color: 'bg-[#e17055]' },
+]
+
+export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, onDone }: ThoughtDetailDrawerProps) {
   const [body, setBody] = useState(thought.body)
   const [selectedType, setSelectedType] = useState<ThoughtType | null>(thought.type)
   const [selectedProject, setSelectedProject] = useState<string | null>(thought.project_id)
+  const [selectedPriority, setSelectedPriority] = useState<ThoughtPriority | null>(thought.priority)
+  const [dueDate, setDueDate] = useState<string>(thought.due_date ?? '')
   const [projects, setProjects] = useState<Project[]>([])
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -43,7 +58,6 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onDone }: Tho
     }
   }, [])
 
-  // Auto-grow textarea
   useEffect(() => {
     const textarea = textareaRef.current
     if (!textarea) return
@@ -65,6 +79,8 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onDone }: Tho
       body: trimmed,
       type: selectedType,
       project_id: selectedProject,
+      priority: selectedPriority,
+      due_date: dueDate || null,
     })
     setSaving(false)
     dismiss()
@@ -82,12 +98,17 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onDone }: Tho
     dismiss()
   }
 
+  function handleArchive() {
+    onArchive(thought.id)
+    dismiss()
+  }
+
   const canSave = body.trim().length > 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -138,8 +159,53 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onDone }: Tho
           </select>
         )}
 
+        {/* Priority chips */}
+        <p className="text-xs text-gray-500 mb-2">Priority</p>
+        <div className="flex gap-2 mb-4">
+          {PRIORITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() =>
+                setSelectedPriority(selectedPriority === opt.value ? null : opt.value)
+              }
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedPriority === opt.value
+                  ? `${opt.color} text-white`
+                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Due date */}
+        <p className="text-xs text-gray-500 mb-2">Due date</p>
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="flex-1 bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] [color-scheme:dark]"
+          />
+          {dueDate && (
+            <button
+              onClick={() => setDueDate('')}
+              className="text-gray-400 hover:text-white text-sm px-2"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleArchive}
+            className="text-sm py-2 px-3 rounded-xl text-gray-400 hover:text-white transition-colors"
+          >
+            Archive
+          </button>
           <button
             onClick={handleDelete}
             className={`text-sm py-2 px-3 rounded-xl transition-colors ${
