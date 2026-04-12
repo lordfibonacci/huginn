@@ -10,7 +10,7 @@ export function useThoughts() {
     const { data, error } = await supabase
       .from('huginn_thoughts')
       .select('*')
-      .eq('status', 'inbox')
+      .in('status', ['inbox', 'filed'])
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -84,7 +84,13 @@ export function useThoughts() {
 
   async function updateThought(
     thoughtId: string,
-    updates: { body?: string; type?: 'idea' | 'task' | 'note' | null; project_id?: string | null }
+    updates: {
+      body?: string
+      type?: 'idea' | 'task' | 'note' | null
+      project_id?: string | null
+      priority?: 'low' | 'medium' | 'high' | null
+      due_date?: string | null
+    }
   ) {
     const prev = thoughts
     setThoughts((t) =>
@@ -121,5 +127,22 @@ export function useThoughts() {
     return true
   }
 
-  return { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, count: thoughts.length }
+  async function archiveThought(thoughtId: string) {
+    const prev = thoughts
+    setThoughts((t) => t.filter((th) => th.id !== thoughtId))
+
+    const { error } = await supabase
+      .from('huginn_thoughts')
+      .update({ status: 'archived' })
+      .eq('id', thoughtId)
+
+    if (error) {
+      console.error('Failed to archive thought:', error)
+      setThoughts(prev)
+      return false
+    }
+    return true
+  }
+
+  return { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, archiveThought, count: thoughts.length }
 }
