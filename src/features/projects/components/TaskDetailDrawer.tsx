@@ -1,0 +1,134 @@
+import { useEffect, useRef, useState } from 'react'
+import type { Task, TaskStatus } from '../../../shared/lib/types'
+
+interface TaskDetailDrawerProps {
+  task: Task
+  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; due_date?: string | null }) => Promise<boolean>
+  onDelete: (id: string) => Promise<boolean>
+  onDone: () => void
+}
+
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: 'todo', label: 'Todo' },
+  { value: 'doing', label: 'Doing' },
+  { value: 'done', label: 'Done' },
+]
+
+export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetailDrawerProps) {
+  const [title, setTitle] = useState(task.title)
+  const [notes, setNotes] = useState(task.notes ?? '')
+  const [status, setStatus] = useState<TaskStatus>(task.status)
+  const [dueDate, setDueDate] = useState(task.due_date ?? '')
+  const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true))
+    return () => { if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current) }
+  }, [])
+
+  function dismiss() {
+    setVisible(false)
+    setTimeout(onDone, 200)
+  }
+
+  async function handleSave() {
+    const trimmed = title.trim()
+    if (!trimmed || saving) return
+    setSaving(true)
+    await onUpdate(task.id, {
+      title: trimmed,
+      notes: notes.trim() || null,
+      status,
+      due_date: dueDate || null,
+    })
+    setSaving(false)
+    dismiss()
+  }
+
+  function handleDelete() {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      confirmTimerRef.current = setTimeout(() => setConfirmDelete(false), 3000)
+      return
+    }
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+    onDelete(task.id)
+    dismiss()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
+      <div
+        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto ${
+          visible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-gray-600 rounded-full mx-auto mb-4" />
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 mb-4"
+          placeholder="Task title"
+        />
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+          rows={3}
+          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 resize-none mb-4"
+        />
+        <p className="text-xs text-gray-500 mb-2">Status</p>
+        <div className="flex gap-2 mb-4">
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setStatus(opt.value)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                status === opt.value
+                  ? 'bg-[#6c5ce7] text-white'
+                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Due date</p>
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="flex-1 bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] [color-scheme:dark]"
+          />
+          {dueDate && (
+            <button onClick={() => setDueDate('')} className="text-gray-400 hover:text-white text-sm px-2">✕</button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDelete}
+            className={`text-sm py-2 px-3 rounded-xl transition-colors ${
+              confirmDelete ? 'text-red-400 bg-red-400/10 font-semibold' : 'text-red-400'
+            }`}
+          >
+            {confirmDelete ? 'Are you sure?' : 'Delete'}
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={handleSave}
+            disabled={!title.trim() || saving}
+            className="bg-[#6c5ce7] text-white text-sm font-semibold rounded-xl py-2 px-6 disabled:opacity-50"
+          >
+            {saving ? '...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
