@@ -63,5 +63,42 @@ export function useProjects() {
     return data as Project
   }
 
-  return { projects, loading, addProject, count: projects.length }
+  async function updateProject(
+    projectId: string,
+    updates: { name?: string; description?: string | null; color?: string; status?: ProjectStatus }
+  ) {
+    const prev = projects
+    setProjects((p) => p.map((pr) => (pr.id === projectId ? { ...pr, ...updates } : pr)))
+
+    const { error } = await supabase
+      .from('huginn_projects')
+      .update(updates)
+      .eq('id', projectId)
+
+    if (error) {
+      console.error('Failed to update project:', error)
+      setProjects(prev)
+      return false
+    }
+    return true
+  }
+
+  async function deleteProject(projectId: string) {
+    const prev = projects
+    setProjects((p) => p.filter((pr) => pr.id !== projectId))
+
+    const { error } = await supabase
+      .from('huginn_projects')
+      .delete()
+      .eq('id', projectId)
+
+    if (error) {
+      console.error('Failed to delete project:', error)
+      setProjects(prev)
+      return false
+    }
+    return true
+  }
+
+  return { projects, loading, addProject, updateProject, deleteProject, count: projects.length }
 }
