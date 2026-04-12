@@ -1,13 +1,14 @@
-import type { Thought } from '../../../shared/lib/types'
+import type { Thought, Project } from '../../../shared/lib/types'
 import { ThoughtCard } from './ThoughtCard'
 
 interface ThoughtListProps {
   thoughts: Thought[]
   loading: boolean
   onThoughtTap: (thought: Thought) => void
+  projectsById?: Record<string, Project>
 }
 
-export function ThoughtList({ thoughts, loading, onThoughtTap }: ThoughtListProps) {
+export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: ThoughtListProps) {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -28,13 +29,18 @@ export function ThoughtList({ thoughts, loading, onThoughtTap }: ThoughtListProp
 
   return (
     <div className="flex-1 overflow-y-auto px-3 py-2">
-      {thoughts.map((thought) => (
-        <ThoughtCard
-          key={thought.id}
-          thought={thought}
-          onClick={() => onThoughtTap(thought)}
-        />
-      ))}
+      {thoughts.map((thought) => {
+        const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
+        return (
+          <ThoughtCard
+            key={thought.id}
+            thought={thought}
+            onClick={() => onThoughtTap(thought)}
+            projectName={project?.name}
+            projectColor={project?.color}
+          />
+        )
+      })}
     </div>
   )
 }
