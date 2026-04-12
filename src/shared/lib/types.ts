@@ -1,6 +1,7 @@
 export type ThoughtSource = 'text' | 'voice'
 export type ThoughtStatus = 'inbox' | 'filed' | 'archived'
 export type ThoughtType = 'idea' | 'task' | 'note'
+export type ThoughtPriority = 'low' | 'medium' | 'high'
 export type ProjectStatus = 'idea' | 'active' | 'hold' | 'done'
 export type TaskStatus = 'todo' | 'doing' | 'done'
 
@@ -13,6 +14,8 @@ export interface Thought {
   status: ThoughtStatus
   type: ThoughtType | null
   tags: string[]
+  priority: ThoughtPriority | null
+  due_date: string | null
   project_id: string | null
   created_at: string
 }
