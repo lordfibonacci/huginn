@@ -86,7 +86,7 @@ export function ThoughtInput({ onSubmit }: ThoughtInputProps) {
           placeholder={isRecording ? 'Listening...' : "What's on your mind?"}
           disabled={isRecording}
           rows={1}
-          className="flex-1 bg-huginn-card text-white rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none disabled:opacity-50"
+          className="flex-1 bg-huginn-card text-white rounded-xl px-4 py-2.5 text-sm outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none disabled:opacity-50"
         />
         {isSupported && (
           <VoiceButton
