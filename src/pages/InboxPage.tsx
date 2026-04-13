@@ -8,7 +8,7 @@ const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 export function InboxPage() {
   const { signOut } = useAuth()
-  const { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, archiveThought, count } = useThoughts()
+  const { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, archiveThought, convertToTask, count } = useThoughts()
   const { projects } = useProjects()
   const [classifyThoughtId, setClassifyThoughtId] = useState<string | null>(null)
   const [editingThought, setEditingThought] = useState<Thought | null>(null)
@@ -98,6 +98,7 @@ export function InboxPage() {
           onUpdate={updateThought}
           onDelete={deleteThought}
           onArchive={archiveThought}
+          onConvertToTask={convertToTask}
           onDone={() => setEditingThought(null)}
         />
       )}

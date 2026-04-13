@@ -13,6 +13,7 @@ interface ThoughtDetailDrawerProps {
   }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
   onArchive: (id: string) => Promise<boolean>
+  onConvertToTask?: (id: string) => Promise<boolean>
   onDone: () => void
 }
 
@@ -28,7 +29,7 @@ const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }
   { value: 'high', label: 'High', color: 'bg-[#e17055]' },
 ]
 
-export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, onDone }: ThoughtDetailDrawerProps) {
+export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, onConvertToTask, onDone }: ThoughtDetailDrawerProps) {
   const [body, setBody] = useState(thought.body)
   const [selectedType, setSelectedType] = useState<ThoughtType | null>(thought.type)
   const [selectedProject, setSelectedProject] = useState<string | null>(thought.project_id)
@@ -100,6 +101,12 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
 
   function handleArchive() {
     onArchive(thought.id)
+    dismiss()
+  }
+
+  async function handleConvertToTask() {
+    if (!onConvertToTask) return
+    await onConvertToTask(thought.id)
     dismiss()
   }
 
@@ -200,6 +207,14 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {onConvertToTask && selectedProject && (
+            <button
+              onClick={handleConvertToTask}
+              className="text-sm py-2 px-3 rounded-xl text-[#6c5ce7] bg-[#6c5ce7]/10 font-medium hover:bg-[#6c5ce7]/20 transition-colors"
+            >
+              Convert to task
+            </button>
+          )}
           <button
             onClick={handleArchive}
             className="text-sm py-2 px-3 rounded-xl text-gray-400 hover:text-white transition-colors"

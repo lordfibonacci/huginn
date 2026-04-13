@@ -30,7 +30,7 @@ export function ProjectDetailPage() {
   const { updateProject, deleteProject } = useProjects()
   const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask } = useProjectTasks(id ?? '')
   const { notes, loading: loadingNotes, addNote, updateNote, deleteNote } = useProjectNotes(id ?? '')
-  const { updateThought, deleteThought, archiveThought } = useThoughts()
+  const { updateThought, deleteThought, archiveThought, convertToTask } = useThoughts()
 
   // Thoughts for this project
   const [thoughts, setThoughts] = useState<Thought[]>([])
@@ -149,7 +149,7 @@ export function ProjectDetailPage() {
       )}
 
       {activeTab === 'tasks' && (
-        <TaskList tasks={tasks} loading={loadingTasks} onTaskTap={setEditingTask} />
+        <TaskList tasks={tasks} loading={loadingTasks} onTaskTap={setEditingTask} onStatusChange={(id, status) => updateTask(id, { status })} />
       )}
 
       {activeTab === 'notes' && (
@@ -211,6 +211,7 @@ export function ProjectDetailPage() {
           onUpdate={updateThought}
           onDelete={deleteThought}
           onArchive={archiveThought}
+          onConvertToTask={convertToTask}
           onDone={() => setEditingThought(null)}
         />
       )}
