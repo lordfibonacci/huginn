@@ -5,7 +5,6 @@ import {
   ProjectTabs,
   TaskList,
   TaskDetailDrawer,
-  NewTaskDrawer,
   ProjectSettingsDrawer,
   useProjects,
   useProjectTasks,
@@ -80,7 +79,6 @@ export function ProjectDetailPage() {
 
   // Drawer state
   const [showSettings, setShowSettings] = useState(false)
-  const [showNewTask, setShowNewTask] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingThought, setEditingThought] = useState<Thought | null>(null)
 
@@ -114,7 +112,6 @@ export function ProjectDetailPage() {
     )
   }
 
-  const showFab = activeTab === 'tasks'
 
   return (
     <>
@@ -158,19 +155,13 @@ export function ProjectDetailPage() {
       )}
 
       {activeTab === 'tasks' && (
-        <TaskList tasks={tasks} loading={loadingTasks} onTaskTap={setEditingTask} onStatusChange={(id, status) => updateTask(id, { status })} />
-      )}
-
-      {/* FAB */}
-      {showFab && (
-        <button
-          onClick={() => setShowNewTask(true)}
-          className="absolute bottom-20 right-4 w-12 h-12 bg-huginn-accent rounded-full flex items-center justify-center shadow-lg active:bg-huginn-accent-hover transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
-            <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1Z" />
-          </svg>
-        </button>
+        <TaskList
+          tasks={tasks}
+          loading={loadingTasks}
+          onTaskTap={setEditingTask}
+          onStatusChange={(id, status) => updateTask(id, { status })}
+          onAddTask={async (title) => { await addTask(title) }}
+        />
       )}
 
       {/* Drawers */}
@@ -180,12 +171,6 @@ export function ProjectDetailPage() {
           onUpdate={handleUpdateProject}
           onDelete={handleDeleteProject}
           onDone={() => setShowSettings(false)}
-        />
-      )}
-      {showNewTask && (
-        <NewTaskDrawer
-          onSave={async (title) => { await addTask(title) }}
-          onDone={() => setShowNewTask(false)}
         />
       )}
       {editingTask && (

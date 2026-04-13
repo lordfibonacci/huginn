@@ -11,11 +11,13 @@ interface TaskListProps {
   loading: boolean
   onTaskTap: (task: Task) => void
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void
+  onAddTask?: (title: string) => Promise<void>
+  selectedTaskId?: string
 }
 
 const COLUMNS: { status: TaskStatus; label: string }[] = [
-  { status: 'todo', label: 'Todo' },
-  { status: 'doing', label: 'Doing' },
+  { status: 'todo', label: 'To Do' },
+  { status: 'doing', label: 'In Progress' },
   { status: 'done', label: 'Done' },
 ]
 
@@ -28,32 +30,105 @@ function sortByPriority(tasks: Task[]): Task[] {
   })
 }
 
-function DroppableColumn({ status, label, children }: { status: string; label: string; children: React.ReactNode }) {
+function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
+  const [adding, setAdding] = useState(false)
+  const [title, setTitle] = useState('')
+
+  function handleSubmit() {
+    const trimmed = title.trim()
+    if (!trimmed) return
+    onAdd(trimmed)
+    setTitle('')
+    setAdding(false)
+  }
+
+  if (!adding) {
+    return (
+      <button
+        onClick={() => setAdding(true)}
+        className="flex items-center gap-1.5 text-xs text-huginn-text-muted hover:text-huginn-text-secondary w-full px-2 py-1.5 rounded-md hover:bg-huginn-card/50 transition-colors mt-1"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+          <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+        </svg>
+        Add a card
+      </button>
+    )
+  }
+
+  return (
+    <div className="mt-1">
+      <textarea
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Enter a title..."
+        autoFocus
+        rows={2}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() }
+          if (e.key === 'Escape') { setAdding(false); setTitle('') }
+        }}
+        className="w-full bg-huginn-card text-white rounded-lg px-3 py-2 text-sm outline-none border border-huginn-border focus:border-huginn-accent resize-none placeholder-huginn-text-muted"
+      />
+      <div className="flex items-center gap-2 mt-1.5">
+        <button
+          onClick={handleSubmit}
+          disabled={!title.trim()}
+          className="bg-huginn-accent text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50"
+        >
+          Add
+        </button>
+        <button onClick={() => { setAdding(false); setTitle('') }} className="text-huginn-text-muted hover:text-white text-xs px-2 py-1.5">
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DroppableColumn({ status, label, count, children, onAdd }: {
+  status: string; label: string; count: number; children: React.ReactNode; onAdd?: (title: string) => void
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[200px] flex flex-col rounded-lg transition-colors p-2 ${isOver ? 'bg-huginn-accent/10' : 'bg-huginn-base/50'}`}
+      className={`flex-1 min-w-[250px] max-w-[350px] flex flex-col rounded-xl transition-colors ${
+        isOver ? 'bg-huginn-accent/5 ring-1 ring-huginn-accent/20' : 'bg-huginn-base/80'
+      }`}
       data-status={status}
     >
-      <div className="flex items-center gap-2 mb-2 px-1">
-        <h3 className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{label}</h3>
+      {/* Column header */}
+      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-huginn-text-secondary">{label}</h3>
+        <span className="text-[10px] font-semibold text-huginn-text-muted bg-huginn-surface rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+          {count}
+        </span>
       </div>
-      <div className="flex-1 overflow-y-auto">{children}</div>
+      {/* Cards */}
+      <div className="flex-1 overflow-y-auto px-2 pb-1">
+        {children}
+        {onAdd && <AddCardInput onAdd={onAdd} />}
+      </div>
     </div>
   )
 }
 
-function DraggableCard({ task, onTaskTap, onStatusChange }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void }) {
+function DraggableCard({ task, onTaskTap, onStatusChange, selected }: {
+  task: Task; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void; selected?: boolean
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className={isDragging ? 'opacity-30' : ''}>
-      <TaskCard task={task} onClick={() => onTaskTap(task)} onStatusChange={onStatusChange} />
+      <TaskCard task={task} onClick={() => onTaskTap(task)} onStatusChange={onStatusChange} selected={selected} />
     </div>
   )
 }
 
-function KanbanView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void }) {
+function KanbanView({ tasks, onTaskTap, onStatusChange, onAddTask, selectedTaskId }: {
+  tasks: Task[]; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void
+  onAddTask?: (title: string) => Promise<void>; selectedTaskId?: string
+}) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   function handleDragStart(event: DragStartEvent) {
@@ -75,25 +150,30 @@ function KanbanView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTas
 
   return (
     <DndContext collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex-1 flex gap-3 px-3 py-2 overflow-x-auto">
+      <div className="flex-1 flex gap-4 p-4 overflow-x-auto">
         {COLUMNS.map(({ status, label }) => {
           const columnTasks = sortByPriority(tasks.filter((t) => t.status === status))
           return (
-            <DroppableColumn key={status} status={status} label={`${label} (${columnTasks.length})`}>
-              {columnTasks.length === 0 ? (
-                <p className="text-xs text-gray-600 px-1">No tasks</p>
-              ) : (
-                columnTasks.map((task) => (
-                  <DraggableCard key={task.id} task={task} onTaskTap={onTaskTap} onStatusChange={onStatusChange} />
-                ))
+            <DroppableColumn
+              key={status}
+              status={status}
+              label={label}
+              count={columnTasks.length}
+              onAdd={status === 'todo' ? onAddTask : undefined}
+            >
+              {columnTasks.length === 0 && (
+                <p className="text-xs text-huginn-text-muted px-1 py-4 text-center">No cards</p>
               )}
+              {columnTasks.map((task) => (
+                <DraggableCard key={task.id} task={task} onTaskTap={onTaskTap} onStatusChange={onStatusChange} selected={task.id === selectedTaskId} />
+              ))}
             </DroppableColumn>
           )
         })}
       </div>
       <DragOverlay>
         {activeTask && (
-          <div className="w-[200px]">
+          <div className="w-[250px] rotate-2">
             <TaskCard task={activeTask} />
           </div>
         )}
@@ -102,7 +182,9 @@ function KanbanView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTas
   )
 }
 
-function GroupedView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void }) {
+function GroupedView({ tasks, onTaskTap, onStatusChange, selectedTaskId }: {
+  tasks: Task[]; onTaskTap: (task: Task) => void; onStatusChange: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string
+}) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ done: true })
 
   return (
@@ -130,7 +212,7 @@ function GroupedView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTa
             </button>
             {!isCollapsed &&
               columnTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onClick={() => onTaskTap(task)} onStatusChange={onStatusChange} />
+                <TaskCard key={task.id} task={task} onClick={() => onTaskTap(task)} onStatusChange={onStatusChange} selected={task.id === selectedTaskId} />
               ))}
           </div>
         )
@@ -139,19 +221,19 @@ function GroupedView({ tasks, onTaskTap, onStatusChange }: { tasks: Task[]; onTa
   )
 }
 
-export function TaskList({ tasks, loading, onTaskTap, onStatusChange }: TaskListProps) {
+export function TaskList({ tasks, loading, onTaskTap, onStatusChange, onAddTask, selectedTaskId }: TaskListProps) {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-huginn-text-muted text-sm">Loading...</p>
       </div>
     )
   }
 
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && !onAddTask) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">No tasks yet. Tap + to create one.</p>
+        <p className="text-huginn-text-muted text-sm">No tasks yet.</p>
       </div>
     )
   }
@@ -159,10 +241,10 @@ export function TaskList({ tasks, loading, onTaskTap, onStatusChange }: TaskList
   return (
     <>
       <div className="hidden md:flex flex-1 min-h-0">
-        <KanbanView tasks={tasks} onTaskTap={onTaskTap} onStatusChange={onStatusChange} />
+        <KanbanView tasks={tasks} onTaskTap={onTaskTap} onStatusChange={onStatusChange} onAddTask={onAddTask} selectedTaskId={selectedTaskId} />
       </div>
       <div className="md:hidden flex-1 min-h-0">
-        <GroupedView tasks={tasks} onTaskTap={onTaskTap} onStatusChange={onStatusChange} />
+        <GroupedView tasks={tasks} onTaskTap={onTaskTap} onStatusChange={onStatusChange} selectedTaskId={selectedTaskId} />
       </div>
     </>
   )
