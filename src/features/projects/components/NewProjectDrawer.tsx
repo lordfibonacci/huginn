@@ -47,7 +47,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-huginn-card rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.3)] p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -63,7 +63,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Project name"
           autoFocus
-          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4 border border-huginn-border focus:border-huginn-accent"
         />
 
         {/* Color swatches */}
@@ -86,7 +86,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
             <button
               key={opt.value}
               onClick={() => setStatus(opt.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
                 status === opt.value
                   ? 'bg-huginn-accent text-white'
                   : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
@@ -105,7 +105,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
           <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
+            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
           >
             {saving ? '...' : 'Save'}
           </button>
