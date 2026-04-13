@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task, TaskStatus, ThoughtPriority } from '../../../shared/lib/types'
 import { timeAgo, formatDueDate } from '../../../shared/lib/dateUtils'
+import { ChecklistSection } from './ChecklistSection'
+import { LabelBadges } from './LabelBadges'
+import { LabelPicker } from './LabelPicker'
+import { useChecklistItems } from '../hooks/useChecklistItems'
+import { useLabels } from '../hooks/useLabels'
+import { useTaskLabels } from '../hooks/useTaskLabels'
+import type { Label } from '../../../shared/lib/types'
 
 interface TaskDetailPanelProps {
   task: Task
+  projectId: string
   onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
   onClose: () => void
@@ -21,7 +29,7 @@ const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }
   { value: 'high', label: 'High', color: 'bg-huginn-danger' },
 ]
 
-export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, projectId, onUpdate, onDelete, onClose }: TaskDetailPanelProps) {
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
   const [status, setStatus] = useState<TaskStatus>(task.status)
@@ -31,6 +39,13 @@ export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetai
   const [confirmDelete, setConfirmDelete] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { items: checklistItems, checkedCount, totalCount, addItem, toggleItem, updateItemText, deleteItem } = useChecklistItems(task.id)
+  const { labels: projectLabels, createLabel } = useLabels(projectId)
+  const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
+  const [showLabelPicker, setShowLabelPicker] = useState(false)
+
+  const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   // Reset when task changes
   useEffect(() => {
@@ -114,6 +129,29 @@ export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetai
             placeholder="Task title"
           />
 
+          {/* Labels */}
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-xs text-huginn-text-muted font-semibold">Labels</p>
+              <button
+                onClick={() => setShowLabelPicker(!showLabelPicker)}
+                className="text-xs text-huginn-accent hover:text-white transition-colors"
+              >
+                {showLabelPicker ? 'Close' : '+ Add'}
+              </button>
+            </div>
+            <LabelBadges labels={taskLabels} />
+            {showLabelPicker && (
+              <LabelPicker
+                labels={projectLabels}
+                activeLabelIds={labelIds}
+                onToggle={(labelId) => hasLabel(labelId) ? removeLabel(labelId) : addLabel(labelId)}
+                onCreate={createLabel}
+                onClose={() => setShowLabelPicker(false)}
+              />
+            )}
+          </div>
+
           {/* Status row — inline buttons */}
           <div>
             <p className="text-xs text-huginn-text-muted font-semibold mb-2">Status</p>
@@ -174,7 +212,7 @@ export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetai
             </div>
           </div>
 
-          {/* Description / Notes */}
+          {/* Description */}
           <div>
             <p className="text-xs text-huginn-text-muted font-semibold mb-2">Description</p>
             <textarea
@@ -182,10 +220,21 @@ export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetai
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add a more detailed description..."
-              rows={4}
+              rows={notes ? 4 : 2}
               className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-lg px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent resize-none leading-relaxed placeholder-huginn-text-muted"
             />
           </div>
+
+          {/* Checklist */}
+          <ChecklistSection
+            items={checklistItems}
+            checkedCount={checkedCount}
+            totalCount={totalCount}
+            onAdd={addItem}
+            onToggle={toggleItem}
+            onUpdateText={updateItemText}
+            onDelete={deleteItem}
+          />
         </div>
       </div>
 
