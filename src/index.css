@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --color-huginn-base: #12122a;
+  --color-huginn-surface: #161630;
+  --color-huginn-card: #1e1e3e;
+  --color-huginn-hover: #242450;
+  --color-huginn-border: #2a2a4a;
+  --color-huginn-accent: #6c5ce7;
+  --color-huginn-accent-hover: #5b4bd5;
+  --color-huginn-accent-soft: rgba(108, 92, 231, 0.15);
+  --color-huginn-success: #00b894;
+  --color-huginn-warning: #fdcb6e;
+  --color-huginn-danger: #e17055;
+  --color-huginn-text-primary: #e8e8f0;
+  --color-huginn-text-secondary: #888888;
+  --color-huginn-text-muted: #555555;
+}
+
 /* Dark scrollbars */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
