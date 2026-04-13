@@ -12,7 +12,6 @@ export function InboxPage() {
   const { projects } = useProjects()
   const [classifyThoughtId, setClassifyThoughtId] = useState<string | null>(null)
   const [editingThought, setEditingThought] = useState<Thought | null>(null)
-  const [activeFilter, setActiveFilter] = useState<'all' | 'idea' | 'task' | 'note'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'priority'>('newest')
 
   const projectsById = useMemo(() => {
@@ -23,9 +22,6 @@ export function InboxPage() {
 
   const filteredThoughts = useMemo(() => {
     let result = thoughts
-    if (activeFilter !== 'all') {
-      result = result.filter((t) => t.type === activeFilter)
-    }
     if (sortBy === 'priority') {
       result = [...result].sort((a, b) => {
         const pa = a.priority ? PRIORITY_ORDER[a.priority] : 3
@@ -35,7 +31,7 @@ export function InboxPage() {
       })
     }
     return result
-  }, [thoughts, activeFilter, sortBy])
+  }, [thoughts, sortBy])
 
   async function handleSubmit(body: string, source: 'text' | 'voice') {
     const thought = await addThought(body, source)
@@ -72,8 +68,6 @@ export function InboxPage() {
 
         {/* Filter bar */}
         <FilterBar
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
           sortBy={sortBy}
           onSortChange={setSortBy}
         />

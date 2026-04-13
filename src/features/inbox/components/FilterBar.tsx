@@ -1,38 +1,13 @@
-type FilterType = 'all' | 'idea' | 'task' | 'note'
 type SortType = 'newest' | 'priority'
 
 interface FilterBarProps {
-  activeFilter: FilterType
-  onFilterChange: (filter: FilterType) => void
   sortBy: SortType
   onSortChange: (sort: SortType) => void
 }
 
-const FILTERS: { value: FilterType; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'idea', label: 'Ideas' },
-  { value: 'task', label: 'Tasks' },
-  { value: 'note', label: 'Notes' },
-]
-
-export function FilterBar({ activeFilter, onFilterChange, sortBy, onSortChange }: FilterBarProps) {
+export function FilterBar({ sortBy, onSortChange }: FilterBarProps) {
   return (
-    <div className="flex items-center px-4 py-2.5 md:px-6">
-      <div className="flex gap-1.5 flex-1">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => onFilterChange(f.value)}
-            className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-              activeFilter === f.value
-                ? 'bg-huginn-accent text-white'
-                : 'text-huginn-text-secondary hover:text-white hover:bg-huginn-card'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+    <div className="flex items-center justify-end px-4 py-2.5 md:px-6">
       <button
         onClick={() => onSortChange(sortBy === 'newest' ? 'priority' : 'newest')}
         className="flex items-center gap-1.5 text-xs text-huginn-text-secondary hover:text-white transition-colors px-2 py-1"

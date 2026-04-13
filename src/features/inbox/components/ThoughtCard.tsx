@@ -1,15 +1,9 @@
-import type { Thought, ThoughtType } from '../../../shared/lib/types'
+import type { Thought } from '../../../shared/lib/types'
 import { timeAgo, formatDueDate } from '../../../shared/lib/dateUtils'
 
 const PRIORITY_COLORS: Record<string, string> = {
   high: 'bg-huginn-danger',
   medium: 'bg-huginn-warning',
-}
-
-const TYPE_BADGE: Record<ThoughtType, string> = {
-  task: 'bg-huginn-accent text-white',
-  idea: 'bg-huginn-warning text-black',
-  note: 'bg-huginn-success text-white',
 }
 
 interface ThoughtCardProps {
@@ -44,11 +38,6 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor, selec
       </div>
       <div className="flex items-center gap-2 mt-2 text-xs text-huginn-text-secondary flex-wrap">
         <span>{timeAgo(thought.created_at)}</span>
-        {thought.type && (
-          <span className={`text-[11px] font-bold uppercase tracking-wide rounded px-2 py-0.5 ${TYPE_BADGE[thought.type]}`}>
-            {thought.type}
-          </span>
-        )}
         {thought.priority && PRIORITY_COLORS[thought.priority] && (
           <span className={`w-2 h-2 rounded-sm ${PRIORITY_COLORS[thought.priority]}`} title={thought.priority} />
         )}

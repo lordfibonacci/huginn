@@ -1,4 +1,4 @@
-type TabType = 'thoughts' | 'tasks' | 'notes'
+type TabType = 'tasks' | 'thoughts'
 
 interface ProjectTabsProps {
   activeTab: TabType
@@ -6,9 +6,8 @@ interface ProjectTabsProps {
 }
 
 const TABS: { value: TabType; label: string }[] = [
-  { value: 'thoughts', label: 'Thoughts' },
   { value: 'tasks', label: 'Tasks' },
-  { value: 'notes', label: 'Notes' },
+  { value: 'thoughts', label: 'Thoughts' },
 ]
 
 export function ProjectTabs({ activeTab, onTabChange }: ProjectTabsProps) {

@@ -6,30 +6,25 @@ import {
   TaskList,
   TaskDetailDrawer,
   NewTaskDrawer,
-  NoteList,
-  NoteDetailDrawer,
-  NewNoteDrawer,
   ProjectSettingsDrawer,
   useProjects,
   useProjectTasks,
-  useProjectNotes,
 } from '../features/projects'
 import { ThoughtCard } from '../features/inbox/components/ThoughtCard'
 import { ThoughtDetailDrawer } from '../features/inbox/components/ThoughtDetailDrawer'
 import { useThoughts } from '../features/inbox'
-import type { Project, Task, Note, Thought } from '../shared/lib/types'
+import type { Project, Task, Thought } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [project, setProject] = useState<Project | null>(null)
   const [loadingProject, setLoadingProject] = useState(true)
-  const [activeTab, setActiveTab] = useState<'thoughts' | 'tasks' | 'notes'>('tasks')
+  const [activeTab, setActiveTab] = useState<'tasks' | 'thoughts'>('tasks')
 
   // Hooks
   const { updateProject, deleteProject } = useProjects()
   const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask } = useProjectTasks(id ?? '')
-  const { notes, loading: loadingNotes, addNote, updateNote, deleteNote } = useProjectNotes(id ?? '')
   const { updateThought, deleteThought, archiveThought, convertToTask } = useThoughts()
 
   // Thoughts for this project
@@ -70,9 +65,7 @@ export function ProjectDetailPage() {
   // Drawer state
   const [showSettings, setShowSettings] = useState(false)
   const [showNewTask, setShowNewTask] = useState(false)
-  const [showNewNote, setShowNewNote] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [editingThought, setEditingThought] = useState<Thought | null>(null)
 
   async function handleDeleteProject(projectId: string) {
@@ -105,7 +98,7 @@ export function ProjectDetailPage() {
     )
   }
 
-  const showFab = activeTab === 'tasks' || activeTab === 'notes'
+  const showFab = activeTab === 'tasks'
 
   return (
     <>
@@ -152,14 +145,10 @@ export function ProjectDetailPage() {
         <TaskList tasks={tasks} loading={loadingTasks} onTaskTap={setEditingTask} onStatusChange={(id, status) => updateTask(id, { status })} />
       )}
 
-      {activeTab === 'notes' && (
-        <NoteList notes={notes} loading={loadingNotes} onNoteTap={setEditingNote} />
-      )}
-
       {/* FAB */}
       {showFab && (
         <button
-          onClick={() => activeTab === 'tasks' ? setShowNewTask(true) : setShowNewNote(true)}
+          onClick={() => setShowNewTask(true)}
           className="absolute bottom-20 right-4 w-12 h-12 bg-huginn-accent rounded-full flex items-center justify-center shadow-lg active:bg-huginn-accent-hover transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
@@ -189,20 +178,6 @@ export function ProjectDetailPage() {
           onUpdate={updateTask}
           onDelete={deleteTask}
           onDone={() => setEditingTask(null)}
-        />
-      )}
-      {showNewNote && (
-        <NewNoteDrawer
-          onSave={async (title, body) => { await addNote(title, body) }}
-          onDone={() => setShowNewNote(false)}
-        />
-      )}
-      {editingNote && (
-        <NoteDetailDrawer
-          note={editingNote}
-          onUpdate={updateNote}
-          onDelete={deleteNote}
-          onDone={() => setEditingNote(null)}
         />
       )}
       {editingThought && (
