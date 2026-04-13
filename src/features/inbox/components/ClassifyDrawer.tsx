@@ -1,28 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../shared/lib/supabase'
-import type { Project, ThoughtType } from '../../../shared/lib/types'
+import type { Project } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
 
 interface ClassifyDrawerProps {
   thoughtId: string
-  onClassify: (thoughtId: string, updates: { type?: 'idea' | 'task' | 'note'; project_id?: string }) => Promise<boolean>
+  onClassify: (thoughtId: string, updates: { project_id?: string }) => Promise<boolean>
   onDone: () => void
 }
 
-const TYPE_OPTIONS: { value: ThoughtType; label: string }[] = [
-  { value: 'idea', label: 'Idea' },
-  { value: 'task', label: 'Task' },
-  { value: 'note', label: 'Note' },
-]
-
-const TYPE_BADGE: Record<ThoughtType, string> = {
-  task: 'bg-huginn-accent text-white',
-  idea: 'bg-huginn-warning text-black',
-  note: 'bg-huginn-success text-white',
-}
-
 export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawerProps) {
-  const [selectedType, setSelectedType] = useState<ThoughtType | null>(null)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [saving, setSaving] = useState(false)
@@ -39,14 +26,13 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
   }, [])
 
   async function handleSave() {
-    if (!selectedType && !selectedProject) {
+    if (!selectedProject) {
       onDone()
       return
     }
 
     setSaving(true)
-    const updates: { type?: 'idea' | 'task' | 'note'; project_id?: string } = {}
-    if (selectedType) updates.type = selectedType
+    const updates: { project_id?: string } = {}
     if (selectedProject) updates.project_id = selectedProject
 
     await onClassify(thoughtId, updates)
@@ -55,24 +41,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
   }
 
   return (
-    <ModalShell onDismiss={onDone} title="Classify this thought">
-      {/* Type chips */}
-      <div className="flex gap-2 mb-4">
-        {TYPE_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setSelectedType(selectedType === opt.value ? null : opt.value)}
-            className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${
-              selectedType === opt.value
-                ? TYPE_BADGE[opt.value]
-                : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
+    <ModalShell onDismiss={onDone} title="Assign to project">
       {/* Project dropdown */}
       {projects.length > 0 && (
         <select
