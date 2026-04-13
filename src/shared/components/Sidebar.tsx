@@ -36,21 +36,23 @@ export function Sidebar() {
     return pathname === `/projects/${project.id}`
   }
 
-  const linkBase = 'flex items-center gap-3 px-4 py-2 text-sm rounded-r-lg border-l-2 transition-colors'
-  const linkActive = 'bg-huginn-card border-huginn-accent text-white'
-  const linkInactive = 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-huginn-card/50'
-
   function ProjectRow({ project }: { project: Project }) {
     const active = isProjectActive(project)
     const count = taskCounts[project.id] || 0
     return (
       <Link
         to={`/projects/${project.id}`}
-        className={`${linkBase} ${active ? linkActive : linkInactive}`}
+        className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg mx-2 transition-colors ${
+          active
+            ? 'bg-huginn-accent text-white'
+            : 'text-gray-400 hover:bg-huginn-card hover:text-gray-200'
+        }`}
       >
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
         <span className="flex-1 truncate">{project.name}</span>
-        {count > 0 && <span className="text-xs text-gray-500">{count}</span>}
+        {count > 0 && (
+          <span className={`text-xs ${active ? 'text-white/70' : 'text-huginn-text-muted'}`}>{count}</span>
+        )}
       </Link>
     )
   }
@@ -59,32 +61,42 @@ export function Sidebar() {
     <>
       <aside className="w-64 border-r border-huginn-border flex flex-col bg-huginn-base">
         {/* App name */}
-        <div className="px-4 py-4">
-          <h1 className="text-lg font-bold">Huginn</h1>
+        <div className="px-4 pt-5 pb-4">
+          <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-huginn-accent to-[#a78bfa] bg-clip-text text-transparent">
+            Huginn
+          </h1>
         </div>
 
         {/* Inbox */}
         <Link
           to="/"
-          className={`${linkBase} mx-0 mb-2 ${isInboxActive ? linkActive : linkInactive}`}
+          className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg mx-2 mb-2 transition-colors ${
+            isInboxActive
+              ? 'bg-huginn-accent text-white'
+              : 'text-gray-400 hover:bg-huginn-card hover:text-gray-200'
+          }`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
             <path d="M3.5 9.5a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v8a2.5 2.5 0 0 1-2.5 2.5h-12A2.5 2.5 0 0 1 3.5 17.5v-8Zm1 3V17.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V12.5h-4.09a3.5 3.5 0 0 1-6.82 0H4.5Z" />
           </svg>
           <span className="flex-1">Inbox</span>
           {inboxCount > 0 && (
-            <span className="text-xs bg-huginn-accent text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center ${
+              isInboxActive
+                ? 'bg-white/20 text-white'
+                : 'bg-huginn-accent text-white'
+            }`}>
               {inboxCount}
             </span>
           )}
         </Link>
 
         {/* Projects section */}
-        <div className="flex items-center justify-between px-4 mt-2 mb-1">
-          <span className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Projects</span>
+        <div className="flex items-center justify-between px-4 mt-3 mb-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-huginn-accent">Projects</span>
           <button
             onClick={() => setShowNewProject(true)}
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-white hover:bg-huginn-card rounded-md p-1 transition-colors"
             title="New project"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -95,7 +107,6 @@ export function Sidebar() {
 
         {/* Project list */}
         <div className="flex-1 overflow-y-auto pb-2">
-          {/* Pinned */}
           {pinned.length > 0 && (
             <div className="mb-2">
               {pinned.map((p) => (
@@ -104,11 +115,10 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* Grouped by status */}
           {groups.map((group) => (
             <div key={group.label} className="mb-2">
               {(groups.length > 1 || pinned.length > 0) && (
-                <p className="text-[10px] uppercase tracking-wider text-gray-600 px-4 mb-1">{group.label}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-huginn-text-muted px-4 mb-1">{group.label}</p>
               )}
               {group.items.map((p) => (
                 <ProjectRow key={p.id} project={p} />
@@ -117,7 +127,7 @@ export function Sidebar() {
           ))}
 
           {projects.length === 0 && (
-            <p className="text-xs text-gray-600 px-4 py-2">No projects yet</p>
+            <p className="text-xs text-huginn-text-muted px-4 py-2">No projects yet</p>
           )}
         </div>
 
@@ -132,7 +142,6 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* New project drawer */}
       {showNewProject && (
         <NewProjectDrawer
           onSave={async (name, color, status) => { await addProject(name, color, status) }}
