@@ -48,6 +48,21 @@ export function ProjectDetailPage() {
     fetchProjectThoughts()
   }, [fetchProjectThoughts])
 
+  // Realtime: refetch project thoughts on any change
+  useEffect(() => {
+    if (!id) return
+    const channel = supabase
+      .channel(`huginn_thoughts_project_${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_thoughts', filter: `project_id=eq.${id}` }, () => {
+        fetchProjectThoughts()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [id, fetchProjectThoughts])
+
   // Fetch project
   useEffect(() => {
     if (!id) return
