@@ -19,9 +19,11 @@ interface TaskCardProps {
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void
   selected?: boolean
   dragHandleProps?: Record<string, unknown>
+  checklistProgress?: { checked: number; total: number } | null
+  labels?: { id: string; name: string; color: string }[]
 }
 
-export function TaskCard({ task, onClick, onStatusChange, selected, dragHandleProps }: TaskCardProps) {
+export function TaskCard({ task, onClick, onStatusChange, selected, dragHandleProps, checklistProgress, labels }: TaskCardProps) {
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
   const priority = task.priority ? PRIORITY_LABELS[task.priority] : null
 
@@ -45,6 +47,20 @@ export function TaskCard({ task, onClick, onStatusChange, selected, dragHandlePr
       {/* Priority color bar at top */}
       {task.priority === 'high' && <div className="h-0.5 bg-huginn-danger rounded-t-lg" />}
       {task.priority === 'medium' && <div className="h-0.5 bg-huginn-warning rounded-t-lg" />}
+
+      {/* Label strips */}
+      {labels && labels.length > 0 && (
+        <div className="flex gap-1 px-3 pt-2">
+          {labels.map((label) => (
+            <div
+              key={label.id}
+              className="h-2 rounded-full flex-1 max-w-[40px]"
+              style={{ backgroundColor: label.color }}
+              title={label.name}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="p-3">
         {/* Title row */}
@@ -83,7 +99,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, dragHandlePr
         </div>
 
         {/* Metadata badges */}
-        {(priority || dueInfo || task.notes) && (
+        {(priority || dueInfo || task.notes || (checklistProgress && checklistProgress.total > 0)) && (
           <div className="flex items-center gap-1.5 mt-2 ml-6 flex-wrap">
             {priority && (
               <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${priority.class}`}>
@@ -102,6 +118,18 @@ export function TaskCard({ task, onClick, onStatusChange, selected, dragHandlePr
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
                   <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7ZM4 5.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4ZM4 8a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H4Z" />
                 </svg>
+              </span>
+            )}
+            {checklistProgress && checklistProgress.total > 0 && (
+              <span className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                checklistProgress.checked === checklistProgress.total
+                  ? 'bg-huginn-success/20 text-huginn-success'
+                  : 'bg-huginn-surface text-huginn-text-secondary'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                  <path fillRule="evenodd" d="M12.4 4.7a.75.75 0 0 1 .1 1.06l-5.25 6a.75.75 0 0 1-1.1.02L3.6 9.1a.75.75 0 1 1 1.1-1.02l2.05 2.22 4.7-5.37a.75.75 0 0 1 1.06-.1l-.1-.13Z" clipRule="evenodd" />
+                </svg>
+                {checklistProgress.checked}/{checklistProgress.total}
               </span>
             )}
           </div>
