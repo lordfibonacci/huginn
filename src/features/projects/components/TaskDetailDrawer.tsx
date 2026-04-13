@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Task, TaskStatus } from '../../../shared/lib/types'
+import type { Task, TaskStatus, ThoughtPriority } from '../../../shared/lib/types'
 
 interface TaskDetailDrawerProps {
   task: Task
-  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; due_date?: string | null }) => Promise<boolean>
+  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
   onDone: () => void
 }
@@ -14,10 +14,17 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: 'done', label: 'Done' },
 ]
 
+const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
+  { value: 'low', label: 'Low', color: 'bg-gray-500' },
+  { value: 'medium', label: 'Medium', color: 'bg-[#fdcb6e]' },
+  { value: 'high', label: 'High', color: 'bg-[#e17055]' },
+]
+
 export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetailDrawerProps) {
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
   const [status, setStatus] = useState<TaskStatus>(task.status)
+  const [priority, setPriority] = useState<ThoughtPriority | null>(task.priority)
   const [dueDate, setDueDate] = useState(task.due_date ?? '')
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -42,6 +49,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
       title: trimmed,
       notes: notes.trim() || null,
       status,
+      priority,
       due_date: dueDate || null,
     })
     setSaving(false)
@@ -91,6 +99,22 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 status === opt.value
                   ? 'bg-[#6c5ce7] text-white'
+                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Priority</p>
+        <div className="flex gap-2 mb-4">
+          {PRIORITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPriority(priority === opt.value ? null : opt.value)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                priority === opt.value
+                  ? `${opt.color} text-white`
                   : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
               }`}
             >
