@@ -174,6 +174,7 @@ export function ProjectDetailPage() {
           <div className="flex-1">
             <TaskDetailPanel
               task={currentEditingTask}
+              projectId={id!}
               onUpdate={updateTask}
               onDelete={deleteTask}
               onClose={() => setEditingTask(null)}
