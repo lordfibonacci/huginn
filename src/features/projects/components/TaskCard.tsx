@@ -36,35 +36,34 @@ export function TaskCard({ task, onClick, onStatusChange }: TaskCardProps) {
 
   return (
     <div
-      className="bg-huginn-card rounded-xl p-3 mb-2 cursor-pointer active:bg-huginn-hover transition-colors"
+      className="bg-huginn-card rounded-xl p-4 mb-2.5 cursor-pointer active:bg-huginn-hover hover:bg-huginn-hover border-l-[3px] border-transparent hover:border-huginn-accent transition-all"
       onClick={onClick}
       data-task-id={task.id}
     >
-      <div className="flex items-start gap-2.5">
-        {/* Status toggle */}
+      <div className="flex items-start gap-3">
         <button
           onClick={handleToggle}
-          className={`w-5 h-5 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center transition-colors ${STATUS_COLORS[task.status]}`}
+          className={`w-6 h-6 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center transition-colors ${STATUS_COLORS[task.status]}`}
           title={`Mark as ${NEXT_STATUS[task.status]}`}
         >
           {task.status === 'done' && (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
               <path fillRule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.58l7.3-7.3a1 1 0 0 1 1.4 0Z" clipRule="evenodd" />
             </svg>
           )}
         </button>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm ${task.status === 'done' ? 'text-gray-500 line-through' : 'text-gray-100'}`}>
+          <p className={`text-sm leading-relaxed ${task.status === 'done' ? 'text-gray-500 line-through' : 'text-huginn-text-primary'}`}>
             {task.title}
           </p>
           {(dueInfo || (task.priority && PRIORITY_COLORS[task.priority])) && (
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2.5 mt-1.5">
               {task.priority && PRIORITY_COLORS[task.priority] && (
-                <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={task.priority} />
+                <span className={`w-2.5 h-2.5 rounded-sm ${PRIORITY_COLORS[task.priority]}`} title={task.priority} />
               )}
               {dueInfo && (
-                <span className={`text-xs ${dueInfo.urgent ? 'text-huginn-danger' : 'text-gray-500'}`}>
+                <span className={`text-xs font-medium ${dueInfo.urgent ? 'text-huginn-danger' : 'text-huginn-text-secondary'}`}>
                   {dueInfo.text}
                 </span>
               )}
