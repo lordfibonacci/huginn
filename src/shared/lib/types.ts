@@ -38,6 +38,7 @@ export interface Task {
   title: string
   notes: string | null
   status: TaskStatus
+  priority: ThoughtPriority | null
   from_thought_id: string | null
   due_date: string | null
   created_at: string
