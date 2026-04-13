@@ -17,7 +17,7 @@ const FILTERS: { value: FilterType; label: string }[] = [
 
 export function FilterBar({ activeFilter, onFilterChange, sortBy, onSortChange }: FilterBarProps) {
   return (
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-huginn-border">
+    <div className="flex items-center gap-2 px-4 py-3 border-b border-huginn-border md:px-6">
       <div className="flex gap-2 flex-1">
         {FILTERS.map((f) => (
           <button

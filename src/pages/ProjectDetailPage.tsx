@@ -110,7 +110,7 @@ export function ProjectDetailPage() {
   return (
     <>
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-huginn-border">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-huginn-border md:px-6">
         <Link to="/projects" className="text-gray-400 hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />

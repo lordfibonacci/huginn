@@ -28,7 +28,8 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-2">
+    <div className="flex-1 overflow-y-auto px-3 py-2 md:px-6">
+      <div className="max-w-2xl">
       {thoughts.map((thought) => {
         const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
         return (
@@ -41,6 +42,7 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
           />
         )
       })}
+      </div>
     </div>
   )
 }
