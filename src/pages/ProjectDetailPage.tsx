@@ -5,6 +5,7 @@ import {
   ProjectTabs,
   TaskList,
   TaskDetailDrawer,
+  TaskDetailPanel,
   ProjectSettingsDrawer,
   useProjects,
   useProjectTasks,
@@ -47,7 +48,6 @@ export function ProjectDetailPage() {
     fetchProjectThoughts()
   }, [fetchProjectThoughts])
 
-  // Realtime: refetch project thoughts on any change
   useEffect(() => {
     if (!id) return
     const channelName = `huginn_thoughts_project_${id}_${crypto.randomUUID()}`
@@ -58,12 +58,9 @@ export function ProjectDetailPage() {
       })
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   }, [id, fetchProjectThoughts])
 
-  // Fetch project
   useEffect(() => {
     if (!id) return
     supabase
@@ -77,10 +74,15 @@ export function ProjectDetailPage() {
       })
   }, [id])
 
-  // Drawer state
+  // Selection state
   const [showSettings, setShowSettings] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingThought, setEditingThought] = useState<Thought | null>(null)
+
+  // Keep editing task in sync with latest data
+  const currentEditingTask = editingTask
+    ? tasks.find((t) => t.id === editingTask.id) ?? editingTask
+    : null
 
   async function handleDeleteProject(projectId: string) {
     const success = await deleteProject(projectId)
@@ -99,7 +101,7 @@ export function ProjectDetailPage() {
   if (loadingProject) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-huginn-text-muted text-sm">Loading...</p>
       </div>
     )
   }
@@ -107,61 +109,89 @@ export function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Project not found.</p>
+        <p className="text-huginn-text-muted text-sm">Project not found.</p>
       </div>
     )
   }
 
-
   return (
-    <>
-      {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-huginn-border md:px-6">
-        <Link to="/projects" className="text-gray-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
-          </svg>
-        </Link>
-        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-        <h1 className="text-lg font-bold flex-1">{project.name}</h1>
-        <button onClick={() => setShowSettings(true)} className="text-gray-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5ZM9.25 12a2.75 2.75 0 1 1 5.5 0 2.75 2.75 0 0 1-5.5 0Z" />
-            <path d="M11.98 2a1.27 1.27 0 0 0-1.26 1.1l-.17 1.2a.86.86 0 0 1-.53.64 7.9 7.9 0 0 0-1.1.46.86.86 0 0 1-.82-.05l-1.02-.65a1.27 1.27 0 0 0-1.67.2l-.04.04a1.27 1.27 0 0 0-.2 1.67l.65 1.02c.15.24.16.54.05.82a7.9 7.9 0 0 0-.46 1.1.86.86 0 0 1-.64.53l-1.2.17A1.27 1.27 0 0 0 2 11.98v.04c0 .63.47 1.17 1.1 1.26l1.2.17c.28.04.52.24.64.53.13.38.28.74.46 1.1.11.28.1.58-.05.82l-.65 1.02a1.27 1.27 0 0 0 .2 1.67l.04.04c.44.44 1.15.52 1.67.2l1.02-.65a.86.86 0 0 1 .82-.05c.36.18.72.33 1.1.46.29.1.49.36.53.64l.17 1.2c.09.63.63 1.1 1.26 1.1h.04c.63 0 1.17-.47 1.26-1.1l.17-1.2a.86.86 0 0 1 .53-.64c.38-.13.74-.28 1.1-.46a.86.86 0 0 1 .82.05l1.02.65c.52.32 1.23.24 1.67-.2l.04-.04c.44-.44.52-1.15.2-1.67l-.65-1.02a.86.86 0 0 1-.05-.82c.18-.36.33-.72.46-1.1.1-.29.36-.49.64-.53l1.2-.17c.63-.09 1.1-.63 1.1-1.26v-.04c0-.63-.47-1.17-1.1-1.26l-1.2-.17a.86.86 0 0 1-.64-.53 7.9 7.9 0 0 0-.46-1.1.86.86 0 0 1 .05-.82l.65-1.02a1.27 1.27 0 0 0-.2-1.67l-.04-.04a1.27 1.27 0 0 0-1.67-.2l-1.02.65a.86.86 0 0 1-.82.05 7.9 7.9 0 0 0-1.1-.46.86.86 0 0 1-.53-.64l-.17-1.2A1.27 1.27 0 0 0 12.02 2h-.04Z" />
-          </svg>
-        </button>
-      </header>
+    <div className="flex flex-1 min-h-0">
+      {/* Left: project content */}
+      <div className={`flex flex-col min-h-0 ${currentEditingTask && activeTab === 'tasks' ? 'hidden md:flex md:flex-1' : 'flex-1'}`}>
+        {/* Header */}
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-huginn-border md:px-5">
+          <Link to="/projects" className="text-huginn-text-muted hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
+            </svg>
+          </Link>
+          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+          <h1 className="text-lg font-bold flex-1">{project.name}</h1>
+          <button onClick={() => setShowSettings(true)} className="text-huginn-text-muted hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+              <path fillRule="evenodd" d="M8.34 1.804A1 1 0 0 1 9.32 1h1.36a1 1 0 0 1 .98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 0 1 1.262.125l.962.962a1 1 0 0 1 .125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 0 1 .804.98v1.362a1 1 0 0 1-.804.98l-1.473.295a6.95 6.95 0 0 1-.587 1.416l.834 1.25a1 1 0 0 1-.125 1.262l-.962.962a1 1 0 0 1-1.262.125l-1.25-.834a6.953 6.953 0 0 1-1.416.587l-.294 1.473a1 1 0 0 1-.98.804H9.32a1 1 0 0 1-.98-.804l-.295-1.473a6.957 6.957 0 0 1-1.416-.587l-1.25.834a1 1 0 0 1-1.262-.125l-.962-.962a1 1 0 0 1-.125-1.262l.834-1.25a6.957 6.957 0 0 1-.587-1.416l-1.473-.294A1 1 0 0 1 1 11.36V9.998a1 1 0 0 1 .804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 0 1 .125-1.262l.962-.962A1 1 0 0 1 5.38 3.708l1.25.834a6.957 6.957 0 0 1 1.416-.587l.294-1.473ZM13 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </header>
 
-      {/* Tabs */}
-      <ProjectTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Tabs */}
+        <ProjectTabs activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setEditingTask(null); setEditingThought(null) }} />
 
-      {/* Tab content */}
-      {activeTab === 'thoughts' && (
-        <div className="flex-1 overflow-y-auto px-3 py-2">
-          {loadingThoughts ? (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <p className="text-gray-500 text-sm">Loading...</p>
-            </div>
-          ) : thoughts.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <p className="text-gray-500 text-sm">No thoughts filed to this project yet.</p>
-            </div>
-          ) : (
-            thoughts.map((t) => (
-              <ThoughtCard key={t.id} thought={t} onClick={() => setEditingThought(t)} />
-            ))
-          )}
+        {/* Tab content */}
+        {activeTab === 'thoughts' && (
+          <div className="flex-1 overflow-y-auto p-4 md:p-5">
+            {loadingThoughts ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-huginn-text-muted text-sm">Loading...</p>
+              </div>
+            ) : thoughts.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-huginn-text-muted text-sm">No thoughts filed to this project yet.</p>
+              </div>
+            ) : (
+              thoughts.map((t) => (
+                <ThoughtCard key={t.id} thought={t} onClick={() => setEditingThought(t)} />
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <TaskList
+            tasks={tasks}
+            loading={loadingTasks}
+            onTaskTap={setEditingTask}
+            onStatusChange={(taskId, status) => updateTask(taskId, { status })}
+            onAddTask={async (title) => { await addTask(title) }}
+            selectedTaskId={currentEditingTask?.id}
+          />
+        )}
+      </div>
+
+      {/* Right: task detail panel (desktop only) */}
+      {currentEditingTask && activeTab === 'tasks' && (
+        <div className="hidden md:flex md:w-[400px] lg:w-[450px] border-l border-huginn-border bg-huginn-surface">
+          <div className="flex-1">
+            <TaskDetailPanel
+              task={currentEditingTask}
+              onUpdate={updateTask}
+              onDelete={deleteTask}
+              onClose={() => setEditingTask(null)}
+            />
+          </div>
         </div>
       )}
 
-      {activeTab === 'tasks' && (
-        <TaskList
-          tasks={tasks}
-          loading={loadingTasks}
-          onTaskTap={setEditingTask}
-          onStatusChange={(id, status) => updateTask(id, { status })}
-          onAddTask={async (title) => { await addTask(title) }}
-        />
+      {/* Mobile: task detail drawer */}
+      {currentEditingTask && activeTab === 'tasks' && (
+        <div className="md:hidden">
+          <TaskDetailDrawer
+            task={currentEditingTask}
+            onUpdate={updateTask}
+            onDelete={deleteTask}
+            onDone={() => setEditingTask(null)}
+          />
+        </div>
       )}
 
       {/* Drawers */}
@@ -171,14 +201,6 @@ export function ProjectDetailPage() {
           onUpdate={handleUpdateProject}
           onDelete={handleDeleteProject}
           onDone={() => setShowSettings(false)}
-        />
-      )}
-      {editingTask && (
-        <TaskDetailDrawer
-          task={editingTask}
-          onUpdate={updateTask}
-          onDelete={deleteTask}
-          onDone={() => setEditingTask(null)}
         />
       )}
       {editingThought && (
@@ -191,6 +213,6 @@ export function ProjectDetailPage() {
           onDone={() => setEditingThought(null)}
         />
       )}
-    </>
+    </div>
   )
 }
