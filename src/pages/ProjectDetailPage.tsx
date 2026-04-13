@@ -110,7 +110,7 @@ export function ProjectDetailPage() {
   return (
     <>
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-[#2a2a4a]">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-huginn-border">
         <Link to="/projects" className="text-gray-400 hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
@@ -160,7 +160,7 @@ export function ProjectDetailPage() {
       {showFab && (
         <button
           onClick={() => activeTab === 'tasks' ? setShowNewTask(true) : setShowNewNote(true)}
-          className="absolute bottom-20 right-4 w-12 h-12 bg-[#6c5ce7] rounded-full flex items-center justify-center shadow-lg active:bg-[#5b4bd5] transition-colors"
+          className="absolute bottom-20 right-4 w-12 h-12 bg-huginn-accent rounded-full flex items-center justify-center shadow-lg active:bg-huginn-accent-hover transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
             <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1Z" />

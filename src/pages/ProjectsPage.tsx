@@ -21,7 +21,7 @@ export function ProjectsPage() {
   return (
     <>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a]">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
         <div>
           <h1 className="text-xl font-bold">Projects</h1>
           <p className="text-xs text-gray-500">
@@ -46,7 +46,7 @@ export function ProjectsPage() {
       {/* Floating + button */}
       <button
         onClick={() => setShowNewProject(true)}
-        className="absolute bottom-20 right-4 w-12 h-12 bg-[#6c5ce7] rounded-full flex items-center justify-center shadow-lg active:bg-[#5b4bd5] transition-colors"
+        className="absolute bottom-20 right-4 w-12 h-12 bg-huginn-accent rounded-full flex items-center justify-center shadow-lg active:bg-huginn-accent-hover transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
           <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1Z" />

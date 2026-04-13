@@ -48,7 +48,7 @@ export function InboxPage() {
   return (
     <>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a4a]">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
         <div>
           <h1 className="text-xl font-bold">Huginn</h1>
           <p className="text-xs text-gray-500">

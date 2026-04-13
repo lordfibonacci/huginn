@@ -27,7 +27,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <h1 className="text-2xl font-bold text-white text-center">Huginn</h1>
         <p className="text-sm text-gray-400 text-center">
@@ -44,7 +44,7 @@ export function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-[#2a2a4a] text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500"
+          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
         />
         <input
           type="password"
@@ -53,12 +53,12 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
-          className="w-full bg-[#2a2a4a] text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500"
+          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#6c5ce7] text-white font-semibold rounded-xl py-3 disabled:opacity-50"
+          className="w-full bg-huginn-accent text-white font-semibold rounded-xl py-3 disabled:opacity-50"
         >
           {loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}
         </button>
