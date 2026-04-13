@@ -14,6 +14,12 @@ const TYPE_OPTIONS: { value: ThoughtType; label: string }[] = [
   { value: 'note', label: 'Note' },
 ]
 
+const TYPE_BADGE: Record<ThoughtType, string> = {
+  task: 'bg-huginn-accent text-white',
+  idea: 'bg-huginn-warning text-black',
+  note: 'bg-huginn-success text-white',
+}
+
 export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawerProps) {
   const [selectedType, setSelectedType] = useState<ThoughtType | null>(null)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
@@ -59,7 +65,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-huginn-card rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.3)] p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -76,9 +82,9 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
               onClick={() =>
                 setSelectedType(selectedType === opt.value ? null : opt.value)
               }
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${
                 selectedType === opt.value
-                  ? 'bg-huginn-accent text-white'
+                  ? TYPE_BADGE[opt.value]
                   : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
               }`}
             >
@@ -92,7 +98,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
           <select
             value={selectedProject ?? ''}
             onChange={(e) => setSelectedProject(e.target.value || null)}
-            className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent mb-4 appearance-none"
+            className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent mb-4 appearance-none"
           >
             <option value="">No project</option>
             {projects.map((p) => (
@@ -114,7 +120,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
+            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
           >
             {saving ? '...' : 'Save'}
           </button>
