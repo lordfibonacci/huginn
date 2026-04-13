@@ -36,6 +36,7 @@ export function useProjectTasks(projectId: string) {
       title,
       notes: null,
       status: 'todo',
+      priority: null,
       from_thought_id: null,
       due_date: null,
       created_at: new Date().toISOString(),
@@ -61,7 +62,7 @@ export function useProjectTasks(projectId: string) {
 
   async function updateTask(
     taskId: string,
-    updates: { title?: string; notes?: string | null; status?: TaskStatus; due_date?: string | null }
+    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; due_date?: string | null }
   ) {
     const prev = tasks
     setTasks((t) => t.map((tk) => (tk.id === taskId ? { ...tk, ...updates } : tk)))

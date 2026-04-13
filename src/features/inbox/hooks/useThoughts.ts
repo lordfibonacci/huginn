@@ -144,5 +144,43 @@ export function useThoughts() {
     return true
   }
 
-  return { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, archiveThought, count: thoughts.length }
+  async function convertToTask(thoughtId: string) {
+    const thought = thoughts.find((t) => t.id === thoughtId)
+    if (!thought || !thought.project_id) return false
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    // Create the task
+    const { error: taskError } = await supabase
+      .from('huginn_tasks')
+      .insert({
+        title: thought.body,
+        project_id: thought.project_id,
+        from_thought_id: thought.id,
+        status: 'todo',
+        user_id: user.id,
+      })
+
+    if (taskError) {
+      console.error('Failed to convert thought to task:', taskError)
+      return false
+    }
+
+    // Archive the thought
+    setThoughts((t) => t.filter((th) => th.id !== thoughtId))
+
+    const { error: archiveError } = await supabase
+      .from('huginn_thoughts')
+      .update({ status: 'archived' })
+      .eq('id', thoughtId)
+
+    if (archiveError) {
+      console.error('Failed to archive converted thought:', archiveError)
+    }
+
+    return true
+  }
+
+  return { thoughts, loading, addThought, classifyThought, updateThought, deleteThought, archiveThought, convertToTask, count: thoughts.length }
 }
