@@ -6,11 +6,11 @@ export function BottomNav() {
   const isProjects = pathname.startsWith('/projects')
 
   return (
-    <nav className="flex border-t border-[#2a2a4a] bg-[#1a1a2e] pb-[env(safe-area-inset-bottom,0px)]">
+    <nav className="flex border-t border-huginn-border bg-huginn-base pb-[env(safe-area-inset-bottom,0px)]">
       <Link
         to="/"
         className={`flex-1 flex flex-col items-center py-2 gap-0.5 ${
-          isInbox ? 'text-[#6c5ce7]' : 'text-gray-500'
+          isInbox ? 'text-huginn-accent' : 'text-gray-500'
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -21,7 +21,7 @@ export function BottomNav() {
       <Link
         to="/projects"
         className={`flex-1 flex flex-col items-center py-2 gap-0.5 ${
-          isProjects ? 'text-[#6c5ce7]' : 'text-gray-500'
+          isProjects ? 'text-huginn-accent' : 'text-gray-500'
         }`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

@@ -37,8 +37,8 @@ export function Sidebar() {
   }
 
   const linkBase = 'flex items-center gap-3 px-4 py-2 text-sm rounded-r-lg border-l-2 transition-colors'
-  const linkActive = 'bg-[#2a2a4a] border-[#6c5ce7] text-white'
-  const linkInactive = 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-[#2a2a4a]/50'
+  const linkActive = 'bg-huginn-card border-huginn-accent text-white'
+  const linkInactive = 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-huginn-card/50'
 
   function ProjectRow({ project }: { project: Project }) {
     const active = isProjectActive(project)
@@ -57,7 +57,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 border-r border-[#2a2a4a] flex flex-col bg-[#1a1a2e]">
+      <aside className="w-64 border-r border-huginn-border flex flex-col bg-huginn-base">
         {/* App name */}
         <div className="px-4 py-4">
           <h1 className="text-lg font-bold">Huginn</h1>
@@ -73,7 +73,7 @@ export function Sidebar() {
           </svg>
           <span className="flex-1">Inbox</span>
           {inboxCount > 0 && (
-            <span className="text-xs bg-[#6c5ce7] text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+            <span className="text-xs bg-huginn-accent text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
               {inboxCount}
             </span>
           )}
@@ -122,7 +122,7 @@ export function Sidebar() {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-[#2a2a4a] px-4 py-3">
+        <div className="border-t border-huginn-border px-4 py-3">
           <button
             onClick={signOut}
             className="text-xs text-gray-500 hover:text-white transition-colors"

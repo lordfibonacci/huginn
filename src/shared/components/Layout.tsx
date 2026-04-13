@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar'
 
 export function Layout() {
   return (
-    <div className="h-[100dvh] bg-[#1a1a2e] text-white flex">
+    <div className="h-[100dvh] bg-huginn-surface text-white flex">
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
         <Sidebar />
