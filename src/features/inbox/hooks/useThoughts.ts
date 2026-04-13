@@ -25,6 +25,19 @@ export function useThoughts() {
     fetchThoughts()
   }, [fetchThoughts])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('huginn_thoughts_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_thoughts' }, () => {
+        fetchThoughts()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchThoughts])
+
   async function addThought(body: string, source: 'text' | 'voice'): Promise<Thought | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
