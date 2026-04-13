@@ -12,17 +12,9 @@ const PRESET_COLORS = [
   '#0984e3', '#e84393', '#636e72', '#2d3436',
 ]
 
-const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'idea', label: 'Idea' },
-  { value: 'hold', label: 'On hold' },
-  { value: 'done', label: 'Done' },
-]
-
 export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
-  const [status, setStatus] = useState<ProjectStatus>('active')
   const [saving, setSaving] = useState(false)
 
   async function handleSave() {
@@ -30,7 +22,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
     if (!trimmed || saving) return
 
     setSaving(true)
-    await onSave(trimmed, color, status)
+    await onSave(trimmed, color, 'active')
     setSaving(false)
     onDone()
   }
@@ -44,10 +36,12 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
         onChange={(e) => setName(e.target.value)}
         placeholder="Project name"
         autoFocus
-        className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4 border border-huginn-border focus:border-huginn-accent"
+        onKeyDown={(e) => { if (e.key === 'Enter') handleSave() }}
+        className="w-full bg-huginn-surface text-white rounded-lg px-4 py-3 text-sm outline-none border border-huginn-border focus:border-huginn-accent placeholder-gray-500 mb-4"
       />
 
-      {/* Color swatches */}
+      {/* Color */}
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Color</p>
       <div className="flex gap-3 mb-4">
         {PRESET_COLORS.map((c) => (
           <button
@@ -61,23 +55,6 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
         ))}
       </div>
 
-      {/* Status chips */}
-      <div className="flex gap-2 mb-4">
-        {STATUS_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setStatus(opt.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-              status === opt.value
-                ? 'bg-huginn-accent text-white'
-                : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
       {/* Actions */}
       <div className="flex gap-2">
         <button onClick={onDone} className="flex-1 text-sm text-gray-400 py-2">
@@ -86,9 +63,9 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
         <button
           onClick={handleSave}
           disabled={!name.trim() || saving}
-          className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
+          className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-lg py-2 disabled:opacity-50"
         >
-          {saving ? '...' : 'Save'}
+          {saving ? '...' : 'Create'}
         </button>
       </div>
     </ModalShell>
