@@ -59,7 +59,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -78,8 +78,8 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
               }
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedType === opt.value
-                  ? 'bg-[#6c5ce7] text-white'
-                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+                  ? 'bg-huginn-accent text-white'
+                  : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
               }`}
             >
               {opt.label}
@@ -92,7 +92,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
           <select
             value={selectedProject ?? ''}
             onChange={(e) => setSelectedProject(e.target.value || null)}
-            className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] mb-4 appearance-none"
+            className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent mb-4 appearance-none"
           >
             <option value="">No project</option>
             {projects.map((p) => (
@@ -114,7 +114,7 @@ export function ClassifyDrawer({ thoughtId, onClassify, onDone }: ClassifyDrawer
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 bg-[#6c5ce7] text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
+            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
           >
             {saving ? '...' : 'Save'}
           </button>

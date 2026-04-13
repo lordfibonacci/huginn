@@ -2,8 +2,8 @@ import type { Thought } from '../../../shared/lib/types'
 import { timeAgo, formatDueDate } from '../../../shared/lib/dateUtils'
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: 'bg-[#e17055]',
-  medium: 'bg-[#fdcb6e]',
+  high: 'bg-huginn-danger',
+  medium: 'bg-huginn-warning',
 }
 
 interface ThoughtCardProps {
@@ -18,7 +18,7 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
 
   return (
     <div
-      className="bg-[#2a2a4a] rounded-xl p-3 mb-2 cursor-pointer active:bg-[#3a3a5a] transition-colors"
+      className="bg-huginn-card rounded-xl p-3 mb-2 cursor-pointer active:bg-huginn-hover transition-colors"
       onClick={onClick}
     >
       <div className="flex items-start gap-2">
@@ -34,7 +34,7 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
       <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 flex-wrap">
         <span>{timeAgo(thought.created_at)}</span>
         {thought.type && (
-          <span className="bg-[#1a1a2e] px-2 py-0.5 rounded-full">
+          <span className="bg-huginn-surface px-2 py-0.5 rounded-full">
             {thought.type}
           </span>
         )}
@@ -42,7 +42,7 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
           <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[thought.priority]}`} title={thought.priority} />
         )}
         {dueInfo && (
-          <span className={dueInfo.urgent ? 'text-[#e17055]' : 'text-gray-400'}>
+          <span className={dueInfo.urgent ? 'text-huginn-danger' : 'text-gray-400'}>
             {dueInfo.text}
           </span>
         )}

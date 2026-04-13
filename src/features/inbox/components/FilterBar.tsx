@@ -17,7 +17,7 @@ const FILTERS: { value: FilterType; label: string }[] = [
 
 export function FilterBar({ activeFilter, onFilterChange, sortBy, onSortChange }: FilterBarProps) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-[#2a2a4a]">
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-huginn-border">
       <div className="flex gap-1.5 flex-1">
         {FILTERS.map((f) => (
           <button
@@ -25,8 +25,8 @@ export function FilterBar({ activeFilter, onFilterChange, sortBy, onSortChange }
             onClick={() => onFilterChange(f.value)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               activeFilter === f.value
-                ? 'bg-[#6c5ce7] text-white'
-                : 'bg-[#2a2a4a] text-gray-400 hover:bg-[#3a3a5a]'
+                ? 'bg-huginn-accent text-white'
+                : 'bg-huginn-card text-gray-400 hover:bg-huginn-hover'
             }`}
           >
             {f.label}

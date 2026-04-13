@@ -73,7 +73,7 @@ export function ThoughtInput({ onSubmit }: ThoughtInputProps) {
   }
 
   return (
-    <div className="border-t border-[#2a2a4a] bg-[#1a1a2e] px-3 py-3 pb-[env(safe-area-inset-bottom,12px)]">
+    <div className="border-t border-huginn-border bg-huginn-surface px-3 py-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
@@ -86,7 +86,7 @@ export function ThoughtInput({ onSubmit }: ThoughtInputProps) {
           placeholder={isRecording ? 'Listening...' : "What's on your mind?"}
           disabled={isRecording}
           rows={1}
-          className="flex-1 bg-[#2a2a4a] text-white rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 resize-none disabled:opacity-50"
+          className="flex-1 bg-huginn-card text-white rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none disabled:opacity-50"
         />
         {isSupported && (
           <VoiceButton

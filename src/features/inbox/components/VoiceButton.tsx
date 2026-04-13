@@ -18,7 +18,7 @@ export function VoiceButton({ isRecording, duration, onToggle }: VoiceButtonProp
       className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
         isRecording
           ? 'bg-red-500 animate-pulse'
-          : 'bg-[#6c5ce7] hover:bg-[#5b4bd5]'
+          : 'bg-huginn-accent hover:bg-huginn-accent-hover'
       }`}
       title={isRecording ? 'Stop recording' : 'Start voice note'}
     >
