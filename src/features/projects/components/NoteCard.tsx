@@ -11,7 +11,7 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
 
   return (
     <div
-      className="bg-[#2a2a4a] rounded-xl p-3 mb-2 cursor-pointer active:bg-[#3a3a5a] transition-colors"
+      className="bg-huginn-card rounded-xl p-3 mb-2 cursor-pointer active:bg-huginn-hover transition-colors"
       onClick={onClick}
     >
       <p className="text-sm text-gray-100">{displayTitle}</p>

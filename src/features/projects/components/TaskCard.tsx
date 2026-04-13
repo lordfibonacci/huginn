@@ -3,13 +3,13 @@ import { formatDueDate } from '../../../shared/lib/dateUtils'
 
 const STATUS_COLORS: Record<string, string> = {
   todo: 'border-gray-500 text-gray-500',
-  doing: 'border-[#6c5ce7] bg-[#6c5ce7] text-white',
-  done: 'border-[#00b894] bg-[#00b894] text-white',
+  doing: 'border-huginn-accent bg-huginn-accent text-white',
+  done: 'border-huginn-success bg-huginn-success text-white',
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: 'bg-[#e17055]',
-  medium: 'bg-[#fdcb6e]',
+  high: 'bg-huginn-danger',
+  medium: 'bg-huginn-warning',
 }
 
 const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
@@ -36,7 +36,7 @@ export function TaskCard({ task, onClick, onStatusChange }: TaskCardProps) {
 
   return (
     <div
-      className="bg-[#2a2a4a] rounded-xl p-3 mb-2 cursor-pointer active:bg-[#3a3a5a] transition-colors"
+      className="bg-huginn-card rounded-xl p-3 mb-2 cursor-pointer active:bg-huginn-hover transition-colors"
       onClick={onClick}
       data-task-id={task.id}
     >
@@ -64,7 +64,7 @@ export function TaskCard({ task, onClick, onStatusChange }: TaskCardProps) {
                 <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority]}`} title={task.priority} />
               )}
               {dueInfo && (
-                <span className={`text-xs ${dueInfo.urgent ? 'text-[#e17055]' : 'text-gray-500'}`}>
+                <span className={`text-xs ${dueInfo.urgent ? 'text-huginn-danger' : 'text-gray-500'}`}>
                   {dueInfo.text}
                 </span>
               )}

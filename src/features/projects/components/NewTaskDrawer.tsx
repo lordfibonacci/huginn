@@ -31,7 +31,7 @@ export function NewTaskDrawer({ onSave, onDone }: NewTaskDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -45,14 +45,14 @@ export function NewTaskDrawer({ onSave, onDone }: NewTaskDrawerProps) {
           placeholder="Task title"
           autoFocus
           onKeyDown={(e) => { if (e.key === 'Enter') handleSave() }}
-          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4"
         />
         <div className="flex gap-2">
           <button onClick={dismiss} className="flex-1 text-sm text-gray-400 py-2">Cancel</button>
           <button
             onClick={handleSave}
             disabled={!title.trim() || saving}
-            className="flex-1 bg-[#6c5ce7] text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
+            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
           >
             {saving ? '...' : 'Save'}
           </button>

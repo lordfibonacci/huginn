@@ -33,7 +33,7 @@ function DroppableColumn({ status, label, children }: { status: string; label: s
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[200px] flex flex-col rounded-lg transition-colors ${isOver ? 'bg-[#2a2a4a]/30' : ''}`}
+      className={`flex-1 min-w-[200px] flex flex-col rounded-lg transition-colors ${isOver ? 'bg-huginn-card/30' : ''}`}
       data-status={status}
     >
       <div className="flex items-center gap-2 mb-2 px-1">

@@ -16,8 +16,8 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
 
 const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
   { value: 'low', label: 'Low', color: 'bg-gray-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-[#fdcb6e]' },
-  { value: 'high', label: 'High', color: 'bg-[#e17055]' },
+  { value: 'medium', label: 'Medium', color: 'bg-huginn-warning' },
+  { value: 'high', label: 'High', color: 'bg-huginn-danger' },
 ]
 
 export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetailDrawerProps) {
@@ -70,7 +70,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto ${
+        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -80,7 +80,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4"
           placeholder="Task title"
         />
         <textarea
@@ -88,7 +88,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Notes (optional)"
           rows={3}
-          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 resize-none mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none mb-4"
         />
         <p className="text-xs text-gray-500 mb-2">Status</p>
         <div className="flex gap-2 mb-4">
@@ -98,8 +98,8 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
               onClick={() => setStatus(opt.value)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 status === opt.value
-                  ? 'bg-[#6c5ce7] text-white'
-                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+                  ? 'bg-huginn-accent text-white'
+                  : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
               }`}
             >
               {opt.label}
@@ -115,7 +115,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 priority === opt.value
                   ? `${opt.color} text-white`
-                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+                  : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
               }`}
             >
               {opt.label}
@@ -128,7 +128,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="flex-1 bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] [color-scheme:dark]"
+            className="flex-1 bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent [color-scheme:dark]"
           />
           {dueDate && (
             <button onClick={() => setDueDate('')} className="text-gray-400 hover:text-white text-sm px-2">✕</button>
@@ -147,7 +147,7 @@ export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetai
           <button
             onClick={handleSave}
             disabled={!title.trim() || saving}
-            className="bg-[#6c5ce7] text-white text-sm font-semibold rounded-xl py-2 px-6 disabled:opacity-50"
+            className="bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 px-6 disabled:opacity-50"
           >
             {saving ? '...' : 'Save'}
           </button>

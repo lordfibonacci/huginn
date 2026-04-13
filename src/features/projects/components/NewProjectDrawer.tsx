@@ -47,7 +47,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-[#2a2a4a] rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
+        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -63,7 +63,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Project name"
           autoFocus
-          className="w-full bg-[#1a1a2e] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6c5ce7] placeholder-gray-500 mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-4"
         />
 
         {/* Color swatches */}
@@ -73,7 +73,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
               key={c}
               onClick={() => setColor(c)}
               className={`w-8 h-8 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-[#2a2a4a]' : ''
+                color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-huginn-card' : ''
               }`}
               style={{ backgroundColor: c }}
             />
@@ -88,8 +88,8 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
               onClick={() => setStatus(opt.value)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 status === opt.value
-                  ? 'bg-[#6c5ce7] text-white'
-                  : 'bg-[#1a1a2e] text-gray-300 hover:bg-[#3a3a5a]'
+                  ? 'bg-huginn-accent text-white'
+                  : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
               }`}
             >
               {opt.label}
@@ -105,7 +105,7 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
           <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="flex-1 bg-[#6c5ce7] text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
+            className="flex-1 bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 disabled:opacity-50"
           >
             {saving ? '...' : 'Save'}
           </button>
