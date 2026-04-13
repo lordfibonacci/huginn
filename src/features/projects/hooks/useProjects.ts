@@ -25,8 +25,9 @@ export function useProjects() {
   }, [fetchProjects])
 
   useEffect(() => {
+    const channelName = `huginn_projects_${crypto.randomUUID()}`
     const channel = supabase
-      .channel('huginn_projects_changes')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_projects' }, () => {
         fetchProjects()
       })

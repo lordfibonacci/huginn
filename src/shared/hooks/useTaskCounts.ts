@@ -29,8 +29,9 @@ export function useTaskCounts() {
   }, [fetchCounts])
 
   useEffect(() => {
+    const channelName = `huginn_tasks_counts_${crypto.randomUUID()}`
     const channel = supabase
-      .channel('huginn_tasks_counts')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks' }, () => {
         fetchCounts()
       })

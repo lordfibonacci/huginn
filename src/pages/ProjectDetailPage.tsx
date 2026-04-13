@@ -51,8 +51,9 @@ export function ProjectDetailPage() {
   // Realtime: refetch project thoughts on any change
   useEffect(() => {
     if (!id) return
+    const channelName = `huginn_thoughts_project_${id}_${crypto.randomUUID()}`
     const channel = supabase
-      .channel(`huginn_thoughts_project_${id}`)
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_thoughts', filter: `project_id=eq.${id}` }, () => {
         fetchProjectThoughts()
       })
