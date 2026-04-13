@@ -37,8 +37,8 @@ export function ProjectList({ projects, loading, onProjectTap }: ProjectListProp
   })).filter((g) => g.items.length > 0)
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-2 md:px-6">
-      <div className="max-w-2xl">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="max-w-3xl">
       {grouped.map((group) => (
         <div key={group.label} className="mb-4">
           <h2 className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-2 px-1">

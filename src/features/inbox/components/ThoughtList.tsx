@@ -12,7 +12,7 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-huginn-text-muted text-sm">Loading...</p>
       </div>
     )
   }
@@ -20,7 +20,7 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
   if (thoughts.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500 text-sm">
+        <p className="text-huginn-text-muted text-sm">
           No thoughts yet. Type one below.
         </p>
       </div>
@@ -28,20 +28,20 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-2 md:px-6">
-      <div className="max-w-2xl">
-      {thoughts.map((thought) => {
-        const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
-        return (
-          <ThoughtCard
-            key={thought.id}
-            thought={thought}
-            onClick={() => onThoughtTap(thought)}
-            projectName={project?.name}
-            projectColor={project?.color}
-          />
-        )
-      })}
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="max-w-3xl">
+        {thoughts.map((thought) => {
+          const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
+          return (
+            <ThoughtCard
+              key={thought.id}
+              thought={thought}
+              onClick={() => onThoughtTap(thought)}
+              projectName={project?.name}
+              projectColor={project?.color}
+            />
+          )
+        })}
       </div>
     </div>
   )

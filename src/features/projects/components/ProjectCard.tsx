@@ -8,7 +8,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
   return (
     <div
-      className="flex items-center gap-3 bg-huginn-card rounded-xl px-4 py-3 mb-2.5 cursor-pointer active:bg-huginn-hover hover:bg-huginn-hover border-l-[3px] border-transparent hover:border-huginn-accent transition-all"
+      className="flex items-center gap-3 bg-huginn-card rounded-lg px-4 py-3 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors"
       onClick={onClick}
     >
       <div

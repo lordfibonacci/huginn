@@ -24,7 +24,7 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
 
   return (
     <div
-      className="bg-huginn-card rounded-xl p-4 mb-2.5 cursor-pointer active:bg-huginn-hover hover:bg-huginn-hover border-l-[3px] border-transparent hover:border-huginn-accent transition-all"
+      className="bg-huginn-card rounded-lg p-4 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors"
       onClick={onClick}
     >
       <div className="flex items-start gap-2">
@@ -37,15 +37,15 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
           {thought.body}
         </p>
       </div>
-      <div className="flex items-center gap-2.5 mt-2.5 text-xs text-huginn-text-secondary flex-wrap">
+      <div className="flex items-center gap-2 mt-2 text-xs text-huginn-text-secondary flex-wrap">
         <span>{timeAgo(thought.created_at)}</span>
         {thought.type && (
-          <span className={`text-[11px] font-bold uppercase tracking-wide rounded-md px-2.5 py-0.5 ${TYPE_BADGE[thought.type]}`}>
+          <span className={`text-[11px] font-bold uppercase tracking-wide rounded px-2 py-0.5 ${TYPE_BADGE[thought.type]}`}>
             {thought.type}
           </span>
         )}
         {thought.priority && PRIORITY_COLORS[thought.priority] && (
-          <span className={`w-2.5 h-2.5 rounded-sm ${PRIORITY_COLORS[thought.priority]}`} title={thought.priority} />
+          <span className={`w-2 h-2 rounded-sm ${PRIORITY_COLORS[thought.priority]}`} title={thought.priority} />
         )}
         {dueInfo && (
           <span className={`font-medium ${dueInfo.urgent ? 'text-huginn-danger' : 'text-huginn-text-secondary'}`}>
@@ -53,9 +53,9 @@ export function ThoughtCard({ thought, onClick, projectName, projectColor }: Tho
           </span>
         )}
         {projectName && (
-          <span className="flex items-center gap-1 bg-huginn-surface/80 rounded-full px-2 py-0.5">
+          <span className="flex items-center gap-1 text-huginn-text-muted">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: projectColor }} />
-            <span className="text-huginn-text-secondary truncate max-w-[120px]">{projectName}</span>
+            <span className="truncate max-w-[120px]">{projectName}</span>
           </span>
         )}
       </div>
