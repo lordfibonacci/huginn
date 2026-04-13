@@ -23,14 +23,14 @@ export function ProjectsPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
         <div>
-          <h1 className="text-xl font-bold">Projects</h1>
-          <p className="text-xs text-gray-500">
+          <h1 className="text-lg font-extrabold tracking-tight">Projects</h1>
+          <p className="text-xs text-huginn-text-secondary">
             {count} project{count !== 1 ? 's' : ''}
           </p>
         </div>
         <button
           onClick={signOut}
-          className="text-xs text-gray-500 hover:text-white"
+          className="text-xs text-gray-500 hover:text-white md:hidden"
         >
           Sign out
         </button>
