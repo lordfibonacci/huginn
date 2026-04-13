@@ -17,14 +17,19 @@ interface ThoughtCardProps {
   onClick?: () => void
   projectName?: string
   projectColor?: string
+  selected?: boolean
 }
 
-export function ThoughtCard({ thought, onClick, projectName, projectColor }: ThoughtCardProps) {
+export function ThoughtCard({ thought, onClick, projectName, projectColor, selected }: ThoughtCardProps) {
   const dueInfo = thought.due_date ? formatDueDate(thought.due_date) : null
 
   return (
     <div
-      className="bg-huginn-card rounded-lg p-4 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors"
+      className={`rounded-lg p-4 mb-2 cursor-pointer transition-colors ${
+        selected
+          ? 'bg-huginn-accent/10 ring-1 ring-huginn-accent'
+          : 'bg-huginn-card hover:bg-huginn-hover'
+      }`}
       onClick={onClick}
     >
       <div className="flex items-start gap-2">

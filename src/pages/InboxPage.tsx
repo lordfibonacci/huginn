@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../shared/hooks/useAuth'
-import { ThoughtInput, ThoughtList, ClassifyDrawer, ThoughtDetailDrawer, FilterBar, useThoughts } from '../features/inbox'
+import { ThoughtInput, ThoughtList, ClassifyDrawer, ThoughtDetailDrawer, ThoughtDetailPanel, FilterBar, useThoughts } from '../features/inbox'
 import { useProjects } from '../features/projects'
 import type { Thought } from '../shared/lib/types'
 
@@ -45,44 +45,83 @@ export function InboxPage() {
     return thought
   }
 
+  // Keep editingThought in sync with latest data
+  const currentEditingThought = editingThought
+    ? thoughts.find((t) => t.id === editingThought.id) ?? editingThought
+    : null
+
   return (
-    <>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border md:px-6">
-        <div>
-          <h1 className="text-lg font-extrabold tracking-tight">Inbox</h1>
-          <p className="text-xs text-huginn-text-secondary">
-            {count} thought{count !== 1 ? 's' : ''}
-          </p>
+    <div className="flex flex-1 min-h-0">
+      {/* Left: list + input */}
+      <div className={`flex flex-col min-h-0 ${currentEditingThought ? 'hidden md:flex md:w-1/2 lg:w-2/5 md:border-r md:border-huginn-border' : 'flex-1'}`}>
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border md:px-5">
+          <div>
+            <h1 className="text-lg font-extrabold tracking-tight">Inbox</h1>
+            <p className="text-xs text-huginn-text-secondary">
+              {count} thought{count !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            onClick={signOut}
+            className="text-xs text-gray-500 hover:text-white md:hidden"
+          >
+            Sign out
+          </button>
+        </header>
+
+        {/* Filter bar */}
+        <FilterBar
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+
+        {/* Thought list */}
+        <ThoughtList
+          thoughts={filteredThoughts}
+          loading={loading}
+          onThoughtTap={setEditingThought}
+          projectsById={projectsById}
+          selectedId={currentEditingThought?.id}
+        />
+
+        {/* Input bar */}
+        <ThoughtInput onSubmit={handleSubmit} />
+      </div>
+
+      {/* Right: detail panel (desktop only) */}
+      {currentEditingThought && (
+        <div className="hidden md:flex flex-1 bg-huginn-base">
+          <div className="flex-1">
+            <ThoughtDetailPanel
+              thought={currentEditingThought}
+              onUpdate={updateThought}
+              onDelete={deleteThought}
+              onArchive={archiveThought}
+              onConvertToTask={convertToTask}
+              onClose={() => setEditingThought(null)}
+            />
+          </div>
         </div>
-        <button
-          onClick={signOut}
-          className="text-xs text-gray-500 hover:text-white md:hidden"
-        >
-          Sign out
-        </button>
-      </header>
+      )}
 
-      {/* Filter bar */}
-      <FilterBar
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
+      {/* Mobile: drawer */}
+      {currentEditingThought && (
+        <div className="md:hidden">
+          <ThoughtDetailDrawer
+            thought={currentEditingThought}
+            onUpdate={updateThought}
+            onDelete={deleteThought}
+            onArchive={archiveThought}
+            onConvertToTask={convertToTask}
+            onDone={() => setEditingThought(null)}
+          />
+        </div>
+      )}
 
-      {/* Thought list */}
-      <ThoughtList
-        thoughts={filteredThoughts}
-        loading={loading}
-        onThoughtTap={setEditingThought}
-        projectsById={projectsById}
-      />
-
-      {/* Input bar */}
-      <ThoughtInput onSubmit={handleSubmit} />
-
-      {/* Classify drawer (post-save) */}
+      {/* Classify drawer (always mobile-style, appears after creating) */}
       {classifyThoughtId && (
         <ClassifyDrawer
           thoughtId={classifyThoughtId}
@@ -90,18 +129,6 @@ export function InboxPage() {
           onDone={() => setClassifyThoughtId(null)}
         />
       )}
-
-      {/* Detail drawer (tap to edit) */}
-      {editingThought && (
-        <ThoughtDetailDrawer
-          thought={editingThought}
-          onUpdate={updateThought}
-          onDelete={deleteThought}
-          onArchive={archiveThought}
-          onConvertToTask={convertToTask}
-          onDone={() => setEditingThought(null)}
-        />
-      )}
-    </>
+    </div>
   )
 }

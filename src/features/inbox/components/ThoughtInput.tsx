@@ -73,8 +73,8 @@ export function ThoughtInput({ onSubmit }: ThoughtInputProps) {
   }
 
   return (
-    <div className="border-t border-huginn-border bg-huginn-base p-4 md:p-6">
-      <div className="flex items-end gap-3 max-w-3xl">
+    <div className="border-t border-huginn-border bg-huginn-base p-3 md:p-4">
+      <div className="flex items-end gap-3">
         <textarea
           ref={textareaRef}
           value={body}

@@ -6,9 +6,10 @@ interface ThoughtListProps {
   loading: boolean
   onThoughtTap: (thought: Thought) => void
   projectsById?: Record<string, Project>
+  selectedId?: string
 }
 
-export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: ThoughtListProps) {
+export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById, selectedId }: ThoughtListProps) {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -28,21 +29,20 @@ export function ThoughtList({ thoughts, loading, onThoughtTap, projectsById }: T
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6">
-      <div className="max-w-3xl">
-        {thoughts.map((thought) => {
-          const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
-          return (
-            <ThoughtCard
-              key={thought.id}
-              thought={thought}
-              onClick={() => onThoughtTap(thought)}
-              projectName={project?.name}
-              projectColor={project?.color}
-            />
-          )
-        })}
-      </div>
+    <div className="flex-1 overflow-y-auto p-3 md:p-4">
+      {thoughts.map((thought) => {
+        const project = thought.project_id && projectsById ? projectsById[thought.project_id] : undefined
+        return (
+          <ThoughtCard
+            key={thought.id}
+            thought={thought}
+            onClick={() => onThoughtTap(thought)}
+            projectName={project?.name}
+            projectColor={project?.color}
+            selected={thought.id === selectedId}
+          />
+        )
+      })}
     </div>
   )
 }
