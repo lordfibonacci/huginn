@@ -44,6 +44,31 @@ export interface Task {
   created_at: string
 }
 
+export interface ChecklistItem {
+  id: string
+  task_id: string
+  user_id: string
+  text: string
+  checked: boolean
+  position: number
+  created_at: string
+}
+
+export interface Label {
+  id: string
+  project_id: string
+  user_id: string
+  name: string
+  color: string
+  created_at: string
+}
+
+export interface TaskLabel {
+  id: string
+  task_id: string
+  label_id: string
+}
+
 export interface Note {
   id: string
   user_id: string
