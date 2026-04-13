@@ -68,26 +68,26 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={dismiss}>
       <div
-        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto ${
+        className={`w-full bg-huginn-card rounded-t-2xl p-4 pb-[env(safe-area-inset-bottom,16px)] transition-transform duration-200 max-h-[85vh] overflow-y-auto shadow-[0_-4px_24px_rgba(0,0,0,0.3)] ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-gray-600 rounded-full mx-auto mb-4" />
-        <p className="text-sm text-gray-400 mb-3">Project settings</p>
+        <p className="text-sm text-huginn-text-muted mb-3">Project settings</p>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Project name"
-          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-3"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 mb-3"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description (optional)"
           rows={3}
-          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none mb-4"
+          className="w-full bg-huginn-surface text-white rounded-xl px-4 py-3 text-sm outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 resize-none mb-4"
         />
         <div className="flex gap-3 mb-4">
           {PRESET_COLORS.map((c) => (
@@ -106,7 +106,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
             <button
               key={opt.value}
               onClick={() => setStatus(opt.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
                 status === opt.value
                   ? 'bg-huginn-accent text-white'
                   : 'bg-huginn-surface text-gray-300 hover:bg-huginn-hover'
@@ -120,7 +120,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
           <button
             onClick={handleDelete}
             className={`text-sm py-2 px-3 rounded-xl transition-colors ${
-              confirmDelete ? 'text-red-400 bg-red-400/10 font-semibold' : 'text-red-400'
+              confirmDelete ? 'text-red-400 bg-huginn-danger/10 font-semibold' : 'text-red-400 hover:bg-huginn-danger/10'
             }`}
           >
             {confirmDelete ? 'Are you sure?' : 'Delete project'}
@@ -129,7 +129,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
           <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 px-6 disabled:opacity-50"
+            className="bg-huginn-accent text-white text-sm font-semibold rounded-xl py-2 px-6 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
           >
             {saving ? '...' : 'Save'}
           </button>

@@ -44,7 +44,7 @@ export function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
+          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
         />
         <input
           type="password"
@@ -53,12 +53,12 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
-          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
+          className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-huginn-accent text-white font-semibold rounded-xl py-3 disabled:opacity-50"
+          className="w-full bg-huginn-accent text-white font-semibold rounded-xl py-3 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
         >
           {loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}
         </button>
