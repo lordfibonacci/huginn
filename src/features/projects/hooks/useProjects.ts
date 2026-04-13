@@ -24,6 +24,19 @@ export function useProjects() {
     fetchProjects()
   }, [fetchProjects])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('huginn_projects_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_projects' }, () => {
+        fetchProjects()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchProjects])
+
   async function addProject(
     name: string,
     color: string,

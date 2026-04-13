@@ -28,5 +28,18 @@ export function useTaskCounts() {
     fetchCounts()
   }, [fetchCounts])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('huginn_tasks_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks' }, () => {
+        fetchCounts()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchCounts])
+
   return { counts, loading }
 }

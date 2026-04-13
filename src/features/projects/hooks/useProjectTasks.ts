@@ -25,6 +25,19 @@ export function useProjectTasks(projectId: string) {
     fetchTasks()
   }, [fetchTasks])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel(`huginn_tasks_${projectId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks', filter: `project_id=eq.${projectId}` }, () => {
+        fetchTasks()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [projectId, fetchTasks])
+
   async function addTask(title: string): Promise<Task | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
