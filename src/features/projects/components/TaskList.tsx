@@ -119,8 +119,14 @@ function DraggableCard({ task, onTaskTap, onStatusChange, selected }: {
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} className={isDragging ? 'opacity-30' : ''}>
-      <TaskCard task={task} onClick={() => onTaskTap(task)} onStatusChange={onStatusChange} selected={selected} />
+    <div ref={setNodeRef} className={isDragging ? 'opacity-30' : ''}>
+      <TaskCard
+        task={task}
+        onClick={() => onTaskTap(task)}
+        onStatusChange={onStatusChange}
+        selected={selected}
+        dragHandleProps={{ ...listeners, ...attributes }}
+      />
     </div>
   )
 }
