@@ -48,16 +48,17 @@ export function TaskCard({ task, onClick, onStatusChange, selected, dragHandlePr
       {task.priority === 'high' && <div className="h-0.5 bg-huginn-danger rounded-t-lg" />}
       {task.priority === 'medium' && <div className="h-0.5 bg-huginn-warning rounded-t-lg" />}
 
-      {/* Label strips */}
+      {/* Labels */}
       {labels && labels.length > 0 && (
-        <div className="flex gap-1 px-3 pt-2">
+        <div className="flex gap-1 flex-wrap px-3 pt-2">
           {labels.map((label) => (
-            <div
+            <span
               key={label.id}
-              className="h-2 rounded-full flex-1 max-w-[40px]"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded text-white"
               style={{ backgroundColor: label.color }}
-              title={label.name}
-            />
+            >
+              {label.name}
+            </span>
           ))}
         </div>
       )}

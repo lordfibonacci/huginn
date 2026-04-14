@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { DndContext, DragOverlay, useDraggable, closestCenter } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
-import type { Task, List } from '../../../shared/lib/types'
+import type { Task, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
 import { ListColumn } from './ListColumn'
 
@@ -16,9 +16,10 @@ interface BoardViewProps {
   onAddList: (name: string) => void
   selectedTaskId?: string
   loading?: boolean
+  taskLabelsMap?: Record<string, Label[]>
 }
 
-function DraggableCard({ task, onTaskTap, selectedTaskId }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string }) {
+function DraggableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
   return (
     <div ref={setNodeRef} className={isDragging ? 'opacity-30' : ''}>
@@ -27,12 +28,13 @@ function DraggableCard({ task, onTaskTap, selectedTaskId }: { task: Task; onTask
         onClick={() => onTaskTap(task)}
         selected={task.id === selectedTaskId}
         dragHandleProps={{ ...listeners, ...attributes }}
+        labels={labels}
       />
     </div>
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap }: BoardViewProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -99,7 +101,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
             onArchiveList={onArchiveList}
             selectedTaskId={selectedTaskId}
             renderDraggableCard={(task) => (
-              <DraggableCard key={task.id} task={task} onTaskTap={onTaskTap} selectedTaskId={selectedTaskId} />
+              <DraggableCard key={task.id} task={task} onTaskTap={onTaskTap} selectedTaskId={selectedTaskId} labels={taskLabelsMap?.[task.id]} />
             )}
           />
         ))}

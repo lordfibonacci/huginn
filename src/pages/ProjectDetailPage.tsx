@@ -14,7 +14,7 @@ import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
 import { getBackground } from '../shared/lib/boardBackgrounds'
-import type { Project, Task } from '../shared/lib/types'
+import type { Project, Task, Label } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -28,6 +28,28 @@ export function ProjectDetailPage() {
   const { lists, loading: loadingLists, addList, updateList, archiveList } = useLists(id ?? '')
   const { labels } = useLabels(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
+
+  // Fetch all task labels for this project's tasks in one query
+  const [taskLabelsMap, setTaskLabelsMap] = useState<Record<string, Label[]>>({})
+  useEffect(() => {
+    if (!tasks.length || !labels.length) return
+    const taskIds = tasks.map(t => t.id)
+    supabase
+      .from('huginn_task_labels')
+      .select('task_id, label_id')
+      .in('task_id', taskIds)
+      .then(({ data }) => {
+        if (!data) return
+        const labelsById: Record<string, Label> = {}
+        for (const l of labels) labelsById[l.id] = l
+        const map: Record<string, Label[]> = {}
+        for (const row of data as { task_id: string; label_id: string }[]) {
+          if (!map[row.task_id]) map[row.task_id] = []
+          if (labelsById[row.label_id]) map[row.task_id].push(labelsById[row.label_id])
+        }
+        setTaskLabelsMap(map)
+      })
+  }, [tasks, labels])
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
   const filteredTasks = filtersActive ? applyBoardFilters(tasks, filters) as Task[] : tasks
@@ -161,6 +183,7 @@ export function ProjectDetailPage() {
           onArchiveList={archiveList}
           onAddList={handleAddList}
           selectedTaskId={currentTask?.id}
+          taskLabelsMap={taskLabelsMap}
         />
       ) : (
         <CalendarView
