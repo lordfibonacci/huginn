@@ -130,7 +130,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
 
       {/* Modal */}
       <div
-        className={`relative bg-huginn-surface rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto transition-transform duration-200 ${
+        className={`relative bg-huginn-card rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto transition-transform duration-200 ${
           visible ? 'scale-100' : 'scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
