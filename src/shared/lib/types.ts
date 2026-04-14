@@ -28,6 +28,7 @@ export interface Project {
   color: string
   status: ProjectStatus
   pinned: boolean
+  background: string
   created_at: string
 }
 

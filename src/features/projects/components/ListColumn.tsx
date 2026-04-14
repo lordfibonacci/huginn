@@ -89,8 +89,8 @@ export function ListColumn({ list, tasks, onTaskTap, onAddCard, onRenameList, on
   return (
     <div
       ref={setNodeRef}
-      className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-colors ${
-        isOver ? 'bg-huginn-accent/5 ring-1 ring-huginn-accent/20' : 'bg-huginn-base/80'
+      className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-colors backdrop-blur-sm ${
+        isOver ? 'bg-black/30 ring-1 ring-huginn-accent/30' : 'bg-black/20'
       }`}
       data-list-id={list.id}
     >

@@ -54,6 +54,7 @@ export function useProjects() {
       color,
       status,
       pinned: false,
+      background: 'default',
       created_at: new Date().toISOString(),
     }
 
@@ -79,7 +80,7 @@ export function useProjects() {
 
   async function updateProject(
     projectId: string,
-    updates: { name?: string; description?: string | null; color?: string; status?: ProjectStatus }
+    updates: { name?: string; description?: string | null; color?: string; status?: ProjectStatus; background?: string }
   ) {
     const prev = projects
     setProjects((p) => p.map((pr) => (pr.id === projectId ? { ...pr, ...updates } : pr)))

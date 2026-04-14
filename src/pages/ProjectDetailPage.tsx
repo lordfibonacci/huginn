@@ -13,6 +13,7 @@ import {
 import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
+import { getBackground } from '../shared/lib/boardBackgrounds'
 import type { Project, Task } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
@@ -146,7 +147,8 @@ export function ProjectDetailPage() {
         </button>
       </header>
 
-      {/* Board or Calendar */}
+      {/* Board or Calendar — with board background */}
+      <div className="flex-1 flex flex-col min-h-0" style={{ background: getBackground(project.background ?? 'default').style }}>
       {view === 'board' ? (
         <BoardView
           lists={lists}
@@ -166,6 +168,7 @@ export function ProjectDetailPage() {
           onTaskTap={setSelectedTask}
         />
       )}
+      </div>
 
       {/* Card popup */}
       {currentTask && (
