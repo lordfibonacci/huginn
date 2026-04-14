@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { DndContext, DragOverlay, useDraggable, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import type { Task, List, Label } from '../../../shared/lib/types'
@@ -56,6 +56,33 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
     setActiveTask(task ?? null)
   }
 
+  // Click-and-drag to scroll the board horizontally
+  const boardRef = useRef<HTMLDivElement>(null)
+  const isDraggingBoard = useRef(false)
+  const dragStartX = useRef(0)
+  const scrollStartX = useRef(0)
+
+  const handleBoardMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only trigger on the board background itself, not on cards or list columns
+    if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest('[data-board-bg]')) return
+    isDraggingBoard.current = true
+    dragStartX.current = e.clientX
+    scrollStartX.current = boardRef.current?.scrollLeft ?? 0
+    document.body.style.cursor = 'grabbing'
+    e.preventDefault()
+  }, [])
+
+  const handleBoardMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDraggingBoard.current || !boardRef.current) return
+    const dx = e.clientX - dragStartX.current
+    boardRef.current.scrollLeft = scrollStartX.current - dx
+  }, [])
+
+  const handleBoardMouseUp = useCallback(() => {
+    isDraggingBoard.current = false
+    document.body.style.cursor = ''
+  }, [])
+
   function handleDragEnd(event: DragEndEvent) {
     setActiveTask(null)
     const { active, over } = event
@@ -101,7 +128,15 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex-1 flex gap-4 p-4 overflow-x-auto items-start">
+      <div
+        ref={boardRef}
+        data-board-bg
+        className="flex-1 flex gap-4 p-4 overflow-x-auto items-start cursor-grab active:cursor-grabbing"
+        onMouseDown={handleBoardMouseDown}
+        onMouseMove={handleBoardMouseMove}
+        onMouseUp={handleBoardMouseUp}
+        onMouseLeave={handleBoardMouseUp}
+      >
         {lists.map((list) => (
           <ListColumn
             key={list.id}
