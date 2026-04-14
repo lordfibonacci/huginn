@@ -355,10 +355,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             )}
             {showDatePicker && (
               <DatePicker
+                startDate={task.start_date ?? ''}
                 dueDate={dueDate}
-                onSave={(date) => {
-                  setDueDate(date ?? '')
-                  onUpdate(task.id, { due_date: date })
+                recurring={task.recurring ?? 'never'}
+                onSave={(dates) => {
+                  if (dates.due_date !== undefined) setDueDate(dates.due_date ?? '')
+                  onUpdate(task.id, dates)
                 }}
                 onClose={() => setShowDatePicker(false)}
               />

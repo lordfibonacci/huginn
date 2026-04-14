@@ -43,7 +43,9 @@ export interface Task {
   priority: ThoughtPriority | null
   position: number
   from_thought_id: string | null
+  start_date: string | null
   due_date: string | null
+  recurring: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
   created_at: string
 }
 
