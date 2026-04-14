@@ -11,6 +11,7 @@ export function useProjectTasks(projectId: string) {
       .from('huginn_tasks')
       .select('*')
       .eq('project_id', projectId)
+      .order('position')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -21,9 +22,7 @@ export function useProjectTasks(projectId: string) {
     setLoading(false)
   }, [projectId])
 
-  useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
+  useEffect(() => { fetchTasks() }, [fetchTasks])
 
   useEffect(() => {
     const channelName = `huginn_tasks_${projectId}_${crypto.randomUUID()}`
@@ -34,33 +33,42 @@ export function useProjectTasks(projectId: string) {
       })
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   }, [projectId, fetchTasks])
 
-  async function addTask(title: string): Promise<Task | null> {
+  async function addTask(title: string, listId?: string): Promise<Task | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
+
+    // Get max position in the target list
+    const listTasks = listId ? tasks.filter(t => t.list_id === listId) : tasks
+    const maxPos = listTasks.length > 0 ? Math.max(...listTasks.map(t => t.position)) + 1 : 0
 
     const optimistic: Task = {
       id: crypto.randomUUID(),
       user_id: user.id,
       project_id: projectId,
+      list_id: listId ?? null,
       title,
       notes: null,
       status: 'todo',
       priority: null,
+      position: maxPos,
       from_thought_id: null,
       due_date: null,
       created_at: new Date().toISOString(),
     }
 
-    setTasks((prev) => [optimistic, ...prev])
+    setTasks((prev) => [...prev, optimistic])
+
+    const insertData: Record<string, unknown> = {
+      title, status: 'todo', project_id: projectId, user_id: user.id, position: maxPos
+    }
+    if (listId) insertData.list_id = listId
 
     const { data, error } = await supabase
       .from('huginn_tasks')
-      .insert({ title, status: 'todo', project_id: projectId, user_id: user.id })
+      .insert(insertData)
       .select()
       .single()
 
@@ -76,7 +84,7 @@ export function useProjectTasks(projectId: string) {
 
   async function updateTask(
     taskId: string,
-    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; due_date?: string | null }
+    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; due_date?: string | null; list_id?: string }
   ) {
     const prev = tasks
     setTasks((t) => t.map((tk) => (tk.id === taskId ? { ...tk, ...updates } : tk)))
