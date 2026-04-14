@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-huginn-base: #12122a;
-  --color-huginn-surface: #161630;
+  --color-huginn-base: #1d2125;
+  --color-huginn-surface: #282e33;
   --color-huginn-card: #22272b;
-  --color-huginn-hover: #2c3338;
-  --color-huginn-border: #374048;
+  --color-huginn-hover: #333c43;
+  --color-huginn-border: #3d474f;
   --color-huginn-accent: #6c5ce7;
   --color-huginn-accent-hover: #5b4bd5;
   --color-huginn-accent-soft: rgba(108, 92, 231, 0.15);
@@ -20,8 +20,8 @@
 /* Dark scrollbars */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #374048; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #454f58; }
+::-webkit-scrollbar-thumb { background: #3d474f; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4a545d; }
 
 /* Selection */
 ::selection { background: rgba(108, 92, 231, 0.3); }

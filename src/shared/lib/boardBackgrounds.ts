@@ -9,7 +9,7 @@ export const BOARD_BACKGROUNDS: BoardBackground[] = [
   {
     id: 'default',
     name: 'Default',
-    style: 'linear-gradient(135deg, #161630 0%, #1a1a3e 100%)',
+    style: 'linear-gradient(135deg, #1d2125 0%, #252b30 100%)',
   },
   {
     id: 'ocean',
