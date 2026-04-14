@@ -35,12 +35,50 @@ export interface Task {
   id: string
   user_id: string
   project_id: string
+  list_id: string | null
   title: string
   notes: string | null
   status: TaskStatus
   priority: ThoughtPriority | null
+  position: number
   from_thought_id: string | null
   due_date: string | null
+  created_at: string
+}
+
+export interface List {
+  id: string
+  project_id: string
+  user_id: string
+  name: string
+  position: number
+  archived: boolean
+  created_at: string
+}
+
+export interface Checklist {
+  id: string
+  task_id: string
+  user_id: string
+  name: string
+  position: number
+  created_at: string
+}
+
+export interface Comment {
+  id: string
+  task_id: string
+  user_id: string
+  body: string
+  created_at: string
+}
+
+export interface Activity {
+  id: string
+  task_id: string
+  user_id: string
+  action: string
+  details: Record<string, unknown> | null
   created_at: string
 }
 
