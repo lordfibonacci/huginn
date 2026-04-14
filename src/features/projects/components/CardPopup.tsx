@@ -156,12 +156,19 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             )}
 
             {/* Title */}
-            <input
+            <textarea
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value)
+                // Auto-grow
+                e.target.style.height = 'auto'
+                e.target.style.height = e.target.scrollHeight + 'px'
+              }}
               onBlur={handleTitleBlur}
-              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-              className="w-full bg-transparent text-2xl font-bold text-huginn-text-primary outline-none placeholder-huginn-text-muted leading-tight"
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.target as HTMLTextAreaElement).blur() } }}
+              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
+              rows={1}
+              className="w-full bg-transparent text-2xl font-bold text-huginn-text-primary outline-none placeholder-huginn-text-muted leading-snug resize-none overflow-hidden"
               placeholder="Card title"
             />
 
