@@ -149,7 +149,25 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <>
+    <div className="flex flex-1 min-h-0">
+      {/* Inbox panel — pushes board to the right */}
+      {showInbox && (
+        <InboxPanel
+          cards={inboxCards}
+          loading={loadingInbox}
+          onAddCard={addInboxCard}
+          onDeleteCard={deleteInboxCard}
+          onCardTap={(card) => {
+            if (lists.length > 0) {
+              moveToProject(card.id, id!, lists[0].id)
+            }
+          }}
+          onClose={() => setShowInbox(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-h-0 min-w-0">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-2.5 border-b border-huginn-border md:px-5 shrink-0">
         <Link to="/projects" className="text-huginn-text-muted hover:text-white transition-colors">
@@ -217,6 +235,17 @@ export function ProjectDetailPage() {
       )}
       </div>
 
+      {/* Bottom toolbar */}
+      <ToolBar
+        inboxOpen={showInbox}
+        inboxCount={inboxCount}
+        onToggleInbox={() => setShowInbox(!showInbox)}
+        onSwitchProjects={() => navigate('/projects')}
+        projectName={project.name}
+      />
+
+      </div>{/* end main content */}
+
       {/* Card popup */}
       {currentTask && (
         <CardPopup
@@ -229,32 +258,6 @@ export function ProjectDetailPage() {
         />
       )}
 
-      {/* Bottom toolbar */}
-      <ToolBar
-        inboxOpen={showInbox}
-        inboxCount={inboxCount}
-        onToggleInbox={() => setShowInbox(!showInbox)}
-        onSwitchProjects={() => navigate('/projects')}
-        projectName={project.name}
-      />
-
-      {/* Inbox panel */}
-      {showInbox && (
-        <InboxPanel
-          cards={inboxCards}
-          loading={loadingInbox}
-          onAddCard={addInboxCard}
-          onDeleteCard={deleteInboxCard}
-          onCardTap={(card) => {
-            // Move to first list of this project
-            if (lists.length > 0) {
-              moveToProject(card.id, id!, lists[0].id)
-            }
-          }}
-          onClose={() => setShowInbox(false)}
-        />
-      )}
-
       {/* Settings drawer */}
       {showSettings && (
         <ProjectSettingsDrawer
@@ -264,6 +267,6 @@ export function ProjectDetailPage() {
           onDone={() => setShowSettings(false)}
         />
       )}
-    </>
+    </div>
   )
 }
