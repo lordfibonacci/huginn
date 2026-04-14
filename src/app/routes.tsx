@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../shared/hooks/useAuth'
 import { Layout } from '../shared/components/Layout'
 import { LoginPage } from '../pages/LoginPage'
-import { InboxPage } from '../pages/InboxPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailPage } from '../pages/ProjectDetailPage'
 
@@ -32,7 +31,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/projects" replace />
   return <>{children}</>
 }
 
@@ -55,7 +54,7 @@ export function AppRouter() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<InboxPage />} />
+          <Route index element={<Navigate to="/projects" replace />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
         </Route>

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../../features/projects'
-import { useThoughts } from '../../features/inbox'
 import { useTaskCounts } from '../hooks/useTaskCounts'
 import { NewProjectDrawer } from '../../features/projects/components/NewProjectDrawer'
 import { GlobalSearch } from './GlobalSearch'
@@ -19,7 +18,6 @@ export function Sidebar() {
   const { pathname } = useLocation()
   const { signOut } = useAuth()
   const { projects, addProject } = useProjects()
-  const { count: inboxCount } = useThoughts()
   const { counts: taskCounts } = useTaskCounts()
   const [showNewProject, setShowNewProject] = useState(false)
 
@@ -30,8 +28,6 @@ export function Sidebar() {
     label,
     items: unpinned.filter((p) => p.status === key),
   })).filter((g) => g.items.length > 0)
-
-  const isInboxActive = pathname === '/'
 
   function isProjectActive(project: Project) {
     return pathname === `/projects/${project.id}`
@@ -72,30 +68,6 @@ export function Sidebar() {
         <div className="px-3 mb-3">
           <GlobalSearch />
         </div>
-
-        {/* Inbox */}
-        <Link
-          to="/"
-          className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg mx-2 mb-2 transition-colors ${
-            isInboxActive
-              ? 'bg-huginn-accent text-white'
-              : 'text-gray-400 hover:bg-huginn-card hover:text-gray-200'
-          }`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
-            <path d="M3.5 9.5a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v8a2.5 2.5 0 0 1-2.5 2.5h-12A2.5 2.5 0 0 1 3.5 17.5v-8Zm1 3V17.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V12.5h-4.09a3.5 3.5 0 0 1-6.82 0H4.5Z" />
-          </svg>
-          <span className="flex-1">Inbox</span>
-          {inboxCount > 0 && (
-            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center ${
-              isInboxActive
-                ? 'bg-white/20 text-white'
-                : 'bg-huginn-accent text-white'
-            }`}>
-              {inboxCount}
-            </span>
-          )}
-        </Link>
 
         {/* Projects section */}
         <div className="flex items-center justify-between px-4 mt-3 mb-2">

@@ -14,6 +14,9 @@ import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
 import { getBackground } from '../shared/lib/boardBackgrounds'
+import { InboxPanel } from '../features/inbox/components/InboxPanel'
+import { useInbox } from '../features/inbox/hooks/useInbox'
+import { ToolBar } from '../shared/components/ToolBar'
 import type { Project, Task, Label } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
@@ -67,6 +70,10 @@ export function ProjectDetailPage() {
 
     return () => { supabase.removeChannel(channel) }
   }, [id])
+
+  // Inbox
+  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, moveToProject, count: inboxCount } = useInbox()
+  const [showInbox, setShowInbox] = useState(false)
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
   const filteredTasks = filtersActive ? applyBoardFilters(tasks, filters) as Task[] : tasks
@@ -219,6 +226,32 @@ export function ProjectDetailPage() {
           onUpdate={updateTask}
           onDelete={deleteTask}
           onClose={() => setSelectedTask(null)}
+        />
+      )}
+
+      {/* Bottom toolbar */}
+      <ToolBar
+        inboxOpen={showInbox}
+        inboxCount={inboxCount}
+        onToggleInbox={() => setShowInbox(!showInbox)}
+        onSwitchProjects={() => navigate('/projects')}
+        projectName={project.name}
+      />
+
+      {/* Inbox panel */}
+      {showInbox && (
+        <InboxPanel
+          cards={inboxCards}
+          loading={loadingInbox}
+          onAddCard={addInboxCard}
+          onDeleteCard={deleteInboxCard}
+          onCardTap={(card) => {
+            // Move to first list of this project
+            if (lists.length > 0) {
+              moveToProject(card.id, id!, lists[0].id)
+            }
+          }}
+          onClose={() => setShowInbox(false)}
         />
       )}
 
