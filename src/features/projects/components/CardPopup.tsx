@@ -138,7 +138,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-10 text-huginn-text-muted hover:text-white bg-huginn-surface/80 rounded-full p-1.5 transition-colors"
+          className="absolute top-4 right-4 z-10 text-huginn-text-muted hover:text-white bg-huginn-surface/80 rounded-full p-2 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
@@ -147,11 +147,11 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
 
         <div className="flex flex-col md:flex-row">
           {/* Left column — main content */}
-          <div className="flex-1 p-6 md:pr-4 space-y-5">
+          <div className="flex-1 p-8 md:pr-6 space-y-6">
             {/* List indicator */}
             {currentList && (
-              <p className="text-xs text-huginn-text-muted">
-                in list <span className="font-semibold text-huginn-text-secondary">{currentList.name}</span>
+              <p className="text-sm text-huginn-text-muted">
+                in list <span className="font-semibold text-huginn-text-primary">{currentList.name}</span>
               </p>
             )}
 
@@ -161,19 +161,31 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleTitleBlur}
               onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-              className="w-full bg-transparent text-xl font-bold text-huginn-text-primary outline-none placeholder-huginn-text-muted"
+              className="w-full bg-transparent text-2xl font-bold text-huginn-text-primary outline-none placeholder-huginn-text-muted leading-tight"
               placeholder="Card title"
             />
 
             {/* Labels + Members */}
-            <div className="flex items-center gap-4 flex-wrap">
-              {taskLabels.length > 0 && <LabelBadges labels={taskLabels} />}
-              {assignedProfiles.length > 0 && <MemberAvatars profiles={assignedProfiles} />}
-            </div>
+            {(taskLabels.length > 0 || assignedProfiles.length > 0) && (
+              <div className="flex items-center gap-4 flex-wrap">
+                {taskLabels.length > 0 && (
+                  <div>
+                    <p className="text-xs text-huginn-text-muted font-semibold mb-1.5">Labels</p>
+                    <LabelBadges labels={taskLabels} />
+                  </div>
+                )}
+                {assignedProfiles.length > 0 && (
+                  <div>
+                    <p className="text-xs text-huginn-text-muted font-semibold mb-1.5">Members</p>
+                    <MemberAvatars profiles={assignedProfiles} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Description */}
             <div>
-              <p className="text-xs text-huginn-text-muted font-semibold mb-2 flex items-center gap-2">
+              <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                   <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7ZM4 5.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4ZM4 8a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H4Z" />
                 </svg>
@@ -203,7 +215,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             {/* Attachments */}
             {attachments.length > 0 && (
               <div>
-                <p className="text-xs text-huginn-text-muted font-semibold mb-2 flex items-center gap-2">
+                <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
                   </svg>
@@ -254,8 +266,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
           </div>
 
           {/* Right column — sidebar actions */}
-          <div className="w-full md:w-48 p-6 md:pl-2 md:pt-12 space-y-2">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1">Add to card</p>
+          <div className="w-full md:w-52 p-8 md:pl-3 md:pt-14 space-y-1.5">
+            <p className="text-xs uppercase tracking-wider font-bold text-huginn-text-muted mb-2">Add to card</p>
 
             {/* Members */}
             <div className="relative">
@@ -344,8 +356,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
 
             {/* Priority */}
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1 mt-4">Priority</p>
-              <div className="flex flex-col gap-1">
+              <p className="text-xs uppercase tracking-wider font-bold text-huginn-text-muted mb-2 mt-5">Priority</p>
+              <div className="flex flex-col gap-1.5">
                 {PRIORITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -354,10 +366,10 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
                       setPriority(newP)
                       onUpdate(task.id, { priority: newP })
                     }}
-                    className={`text-xs py-1 px-2 rounded-md text-left font-medium transition-colors ${
+                    className={`text-sm py-1.5 px-3 rounded-lg text-left font-medium transition-colors ${
                       priority === opt.value
                         ? `${opt.color} text-white`
-                        : 'bg-huginn-card text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
+                        : 'bg-huginn-surface text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
                     }`}
                   >
                     {opt.label}
@@ -368,11 +380,11 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
 
             {/* Move to list */}
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1 mt-4">Actions</p>
+              <p className="text-xs uppercase tracking-wider font-bold text-huginn-text-muted mb-2 mt-5">Actions</p>
               <select
                 value={task.list_id ?? ''}
                 onChange={(e) => handleMoveToList(e.target.value)}
-                className="w-full bg-huginn-card text-huginn-text-secondary rounded-md px-2 py-1.5 text-xs outline-none border border-huginn-border focus:border-huginn-accent appearance-none mb-1"
+                className="w-full bg-huginn-surface text-huginn-text-secondary rounded-lg px-3 py-2 text-sm outline-none border border-huginn-border focus:border-huginn-accent appearance-none mb-1.5"
               >
                 {lists.map((l) => (
                   <option key={l.id} value={l.id}>{l.name}</option>
@@ -381,8 +393,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
 
               <button
                 onClick={handleDelete}
-                className={`w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
-                  confirmDelete ? 'text-red-400 bg-huginn-danger/10 font-semibold' : 'bg-huginn-card text-huginn-text-secondary hover:text-huginn-danger hover:bg-huginn-danger/10'
+                className={`w-full text-left text-sm py-2 px-3 rounded-lg transition-colors ${
+                  confirmDelete ? 'text-red-400 bg-huginn-danger/10 font-semibold' : 'bg-huginn-surface text-huginn-text-secondary hover:text-huginn-danger hover:bg-huginn-danger/10'
                 }`}
               >
                 {confirmDelete ? 'Click again to delete' : 'Delete card'}
@@ -399,7 +411,7 @@ function SidebarButton({ onClick, children }: { onClick: () => void; children: R
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 w-full text-xs text-huginn-text-secondary bg-huginn-card hover:bg-huginn-hover rounded-md px-2.5 py-1.5 transition-colors"
+      className="flex items-center gap-2.5 w-full text-sm text-huginn-text-secondary bg-huginn-surface hover:bg-huginn-hover rounded-lg px-3 py-2 transition-colors"
     >
       {children}
     </button>

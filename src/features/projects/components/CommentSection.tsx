@@ -36,7 +36,7 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
   return (
     <div>
       {/* Header */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
+      <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
           <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v6a1.5 1.5 0 0 1-1.5 1.5H10l-3.5 2.5V11H2.5A1.5 1.5 0 0 1 1 9.5v-6Z" />
         </svg>
@@ -53,7 +53,7 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() }
           }}
-          className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-lg px-3 py-2.5 outline-none border border-huginn-border focus:border-huginn-accent resize-none placeholder-huginn-text-muted"
+          className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-lg px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent resize-none placeholder-huginn-text-muted"
         />
         {body.trim() && (
           <button
