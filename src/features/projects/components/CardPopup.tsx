@@ -8,6 +8,10 @@ import { LabelPicker } from './LabelPicker'
 import { useChecklistItems } from '../hooks/useChecklistItems'
 import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
+import { useComments } from '../hooks/useComments'
+import { useActivity } from '../hooks/useActivity'
+import { CommentSection } from './CommentSection'
+import { useAuth } from '../../../shared/hooks/useAuth'
 
 interface CardPopupProps {
   task: Task
@@ -34,9 +38,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const [showLabelPicker, setShowLabelPicker] = useState(false)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const { user } = useAuth()
   const { items: checklistItems, checkedCount, totalCount, addItem, toggleItem, updateItemText, deleteItem } = useChecklistItems(task.id)
   const { labels: projectLabels, createLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
+  const { comments, addComment, deleteComment } = useComments(task.id)
+  const { activities } = useActivity(task.id)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   const currentList = lists.find(l => l.id === task.list_id)
@@ -175,16 +182,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
               />
             )}
 
-            {/* Activity */}
-            <div>
-              <p className="text-xs text-huginn-text-muted font-semibold mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
-                  <path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM8.75 5a.75.75 0 0 0-1.5 0v3c0 .2.08.39.22.53l2 2a.75.75 0 1 0 1.06-1.06L8.75 7.69V5Z" />
-                </svg>
-                Activity
-              </p>
-              <p className="text-xs text-huginn-text-muted">Created {timeAgo(task.created_at)}</p>
-            </div>
+            {/* Comments & Activity */}
+            <CommentSection
+              comments={comments}
+              activities={activities}
+              currentUserId={user?.id ?? ''}
+              onAddComment={addComment}
+              onDeleteComment={deleteComment}
+            />
           </div>
 
           {/* Right column — sidebar actions */}
