@@ -5,7 +5,7 @@ import { RichTextEditor } from './RichTextEditor'
 import { ChecklistSection } from './ChecklistSection'
 import { LabelBadges } from './LabelBadges'
 import { LabelPicker } from './LabelPicker'
-import { useChecklistItems } from '../hooks/useChecklistItems'
+import { useChecklists } from '../hooks/useChecklists'
 import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
 import { useComments } from '../hooks/useComments'
@@ -39,7 +39,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { user } = useAuth()
-  const { items: checklistItems, checkedCount, totalCount, addItem, toggleItem, updateItemText, deleteItem } = useChecklistItems(task.id)
+  const { checklists, addChecklist, deleteChecklist, renameChecklist, addItem, toggleItem, updateItemText, deleteItem } = useChecklists(task.id)
   const { labels: projectLabels, createLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
   const { comments, addComment, deleteComment } = useComments(task.id)
@@ -170,15 +170,16 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             </div>
 
             {/* Checklists */}
-            {(checklistItems.length > 0 || totalCount > 0) && (
+            {checklists.length > 0 && (
               <ChecklistSection
-                items={checklistItems}
-                checkedCount={checkedCount}
-                totalCount={totalCount}
-                onAdd={addItem}
-                onToggle={toggleItem}
-                onUpdateText={updateItemText}
-                onDelete={deleteItem}
+                checklists={checklists}
+                onAddChecklist={addChecklist}
+                onDeleteChecklist={deleteChecklist}
+                onRenameChecklist={renameChecklist}
+                onAddItem={addItem}
+                onToggleItem={toggleItem}
+                onUpdateItemText={updateItemText}
+                onDeleteItem={deleteItem}
               />
             )}
 

@@ -4,7 +4,7 @@ import { timeAgo, formatDueDate } from '../../../shared/lib/dateUtils'
 import { ChecklistSection } from './ChecklistSection'
 import { LabelBadges } from './LabelBadges'
 import { LabelPicker } from './LabelPicker'
-import { useChecklistItems } from '../hooks/useChecklistItems'
+import { useChecklists } from '../hooks/useChecklists'
 import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
 import type { Label } from '../../../shared/lib/types'
@@ -40,7 +40,7 @@ export function TaskDetailPanel({ task, projectId, onUpdate, onDelete, onClose }
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { items: checklistItems, checkedCount, totalCount, addItem, toggleItem, updateItemText, deleteItem } = useChecklistItems(task.id)
+  const { checklists, addChecklist, deleteChecklist, renameChecklist, addItem, toggleItem, updateItemText, deleteItem } = useChecklists(task.id)
   const { labels: projectLabels, createLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
   const [showLabelPicker, setShowLabelPicker] = useState(false)
@@ -225,15 +225,16 @@ export function TaskDetailPanel({ task, projectId, onUpdate, onDelete, onClose }
             />
           </div>
 
-          {/* Checklist */}
+          {/* Checklists */}
           <ChecklistSection
-            items={checklistItems}
-            checkedCount={checkedCount}
-            totalCount={totalCount}
-            onAdd={addItem}
-            onToggle={toggleItem}
-            onUpdateText={updateItemText}
-            onDelete={deleteItem}
+            checklists={checklists}
+            onAddChecklist={addChecklist}
+            onDeleteChecklist={deleteChecklist}
+            onRenameChecklist={renameChecklist}
+            onAddItem={addItem}
+            onToggleItem={toggleItem}
+            onUpdateItemText={updateItemText}
+            onDeleteItem={deleteItem}
           />
         </div>
       </div>
