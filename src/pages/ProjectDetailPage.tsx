@@ -10,6 +10,7 @@ import {
   useLists,
   useLabels,
 } from '../features/projects'
+import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
 import type { Project, Task } from '../shared/lib/types'
@@ -45,6 +46,7 @@ export function ProjectDetailPage() {
   }, [id])
 
   // State
+  const [view, setView] = useState<'board' | 'calendar'>('board')
   const [showSettings, setShowSettings] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
@@ -110,6 +112,27 @@ export function ProjectDetailPage() {
         </Link>
         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
         <h1 className="text-base font-bold flex-1">{project.name}</h1>
+
+        {/* View switcher */}
+        <div className="flex bg-huginn-card rounded-md p-0.5 mr-2">
+          <button
+            onClick={() => setView('board')}
+            className={`text-[11px] font-medium px-2.5 py-1 rounded transition-colors ${
+              view === 'board' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+            }`}
+          >
+            Board
+          </button>
+          <button
+            onClick={() => setView('calendar')}
+            className={`text-[11px] font-medium px-2.5 py-1 rounded transition-colors ${
+              view === 'calendar' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+            }`}
+          >
+            Calendar
+          </button>
+        </div>
+
         <BoardFilterBar
           filters={filters}
           onChange={setFilters}
@@ -123,19 +146,26 @@ export function ProjectDetailPage() {
         </button>
       </header>
 
-      {/* Board */}
-      <BoardView
-        lists={lists}
-        tasks={filteredTasks}
-        loading={loadingLists || loadingTasks}
-        onTaskTap={setSelectedTask}
-        onAddCard={handleAddCard}
-        onMoveCard={handleMoveCard}
-        onRenameList={handleRenameList}
-        onArchiveList={archiveList}
-        onAddList={handleAddList}
-        selectedTaskId={currentTask?.id}
-      />
+      {/* Board or Calendar */}
+      {view === 'board' ? (
+        <BoardView
+          lists={lists}
+          tasks={filteredTasks}
+          loading={loadingLists || loadingTasks}
+          onTaskTap={setSelectedTask}
+          onAddCard={handleAddCard}
+          onMoveCard={handleMoveCard}
+          onRenameList={handleRenameList}
+          onArchiveList={archiveList}
+          onAddList={handleAddList}
+          selectedTaskId={currentTask?.id}
+        />
+      ) : (
+        <CalendarView
+          tasks={filteredTasks}
+          onTaskTap={setSelectedTask}
+        />
+      )}
 
       {/* Card popup */}
       {currentTask && (
