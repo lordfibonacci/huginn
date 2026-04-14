@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DndContext, DragOverlay, useDraggable, closestCenter } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import type { Task, List, Label } from '../../../shared/lib/types'
@@ -20,14 +20,33 @@ interface BoardViewProps {
 }
 
 function DraggableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({ id: task.id })
+  const didDrag = useRef(false)
+
+  // Track if a real drag happened (not just a click)
+  useEffect(() => {
+    if (isDragging) didDrag.current = true
+  }, [isDragging])
+
+  function handleClick() {
+    // Only open card if we didn't just finish a drag
+    if (!didDrag.current) {
+      onTaskTap(task)
+    }
+    didDrag.current = false
+  }
+
   return (
-    <div ref={setNodeRef} className={isDragging ? 'opacity-30' : ''}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      className={`cursor-pointer ${isDragging ? 'opacity-30' : ''}`}
+    >
       <TaskCard
         task={task}
-        onClick={() => onTaskTap(task)}
         selected={task.id === selectedTaskId}
-        dragHandleProps={{ ...listeners, ...attributes }}
         labels={labels}
       />
     </div>

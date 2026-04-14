@@ -18,12 +18,11 @@ interface TaskCardProps {
   onClick?: () => void
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void
   selected?: boolean
-  dragHandleProps?: Record<string, unknown>
   checklistProgress?: { checked: number; total: number } | null
   labels?: { id: string; name: string; color: string }[]
 }
 
-export function TaskCard({ task, onClick, onStatusChange, selected, dragHandleProps, checklistProgress, labels }: TaskCardProps) {
+export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels }: TaskCardProps) {
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
   const priority = task.priority ? PRIORITY_LABELS[task.priority] : null
 
@@ -66,18 +65,6 @@ export function TaskCard({ task, onClick, onStatusChange, selected, dragHandlePr
       <div className="p-3">
         {/* Title row */}
         <div className="flex items-start gap-2">
-          {/* Drag handle — only visible on hover */}
-          {dragHandleProps && (
-            <div
-              {...dragHandleProps}
-              className="mt-1 shrink-0 cursor-grab active:cursor-grabbing text-huginn-text-muted opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                <path d="M4 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm4-10a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-              </svg>
-            </div>
-          )}
           <button
             onClick={handleToggle}
             className={`w-4 h-4 rounded border mt-0.5 shrink-0 flex items-center justify-center transition-colors ${
