@@ -85,10 +85,23 @@ export interface Activity {
 export interface ChecklistItem {
   id: string
   task_id: string
+  checklist_id: string | null
   user_id: string
   text: string
   checked: boolean
   position: number
+  created_at: string
+}
+
+export interface Attachment {
+  id: string
+  task_id: string
+  user_id: string
+  name: string
+  url: string
+  type: string
+  size: number | null
+  is_cover: boolean
   created_at: string
 }
 
