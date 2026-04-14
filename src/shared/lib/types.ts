@@ -35,7 +35,7 @@ export interface Project {
 export interface Task {
   id: string
   user_id: string
-  project_id: string
+  project_id: string | null
   list_id: string | null
   title: string
   notes: string | null
