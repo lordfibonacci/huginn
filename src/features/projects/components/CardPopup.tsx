@@ -12,7 +12,11 @@ import { useComments } from '../hooks/useComments'
 import { useActivity } from '../hooks/useActivity'
 import { useAttachments } from '../hooks/useAttachments'
 import { CommentSection } from './CommentSection'
+import { MemberAvatars } from './MemberAvatars'
+import { MemberPicker } from './MemberPicker'
 import { useAuth } from '../../../shared/hooks/useAuth'
+import { useBoardMembers } from '../hooks/useBoardMembers'
+import { useTaskMembers } from '../hooks/useTaskMembers'
 
 interface CardPopupProps {
   task: Task
@@ -46,6 +50,9 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const { comments, addComment, deleteComment } = useComments(task.id)
   const { activities } = useActivity(task.id)
   const { attachments, uploadFile, deleteAttachment } = useAttachments(task.id)
+  const { members: boardMembers } = useBoardMembers(projectId)
+  const { memberIds: assignedIds, profiles: assignedProfiles, assignMember, unassignMember, isAssigned } = useTaskMembers(task.id)
+  const [showMemberPicker, setShowMemberPicker] = useState(false)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   const currentList = lists.find(l => l.id === task.list_id)
@@ -158,12 +165,11 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
               placeholder="Card title"
             />
 
-            {/* Labels */}
-            {taskLabels.length > 0 && (
-              <div className="relative">
-                <LabelBadges labels={taskLabels} />
-              </div>
-            )}
+            {/* Labels + Members */}
+            <div className="flex items-center gap-4 flex-wrap">
+              {taskLabels.length > 0 && <LabelBadges labels={taskLabels} />}
+              {assignedProfiles.length > 0 && <MemberAvatars profiles={assignedProfiles} />}
+            </div>
 
             {/* Description */}
             <div>
@@ -250,6 +256,24 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
           {/* Right column — sidebar actions */}
           <div className="w-full md:w-48 p-6 md:pl-2 md:pt-12 space-y-2">
             <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1">Add to card</p>
+
+            {/* Members */}
+            <div className="relative">
+              <SidebarButton onClick={() => setShowMemberPicker(!showMemberPicker)}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.7 14a6.98 6.98 0 0 0-9.4 0 .5.5 0 0 0 .35.85h8.7a.5.5 0 0 0 .35-.85Z" />
+                </svg>
+                Members
+              </SidebarButton>
+              {showMemberPicker && (
+                <MemberPicker
+                  boardMembers={boardMembers}
+                  assignedIds={assignedIds}
+                  onToggle={(userId) => isAssigned(userId) ? unassignMember(userId) : assignMember(userId)}
+                  onClose={() => setShowMemberPicker(false)}
+                />
+              )}
+            </div>
 
             {/* Labels */}
             <div className="relative">
