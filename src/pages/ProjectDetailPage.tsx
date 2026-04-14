@@ -29,9 +29,11 @@ export function ProjectDetailPage() {
   const { labels } = useLabels(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
 
-  // Fetch all task labels for this project's tasks in one query
+  // Fetch all task labels for this project's tasks
   const [taskLabelsMap, setTaskLabelsMap] = useState<Record<string, Label[]>>({})
-  useEffect(() => {
+  const [taskLabelVersion, setTaskLabelVersion] = useState(0)
+
+  const fetchTaskLabels = useCallback(() => {
     if (!tasks.length || !labels.length) return
     const taskIds = tasks.map(t => t.id)
     supabase
@@ -50,6 +52,21 @@ export function ProjectDetailPage() {
         setTaskLabelsMap(map)
       })
   }, [tasks, labels])
+
+  useEffect(() => { fetchTaskLabels() }, [fetchTaskLabels, taskLabelVersion])
+
+  // Realtime: refetch task labels on any change
+  useEffect(() => {
+    const channelName = `huginn_task_labels_board_${id}_${crypto.randomUUID()}`
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_labels' }, () => {
+        setTaskLabelVersion(v => v + 1)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [id])
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
   const filteredTasks = filtersActive ? applyBoardFilters(tasks, filters) as Task[] : tasks
