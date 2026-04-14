@@ -10,6 +10,7 @@ import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
 import { useComments } from '../hooks/useComments'
 import { useActivity } from '../hooks/useActivity'
+import { useAttachments } from '../hooks/useAttachments'
 import { CommentSection } from './CommentSection'
 import { useAuth } from '../../../shared/hooks/useAuth'
 
@@ -44,6 +45,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
   const { comments, addComment, deleteComment } = useComments(task.id)
   const { activities } = useActivity(task.id)
+  const { attachments, uploadFile, deleteAttachment } = useAttachments(task.id)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   const currentList = lists.find(l => l.id === task.list_id)
@@ -52,6 +54,15 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
     requestAnimationFrame(() => setVisible(true))
     return () => { if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current) }
   }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  })
 
   // Reset when task changes
   useEffect(() => {
@@ -183,6 +194,49 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
               />
             )}
 
+            {/* Attachments */}
+            {attachments.length > 0 && (
+              <div>
+                <p className="text-xs text-huginn-text-muted font-semibold mb-2 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                    <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
+                  </svg>
+                  Attachments
+                </p>
+                <div className="space-y-2">
+                  {attachments.map((att) => (
+                    <div key={att.id} className="flex items-center gap-3 bg-huginn-card rounded-lg p-2.5 group">
+                      {att.type === 'image' ? (
+                        <img src={att.url} alt={att.name} className="w-16 h-12 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="w-16 h-12 rounded bg-huginn-surface flex items-center justify-center shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-huginn-text-muted">
+                            <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V6.621a1.5 1.5 0 0 0-.44-1.06L9.94 2.44A1.5 1.5 0 0 0 8.878 2H3.5Z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-huginn-text-primary hover:text-huginn-accent truncate block">
+                          {att.name}
+                        </a>
+                        <p className="text-[10px] text-huginn-text-muted mt-0.5">
+                          {att.size ? `${(att.size / 1024).toFixed(0)} KB` : att.type === 'link' ? 'Link' : 'File'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => deleteAttachment(att.id)}
+                        className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Comments & Activity */}
             <CommentSection
               comments={comments}
@@ -217,12 +271,29 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             </div>
 
             {/* Checklist */}
-            <SidebarButton onClick={() => addItem('New item')}>
+            <SidebarButton onClick={() => addChecklist('Checklist')}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                 <path fillRule="evenodd" d="M12.4 4.7a.75.75 0 0 1 .1 1.06l-5.25 6a.75.75 0 0 1-1.1.02L3.6 9.1a.75.75 0 1 1 1.1-1.02l2.05 2.22 4.7-5.37a.75.75 0 0 1 1.06-.1l-.1-.13Z" clipRule="evenodd" />
               </svg>
               Checklist
             </SidebarButton>
+
+            {/* Attachment */}
+            <label className="flex items-center gap-2 w-full text-xs text-huginn-text-secondary bg-huginn-card hover:bg-huginn-hover rounded-md px-2.5 py-1.5 transition-colors cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
+              </svg>
+              Attachment
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) uploadFile(file)
+                  e.target.value = ''
+                }}
+              />
+            </label>
 
             {/* Due date */}
             <div>
