@@ -1,74 +1,106 @@
 # Huginn
 
-Personal second brain and project management PWA for a founder who juggles many products. Capture thoughts instantly (text or voice), triage later, organize into projects.
+Personal project management PWA (Trello-style) for a founder who runs multiple independent businesses. Capture thoughts via text/voice, triage into projects, manage tasks on Trello-style boards with custom lists, card popups, checklists, labels, and rich text descriptions.
 
 ## Tech Stack
 
 - **Frontend:** React 19 + Vite 6 + TypeScript
-- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite` plugin)
-- **Backend:** Supabase (Postgres, Auth, RLS)
+- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite` plugin) with `huginn-*` color tokens defined in `@theme` in `src/index.css`
+- **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
+- **Rich Text:** Tiptap (ProseMirror-based) for card descriptions
+- **Drag & Drop:** @dnd-kit/core + @dnd-kit/sortable
 - **PWA:** vite-plugin-pwa with auto-update service worker
 - **Voice:** Web Speech API (browser-native)
-- **Routing:** React Router v6 (nested routes)
+- **Routing:** React Router v6 (nested routes with Layout)
 
 ## Architecture
 
-Feature-module structure. Pages are thin shells that compose feature components.
+Feature-module structure. Trello-style board with custom lists. Card popup modal for full editing.
 
 ```
 src/
 ├── app/              # App entry, router
 ├── features/
-│   ├── inbox/        # Thought capture, editing, classification
-│   └── projects/     # Project listing, creation
+│   ├── inbox/        # Thought capture, voice input, triage
+│   │   ├── components/  # ThoughtCard, ThoughtInput, ThoughtDetailPanel, etc.
+│   │   └── hooks/       # useThoughts, useVoiceRecorder
+│   └── projects/     # Board view, cards, lists, checklists, labels
+│       ├── components/  # BoardView, ListColumn, CardPopup, TaskCard, ChecklistSection, LabelPicker, RichTextEditor, CommentSection, etc.
+│       └── hooks/       # useLists, useProjectTasks, useChecklists, useLabels, useTaskLabels, useComments, useActivity, useAttachments, useProjects
 ├── shared/
-│   ├── components/   # Layout, BottomNav
-│   ├── hooks/        # useAuth
-│   └── lib/          # Supabase client, TypeScript types
-├── pages/            # Thin page shells (InboxPage, ProjectsPage, etc.)
+│   ├── components/   # Layout, Sidebar, BottomNav, ModalShell
+│   ├── hooks/        # useAuth, useTaskCounts
+│   └── lib/          # Supabase client, TypeScript types, dateUtils
+├── pages/            # InboxPage, ProjectsPage, ProjectDetailPage, LoginPage
 └── main.tsx
 ```
 
 ## Supabase
 
 - **Project:** `czdjxtsjgughimlazdmu` (shared — other projects use this DB too)
-- **Table prefix:** All tables use `huginn_` prefix: `huginn_thoughts`, `huginn_projects`, `huginn_tasks`, `huginn_notes`
+- **Table prefix:** All tables use `huginn_` prefix
+- **Tables:**
+  - `huginn_thoughts` — captured thoughts (inbox)
+  - `huginn_projects` — projects/boards
+  - `huginn_tasks` — cards (belong to a list via `list_id`)
+  - `huginn_lists` — custom lists per project (Trello columns)
+  - `huginn_checklists` — named checklists per card
+  - `huginn_checklist_items` — items within checklists
+  - `huginn_labels` — colored labels per project
+  - `huginn_task_labels` — label-card junction
+  - `huginn_comments` — comments on cards
+  - `huginn_activity` — auto-generated activity log
+  - `huginn_attachments` — file/image/link attachments on cards
+  - `huginn_board_members` — project membership (owner/admin/member/viewer)
+  - `huginn_task_members` — card assignees
+  - `huginn_profiles` — user display names and avatars
+  - `huginn_notes` — (legacy, not actively used in UI)
 - **Auth:** Email/password via Supabase Auth
-- **RLS:** All tables have row-level security — `auth.uid() = user_id`
+- **RLS:** All tables have row-level security
+- **Realtime:** All tables publish changes via Supabase Realtime
+- **Storage:** `huginn-attachments` bucket for file uploads
 - **Env vars:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` in `.env`
 
 ## Design System
 
-- **Theme:** Dark — navy background `#1a1a2e`, card surfaces `#2a2a4a`, white/light gray text
-- **Accent:** Purple `#6c5ce7` for interactive elements
-- **Active/hover states:** `#3a3a5a`
-- **Typography:** System font stack
-- **Corners:** 12-20px radius
-- **Mobile-first:** `100dvh` layout, safe-area insets on BottomNav
-- **Drawers:** Bottom sheet pattern for create/edit — slide-up animation, backdrop dismiss, 200ms transition
+Uses Tailwind CSS 4 with custom `huginn-*` color tokens defined via `@theme` in `src/index.css`:
 
-## Patterns
+- **bg-huginn-base:** `#12122a` (sidebar, nav)
+- **bg-huginn-surface:** `#161630` (page background)
+- **bg-huginn-card:** `#1e1e3e` (cards, inputs, drawers)
+- **bg-huginn-hover:** `#242450` (hover/active states)
+- **huginn-accent:** `#6c5ce7` (primary interactive)
+- **huginn-success:** `#00b894` (done/success)
+- **huginn-warning:** `#fdcb6e` (medium priority)
+- **huginn-danger:** `#e17055` (high priority, destructive)
 
-- **Hooks:** Each feature has a `useX` hook (e.g., `useThoughts`, `useProjects`) that handles Supabase CRUD with optimistic updates and rollback on error
-- **Components:** Props-based, no global state. Drawers receive callbacks (`onSave`, `onDone`, `onDelete`)
-- **Barrel exports:** Each feature has an `index.ts` re-exporting its public API
-- **Optimistic UI:** Insert/update/delete all update local state immediately, then sync with Supabase. Rollback on error.
+**Note:** Tailwind v4 does NOT use `tailwind.config.ts`. Colors are defined via CSS `@theme` directive.
+
+## Key Patterns
+
+- **Hooks with Realtime:** Every data hook (useThoughts, useProjectTasks, useLists, etc.) fetches on mount AND subscribes to Supabase Realtime for live updates. Channel names use `crypto.randomUUID()` to avoid conflicts when multiple hook instances exist.
+- **Optimistic Updates:** Mutations update local state immediately, then sync with Supabase. Rollback on error.
+- **ModalShell:** Shared component that renders as centered modal on desktop, bottom drawer on mobile.
+- **BoardView + ListColumn:** Trello-style board with custom lists, drag-and-drop via @dnd-kit. Cards belong to lists via `list_id`.
+- **CardPopup:** Full overlay modal for card editing — title, rich text description (Tiptap), multiple checklists, labels, attachments, comments, activity feed.
+- **Split-view Inbox:** Desktop shows thought list on left, detail panel on right. Mobile uses drawers.
+- **Barrel exports:** Each feature has an `index.ts` re-exporting its public API.
 
 ## Commands
 
 ```bash
 npm run dev      # Start dev server (localhost:5173)
-npm run build    # Production build (uses vite build)
+npm run build    # Production build
 npm run preview  # Preview production build
 ```
 
 ## Conventions
 
-- Commit messages: `feat:`, `fix:`, `chore:`, `docs:` prefixes
-- No tests yet (planned)
+- Commit messages: `feat:`, `fix:`, `style:`, `refactor:`, `simplify:`, `docs:` prefixes
+- No tests yet
 - `.env` is gitignored — contains Supabase credentials
 - `.superpowers/` is gitignored — brainstorming artifacts
 
-## Scalability Note
+## Multi-User (In Progress)
 
-This is currently single-user but may become multi-user (Conor's co-founder Árni may join as collaborator). All tables have `user_id` columns and RLS policies. Don't hardcode single-user assumptions into components.
+Tables exist for `huginn_board_members` (project membership with roles) and `huginn_task_members` (card assignees). UI not yet built — currently single-user. Co-founder Árni will be the first additional user. Each project is an independent business (real estate, camping, apps, etc.) — projects are NOT related to each other.
