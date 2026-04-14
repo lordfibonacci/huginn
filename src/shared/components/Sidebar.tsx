@@ -5,6 +5,7 @@ import { useProjects } from '../../features/projects'
 import { useThoughts } from '../../features/inbox'
 import { useTaskCounts } from '../hooks/useTaskCounts'
 import { NewProjectDrawer } from '../../features/projects/components/NewProjectDrawer'
+import { GlobalSearch } from './GlobalSearch'
 import type { Project, ProjectStatus } from '../lib/types'
 
 const STATUS_ORDER: { key: ProjectStatus; label: string }[] = [
@@ -61,10 +62,15 @@ export function Sidebar() {
     <>
       <aside className="w-64 border-r border-huginn-border flex flex-col bg-huginn-base">
         {/* App name */}
-        <div className="px-4 pt-5 pb-4">
+        <div className="px-4 pt-5 pb-3">
           <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-huginn-accent to-[#a78bfa] bg-clip-text text-transparent">
             Huginn
           </h1>
+        </div>
+
+        {/* Search */}
+        <div className="px-3 mb-3">
+          <GlobalSearch />
         </div>
 
         {/* Inbox */}
