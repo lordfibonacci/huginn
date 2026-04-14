@@ -107,6 +107,29 @@ export interface TaskLabel {
   label_id: string
 }
 
+export interface BoardMember {
+  id: string
+  project_id: string
+  user_id: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  created_at: string
+}
+
+export interface TaskMember {
+  id: string
+  task_id: string
+  user_id: string
+  created_at: string
+}
+
+export interface Profile {
+  id: string
+  display_name: string | null
+  email: string | null
+  avatar_url: string | null
+  updated_at: string
+}
+
 export interface Note {
   id: string
   user_id: string
