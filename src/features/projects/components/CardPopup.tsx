@@ -15,6 +15,7 @@ import { CommentSection } from './CommentSection'
 import { MemberAvatars } from './MemberAvatars'
 import { MemberPicker } from './MemberPicker'
 import { useAuth } from '../../../shared/hooks/useAuth'
+import { DatePicker } from './DatePicker'
 import { useBoardMembers } from '../hooks/useBoardMembers'
 import { useTaskMembers } from '../hooks/useTaskMembers'
 
@@ -53,6 +54,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const { members: boardMembers } = useBoardMembers(projectId)
   const { memberIds: assignedIds, profiles: assignedProfiles, assignMember, unassignMember, isAssigned } = useTaskMembers(task.id)
   const [showMemberPicker, setShowMemberPicker] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   const currentList = lists.find(l => l.id === task.list_id)
@@ -339,27 +341,28 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
             </label>
 
             {/* Due date */}
-            <div>
-              <SidebarButton onClick={() => {}}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                  <path d="M5 4a.75.75 0 0 0-1.5 0v1H2.75A.75.75 0 0 0 2 5.75v.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-.5a.75.75 0 0 0-.75-.75H12.5V4a.75.75 0 0 0-1.5 0v1h-5V4Z" />
-                  <path d="M2 9.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v4a1.75 1.75 0 0 1-1.75 1.75H3.75A1.75 1.75 0 0 1 2 13.25v-4Z" />
-                </svg>
-                Dates
-              </SidebarButton>
-              {/* Inline date input */}
-              <div className="mt-1">
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => {
-                    setDueDate(e.target.value)
-                    onUpdate(task.id, { due_date: e.target.value || null })
-                  }}
-                  className="w-full bg-huginn-surface text-huginn-text-primary rounded-md px-2 py-1 text-xs outline-none border border-huginn-border focus:border-huginn-accent [color-scheme:dark]"
-                />
-              </div>
-            </div>
+            <SidebarButton onClick={() => setShowDatePicker(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M5 4a.75.75 0 0 0-1.5 0v1H2.75A.75.75 0 0 0 2 5.75v.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-.5a.75.75 0 0 0-.75-.75H12.5V4a.75.75 0 0 0-1.5 0v1h-5V4Z" />
+                <path d="M2 9.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v4a1.75 1.75 0 0 1-1.75 1.75H3.75A1.75 1.75 0 0 1 2 13.25v-4Z" />
+              </svg>
+              Dates
+            </SidebarButton>
+            {dueDate && (
+              <p className="text-xs text-huginn-text-secondary px-3 mt-1">
+                {new Date(dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+            )}
+            {showDatePicker && (
+              <DatePicker
+                dueDate={dueDate}
+                onSave={(date) => {
+                  setDueDate(date ?? '')
+                  onUpdate(task.id, { due_date: date })
+                }}
+                onClose={() => setShowDatePicker(false)}
+              />
+            )}
 
             {/* Priority */}
             <div>
