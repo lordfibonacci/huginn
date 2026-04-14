@@ -1,0 +1,122 @@
+import { useState } from 'react'
+import type { Task } from '../../../shared/lib/types'
+
+interface InboxPanelProps {
+  cards: Task[]
+  loading: boolean
+  onAddCard: (title: string) => Promise<unknown>
+  onDeleteCard: (cardId: string) => void
+  onCardTap: (card: Task) => void
+  onClose: () => void
+}
+
+export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap, onClose }: InboxPanelProps) {
+  const [newTitle, setNewTitle] = useState('')
+  const [adding, setAdding] = useState(false)
+
+  async function handleAdd() {
+    const trimmed = newTitle.trim()
+    if (!trimmed) return
+    await onAddCard(trimmed)
+    setNewTitle('')
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex" onClick={onClose}>
+      {/* Panel */}
+      <div
+        className="w-72 bg-huginn-base border-r border-huginn-border flex flex-col h-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
+          <h2 className="text-sm font-bold text-huginn-text-primary">Inbox</h2>
+          <button onClick={onClose} className="text-huginn-text-muted hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Add card */}
+        <div className="px-3 py-3 border-b border-huginn-border">
+          {adding ? (
+            <div>
+              <textarea
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Enter a title..."
+                autoFocus
+                rows={2}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd() }
+                  if (e.key === 'Escape') { setAdding(false); setNewTitle('') }
+                }}
+                className="w-full bg-huginn-card text-sm text-huginn-text-primary rounded-lg px-3 py-2 outline-none border border-huginn-border focus:border-huginn-accent resize-none placeholder-huginn-text-muted"
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={handleAdd}
+                  disabled={!newTitle.trim()}
+                  className="bg-huginn-accent text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50"
+                >
+                  Add card
+                </button>
+                <button onClick={() => { setAdding(false); setNewTitle('') }} className="text-huginn-text-muted hover:text-white text-xs">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-2 text-sm text-huginn-text-muted hover:text-huginn-text-secondary w-full px-2 py-1.5 rounded-md hover:bg-huginn-card/50 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+              </svg>
+              Add a card
+            </button>
+          )}
+        </div>
+
+        {/* Cards */}
+        <div className="flex-1 overflow-y-auto px-3 py-2">
+          {loading ? (
+            <p className="text-xs text-huginn-text-muted py-4 text-center">Loading...</p>
+          ) : cards.length === 0 ? (
+            <p className="text-xs text-huginn-text-muted py-4 text-center">
+              Your inbox is empty. Capture quick ideas here.
+            </p>
+          ) : (
+            cards.map((card) => (
+              <div
+                key={card.id}
+                className="bg-huginn-card rounded-lg p-3 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors group"
+                onClick={() => onCardTap(card)}
+              >
+                <div className="flex items-start gap-2">
+                  <p className="text-sm text-huginn-text-primary flex-1">{card.title}</p>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteCard(card.id) }}
+                    className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
+                    </svg>
+                  </button>
+                </div>
+                {card.due_date && (
+                  <p className="text-[10px] text-huginn-text-muted mt-1">{card.due_date}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Dim overlay for the rest */}
+      <div className="flex-1 bg-black/30" />
+    </div>
+  )
+}
