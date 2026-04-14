@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { DndContext, DragOverlay, useDraggable, closestCenter } from '@dnd-kit/core'
+import { useState } from 'react'
+import { DndContext, DragOverlay, useDraggable, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import type { Task, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
@@ -20,32 +20,18 @@ interface BoardViewProps {
 }
 
 function DraggableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
-  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({ id: task.id })
-  const didDrag = useRef(false)
-
-  // Track if a real drag happened (not just a click)
-  useEffect(() => {
-    if (isDragging) didDrag.current = true
-  }, [isDragging])
-
-  function handleClick() {
-    // Only open card if we didn't just finish a drag
-    if (!didDrag.current) {
-      onTaskTap(task)
-    }
-    didDrag.current = false
-  }
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      onClick={handleClick}
-      className={`cursor-pointer ${isDragging ? 'opacity-30' : ''}`}
+      className={isDragging ? 'opacity-30' : ''}
     >
       <TaskCard
         task={task}
+        onClick={() => onTaskTap(task)}
         selected={task.id === selectedTaskId}
         labels={labels}
       />
@@ -57,6 +43,13 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
+
+  // Require 8px of movement before drag activates — allows clicks to pass through
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  )
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasks.find((t) => t.id === event.active.id)
@@ -107,7 +100,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
   }
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex-1 flex gap-4 p-4 overflow-x-auto items-start">
         {lists.map((list) => (
           <ListColumn
