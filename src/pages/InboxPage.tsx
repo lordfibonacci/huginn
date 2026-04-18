@@ -2,10 +2,31 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useInbox } from '../features/inbox/hooks/useInbox'
 import { useVoiceRecorder } from '../features/inbox/hooks/useVoiceRecorder'
+import { CardPopup } from '../features/projects/components/CardPopup'
 import { Mark, Wordmark, EmptyState } from '../shared/components/Logo'
+import { supabase } from '../shared/lib/supabase'
+import type { Task } from '../shared/lib/types'
 
 export function InboxPage() {
   const { cards, loading, addCard, deleteCard, count } = useInbox()
+  const [selectedCard, setSelectedCard] = useState<Task | null>(null)
+  const currentSelected = selectedCard
+    ? cards.find(c => c.id === selectedCard.id) ?? selectedCard
+    : null
+
+  async function updateInboxCard(taskId: string, updates: Record<string, unknown>) {
+    const { error } = await supabase.from('huginn_tasks').update(updates).eq('id', taskId)
+    if (error) {
+      console.error('Failed to update inbox card:', error)
+      return false
+    }
+    return true
+  }
+
+  async function deleteInboxCard(taskId: string) {
+    await deleteCard(taskId)
+    return true
+  }
   const { isRecording, transcript, duration, startRecording, stopRecording, isSupported } = useVoiceRecorder()
   const [text, setText] = useState('')
   const [adding, setAdding] = useState(false)
@@ -135,29 +156,40 @@ export function InboxPage() {
           ) : (
             <ul className="space-y-2">
               {cards.map((card) => (
-                <li
-                  key={card.id}
-                  className="bg-huginn-card border border-huginn-border/60 rounded-xl px-4 py-3 flex items-start gap-3 group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-huginn-text-primary whitespace-pre-wrap break-words">
-                      {card.title}
-                    </p>
-                    <p className="text-[11px] text-huginn-text-muted mt-1">
-                      {formatRelativeTime(card.created_at)}
-                    </p>
-                  </div>
+                <li key={card.id}>
                   <button
-                    onClick={() => {
-                      if (window.confirm('Delete this thought?')) deleteCard(card.id)
-                    }}
-                    className="text-huginn-text-muted hover:text-huginn-danger opacity-50 group-hover:opacity-100 transition-opacity shrink-0 -mr-1"
-                    aria-label="Delete"
+                    onClick={() => setSelectedCard(card)}
+                    className="w-full text-left bg-huginn-card border border-huginn-border/60 hover:border-huginn-accent/40 rounded-xl px-4 py-3 flex items-start gap-3 group transition-colors"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                      <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
-                      <path fillRule="evenodd" d="M4.5 7a.5.5 0 0 1 .5.5v9.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.5a.5.5 0 0 1 1 0v9.5a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7.5a.5.5 0 0 1 .5-.5Z" clipRule="evenodd" />
-                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-huginn-text-primary whitespace-pre-wrap break-words">
+                        {card.title}
+                      </p>
+                      <p className="text-[11px] text-huginn-text-muted mt-1">
+                        {formatRelativeTime(card.created_at)}
+                      </p>
+                    </div>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (window.confirm('Delete this thought?')) deleteCard(card.id)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.stopPropagation()
+                          if (window.confirm('Delete this thought?')) deleteCard(card.id)
+                        }
+                      }}
+                      className="text-huginn-text-muted hover:text-huginn-danger opacity-50 group-hover:opacity-100 transition-opacity shrink-0 -mr-1 p-1"
+                      aria-label="Delete"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                        <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
+                        <path fillRule="evenodd" d="M4.5 7a.5.5 0 0 1 .5.5v9.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.5a.5.5 0 0 1 1 0v9.5a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7.5a.5.5 0 0 1 .5-.5Z" clipRule="evenodd" />
+                      </svg>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -165,6 +197,17 @@ export function InboxPage() {
           )}
         </div>
       </div>
+
+      {currentSelected && (
+        <CardPopup
+          task={currentSelected}
+          projectId=""
+          lists={[]}
+          onUpdate={updateInboxCard}
+          onDelete={deleteInboxCard}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
     </>
   )
 }

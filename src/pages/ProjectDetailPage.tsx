@@ -76,7 +76,7 @@ export function ProjectDetailPage() {
   }, [id])
 
   // Inbox
-  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, moveToProject, count: inboxCount } = useInbox()
+  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, count: inboxCount } = useInbox()
   const [showInbox, setShowInbox] = useState(false)
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
@@ -102,10 +102,13 @@ export function ProjectDetailPage() {
   const [showMembers, setShowMembers] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
-  // Keep selected task in sync with latest data
+  // Keep selected task in sync with latest data (could be a project task OR an inbox card)
   const currentTask = selectedTask
-    ? tasks.find((t) => t.id === selectedTask.id) ?? selectedTask
+    ? tasks.find((t) => t.id === selectedTask.id)
+      ?? inboxCards.find((c) => c.id === selectedTask.id)
+      ?? selectedTask
     : null
+  const selectedIsInbox = currentTask?.project_id == null
 
   async function handleDeleteProject(projectId: string) {
     const success = await deleteProject(projectId)
@@ -158,11 +161,7 @@ export function ProjectDetailPage() {
           loading={loadingInbox}
           onAddCard={addInboxCard}
           onDeleteCard={deleteInboxCard}
-          onCardTap={(card) => {
-            if (lists.length > 0) {
-              moveToProject(card.id, id!, lists[0].id)
-            }
-          }}
+          onCardTap={(card) => setSelectedTask(card)}
           onClose={() => setShowInbox(false)}
         />
       )}
@@ -271,14 +270,16 @@ export function ProjectDetailPage() {
 
       </div>{/* end main content */}
 
-      {/* Card popup */}
+      {/* Card popup — same component for board tasks and inbox cards */}
       {currentTask && (
         <CardPopup
           task={currentTask}
-          projectId={id!}
-          lists={lists}
+          projectId={selectedIsInbox ? '' : id!}
+          lists={selectedIsInbox ? [] : lists}
           onUpdate={updateTask}
-          onDelete={deleteTask}
+          onDelete={selectedIsInbox
+            ? async (taskId) => { await deleteInboxCard(taskId); return true }
+            : deleteTask}
           onClose={() => setSelectedTask(null)}
         />
       )}

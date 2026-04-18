@@ -57,6 +57,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   const currentList = lists.find(l => l.id === task.list_id)
+  const isInboxCard = !task.project_id || !projectId
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -170,12 +171,19 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
         <div className="flex flex-col md:flex-row">
           {/* Left column — main content */}
           <div className="flex-1 p-8 md:pr-6 space-y-6">
-            {/* List indicator */}
-            {currentList && (
+            {/* List indicator / inbox indicator */}
+            {currentList ? (
               <p className="text-sm text-huginn-text-muted">
                 in list <span className="font-semibold text-huginn-text-primary">{currentList.name}</span>
               </p>
-            )}
+            ) : isInboxCard ? (
+              <p className="text-sm text-huginn-text-muted flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M3.5 7.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-4Zm1 2v2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-2H10a2.5 2.5 0 0 1-4 0H4.5Z" />
+                </svg>
+                in <span className="font-semibold text-huginn-text-primary">Inbox</span>
+              </p>
+            ) : null}
 
             {/* Title */}
             <textarea
@@ -298,42 +306,45 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
           <div className="w-full md:w-52 p-8 md:pl-3 md:pt-14 space-y-1.5">
             <p className="text-xs uppercase tracking-wider font-bold text-huginn-text-muted mb-2">Add to card</p>
 
-            {/* Members */}
-            <div className="relative">
-              <SidebarButton onClick={() => setShowMemberPicker(!showMemberPicker)}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.7 14a6.98 6.98 0 0 0-9.4 0 .5.5 0 0 0 .35.85h8.7a.5.5 0 0 0 .35-.85Z" />
-                </svg>
-                Members
-              </SidebarButton>
-              {showMemberPicker && (
-                <MemberPicker
-                  boardMembers={boardMembers}
-                  assignedIds={assignedIds}
-                  onToggle={(userId) => isAssigned(userId) ? unassignMember(userId) : assignMember(userId)}
-                  onClose={() => setShowMemberPicker(false)}
-                />
-              )}
-            </div>
+            {/* Members + Labels — only available on cards that belong to a board */}
+            {!isInboxCard && (
+              <>
+                <div className="relative">
+                  <SidebarButton onClick={() => setShowMemberPicker(!showMemberPicker)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.7 14a6.98 6.98 0 0 0-9.4 0 .5.5 0 0 0 .35.85h8.7a.5.5 0 0 0 .35-.85Z" />
+                    </svg>
+                    Members
+                  </SidebarButton>
+                  {showMemberPicker && (
+                    <MemberPicker
+                      boardMembers={boardMembers}
+                      assignedIds={assignedIds}
+                      onToggle={(userId) => isAssigned(userId) ? unassignMember(userId) : assignMember(userId)}
+                      onClose={() => setShowMemberPicker(false)}
+                    />
+                  )}
+                </div>
 
-            {/* Labels */}
-            <div className="relative">
-              <SidebarButton onClick={() => setShowLabelPicker(!showLabelPicker)}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                  <path d="M3.5 1A1.5 1.5 0 0 0 2 2.5v9.793a.5.5 0 0 0 .854.354l2.646-2.647 2.646 2.647a.5.5 0 0 0 .854-.354V2.5A1.5 1.5 0 0 0 7.5 1h-4Z" />
-                </svg>
-                Labels
-              </SidebarButton>
-              {showLabelPicker && (
-                <LabelPicker
-                  labels={projectLabels}
-                  activeLabelIds={labelIds}
-                  onToggle={(labelId) => hasLabel(labelId) ? removeLabel(labelId) : addLabel(labelId)}
-                  onCreate={createLabel}
-                  onClose={() => setShowLabelPicker(false)}
-                />
-              )}
-            </div>
+                <div className="relative">
+                  <SidebarButton onClick={() => setShowLabelPicker(!showLabelPicker)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M3.5 1A1.5 1.5 0 0 0 2 2.5v9.793a.5.5 0 0 0 .854.354l2.646-2.647 2.646 2.647a.5.5 0 0 0 .854-.354V2.5A1.5 1.5 0 0 0 7.5 1h-4Z" />
+                    </svg>
+                    Labels
+                  </SidebarButton>
+                  {showLabelPicker && (
+                    <LabelPicker
+                      labels={projectLabels}
+                      activeLabelIds={labelIds}
+                      onToggle={(labelId) => hasLabel(labelId) ? removeLabel(labelId) : addLabel(labelId)}
+                      onCreate={createLabel}
+                      onClose={() => setShowLabelPicker(false)}
+                    />
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Checklist */}
             <SidebarButton onClick={() => addChecklist('Checklist')}>
