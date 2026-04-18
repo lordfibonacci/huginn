@@ -32,20 +32,13 @@ export function InboxPage() {
   const [adding, setAdding] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Stream voice transcript into the input field while recording.
+  // Stream the live transcript into the input while recording. Stop = the user
+  // can review/edit before tapping Add — never auto-save.
   useEffect(() => {
-    if (isRecording && transcript) {
+    if (isRecording) {
       setText(transcript)
     }
   }, [isRecording, transcript])
-
-  // When recording stops with a final transcript, save automatically.
-  useEffect(() => {
-    if (!isRecording && transcript && transcript === text && transcript.trim()) {
-      void handleSave(transcript.trim())
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRecording])
 
   async function handleSave(value?: string) {
     const trimmed = (value ?? text).trim()

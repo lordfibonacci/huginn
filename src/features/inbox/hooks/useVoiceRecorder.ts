@@ -16,6 +16,10 @@ export function useVoiceRecorder() {
   const [duration, setDuration] = useState(0)
   const recognitionRef = useRef<InstanceType<NonNullable<typeof SpeechRecognition>> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Finalised speech segments are committed here; interim results are shown on
+  // top without polluting the final text. Prevents the "thisthis isthis is
+  // very broken" duplication caused by interim results piling up.
+  const finalTextRef = useRef('')
   const isSupported = SpeechRecognition !== null
 
   const stopRecording = useCallback(() => {
@@ -34,6 +38,7 @@ export function useVoiceRecorder() {
   const startRecording = useCallback(() => {
     if (!SpeechRecognition) return
 
+    finalTextRef.current = ''
     setTranscript('')
     setDuration(0)
 
@@ -43,11 +48,20 @@ export function useVoiceRecorder() {
     recognition.lang = 'en-US'
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let final = ''
-      for (let i = 0; i < event.results.length; i++) {
-        final += event.results[i][0].transcript
+      let interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        const text = result[0].transcript
+        if (result.isFinal) {
+          // Add a space between finalised utterances for readability.
+          const needsSpace = finalTextRef.current && !/\s$/.test(finalTextRef.current)
+          finalTextRef.current += (needsSpace ? ' ' : '') + text.trim()
+        } else {
+          interim = text
+        }
       }
-      setTranscript(final)
+      const separator = finalTextRef.current && interim ? ' ' : ''
+      setTranscript(finalTextRef.current + separator + interim)
     }
 
     recognition.onerror = () => {

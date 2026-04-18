@@ -36,7 +36,12 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (user) return <Navigate to="/projects" replace />
+  if (user) {
+    // On mobile, the primary use case is quick capture — drop straight into the inbox.
+    // On desktop, projects-as-tile-grid is the natural starting view.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    return <Navigate to={isMobile ? '/inbox' : '/projects'} replace />
+  }
   return <>{children}</>
 }
 
