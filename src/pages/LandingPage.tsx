@@ -40,7 +40,7 @@ export function LandingPage() {
             Your second brain,<br className="hidden md:block" /> organised.
           </h1>
           <p className="mt-5 text-base md:text-lg text-huginn-text-secondary max-w-xl">
-            Capture every thought the moment it strikes — by text or voice — then triage them into
+            Capture every thought the moment it strikes - by text or voice - then triage them into
             Trello-style boards so nothing slips and everything ships.
           </p>
 
