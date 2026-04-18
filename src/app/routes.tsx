@@ -6,6 +6,7 @@ import { LoginPage } from '../pages/LoginPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailPage } from '../pages/ProjectDetailPage'
 import { SettingsPage } from '../pages/SettingsPage'
+import { InboxPage } from '../pages/InboxPage'
 import { AuthCallbackPage } from '../pages/AuthCallbackPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 
@@ -70,6 +71,7 @@ export function AppRouter() {
         >
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="inbox" element={<InboxPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
