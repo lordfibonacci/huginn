@@ -72,14 +72,17 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
     return () => document.removeEventListener('keydown', handleKeyDown)
   })
 
-  // Reset when task changes
+  // Reset only when switching to a different card.
+  // Re-syncing on every task.notes change creates a feedback loop with realtime
+  // that clobbers in-flight keystrokes in the description editor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setTitle(task.title)
     setDescription(task.notes ?? '')
     setDueDate(task.due_date ?? '')
     setPriority(task.priority)
     setConfirmDelete(false)
-  }, [task.id, task.title, task.notes, task.due_date, task.priority])
+  }, [task.id])
 
   function handleClose() {
     setVisible(false)
@@ -94,15 +97,33 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
     }
   }
 
-  // Auto-save description on blur
+  // Update local state on every keystroke; debounce DB write so realtime
+  // round-trips don't fight the user's typing.
+  const descriptionSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   function handleDescriptionChange(html: string) {
     setDescription(html)
-    // Debounce save (save after user stops typing for 1s)
-    const clean = html === '<p></p>' ? null : html
-    if (clean !== task.notes) {
-      onUpdate(task.id, { notes: clean })
-    }
+    if (descriptionSaveTimer.current) clearTimeout(descriptionSaveTimer.current)
+    descriptionSaveTimer.current = setTimeout(() => {
+      const clean = html === '<p></p>' ? null : html
+      if (clean !== task.notes) {
+        onUpdate(task.id, { notes: clean })
+      }
+    }, 700)
   }
+
+  // Flush pending description save when card closes / unmounts.
+  useEffect(() => {
+    return () => {
+      if (descriptionSaveTimer.current) {
+        clearTimeout(descriptionSaveTimer.current)
+        const clean = description === '<p></p>' ? null : description
+        if (clean !== task.notes) {
+          onUpdate(task.id, { notes: clean })
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function handleDelete() {
     if (!confirmDelete) {

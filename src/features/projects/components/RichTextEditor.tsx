@@ -30,11 +30,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     },
   })
 
-  // Sync external content changes (when switching cards)
+  // Sync external content changes (e.g. switching cards). Skip if the editor
+  // is focused — the user is actively typing and an in-flight prop update
+  // would clobber their keystrokes.
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content)
-    }
+    if (!editor) return
+    if (editor.isFocused) return
+    if (content === editor.getHTML()) return
+    editor.commands.setContent(content)
   }, [content, editor])
 
   if (!editor) return null
