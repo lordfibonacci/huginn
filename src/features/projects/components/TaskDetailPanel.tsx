@@ -7,7 +7,6 @@ import { LabelPicker } from './LabelPicker'
 import { useChecklists } from '../hooks/useChecklists'
 import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
-import type { Label } from '../../../shared/lib/types'
 
 interface TaskDetailPanelProps {
   task: Task

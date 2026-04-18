@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../../shared/lib/supabase'
-import type { Label } from '../../../shared/lib/types'
 
 export function useTaskLabels(taskId: string) {
   const [labelIds, setLabelIds] = useState<string[]>([])

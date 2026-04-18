@@ -9,7 +9,7 @@ interface ChecklistData {
 
 interface MultiChecklistSectionProps {
   checklists: ChecklistData[]
-  onAddChecklist: (name: string) => Promise<unknown>
+  onAddChecklist?: (name: string) => Promise<unknown>
   onDeleteChecklist: (checklistId: string) => void
   onRenameChecklist: (checklistId: string, name: string) => void
   onAddItem: (checklistId: string, text: string) => Promise<unknown>
@@ -18,7 +18,7 @@ interface MultiChecklistSectionProps {
   onDeleteItem: (itemId: string) => Promise<void>
 }
 
-export function ChecklistSection({ checklists, onAddChecklist, onDeleteChecklist, onRenameChecklist, onAddItem, onToggleItem, onUpdateItemText, onDeleteItem }: MultiChecklistSectionProps) {
+export function ChecklistSection({ checklists, onDeleteChecklist, onRenameChecklist, onAddItem, onToggleItem, onUpdateItemText, onDeleteItem }: MultiChecklistSectionProps) {
   return (
     <div className="space-y-4">
       {checklists.map((checklist) => (

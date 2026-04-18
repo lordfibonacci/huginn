@@ -53,6 +53,8 @@ export function useThoughts() {
       type: null,
       tags: [],
       project_id: null,
+      priority: null,
+      due_date: null,
       created_at: new Date().toISOString(),
     }
 

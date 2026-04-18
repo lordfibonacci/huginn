@@ -20,6 +20,7 @@ interface TaskCardProps {
   selected?: boolean
   checklistProgress?: { checked: number; total: number } | null
   labels?: { id: string; name: string; color: string }[]
+  dragHandleProps?: Record<string, unknown>
 }
 
 export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels }: TaskCardProps) {

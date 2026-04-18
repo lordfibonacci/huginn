@@ -45,6 +45,7 @@ export function useChecklistItems(taskId: string) {
     const optimistic: ChecklistItem = {
       id: crypto.randomUUID(),
       task_id: taskId,
+      checklist_id: '',
       user_id: user.id,
       text,
       checked: false,

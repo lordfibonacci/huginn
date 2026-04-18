@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task, TaskStatus, ThoughtPriority, List } from '../../../shared/lib/types'
-import { timeAgo } from '../../../shared/lib/dateUtils'
 import { RichTextEditor } from './RichTextEditor'
 import { ChecklistSection } from './ChecklistSection'
 import { LabelBadges } from './LabelBadges'

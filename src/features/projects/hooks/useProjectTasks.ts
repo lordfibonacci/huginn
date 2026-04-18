@@ -86,7 +86,7 @@ export function useProjectTasks(projectId: string) {
 
   async function updateTask(
     taskId: string,
-    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; start_date?: string | null; due_date?: string | null; recurring?: string | null; list_id?: string }
+    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; start_date?: string | null; due_date?: string | null; recurring?: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null; list_id?: string }
   ) {
     const prev = tasks
     setTasks((t) => t.map((tk) => (tk.id === taskId ? { ...tk, ...updates } : tk)))

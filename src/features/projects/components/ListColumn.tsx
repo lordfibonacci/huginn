@@ -70,7 +70,7 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-export function ListColumn({ list, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, selectedTaskId, renderDraggableCard }: ListColumnProps) {
+export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, renderDraggableCard }: ListColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: list.id })
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(list.name)
