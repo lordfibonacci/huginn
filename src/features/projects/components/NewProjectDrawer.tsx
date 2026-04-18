@@ -1,20 +1,16 @@
 import { useState } from 'react'
 import type { ProjectStatus } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
+import { ProjectColorPicker } from './ProjectColorPicker'
 
 interface NewProjectDrawerProps {
   onSave: (name: string, color: string, status: ProjectStatus) => Promise<void>
   onDone: () => void
 }
 
-const PRESET_COLORS = [
-  '#6c5ce7', '#00b894', '#fdcb6e', '#e17055',
-  '#0984e3', '#e84393', '#636e72', '#2d3436',
-]
-
 export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
   const [name, setName] = useState('')
-  const [color, setColor] = useState(PRESET_COLORS[0])
+  const [color, setColor] = useState('#6c5ce7')
   const [saving, setSaving] = useState(false)
 
   async function handleSave() {
@@ -42,17 +38,8 @@ export function NewProjectDrawer({ onSave, onDone }: NewProjectDrawerProps) {
 
       {/* Color */}
       <p className="text-xs text-huginn-text-muted font-semibold mb-2">Color</p>
-      <div className="flex gap-3 mb-4">
-        {PRESET_COLORS.map((c) => (
-          <button
-            key={c}
-            onClick={() => setColor(c)}
-            className={`w-8 h-8 rounded-full transition-all ${
-              color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-huginn-card' : ''
-            }`}
-            style={{ backgroundColor: c }}
-          />
-        ))}
+      <div className="mb-5">
+        <ProjectColorPicker value={color} onChange={setColor} />
       </div>
 
       {/* Actions */}

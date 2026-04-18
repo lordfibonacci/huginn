@@ -17,6 +17,10 @@ import { getBackground } from '../shared/lib/boardBackgrounds'
 import { InboxPanel } from '../features/inbox/components/InboxPanel'
 import { useInbox } from '../features/inbox/hooks/useInbox'
 import { ToolBar } from '../shared/components/ToolBar'
+import { LoadingScreen } from '../shared/components/Logo'
+import { ProjectGlyph } from '../features/projects/components/ProjectGlyph'
+import { BoardMembersStack } from '../features/projects/components/BoardMembersStack'
+import { BoardMembersDrawer } from '../features/projects/components/BoardMembersDrawer'
 import type { Project, Task, Label } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
@@ -95,6 +99,7 @@ export function ProjectDetailPage() {
   // State
   const [view, setView] = useState<'board' | 'calendar'>('board')
   const [showSettings, setShowSettings] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   // Keep selected task in sync with latest data
@@ -133,11 +138,7 @@ export function ProjectDetailPage() {
   }
 
   if (loadingProject) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-huginn-text-muted text-sm">Loading...</p>
-      </div>
-    )
+    return <LoadingScreen message="Loading board" />
   }
 
   if (!project) {
@@ -169,29 +170,44 @@ export function ProjectDetailPage() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-0 min-w-0">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-2.5 border-b border-huginn-border md:px-5 shrink-0">
-        <Link to="/projects" className="text-huginn-text-muted hover:text-white transition-colors">
+      <header className="relative flex items-center gap-3 px-5 py-3.5 border-b border-huginn-border bg-huginn-base/80 backdrop-blur-sm md:gap-4 md:px-6 md:py-4 shrink-0">
+        <Link
+          to="/projects"
+          className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors -ml-1.5"
+          aria-label="Back to projects"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
           </svg>
         </Link>
-        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-        <h1 className="text-base font-bold flex-1">{project.name}</h1>
+
+        <div className="w-px h-7 bg-huginn-border/70" aria-hidden />
+
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex items-center gap-3 min-w-0 flex-1 group rounded-lg px-2 py-1.5 -mx-2 hover:bg-huginn-hover/40 transition-colors"
+          title="Project settings"
+        >
+          <ProjectGlyph color={project.color} size={20} />
+          <h1 className="text-lg font-bold tracking-tight truncate text-white group-hover:text-white">
+            {project.name}
+          </h1>
+        </button>
 
         {/* View switcher */}
-        <div className="flex bg-huginn-card rounded-md p-0.5 mr-2">
+        <div className="flex bg-huginn-card rounded-lg p-0.5">
           <button
             onClick={() => setView('board')}
-            className={`text-[11px] font-medium px-2.5 py-1 rounded transition-colors ${
-              view === 'board' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+            className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+              view === 'board' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             Board
           </button>
           <button
             onClick={() => setView('calendar')}
-            className={`text-[11px] font-medium px-2.5 py-1 rounded transition-colors ${
-              view === 'calendar' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+            className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+              view === 'calendar' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             Calendar
@@ -204,7 +220,17 @@ export function ProjectDetailPage() {
           labels={labels}
           isActive={filtersActive}
         />
-        <button onClick={() => setShowSettings(true)} className="text-huginn-text-muted hover:text-white transition-colors">
+
+        <BoardMembersStack
+          projectId={id!}
+          onClick={() => setShowMembers(true)}
+        />
+
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors"
+          aria-label="Project settings"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
             <path fillRule="evenodd" d="M8.34 1.804A1 1 0 0 1 9.32 1h1.36a1 1 0 0 1 .98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 0 1 1.262.125l.962.962a1 1 0 0 1 .125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 0 1 .804.98v1.362a1 1 0 0 1-.804.98l-1.473.295a6.95 6.95 0 0 1-.587 1.416l.834 1.25a1 1 0 0 1-.125 1.262l-.962.962a1 1 0 0 1-1.262.125l-1.25-.834a6.953 6.953 0 0 1-1.416.587l-.294 1.473a1 1 0 0 1-.98.804H9.32a1 1 0 0 1-.98-.804l-.295-1.473a6.957 6.957 0 0 1-1.416-.587l-1.25.834a1 1 0 0 1-1.262-.125l-.962-.962a1 1 0 0 1-.125-1.262l.834-1.25a6.957 6.957 0 0 1-.587-1.416l-1.473-.294A1 1 0 0 1 1 11.36V9.998a1 1 0 0 1 .804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 0 1 .125-1.262l.962-.962A1 1 0 0 1 5.38 3.708l1.25.834a6.957 6.957 0 0 1 1.416-.587l.294-1.473ZM13 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />
           </svg>
@@ -235,13 +261,12 @@ export function ProjectDetailPage() {
       )}
       </div>
 
-      {/* Bottom toolbar */}
+      {/* Floating bottom toolbar (fixed, viewport-anchored) */}
       <ToolBar
         inboxOpen={showInbox}
         inboxCount={inboxCount}
         onToggleInbox={() => setShowInbox(!showInbox)}
         onSwitchProjects={() => navigate('/projects')}
-        projectName={project.name}
       />
 
       </div>{/* end main content */}
@@ -265,6 +290,14 @@ export function ProjectDetailPage() {
           onUpdate={handleUpdateProject}
           onDelete={handleDeleteProject}
           onDone={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Members drawer */}
+      {showMembers && (
+        <BoardMembersDrawer
+          projectId={id!}
+          onDone={() => setShowMembers(false)}
         />
       )}
     </div>

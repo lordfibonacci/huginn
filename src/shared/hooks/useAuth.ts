@@ -26,8 +26,30 @@ export function useAuth() {
     if (error) throw error
   }
 
-  async function signUp(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password })
+  async function signUp(email: string, password: string): Promise<{ needsEmailConfirmation: boolean }> {
+    const redirectTo = `${window.location.origin}/auth/callback`
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: redirectTo },
+    })
+    if (error) throw error
+    return { needsEmailConfirmation: !data.session }
+  }
+
+  async function resendConfirmation(email: string) {
+    const redirectTo = `${window.location.origin}/auth/callback`
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: redirectTo },
+    })
+    if (error) throw error
+  }
+
+  async function requestPasswordReset(email: string) {
+    const redirectTo = `${window.location.origin}/auth/callback?type=recovery`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
     if (error) throw error
   }
 
@@ -36,5 +58,5 @@ export function useAuth() {
     if (error) throw error
   }
 
-  return { user, loading, signIn, signUp, signOut }
+  return { user, loading, signIn, signUp, resendConfirmation, requestPasswordReset, signOut }
 }

@@ -4,6 +4,7 @@ import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import type { Task, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
 import { ListColumn } from './ListColumn'
+import { LoadingScreen } from '../../../shared/components/Logo'
 
 interface BoardViewProps {
   lists: List[]
@@ -104,11 +105,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onMoveCard, onRe
   }
 
   if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-huginn-text-muted text-sm">Loading board...</p>
-      </div>
-    )
+    return <LoadingScreen message="Loading board" />
   }
 
   // Group tasks by list_id

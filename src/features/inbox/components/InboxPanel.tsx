@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Task } from '../../../shared/lib/types'
+import { EmptyState } from '../../../shared/components/Logo'
 
 interface InboxPanelProps {
   cards: Task[]
@@ -22,9 +23,9 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
   }
 
   return (
-    <div className="w-72 min-w-[288px] bg-[#1a1d21] border-r border-[#2a2d31] flex flex-col h-full shrink-0">
+    <div className="w-72 min-w-[288px] bg-huginn-base border-r border-huginn-border flex flex-col h-full shrink-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2d31]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
         <div className="flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-huginn-text-secondary">
             <path d="M3.5 9.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-6Zm1 2v4a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4h-3.09a3 3 0 0 1-5.82 0H4.5Z" />
@@ -85,9 +86,10 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
         {loading ? (
           <p className="text-xs text-huginn-text-muted py-4 text-center">Loading...</p>
         ) : cards.length === 0 ? (
-          <p className="text-xs text-huginn-text-muted py-4 text-center">
-            Your inbox is empty.<br />Capture quick ideas here.
-          </p>
+          <EmptyState
+            title="Your inbox is empty"
+            hint="Capture quick ideas here."
+          />
         ) : (
           cards.map((card) => (
             <div

@@ -127,7 +127,9 @@ export interface BoardMember {
   id: string
   project_id: string
   user_id: string
-  role: 'owner' | 'admin' | 'member' | 'viewer'
+  role: 'owner' | 'admin' | 'member'
+  status: 'pending' | 'active'
+  invited_by: string | null
   created_at: string
 }
 
