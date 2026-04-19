@@ -10,6 +10,7 @@ interface ListColumnProps {
   onRenameList: (listId: string, name: string) => void
   onArchiveList: (listId: string) => void
   selectedTaskId?: string
+  isHovered?: boolean
   renderDraggableCard: (task: Task) => React.ReactNode
 }
 
@@ -70,8 +71,9 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, renderDraggableCard }: ListColumnProps) {
+export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, isHovered, renderDraggableCard }: ListColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: list.id })
+  const showDropIndicator = isOver || isHovered
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(list.name)
   const [showMenu, setShowMenu] = useState(false)
@@ -89,8 +91,10 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
   return (
     <div
       ref={setNodeRef}
-      className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-colors backdrop-blur-sm ${
-        isOver ? 'bg-black/30 ring-1 ring-huginn-accent/30' : 'bg-black/20'
+      className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-all duration-200 backdrop-blur-sm ${
+        showDropIndicator
+          ? 'bg-huginn-accent/10 ring-2 ring-huginn-accent/60 shadow-lg shadow-huginn-accent/20 scale-[1.01]'
+          : 'bg-black/20'
       }`}
       data-list-id={list.id}
     >
@@ -138,6 +142,11 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
       {/* Cards */}
       <div className="flex-1 overflow-y-auto px-2 pb-1 min-h-[20px]">
         {tasks.map((task) => renderDraggableCard(task))}
+        {showDropIndicator && (
+          <div className="mt-1 mb-1 h-12 rounded-lg border-2 border-dashed border-huginn-accent/70 bg-huginn-accent/5 flex items-center justify-center text-[11px] font-semibold uppercase tracking-wider text-huginn-accent/80 animate-pulse">
+            Drop here
+          </div>
+        )}
       </div>
 
       {/* Add card */}

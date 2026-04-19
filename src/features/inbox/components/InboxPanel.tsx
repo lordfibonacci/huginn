@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import type { Task } from '../../../shared/lib/types'
 import { EmptyState } from '../../../shared/components/Logo'
 
@@ -92,29 +93,47 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
           />
         ) : (
           cards.map((card) => (
-            <div
+            <DraggableInboxCard
               key={card.id}
-              className="bg-huginn-card rounded-lg p-3 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors group"
-              onClick={() => onCardTap(card)}
-            >
-              <div className="flex items-start gap-2">
-                <p className="text-sm text-huginn-text-primary flex-1">{card.title}</p>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDeleteCard(card.id) }}
-                  className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
-                  </svg>
-                </button>
-              </div>
-              {card.due_date && (
-                <p className="text-[10px] text-huginn-text-muted mt-1">{card.due_date}</p>
-              )}
-            </div>
+              card={card}
+              onTap={() => onCardTap(card)}
+              onDelete={() => onDeleteCard(card.id)}
+            />
           ))
         )}
       </div>
+    </div>
+  )
+}
+
+function DraggableInboxCard({ card, onTap, onDelete }: { card: Task; onTap: () => void; onDelete: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={onTap}
+      className={`bg-huginn-card rounded-lg p-3 mb-2 cursor-pointer hover:bg-huginn-hover transition-colors group select-none ${
+        isDragging ? 'opacity-30' : ''
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <p className="text-sm text-huginn-text-primary flex-1 break-words">{card.title}</p>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete() }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
+          </svg>
+        </button>
+      </div>
+      {card.due_date && (
+        <p className="text-[10px] text-huginn-text-muted mt-1">{card.due_date}</p>
+      )}
     </div>
   )
 }

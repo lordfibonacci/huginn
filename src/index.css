@@ -25,3 +25,15 @@
 
 /* Selection */
 ::selection { background: rgba(108, 92, 231, 0.3); }
+
+/* 10-second-hold easter egg: card explosion */
+@keyframes hg-explode-core {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  20%  { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+@keyframes hg-explode-particle {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  60%  { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--hg-dx, 0)), calc(-50% + var(--hg-dy, 0))) scale(0.2); opacity: 0; }
+}

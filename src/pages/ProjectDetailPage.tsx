@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../shared/lib/supabase'
+import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import {
   BoardView,
   CardPopup,
@@ -10,6 +12,7 @@ import {
   useLists,
   useLabels,
 } from '../features/projects'
+import { TaskCard } from '../features/projects/components/TaskCard'
 import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
@@ -76,7 +79,7 @@ export function ProjectDetailPage() {
   }, [id])
 
   // Inbox
-  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, count: inboxCount } = useInbox()
+  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, moveToProject: moveInboxCardToProject, count: inboxCount } = useInbox()
   const [showInbox, setShowInbox] = useState(false)
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
@@ -128,10 +131,6 @@ export function ProjectDetailPage() {
     await addTask(title, listId)
   }
 
-  function handleMoveCard(taskId: string, newListId: string) {
-    updateTask(taskId, { list_id: newListId })
-  }
-
   function handleRenameList(listId: string, name: string) {
     updateList(listId, { name })
   }
@@ -139,6 +138,83 @@ export function ProjectDetailPage() {
   function handleAddList(name: string) {
     addList(name)
   }
+
+  // ===== Drag-and-drop (board cards + inbox cards) =====
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [hoveredListId, setHoveredListId] = useState<string | null>(null)
+  const [explosion, setExplosion] = useState<{ x: number; y: number } | null>(null)
+  const explosionPendingRef = useRef(false)
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+
+  // Track the pointer continuously while a drag is active so we know where
+  // to spawn the explosion when the 10-second easter egg fires.
+  useEffect(() => {
+    if (!activeTask) return
+    function handlePointerMove(e: PointerEvent) {
+      lastPointerRef.current = { x: e.clientX, y: e.clientY }
+    }
+    window.addEventListener('pointermove', handlePointerMove)
+    return () => window.removeEventListener('pointermove', handlePointerMove)
+  }, [activeTask])
+
+  function findTask(taskId: string): Task | undefined {
+    return tasks.find(t => t.id === taskId) ?? inboxCards.find(c => c.id === taskId)
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const task = findTask(event.active.id as string)
+    setActiveTask(task ?? null)
+    explosionPendingRef.current = false
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
+    // 10-second hold -> the card explodes and respawns in its original slot
+    holdTimerRef.current = setTimeout(() => {
+      explosionPendingRef.current = true
+      setExplosion({ ...lastPointerRef.current })
+      // Clear active task so the drag overlay disappears (the explosion takes over)
+      setActiveTask(null)
+      setHoveredListId(null)
+    }, 10000)
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const overId = event.over?.id as string | undefined
+    setHoveredListId(overId ?? null)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current)
+      holdTimerRef.current = null
+    }
+    setActiveTask(null)
+    setHoveredListId(null)
+    if (explosionPendingRef.current) {
+      // The card was nuked mid-drag — do nothing, it stays where it was.
+      return
+    }
+    const { active, over } = event
+    if (!over) return
+    const taskId = active.id as string
+    const newListId = over.id as string
+    const task = findTask(taskId)
+    if (!task) return
+
+    if (task.project_id == null) {
+      // Inbox card dropped onto a list — adopt it into this board+list
+      moveInboxCardToProject(taskId, id!, newListId)
+    } else if (task.list_id !== newListId) {
+      updateTask(taskId, { list_id: newListId })
+    }
+  }
+
+  // Auto-clear the explosion after the animation finishes
+  useEffect(() => {
+    if (!explosion) return
+    const t = setTimeout(() => setExplosion(null), 1200)
+    return () => clearTimeout(t)
+  }, [explosion])
 
   if (loadingProject) {
     return <LoadingScreen message="Loading board" />
@@ -153,6 +229,13 @@ export function ProjectDetailPage() {
   }
 
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
     <div className="flex flex-1 min-h-0">
       {/* Inbox panel — pushes board to the right */}
       {showInbox && (
@@ -245,12 +328,12 @@ export function ProjectDetailPage() {
           loading={loadingLists || loadingTasks}
           onTaskTap={setSelectedTask}
           onAddCard={handleAddCard}
-          onMoveCard={handleMoveCard}
           onRenameList={handleRenameList}
           onArchiveList={archiveList}
           onAddList={handleAddList}
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
+          hoveredListId={hoveredListId}
         />
       ) : (
         <CalendarView
@@ -301,6 +384,60 @@ export function ProjectDetailPage() {
           onDone={() => setShowMembers(false)}
         />
       )}
+    </div>
+
+    <DragOverlay dropAnimation={null}>
+      {activeTask && (
+        <div className="w-[250px] rotate-2 opacity-90 pointer-events-none">
+          <TaskCard task={activeTask} />
+        </div>
+      )}
+    </DragOverlay>
+
+    {explosion && <ExplosionFx x={explosion.x} y={explosion.y} />}
+    </DndContext>
+  )
+}
+
+// 10-second-hold easter egg. Renders a one-shot CSS particle burst at the
+// pointer position. Card data is untouched — when the drag is released, the
+// card is still in its original slot.
+function ExplosionFx({ x, y }: { x: number; y: number }) {
+  const particles = Array.from({ length: 14 })
+  return (
+    <div
+      className="fixed pointer-events-none z-[100]"
+      style={{ left: x, top: y, width: 0, height: 0 }}
+      aria-hidden
+    >
+      <span className="absolute -translate-x-1/2 -translate-y-1/2 text-4xl select-none animate-[hg-explode-core_900ms_ease-out_forwards]">
+        💥
+      </span>
+      {particles.map((_, i) => {
+        const angle = (i / particles.length) * Math.PI * 2
+        const dx = Math.cos(angle) * 90
+        const dy = Math.sin(angle) * 90
+        const colors = ['#6c5ce7', '#fdcb6e', '#e17055', '#00b894', '#0984e3', '#e84393']
+        const color = colors[i % colors.length]
+        return (
+          <span
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              left: 0,
+              top: 0,
+              width: 8,
+              height: 8,
+              backgroundColor: color,
+              boxShadow: `0 0 8px ${color}`,
+              transform: 'translate(-50%, -50%)',
+              animation: `hg-explode-particle 900ms ease-out forwards`,
+              ['--hg-dx' as string]: `${dx}px`,
+              ['--hg-dy' as string]: `${dy}px`,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
