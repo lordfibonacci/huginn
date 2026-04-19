@@ -213,9 +213,10 @@ export function ProjectDetailPage() {
     const activeTaskObj = localTasks.find(t => t.id === activeId)
     if (!activeTaskObj) return // inbox card — no in-list preview
 
-    // Hovering the inbox panel — pull the card out of localTasks so it
-    // visibly leaves the board mid-drag.
-    if (overId === INBOX_DROPPABLE_ID) {
+    // Hovering the inbox panel (or any card inside it) — pull the dragged card
+    // out of localTasks so it visibly leaves the board mid-drag.
+    const hoveringInbox = overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)
+    if (hoveringInbox) {
       setLocalTasks(prev => prev.filter(t => t.id !== activeId))
       return
     }
@@ -281,17 +282,20 @@ export function ProjectDetailPage() {
     const activeId = active.id as string
     const overId = over.id as string
 
+    // Treat "over an inbox card" the same as "over the inbox panel" — both mean inbox.
+    const droppedOnInbox = overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)
+
     // Inbox card -> board: figure out which list, then adopt
     const inboxCard = inboxCards.find(c => c.id === activeId)
     if (inboxCard) {
-      if (overId === INBOX_DROPPABLE_ID) return // dropped back on itself
+      if (droppedOnInbox) return // dropped back on inbox itself, no-op
       const targetList = resolveContainer(overId)
       if (targetList) moveInboxCardToProject(activeId, id!, targetList)
       return
     }
 
     // Board card -> inbox: detach from project + list, take ownership
-    if (overId === INBOX_DROPPABLE_ID) {
+    if (droppedOnInbox) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { error } = await supabase
