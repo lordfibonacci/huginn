@@ -18,7 +18,7 @@ import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
 import { getBackground } from '../shared/lib/boardBackgrounds'
-import { InboxPanel } from '../features/inbox/components/InboxPanel'
+import { InboxPanel, INBOX_DROPPABLE_ID } from '../features/inbox/components/InboxPanel'
 import { useInbox } from '../features/inbox/hooks/useInbox'
 import { ToolBar } from '../shared/components/ToolBar'
 import { LoadingScreen } from '../shared/components/Logo'
@@ -213,6 +213,13 @@ export function ProjectDetailPage() {
     const activeTaskObj = localTasks.find(t => t.id === activeId)
     if (!activeTaskObj) return // inbox card — no in-list preview
 
+    // Hovering the inbox panel — pull the card out of localTasks so it
+    // visibly leaves the board mid-drag.
+    if (overId === INBOX_DROPPABLE_ID) {
+      setLocalTasks(prev => prev.filter(t => t.id !== activeId))
+      return
+    }
+
     const activeContainer = activeTaskObj.list_id ?? null
     const overContainer = resolveContainer(overId)
     if (!overContainer) return
@@ -272,12 +279,40 @@ export function ProjectDetailPage() {
     }
 
     const activeId = active.id as string
+    const overId = over.id as string
 
     // Inbox card -> board: figure out which list, then adopt
     const inboxCard = inboxCards.find(c => c.id === activeId)
     if (inboxCard) {
-      const targetList = resolveContainer(over.id as string)
+      if (overId === INBOX_DROPPABLE_ID) return // dropped back on itself
+      const targetList = resolveContainer(overId)
       if (targetList) moveInboxCardToProject(activeId, id!, targetList)
+      return
+    }
+
+    // Board card -> inbox: detach from project + list, take ownership
+    if (overId === INBOX_DROPPABLE_ID) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { error } = await supabase
+        .from('huginn_tasks')
+        .update({ project_id: null, list_id: null, user_id: user.id, position: 0 })
+        .eq('id', activeId)
+      if (error) {
+        console.error('Move-to-inbox failed:', error)
+        setLocalTasks(tasks)
+        return
+      }
+      // Renumber the source list (gap left by the removed card)
+      const sourceListId = tasks.find(t => t.id === activeId)?.list_id
+      if (sourceListId) {
+        const remaining = localTasks.filter(t => t.list_id === sourceListId)
+        const writes = remaining.flatMap((t, index) => {
+          const orig = tasks.find(o => o.id === t.id)
+          return orig && orig.position !== index ? [updateTask(t.id, { position: index })] : []
+        })
+        await Promise.all(writes)
+      }
       return
     }
 

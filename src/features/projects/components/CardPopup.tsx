@@ -17,6 +17,7 @@ import { useAuth } from '../../../shared/hooks/useAuth'
 import { DatePicker } from './DatePicker'
 import { useBoardMembers } from '../hooks/useBoardMembers'
 import { useTaskMembers } from '../hooks/useTaskMembers'
+import { supabase } from '../../../shared/lib/supabase'
 
 interface CardPopupProps {
   task: Task
@@ -141,6 +142,20 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
     if (listId !== task.list_id) {
       onUpdate(task.id, { list_id: listId })
     }
+  }
+
+  async function handleMoveToInbox() {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return
+    const { error } = await supabase
+      .from('huginn_tasks')
+      .update({ project_id: null, list_id: null, user_id: authUser.id, position: 0 })
+      .eq('id', task.id)
+    if (error) {
+      console.error('Move-to-inbox failed:', error)
+      return
+    }
+    handleClose()
   }
 
   return (
@@ -421,18 +436,32 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
               </div>
             </div>
 
-            {/* Move to list */}
+            {/* Move to list / move to inbox */}
             <div>
               <p className="text-xs uppercase tracking-wider font-bold text-huginn-text-muted mb-2 mt-5">Actions</p>
-              <select
-                value={task.list_id ?? ''}
-                onChange={(e) => handleMoveToList(e.target.value)}
-                className="w-full bg-huginn-surface text-huginn-text-secondary rounded-lg px-3 py-2 text-sm outline-none border border-huginn-border focus:border-huginn-accent appearance-none mb-1.5"
-              >
-                {lists.map((l) => (
-                  <option key={l.id} value={l.id}>{l.name}</option>
-                ))}
-              </select>
+              {!isInboxCard && (
+                <>
+                  <select
+                    value={task.list_id ?? ''}
+                    onChange={(e) => handleMoveToList(e.target.value)}
+                    className="w-full bg-huginn-surface text-huginn-text-secondary rounded-lg px-3 py-2 text-sm outline-none border border-huginn-border focus:border-huginn-accent appearance-none mb-1.5"
+                  >
+                    {lists.map((l) => (
+                      <option key={l.id} value={l.id}>{l.name}</option>
+                    ))}
+                  </select>
+
+                  <button
+                    onClick={handleMoveToInbox}
+                    className="w-full flex items-center gap-2 text-sm py-2 px-3 rounded-lg bg-huginn-surface text-huginn-text-secondary hover:text-white hover:bg-huginn-hover transition-colors mb-1.5"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M3.5 7.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-4Zm1 2v2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-2H10a2.5 2.5 0 0 1-4 0H4.5Z" />
+                    </svg>
+                    Move to Inbox
+                  </button>
+                </>
+              )}
 
               <button
                 onClick={handleDelete}

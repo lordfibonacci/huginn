@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { useDraggable } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { Task } from '../../../shared/lib/types'
 import { EmptyState } from '../../../shared/components/Logo'
+
+export const INBOX_DROPPABLE_ID = '__inbox__'
 
 interface InboxPanelProps {
   cards: Task[]
@@ -15,6 +17,7 @@ interface InboxPanelProps {
 export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap, onClose }: InboxPanelProps) {
   const [newTitle, setNewTitle] = useState('')
   const [adding, setAdding] = useState(false)
+  const { setNodeRef, isOver } = useDroppable({ id: INBOX_DROPPABLE_ID, data: { type: 'inbox' } })
 
   async function handleAdd() {
     const trimmed = newTitle.trim()
@@ -24,7 +27,12 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
   }
 
   return (
-    <div className="w-72 min-w-[288px] bg-huginn-base border-r border-huginn-border flex flex-col h-full shrink-0">
+    <div
+      ref={setNodeRef}
+      className={`w-72 min-w-[288px] bg-huginn-base border-r flex flex-col h-full shrink-0 transition-colors ${
+        isOver ? 'border-huginn-accent ring-2 ring-huginn-accent/40 ring-inset bg-huginn-accent/5' : 'border-huginn-border'
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-huginn-border">
         <div className="flex items-center gap-2">
