@@ -22,7 +22,7 @@ interface CardPopupProps {
   task: Task
   projectId: string
   lists: List[]
-  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null; list_id?: string }) => Promise<boolean>
+  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null; list_id?: string; position?: number }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
   onClose: () => void
 }

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import { useDraggable } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Task, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
 import { ListColumn } from './ListColumn'
@@ -16,16 +17,23 @@ interface BoardViewProps {
   selectedTaskId?: string
   loading?: boolean
   taskLabelsMap?: Record<string, Label[]>
-  /** Set when a card is being dragged so we can render an in-list placeholder. */
-  hoveredListId?: string | null
 }
 
-function DraggableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+function SortableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { type: 'card', listId: task.list_id },
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
 
   return (
     <div
       ref={setNodeRef}
+      style={style}
       {...listeners}
       {...attributes}
       className={isDragging ? 'opacity-30' : ''}
@@ -40,7 +48,7 @@ function DraggableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap, hoveredListId }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap }: BoardViewProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
 
@@ -51,7 +59,6 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
   const scrollStartX = useRef(0)
 
   const handleBoardMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only trigger on the board background itself, not on cards or list columns
     if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest('[data-board-bg]')) return
     isDraggingBoard.current = true
     dragStartX.current = e.clientX
@@ -83,19 +90,13 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
     return <LoadingScreen message="Loading board" />
   }
 
-  // Group tasks by list_id
+  // Group tasks by list_id, preserving the order they arrive in (parent owns order)
   const tasksByList: Record<string, Task[]> = {}
-  for (const list of lists) {
-    tasksByList[list.id] = []
-  }
+  for (const list of lists) tasksByList[list.id] = []
   for (const task of tasks) {
     if (task.list_id && tasksByList[task.list_id]) {
       tasksByList[task.list_id].push(task)
     }
-  }
-  // Sort each list's tasks by position
-  for (const listId of Object.keys(tasksByList)) {
-    tasksByList[listId].sort((a, b) => a.position - b.position)
   }
 
   return (
@@ -108,22 +109,26 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
       onMouseUp={handleBoardMouseUp}
       onMouseLeave={handleBoardMouseUp}
     >
-      {lists.map((list) => (
-        <ListColumn
-          key={list.id}
-          list={list}
-          tasks={tasksByList[list.id] || []}
-          onTaskTap={onTaskTap}
-          onAddCard={onAddCard}
-          onRenameList={onRenameList}
-          onArchiveList={onArchiveList}
-          selectedTaskId={selectedTaskId}
-          isHovered={hoveredListId === list.id}
-          renderDraggableCard={(task) => (
-            <DraggableCard key={task.id} task={task} onTaskTap={onTaskTap} selectedTaskId={selectedTaskId} labels={taskLabelsMap?.[task.id]} />
-          )}
-        />
-      ))}
+      {lists.map((list) => {
+        const listTasks = tasksByList[list.id] || []
+        const itemIds = listTasks.map(t => t.id)
+        return (
+          <SortableContext key={list.id} id={list.id} items={itemIds} strategy={verticalListSortingStrategy}>
+            <ListColumn
+              list={list}
+              tasks={listTasks}
+              onTaskTap={onTaskTap}
+              onAddCard={onAddCard}
+              onRenameList={onRenameList}
+              onArchiveList={onArchiveList}
+              selectedTaskId={selectedTaskId}
+              renderDraggableCard={(task) => (
+                <SortableCard key={task.id} task={task} onTaskTap={onTaskTap} selectedTaskId={selectedTaskId} labels={taskLabelsMap?.[task.id]} />
+              )}
+            />
+          </SortableContext>
+        )
+      })}
 
       {/* Add another list */}
       <div className="w-[272px] min-w-[272px] shrink-0">

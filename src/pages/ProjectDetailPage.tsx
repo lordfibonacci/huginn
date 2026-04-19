@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../shared/lib/supabase'
-import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import {
   BoardView,
   CardPopup,
@@ -83,7 +84,22 @@ export function ProjectDetailPage() {
   const [showInbox, setShowInbox] = useState(false)
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
-  const filteredTasks = filtersActive ? applyBoardFilters(tasks, filters) as Task[] : tasks
+
+  // Local optimistic copy of tasks so dnd-kit's sortable can reorder live
+  // during a drag without waiting on the server. Synced from server-truth
+  // (`tasks`) whenever a drag is NOT in progress.
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
+  const isDraggingRef = useRef(false)
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalTasks([...tasks].sort((a, b) => {
+        if ((a.list_id ?? '') !== (b.list_id ?? '')) return 0
+        return (a.position ?? 0) - (b.position ?? 0)
+      }))
+    }
+  }, [tasks])
+
+  const filteredTasks = filtersActive ? applyBoardFilters(localTasks, filters) as Task[] : localTasks
 
   // Fetch project
   useEffect(() => {
@@ -142,7 +158,6 @@ export function ProjectDetailPage() {
   // ===== Drag-and-drop (board cards + inbox cards) =====
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [hoveredListId, setHoveredListId] = useState<string | null>(null)
   const [explosion, setExplosion] = useState<{ x: number; y: number } | null>(null)
   const explosionPendingRef = useRef(false)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -159,54 +174,138 @@ export function ProjectDetailPage() {
     return () => window.removeEventListener('pointermove', handlePointerMove)
   }, [activeTask])
 
-  function findTask(taskId: string): Task | undefined {
-    return tasks.find(t => t.id === taskId) ?? inboxCards.find(c => c.id === taskId)
+  function findTaskAnywhere(taskId: string): Task | undefined {
+    return localTasks.find(t => t.id === taskId) ?? inboxCards.find(c => c.id === taskId)
+  }
+
+  // Resolve the list-container that an over.id refers to.
+  // - If over.id IS a list id, that's the container.
+  // - If over.id is a task id (a card under the pointer), use that task's list.
+  function resolveContainer(id: string): string | null {
+    if (lists.some(l => l.id === id)) return id
+    const task = localTasks.find(t => t.id === id)
+    return task?.list_id ?? null
   }
 
   function handleDragStart(event: DragStartEvent) {
-    const task = findTask(event.active.id as string)
+    isDraggingRef.current = true
+    const task = findTaskAnywhere(event.active.id as string)
     setActiveTask(task ?? null)
     explosionPendingRef.current = false
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
-    // 10-second hold -> the card explodes and respawns in its original slot
     holdTimerRef.current = setTimeout(() => {
       explosionPendingRef.current = true
       setExplosion({ ...lastPointerRef.current })
-      // Clear active task so the drag overlay disappears (the explosion takes over)
       setActiveTask(null)
-      setHoveredListId(null)
     }, 10000)
   }
 
+  // Live-reorder localTasks while dragging so cards visibly slide to make room.
+  // Inbox cards are NOT in localTasks — they preview-on-hover via the list ring
+  // only; the actual adoption happens on drop.
   function handleDragOver(event: DragOverEvent) {
-    const overId = event.over?.id as string | undefined
-    setHoveredListId(overId ?? null)
+    const { active, over } = event
+    if (!over) return
+    const activeId = active.id as string
+    const overId = over.id as string
+    if (activeId === overId) return
+
+    const activeTaskObj = localTasks.find(t => t.id === activeId)
+    if (!activeTaskObj) return // inbox card — no in-list preview
+
+    const activeContainer = activeTaskObj.list_id ?? null
+    const overContainer = resolveContainer(overId)
+    if (!overContainer) return
+
+    if (activeContainer === overContainer) {
+      // Same-list reorder
+      const overTask = localTasks.find(t => t.id === overId)
+      if (!overTask) return // hovering the list itself (whitespace) — skip
+      const fromIndex = localTasks.indexOf(activeTaskObj)
+      const toIndex = localTasks.indexOf(overTask)
+      if (fromIndex !== toIndex) {
+        setLocalTasks(prev => arrayMove(prev, fromIndex, toIndex))
+      }
+    } else {
+      // Cross-list move
+      setLocalTasks(prev => {
+        const without = prev.filter(t => t.id !== activeId)
+        const moved = { ...activeTaskObj, list_id: overContainer }
+        const overTask = prev.find(t => t.id === overId)
+        if (overTask && overTask.list_id === overContainer) {
+          // Inserting just before the hovered card
+          const insertAt = without.indexOf(overTask)
+          without.splice(insertAt, 0, moved)
+        } else {
+          // Hovering empty list whitespace — append to end of that list
+          const lastIndexInTarget = (() => {
+            for (let i = without.length - 1; i >= 0; i--) {
+              if (without[i].list_id === overContainer) return i
+            }
+            return -1
+          })()
+          without.splice(lastIndexInTarget + 1, 0, moved)
+        }
+        return without
+      })
+    }
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
+    isDraggingRef.current = false
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current)
       holdTimerRef.current = null
     }
     setActiveTask(null)
-    setHoveredListId(null)
+
     if (explosionPendingRef.current) {
-      // The card was nuked mid-drag — do nothing, it stays where it was.
+      // Card was nuked — discard any optimistic moves
+      setLocalTasks(tasks)
       return
     }
-    const { active, over } = event
-    if (!over) return
-    const taskId = active.id as string
-    const newListId = over.id as string
-    const task = findTask(taskId)
-    if (!task) return
 
-    if (task.project_id == null) {
-      // Inbox card dropped onto a list — adopt it into this board+list
-      moveInboxCardToProject(taskId, id!, newListId)
-    } else if (task.list_id !== newListId) {
-      updateTask(taskId, { list_id: newListId })
+    const { active, over } = event
+    if (!over) {
+      setLocalTasks(tasks)
+      return
     }
+
+    const activeId = active.id as string
+
+    // Inbox card -> board: figure out which list, then adopt
+    const inboxCard = inboxCards.find(c => c.id === activeId)
+    if (inboxCard) {
+      const targetList = resolveContainer(over.id as string)
+      if (targetList) moveInboxCardToProject(activeId, id!, targetList)
+      return
+    }
+
+    // Board card: persist new list_id + position for any tasks whose slot changed
+    const movedTask = localTasks.find(t => t.id === activeId)
+    if (!movedTask) return
+
+    const originalTask = tasks.find(t => t.id === activeId)
+    const affectedLists = new Set<string>()
+    if (movedTask.list_id) affectedLists.add(movedTask.list_id)
+    if (originalTask?.list_id && originalTask.list_id !== movedTask.list_id) {
+      affectedLists.add(originalTask.list_id)
+    }
+
+    const writes: Promise<unknown>[] = []
+    for (const listId of affectedLists) {
+      const tasksInList = localTasks.filter(t => t.list_id === listId)
+      tasksInList.forEach((t, index) => {
+        const orig = tasks.find(o => o.id === t.id)
+        if (!orig) return
+        const listChanged = orig.list_id !== t.list_id
+        const positionChanged = orig.position !== index
+        if (listChanged || positionChanged) {
+          writes.push(updateTask(t.id, { list_id: t.list_id ?? undefined, position: index }))
+        }
+      })
+    }
+    await Promise.all(writes)
   }
 
   // Auto-clear the explosion after the animation finishes
@@ -231,7 +330,7 @@ export function ProjectDetailPage() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -333,7 +432,6 @@ export function ProjectDetailPage() {
           onAddList={handleAddList}
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
-          hoveredListId={hoveredListId}
         />
       ) : (
         <CalendarView
