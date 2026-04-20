@@ -118,7 +118,19 @@ export function useAttachments(taskId: string) {
       .delete()
       .eq('id', attachmentId)
 
-    if (error) console.error('Failed to delete attachment:', error)
+    if (error) {
+      console.error('Failed to delete attachment:', error)
+      return
+    }
+
+    // Clean up the matching "attached" activity entry so the feed doesn't
+    // keep referencing a file that no longer exists.
+    await supabase
+      .from('huginn_activity')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('action', 'attached')
+      .eq('details->>url', attachment.url)
   }
 
   async function setCover(attachmentId: string) {
