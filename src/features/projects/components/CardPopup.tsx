@@ -76,6 +76,24 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
     return () => document.removeEventListener('keydown', handleKeyDown)
   })
 
+  // Lightbox state for image-attachment viewer
+  const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(null)
+  useEffect(() => {
+    if (!lightbox) return
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        // Block the popup's own Escape-to-close listener (also on document)
+        // so we don't also close the whole card.
+        e.stopImmediatePropagation()
+        setLightbox(null)
+      }
+    }
+    // Capture phase so we close the lightbox BEFORE the existing handleClose
+    // listener (which also watches for Escape) sees the event.
+    document.addEventListener('keydown', onEsc, { capture: true })
+    return () => document.removeEventListener('keydown', onEsc, { capture: true } as EventListenerOptions)
+  }, [lightbox])
+
   // Paste-to-attach: while this popup is mounted, intercept paste events whose
   // clipboard carries an image (screenshot, copy from a browser, copy from
   // file manager) and upload it as an attachment.
@@ -318,35 +336,60 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   {pasting && <span className="text-[10px] font-normal text-huginn-accent animate-pulse ml-1">uploading…</span>}
                 </p>
                 <div className="space-y-2">
-                  {attachments.map((att) => (
-                    <div key={att.id} className="flex items-center gap-3 bg-huginn-card rounded-lg p-2.5 group">
-                      {att.type === 'image' ? (
-                        <img src={att.url} alt={att.name} className="w-16 h-12 rounded object-cover shrink-0" />
-                      ) : (
-                        <div className="w-16 h-12 rounded bg-huginn-surface flex items-center justify-center shrink-0">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-huginn-text-muted">
-                            <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V6.621a1.5 1.5 0 0 0-.44-1.06L9.94 2.44A1.5 1.5 0 0 0 8.878 2H3.5Z" />
-                          </svg>
+                  {attachments.map((att) => {
+                    const isImage = att.type === 'image'
+                    const openInLightbox = (e: React.MouseEvent) => {
+                      if (!isImage) return
+                      e.preventDefault()
+                      setLightbox({ url: att.url, name: att.name })
+                    }
+                    return (
+                      <div key={att.id} className="flex items-center gap-3 bg-huginn-card rounded-lg p-2.5 group">
+                        {isImage ? (
+                          <button
+                            type="button"
+                            onClick={openInLightbox}
+                            className="shrink-0 rounded overflow-hidden focus:outline-none focus:ring-2 focus:ring-huginn-accent"
+                            title="Open"
+                          >
+                            <img src={att.url} alt={att.name} className="w-16 h-12 object-cover" />
+                          </button>
+                        ) : (
+                          <div className="w-16 h-12 rounded bg-huginn-surface flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-huginn-text-muted">
+                              <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V6.621a1.5 1.5 0 0 0-.44-1.06L9.94 2.44A1.5 1.5 0 0 0 8.878 2H3.5Z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          {isImage ? (
+                            <button
+                              type="button"
+                              onClick={openInLightbox}
+                              className="text-xs font-medium text-huginn-text-primary hover:text-huginn-accent truncate block text-left w-full"
+                            >
+                              {att.name}
+                            </button>
+                          ) : (
+                            <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-huginn-text-primary hover:text-huginn-accent truncate block">
+                              {att.name}
+                            </a>
+                          )}
+                          <p className="text-[10px] text-huginn-text-muted mt-0.5">
+                            {att.size ? `${(att.size / 1024).toFixed(0)} KB` : att.type === 'link' ? 'Link' : 'File'}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-huginn-text-primary hover:text-huginn-accent truncate block">
-                          {att.name}
-                        </a>
-                        <p className="text-[10px] text-huginn-text-muted mt-0.5">
-                          {att.size ? `${(att.size / 1024).toFixed(0)} KB` : att.type === 'link' ? 'Link' : 'File'}
-                        </p>
+                        <button
+                          onClick={() => deleteAttachment(att.id)}
+                          className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
+                          </svg>
+                        </button>
                       </div>
-                      <button
-                        onClick={() => deleteAttachment(att.id)}
-                        className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -519,6 +562,40 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
           </div>
         </div>
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox.url}
+            alt={lightbox.name}
+            className="max-w-[92vw] max-h-[82vh] object-contain rounded-md shadow-2xl shadow-black/60"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
+          <div className="mt-3 flex items-center gap-3 text-xs text-white/80">
+            <span className="truncate max-w-[60vw]">{lightbox.name}</span>
+            <a
+              href={lightbox.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-huginn-accent hover:text-white transition-colors"
+            >
+              Open full size ↗
+            </a>
+            <button
+              type="button"
+              onClick={() => setLightbox(null)}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              Close (Esc)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
