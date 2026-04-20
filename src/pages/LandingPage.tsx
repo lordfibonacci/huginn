@@ -134,7 +134,7 @@ function HeroSection() {
           <SplitText text="Your second brain," delay={700} />
           <br className="hidden md:block" />
           <span
-            className="inline-block bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent"
+            className="inline-block bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent leading-[1.2] pb-1"
             style={{
               backgroundSize: '200% 100%',
               animation:
@@ -454,7 +454,7 @@ function CaptureScene() {
         </div>
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
           From a fleeting thought<br />
-          <span className="bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
+          <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
             to the right column.
           </span>
         </h2>
@@ -823,7 +823,7 @@ function VoiceSection() {
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-[1.1]">
             Tap it. Talk.<br />
-            <span className="bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
+            <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
               It lands in your inbox.
             </span>
           </h2>
@@ -886,7 +886,7 @@ function FinalCTASection() {
       <div className="relative max-w-3xl mx-auto text-center">
         <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.05]">
           Your thoughts,<br />
-          <span className="bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent">
+          <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent">
             finally kept.
           </span>
         </h2>
