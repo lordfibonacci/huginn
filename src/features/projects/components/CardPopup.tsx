@@ -334,9 +334,9 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
         </div>
 
         {/* Two-column body */}
-        <div className="flex flex-col md:flex-row gap-6 p-6">
+        <div className="flex flex-col md:flex-row md:gap-0 p-6 md:pr-0">
           {/* Main column */}
-          <div className="flex-1 min-w-0 space-y-5">
+          <div className="flex-1 min-w-0 space-y-5 md:pr-6">
             {/* Title row */}
             <div className="flex items-start gap-3">
               <button
@@ -655,7 +655,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
           </div>
 
           {/* Right column — comments & activity */}
-          <div className="w-full md:w-80 md:shrink-0">
+          <div className="w-full mt-6 md:mt-0 md:w-[360px] md:shrink-0 md:border-l md:border-huginn-border/60 md:bg-huginn-base/30 md:pl-6 md:pr-6 md:-mr-6 md:rounded-r-xl pt-2 md:pt-6 pb-2">
             <CommentSection
               comments={comments}
               activities={activities}
