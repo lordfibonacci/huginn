@@ -672,7 +672,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
       {lightbox && (
         <div
           className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-6"
-          onClick={() => setLightbox(null)}
+          onClick={(e) => {
+            // Swallow the click so it doesn't bubble up to the card popup's
+            // backdrop, which would close the whole card.
+            e.stopPropagation()
+            setLightbox(null)
+          }}
         >
           <img
             src={lightbox.url}
