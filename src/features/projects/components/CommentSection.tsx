@@ -9,6 +9,8 @@ interface CommentSectionProps {
   currentUserId: string
   /** Map of user_id -> profile. Built by the caller from board members + self. */
   profileById?: Record<string, Profile>
+  /** Open an image in the parent's lightbox (single lightbox per card). */
+  onOpenImage?: (url: string, name: string) => void
   onAddComment: (body: string) => Promise<unknown>
   onDeleteComment: (commentId: string) => void
 }
@@ -17,7 +19,7 @@ type FeedItem =
   | { type: 'comment'; data: Comment }
   | { type: 'activity'; data: Activity }
 
-export function CommentSection({ comments, activities, currentUserId, profileById, onAddComment, onDeleteComment }: CommentSectionProps) {
+export function CommentSection({ comments, activities, currentUserId, profileById, onOpenImage, onAddComment, onDeleteComment }: CommentSectionProps) {
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -121,20 +123,42 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
           }
           const activity = item.data as Activity
           const { profile, displayName } = resolveAuthor(activity.user_id)
+          const details = (activity.details ?? {}) as Record<string, unknown>
+          const isImageAttach = activity.action === 'attached' && details.type === 'image' && typeof details.url === 'string'
+          const imageUrl = isImageAttach ? (details.url as string) : null
+          const imageName = typeof details.name === 'string' ? details.name : 'image'
           return (
-            <div key={`a-${activity.id}`} className="flex items-center gap-2 text-xs text-huginn-text-muted py-0.5">
-              <Avatar
-                url={profile?.avatar_url}
-                name={profile?.display_name}
-                email={profile?.email}
-                size={16}
-              />
-              <span>
-                <span className="font-semibold text-huginn-text-secondary">{displayName}</span>
-                {' '}
-                {formatActivityAction(activity)}
-              </span>
-              <span className="text-[10px]">{timeAgo(activity.created_at)}</span>
+            <div key={`a-${activity.id}`} className="text-xs text-huginn-text-muted">
+              <div className="flex items-center gap-2 py-0.5">
+                <Avatar
+                  url={profile?.avatar_url}
+                  name={profile?.display_name}
+                  email={profile?.email}
+                  size={16}
+                />
+                <span>
+                  <span className="font-semibold text-huginn-text-secondary">{displayName}</span>
+                  {' '}
+                  {formatActivityAction(activity)}
+                </span>
+                <span className="text-[10px]">{timeAgo(activity.created_at)}</span>
+              </div>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => onOpenImage?.(imageUrl, imageName)}
+                  className="ml-6 mt-1.5 block rounded-lg overflow-hidden border border-huginn-border hover:border-huginn-accent/60 transition-colors"
+                  title="Open"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={imageName}
+                    className="max-w-[320px] max-h-[200px] object-cover block"
+                    draggable={false}
+                    loading="lazy"
+                  />
+                </button>
+              )}
             </div>
           )
         })}

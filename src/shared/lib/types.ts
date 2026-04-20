@@ -46,7 +46,9 @@ export interface Task {
   start_date: string | null
   due_date: string | null
   recurring: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+  archived: boolean
   created_at: string
+  updated_at: string
 }
 
 export interface List {

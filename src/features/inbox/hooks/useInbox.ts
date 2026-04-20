@@ -11,6 +11,7 @@ export function useInbox() {
       .from('huginn_tasks')
       .select('*')
       .is('project_id', null)
+      .eq('archived', false)
       .order('created_at', { ascending: false })
 
     if (error) {

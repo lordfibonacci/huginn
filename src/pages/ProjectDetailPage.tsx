@@ -35,7 +35,7 @@ export function ProjectDetailPage() {
 
   // Hooks
   const { updateProject, deleteProject } = useProjects()
-  const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask, removeTaskLocal } = useProjectTasks(id ?? '')
+  const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask, removeTaskLocal, archiveTask, copyTask, moveTaskToBoard } = useProjectTasks(id ?? '')
   const { lists, loading: loadingLists, addList, updateList, archiveList } = useLists(id ?? '')
   const { labels } = useLabels(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
@@ -646,6 +646,9 @@ export function ProjectDetailPage() {
             ? async (taskId) => { await deleteInboxCard(taskId); return true }
             : deleteTask}
           onMovedAway={removeTaskLocal}
+          onArchive={selectedIsInbox ? undefined : archiveTask}
+          onCopy={copyTask}
+          onMoveToBoard={selectedIsInbox ? undefined : moveTaskToBoard}
           onClose={() => setSelectedTask(null)}
         />
       )}
