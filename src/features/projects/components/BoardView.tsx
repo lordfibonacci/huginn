@@ -17,9 +17,10 @@ interface BoardViewProps {
   selectedTaskId?: string
   loading?: boolean
   taskLabelsMap?: Record<string, Label[]>
+  coverImageMap?: Record<string, string>
 }
 
-function SortableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[] }) {
+function SortableCard({ task, onTaskTap, selectedTaskId, labels, coverImageUrl }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
@@ -43,12 +44,13 @@ function SortableCard({ task, onTaskTap, selectedTaskId, labels }: { task: Task;
         onClick={() => onTaskTap(task)}
         selected={task.id === selectedTaskId}
         labels={labels}
+        coverImageUrl={coverImageUrl}
       />
     </div>
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap, coverImageMap }: BoardViewProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
 
@@ -123,7 +125,14 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
               onArchiveList={onArchiveList}
               selectedTaskId={selectedTaskId}
               renderDraggableCard={(task) => (
-                <SortableCard key={task.id} task={task} onTaskTap={onTaskTap} selectedTaskId={selectedTaskId} labels={taskLabelsMap?.[task.id]} />
+                <SortableCard
+                  key={task.id}
+                  task={task}
+                  onTaskTap={onTaskTap}
+                  selectedTaskId={selectedTaskId}
+                  labels={taskLabelsMap?.[task.id]}
+                  coverImageUrl={coverImageMap?.[task.id]}
+                />
               )}
             />
           </SortableContext>

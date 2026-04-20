@@ -51,7 +51,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   const { labels: projectLabels, createLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
   const { comments, addComment, deleteComment } = useComments(task.id)
-  const { activities } = useActivity(task.id)
+  const { activities, logActivity } = useActivity(task.id)
   const { attachments, uploadFile, deleteAttachment } = useAttachments(task.id)
   const { members: boardMembers } = useBoardMembers(projectId)
   const { memberIds: assignedIds, profiles: assignedProfiles, assignMember, unassignMember, isAssigned } = useTaskMembers(task.id)
@@ -75,6 +75,42 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   })
+
+  // Paste-to-attach: while this popup is mounted, intercept paste events whose
+  // clipboard carries an image (screenshot, copy from a browser, copy from
+  // file manager) and upload it as an attachment.
+  const [pasting, setPasting] = useState(false)
+  useEffect(() => {
+    async function handlePaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length === 0) return
+      e.preventDefault()
+      setPasting(true)
+      try {
+        for (const f of imageFiles) {
+          const named = f.name && f.name !== 'image.png'
+            ? f
+            : new File([f], `pasted-${Date.now()}.${(f.type.split('/')[1] || 'png')}`, { type: f.type })
+          const result = await uploadFile(named)
+          if (result) {
+            await logActivity('attached', { name: result.name, url: result.url, type: result.type })
+          }
+        }
+      } finally {
+        setPasting(false)
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [uploadFile, logActivity])
 
   // Reset only when switching to a different card.
   // Re-syncing on every task.notes change creates a feedback loop with realtime
@@ -272,13 +308,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
             )}
 
             {/* Attachments */}
-            {attachments.length > 0 && (
+            {(attachments.length > 0 || pasting) && (
               <div>
                 <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
                   </svg>
                   Attachments
+                  {pasting && <span className="text-[10px] font-normal text-huginn-accent animate-pulse ml-1">uploading…</span>}
                 </p>
                 <div className="space-y-2">
                   {attachments.map((att) => (

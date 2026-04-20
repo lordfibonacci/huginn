@@ -79,6 +79,43 @@ export function ProjectDetailPage() {
     return () => { supabase.removeChannel(channel) }
   }, [id])
 
+  // Board-level cover image map: first image attachment per task (prefer is_cover).
+  const [coverImageMap, setCoverImageMap] = useState<Record<string, string>>({})
+  const [coverVersion, setCoverVersion] = useState(0)
+
+  const fetchCoverImages = useCallback(() => {
+    if (!tasks.length) { setCoverImageMap({}); return }
+    const taskIds = tasks.map(t => t.id)
+    supabase
+      .from('huginn_attachments')
+      .select('task_id, url, type, is_cover, created_at')
+      .in('task_id', taskIds)
+      .eq('type', 'image')
+      .order('is_cover', { ascending: false })
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (!data) return
+        const map: Record<string, string> = {}
+        for (const row of data as { task_id: string; url: string }[]) {
+          if (!map[row.task_id]) map[row.task_id] = row.url
+        }
+        setCoverImageMap(map)
+      })
+  }, [tasks])
+
+  useEffect(() => { fetchCoverImages() }, [fetchCoverImages, coverVersion])
+
+  useEffect(() => {
+    const channelName = `huginn_attachments_board_${id}_${crypto.randomUUID()}`
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_attachments' }, () => {
+        setCoverVersion(v => v + 1)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id])
+
   // Inbox
   const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, count: inboxCount } = useInbox()
   const [showInbox, setShowInbox] = useState(false)
@@ -578,6 +615,7 @@ export function ProjectDetailPage() {
           onAddList={handleAddList}
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
+          coverImageMap={coverImageMap}
         />
       ) : (
         <CalendarView

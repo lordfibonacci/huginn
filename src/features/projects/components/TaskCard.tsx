@@ -20,10 +20,11 @@ interface TaskCardProps {
   selected?: boolean
   checklistProgress?: { checked: number; total: number } | null
   labels?: { id: string; name: string; color: string }[]
+  coverImageUrl?: string | null
   dragHandleProps?: Record<string, unknown>
 }
 
-export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels }: TaskCardProps) {
+export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl }: TaskCardProps) {
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
   const priority = task.priority ? PRIORITY_LABELS[task.priority] : null
 
@@ -44,9 +45,22 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
       onClick={onClick}
       data-task-id={task.id}
     >
-      {/* Priority color bar at top */}
-      {task.priority === 'high' && <div className="h-0.5 bg-huginn-danger rounded-t-lg" />}
-      {task.priority === 'medium' && <div className="h-0.5 bg-huginn-warning rounded-t-lg" />}
+      {/* Cover image — edge-to-edge at the top, Trello-style */}
+      {coverImageUrl && (
+        <div className="overflow-hidden rounded-t-lg bg-black/30">
+          <img
+            src={coverImageUrl}
+            alt=""
+            className="w-full max-h-48 object-cover select-none"
+            draggable={false}
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* Priority color bar at top (below cover if any) */}
+      {!coverImageUrl && task.priority === 'high' && <div className="h-0.5 bg-huginn-danger rounded-t-lg" />}
+      {!coverImageUrl && task.priority === 'medium' && <div className="h-0.5 bg-huginn-warning rounded-t-lg" />}
 
       {/* Labels */}
       {labels && labels.length > 0 && (
