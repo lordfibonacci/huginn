@@ -90,7 +90,7 @@ function SingleChecklist({ checklist, onDelete, onRename, onAddItem, onToggleIte
     <div>
       {/* Checklist header */}
       <div className="flex items-center gap-2 mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-huginn-text-muted shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-huginn-text-secondary shrink-0">
           <path fillRule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.58l7.3-7.3a1 1 0 0 1 1.4 0Z" clipRule="evenodd" />
         </svg>
         {editingName ? (
@@ -105,7 +105,7 @@ function SingleChecklist({ checklist, onDelete, onRename, onAddItem, onToggleIte
         ) : (
           <span
             onClick={() => setEditingName(true)}
-            className="flex-1 text-xs text-huginn-text-muted font-semibold cursor-pointer hover:text-huginn-text-secondary"
+            className="flex-1 text-sm text-huginn-text-primary font-semibold cursor-pointer hover:text-white"
           >
             {checklist.name}
             {totalCount > 0 && <span className="ml-1.5 text-huginn-text-secondary">{checkedCount}/{totalCount}</span>}

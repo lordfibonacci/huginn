@@ -449,29 +449,29 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               <div className="flex items-start gap-6 flex-wrap">
                 {taskLabels.length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Labels</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Labels</p>
                     <LabelBadges labels={taskLabels} />
                   </div>
                 )}
                 {assignedProfiles.length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Members</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Members</p>
                     <MemberAvatars profiles={assignedProfiles} />
                   </div>
                 )}
                 {task.updated_at && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Last updated</p>
-                    <p className="text-xs text-huginn-text-secondary">{timeAgo(task.updated_at)}</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Last updated</p>
+                    <p className="text-xs text-huginn-text-primary">{timeAgo(task.updated_at)}</p>
                   </div>
                 )}
               </div>
             )}
 
             {/* Description */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-huginn-text-muted font-semibold flex items-center gap-2">
+            <div className="pt-4 border-t border-huginn-border/50">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-sm text-huginn-text-primary font-semibold flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7ZM4 5.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4ZM4 8a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H4Z" />
                   </svg>
@@ -534,8 +534,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
 
             {/* Priority chips (board cards only) */}
             {!isInboxCard && (
-              <div>
-                <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-2">Priority</p>
+              <div className="pt-4 border-t border-huginn-border/50">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-2">Priority</p>
                 <div className="flex gap-1.5">
                   {PRIORITY_OPTIONS.map((opt) => (
                     <button
@@ -561,6 +561,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
 
             {/* Checklists */}
             {checklists.length > 0 && (
+              <div className="pt-4 border-t border-huginn-border/50">
               <ChecklistSection
                 checklists={checklists}
                 onAddChecklist={addChecklist}
@@ -571,12 +572,13 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                 onUpdateItemText={updateItemText}
                 onDeleteItem={deleteItem}
               />
+              </div>
             )}
 
             {/* Attachments */}
             {(attachments.length > 0 || pasting) && (
-              <div>
-                <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
+              <div className="pt-4 border-t border-huginn-border/50">
+                <p className="text-sm text-huginn-text-primary font-semibold mb-3 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
                   </svg>

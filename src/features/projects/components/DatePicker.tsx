@@ -96,9 +96,9 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
 
   return (
     <>
-      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed z-[61] bg-huginn-card border border-huginn-border rounded-xl shadow-2xl w-80 max-h-[90vh] overflow-y-auto" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+      <div className="absolute top-full left-0 mt-1.5 z-50 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl w-80 max-h-[80vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <h3 className="text-sm font-bold text-huginn-text-primary">Dates</h3>

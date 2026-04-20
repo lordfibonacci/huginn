@@ -25,9 +25,9 @@ export function MemberPicker({ boardMembers, assignedIds, onToggle, onClose }: M
   return (
     <>
       {/* Backdrop to close on outside click */}
-      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed z-[61] bg-huginn-card border border-huginn-border rounded-lg shadow-2xl p-3 w-60" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+      <div className="absolute top-full left-0 mt-1.5 z-50 bg-huginn-card border border-huginn-border rounded-lg shadow-2xl p-3 w-60">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-huginn-text-secondary">Members</p>
         <button onClick={onClose} className="text-huginn-text-muted hover:text-white">
