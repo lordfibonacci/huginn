@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DatePickerProps {
   startDate: string
@@ -94,11 +95,15 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
     onClose()
   }
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-[70] bg-black/40" onClick={onClose} />
 
-      <div className="absolute top-full left-0 mt-1.5 z-50 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl w-72 p-3">
+      <div
+        className="fixed z-[71] bg-huginn-card border border-huginn-border rounded-xl shadow-2xl w-72 p-3"
+        style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Month nav */}
         <div className="flex items-center justify-between mb-2">
           <button onClick={prevMonth} className="text-huginn-text-secondary hover:text-white p-1 rounded hover:bg-huginn-hover">
@@ -235,6 +240,7 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
