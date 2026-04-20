@@ -24,6 +24,8 @@ interface CardPopupProps {
   projectId: string
   lists: List[]
   onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null; list_id?: string; position?: number }) => Promise<boolean>
+  /** Optional optimistic-remove for when the card leaves the current project (e.g. moved to inbox). */
+  onMovedAway?: (id: string) => void
   onDelete: (id: string) => Promise<boolean>
   onClose: () => void
 }
@@ -34,7 +36,7 @@ const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }
   { value: 'high', label: 'High', color: 'bg-huginn-danger' },
 ]
 
-export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose }: CardPopupProps) {
+export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose, onMovedAway }: CardPopupProps) {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.notes ?? '')
   const [dueDate, setDueDate] = useState(task.due_date ?? '')
@@ -155,6 +157,11 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose 
       console.error('Move-to-inbox failed:', error)
       return
     }
+    // Drop the card from the project's local task state — useProjectTasks's
+    // realtime filter (project_id=eq.<projectId>) doesn't fire for rows whose
+    // new project_id falls outside the filter, so we'd otherwise see the
+    // card linger on the board until refresh.
+    onMovedAway?.(task.id)
     handleClose()
   }
 

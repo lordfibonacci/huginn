@@ -121,5 +121,13 @@ export function useProjectTasks(projectId: string) {
     return true
   }
 
-  return { tasks, loading, addTask, updateTask, deleteTask }
+  // Drop a task from local state without hitting the DB. Use this when the
+  // task left the project via a path the realtime filter (project_id=eq.X)
+  // can't see — e.g. moved to inbox (project_id -> null), reassigned to
+  // another project, etc. The caller is responsible for the actual write.
+  function removeTaskLocal(taskId: string) {
+    setTasks((t) => t.filter((tk) => tk.id !== taskId))
+  }
+
+  return { tasks, loading, addTask, updateTask, deleteTask, removeTaskLocal }
 }
