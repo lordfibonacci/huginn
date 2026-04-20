@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../shared/lib/supabase'
 import { DndContext, DragOverlay, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core'
@@ -80,7 +80,7 @@ export function ProjectDetailPage() {
   }, [id])
 
   // Inbox
-  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, moveToProject: moveInboxCardToProject, count: inboxCount } = useInbox()
+  const { cards: inboxCards, loading: loadingInbox, addCard: addInboxCard, deleteCard: deleteInboxCard, count: inboxCount } = useInbox()
   const [showInbox, setShowInbox] = useState(false)
 
   const filtersActive = filters.search !== '' || filters.labelIds.length > 0 || filters.priority !== null || filters.dueStatus !== 'all'
@@ -99,7 +99,42 @@ export function ProjectDetailPage() {
     }
   }, [tasks])
 
-  const filteredTasks = filtersActive ? applyBoardFilters(localTasks, filters) as Task[] : localTasks
+  // Preview slot for an incoming inbox card during drag. When set, a phantom
+  // task is injected into localTasks at the hover position so the destination
+  // list's SortableContext animates cards out of the way (same visual as a
+  // normal cross-list reorder).
+  const INBOX_PREVIEW_ID = '__inbox_preview__'
+  const [inboxPreview, setInboxPreview] = useState<{ card: Task; listId: string; index: number } | null>(null)
+
+  const tasksWithPreview = useMemo(() => {
+    if (!inboxPreview) return localTasks
+    const phantom: Task = {
+      ...inboxPreview.card,
+      id: INBOX_PREVIEW_ID,
+      project_id: id ?? null,
+      list_id: inboxPreview.listId,
+      position: inboxPreview.index,
+    }
+    // Insert the phantom into its target list at the requested index, preserving
+    // the rest of the array order.
+    const result: Task[] = []
+    let inserted = false
+    let sameListCount = 0
+    for (const t of localTasks) {
+      if (t.list_id === inboxPreview.listId) {
+        if (!inserted && sameListCount === inboxPreview.index) {
+          result.push(phantom)
+          inserted = true
+        }
+        sameListCount++
+      }
+      result.push(t)
+    }
+    if (!inserted) result.push(phantom)
+    return result
+  }, [localTasks, inboxPreview, id])
+
+  const filteredTasks = filtersActive ? applyBoardFilters(tasksWithPreview, filters) as Task[] : tasksWithPreview
 
   // Fetch project
   useEffect(() => {
@@ -191,6 +226,7 @@ export function ProjectDetailPage() {
     isDraggingRef.current = true
     const task = findTaskAnywhere(event.active.id as string)
     setActiveTask(task ?? null)
+    setInboxPreview(null)
     explosionPendingRef.current = false
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
     holdTimerRef.current = setTimeout(() => {
@@ -198,6 +234,17 @@ export function ProjectDetailPage() {
       setExplosion({ ...lastPointerRef.current })
       setActiveTask(null)
     }, 10000)
+  }
+
+  function handleDragCancel() {
+    isDraggingRef.current = false
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current)
+      holdTimerRef.current = null
+    }
+    setActiveTask(null)
+    setInboxPreview(null)
+    setLocalTasks(tasks)
   }
 
   // Live-reorder localTasks while dragging so cards visibly slide to make room.
@@ -211,13 +258,41 @@ export function ProjectDetailPage() {
     if (activeId === overId) return
 
     const activeTaskObj = localTasks.find(t => t.id === activeId)
-    if (!activeTaskObj) return // inbox card — no in-list preview
 
-    // Don't mutate localTasks when hovering the inbox panel. Removing the
-    // active card from its source list mid-drag unmounts its <SortableCard>,
+    // Inbox card being dragged onto the board — inject a phantom preview
+    // slot into the target list so the SortableContext animates cards out
+    // of the way (same visual as a cross-list reorder).
+    if (!activeTaskObj) {
+      const inboxCard = inboxCards.find(c => c.id === activeId)
+      if (!inboxCard) return
+      if (overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)) {
+        setInboxPreview(null)
+        return
+      }
+      // Hovering the phantom preview itself — keep it where it is.
+      if (overId === INBOX_PREVIEW_ID) return
+      const overContainer = resolveContainer(overId)
+      if (!overContainer) { setInboxPreview(null); return }
+      const overTask = localTasks.find(t => t.id === overId)
+      const sameListTasks = localTasks.filter(t => t.list_id === overContainer)
+      let index: number
+      if (overTask && overTask.list_id === overContainer) {
+        index = sameListTasks.indexOf(overTask)
+      } else {
+        index = sameListTasks.length // hovering whitespace — append at end
+      }
+      setInboxPreview(prev =>
+        prev && prev.listId === overContainer && prev.index === index && prev.card.id === inboxCard.id
+          ? prev
+          : { card: inboxCard, listId: overContainer, index }
+      )
+      return
+    }
+
+    // Don't mutate localTasks when a BOARD card hovers the inbox panel. Removing
+    // the active card from its source list mid-drag unmounts its <SortableCard>,
     // which kills the useSortable instance and makes dnd-kit lose track of
-    // the active draggable — `over` becomes null on release, the drop is
-    // ignored. The inbox panel's own `isOver` ring is enough hover feedback.
+    // the active draggable — `over` becomes null on release, the drop is ignored.
     if (overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)) {
       return
     }
@@ -267,6 +342,7 @@ export function ProjectDetailPage() {
       holdTimerRef.current = null
     }
     setActiveTask(null)
+    setInboxPreview(null)
 
     if (explosionPendingRef.current) {
       // Card was nuked — discard any optimistic moves
@@ -286,12 +362,41 @@ export function ProjectDetailPage() {
     // Treat "over an inbox card" the same as "over the inbox panel" — both mean inbox.
     const droppedOnInbox = overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)
 
-    // Inbox card -> board: figure out which list, then adopt
+    // Inbox card -> board: adopt into target list at the previewed index
     const inboxCard = inboxCards.find(c => c.id === activeId)
     if (inboxCard) {
       if (droppedOnInbox) return // dropped back on inbox itself, no-op
-      const targetList = resolveContainer(overId)
-      if (targetList) moveInboxCardToProject(activeId, id!, targetList)
+      const targetList = inboxPreview?.listId ?? resolveContainer(overId)
+      if (!targetList) return
+      const targetIndex = inboxPreview?.listId === targetList ? inboxPreview.index : 0
+
+      // Build the new order for the target list with the inbox card inserted,
+      // then persist (inbox card gets project_id + list_id + position, siblings
+      // get renumbered where their index changed).
+      const targetTasks = localTasks.filter(t => t.list_id === targetList)
+      const newOrder = [...targetTasks]
+      newOrder.splice(Math.min(targetIndex, targetTasks.length), 0, { ...inboxCard })
+      const writes = newOrder
+        .map((t, index): Promise<unknown> | null => {
+          if (t.id === activeId) {
+            return (async () => {
+              const { error } = await supabase
+                .from('huginn_tasks')
+                .update({ project_id: id!, list_id: targetList, position: index })
+                .eq('id', activeId)
+              if (error) console.error('Move inbox -> project failed:', error)
+            })()
+          }
+          const orig = tasks.find(o => o.id === t.id)
+          if (orig && orig.position !== index) {
+            return updateTask(t.id, { position: index })
+          }
+          return null
+        })
+        .filter((p): p is Promise<unknown> => p !== null)
+      await Promise.all(writes)
+      // The inbox hook's unfiltered realtime + useProjectTasks refetch will pull the card in;
+      // useInbox will drop it from its cards array on the next UPDATE event.
       return
     }
 
@@ -374,6 +479,7 @@ export function ProjectDetailPage() {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
     <div className="flex flex-1 min-h-0">
       {/* Inbox panel — pushes board to the right */}
@@ -525,7 +631,7 @@ export function ProjectDetailPage() {
       )}
     </div>
 
-    <DragOverlay dropAnimation={null}>
+    <DragOverlay>
       {activeTask && (
         <div className="w-[250px] rotate-2 opacity-90 pointer-events-none">
           <TaskCard task={activeTask} />
