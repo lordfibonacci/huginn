@@ -19,7 +19,7 @@ export function PendingInvitesPanel() {
     <section className="mb-8">
       <h2 className="text-[11px] uppercase tracking-widest text-huginn-accent font-bold mb-3 px-0.5 flex items-center gap-2">
         <span className="inline-block w-2 h-2 rounded-full bg-huginn-accent animate-pulse" />
-        Board invitations
+        Project invitations
         <span className="text-huginn-text-muted font-semibold normal-case tracking-normal">
           ({invites.length})
         </span>

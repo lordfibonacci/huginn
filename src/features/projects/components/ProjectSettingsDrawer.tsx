@@ -54,7 +54,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
     <ModalShell onDismiss={onDone} title={readOnly ? 'Project info' : 'Project settings'}>
       {readOnly && (
         <p className="text-xs text-huginn-text-muted bg-huginn-surface/60 border border-huginn-border/60 rounded-md px-3 py-2 mb-4">
-          You're a <span className="font-semibold text-huginn-text-secondary">{role}</span> on this board — only owners and admins can change settings.
+          You're a <span className="font-semibold text-huginn-text-secondary">{role}</span> on this project — only owners and admins can change settings.
         </p>
       )}
 
@@ -81,8 +81,8 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
         <ProjectColorPicker value={color} onChange={setColor} />
       </div>
 
-      {/* Board background */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Board background</p>
+      {/* Project background */}
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Project background</p>
       <div className={`mb-5 ${readOnly ? 'pointer-events-none opacity-60' : ''}`}>
         <BoardBackgroundPicker value={background} onChange={setBackground} />
       </div>

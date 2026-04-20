@@ -1,21 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Mark } from './Logo'
 import { Avatar } from './Avatar'
 import { AccountSettingsDrawer } from './AccountSettingsDrawer'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
+import { useProjects } from '../../features/projects/hooks/useProjects'
+import { ProjectGlyph } from '../../features/projects/components/ProjectGlyph'
 
 interface ToolBarProps {
   inboxOpen: boolean
   inboxCount: number
   onToggleInbox: () => void
-  onSwitchProjects: () => void
+  currentProjectId?: string
 }
 
-export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, onSwitchProjects }: ToolBarProps) {
+export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId }: ToolBarProps) {
   const { user } = useAuth()
   const { profile } = useProfile()
+  const { projects } = useProjects()
   const [showAccount, setShowAccount] = useState(false)
+  const [showSwitcher, setShowSwitcher] = useState(false)
+  const switcherRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+
+  // Close switcher on outside click / Escape
+  useEffect(() => {
+    if (!showSwitcher) return
+    function handleClick(e: MouseEvent) {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setShowSwitcher(false)
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowSwitcher(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [showSwitcher])
+
+  function handlePick(projectId: string) {
+    setShowSwitcher(false)
+    navigate(`/projects/${projectId}`)
+  }
+
+  function handleViewAll() {
+    setShowSwitcher(false)
+    navigate('/projects')
+  }
 
   return (
     <>
@@ -48,24 +84,59 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, onSwitchProjects
           )}
         </button>
 
-        {/* Board indicator */}
-        <div className="flex items-center gap-2 text-sm font-medium px-3.5 py-1.5 text-huginn-text-muted">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-            <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h11A2.5 2.5 0 0 1 18 4.5v2a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-2ZM2.5 8h15a.5.5 0 0 1 .5.5v7A2.5 2.5 0 0 1 15.5 18h-11A2.5 2.5 0 0 1 2 15.5v-7a.5.5 0 0 1 .5-.5Z" />
-          </svg>
-          Board
-        </div>
-
         {/* Switch Projects */}
-        <button
-          onClick={onSwitchProjects}
-          className="flex items-center gap-2 text-sm font-medium px-3.5 py-1.5 rounded-full text-huginn-text-secondary hover:text-white hover:bg-huginn-hover transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-            <path d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.28a.75.75 0 0 0-.75.75v3.955a.75.75 0 0 0 1.5 0v-2.174l.307.306a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.437-.354Zm-9.624-2.848a.75.75 0 0 0 1.437.354A5.5 5.5 0 0 1 16.2 11.39l.312.311h-2.433a.75.75 0 0 0 0 1.5H18.03a.75.75 0 0 0 .75-.75V8.495a.75.75 0 0 0-1.5 0v2.174l-.307-.306A7 7 0 0 0 5.261 13.5a.75.75 0 0 0 .427-1.424Z" />
-          </svg>
-          Switch boards
-        </button>
+        <div className="relative" ref={switcherRef}>
+          <button
+            onClick={() => setShowSwitcher(o => !o)}
+            className={`flex items-center gap-2 text-sm font-medium px-3.5 py-1.5 rounded-full transition-colors ${
+              showSwitcher ? 'bg-huginn-hover text-white' : 'text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.28a.75.75 0 0 0-.75.75v3.955a.75.75 0 0 0 1.5 0v-2.174l.307.306a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.437-.354Zm-9.624-2.848a.75.75 0 0 0 1.437.354A5.5 5.5 0 0 1 16.2 11.39l.312.311h-2.433a.75.75 0 0 0 0 1.5H18.03a.75.75 0 0 0 .75-.75V8.495a.75.75 0 0 0-1.5 0v2.174l-.307-.306A7 7 0 0 0 5.261 13.5a.75.75 0 0 0 .427-1.424Z" />
+            </svg>
+            Switch projects
+          </button>
+
+          {showSwitcher && (
+            <div className="absolute bottom-full right-0 mb-2 w-72 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl overflow-hidden">
+              <div className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-huginn-text-secondary">
+                Your projects
+              </div>
+              <div className="max-h-80 overflow-y-auto px-2 pb-2">
+                {projects.length === 0 && (
+                  <p className="text-xs text-huginn-text-muted px-2 py-3 text-center">No projects yet.</p>
+                )}
+                {projects.map((p) => {
+                  const isCurrent = p.id === currentProjectId
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handlePick(p.id)}
+                      className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-colors ${
+                        isCurrent
+                          ? 'bg-huginn-accent/15 text-huginn-text-primary'
+                          : 'text-huginn-text-primary hover:bg-huginn-hover'
+                      }`}
+                    >
+                      <ProjectGlyph color={p.color} size={24} />
+                      <span className="flex-1 text-sm truncate">{p.name}</span>
+                      {isCurrent && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-huginn-accent">Current</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                onClick={handleViewAll}
+                className="w-full border-t border-huginn-border text-sm font-semibold text-huginn-accent hover:bg-huginn-hover py-2.5 transition-colors"
+              >
+                View all projects →
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="w-px h-5 bg-huginn-border mx-1" aria-hidden />
 

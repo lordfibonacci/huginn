@@ -498,7 +498,7 @@ export function ProjectDetailPage() {
   }, [explosion])
 
   if (loadingProject) {
-    return <LoadingScreen message="Loading board" />
+    return <LoadingScreen message="Loading project" />
   }
 
   if (!project) {
@@ -566,7 +566,7 @@ export function ProjectDetailPage() {
               view === 'board' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
-            Board
+            Cards
           </button>
           <button
             onClick={() => setView('calendar')}
@@ -630,7 +630,7 @@ export function ProjectDetailPage() {
         inboxOpen={showInbox}
         inboxCount={inboxCount}
         onToggleInbox={() => setShowInbox(!showInbox)}
-        onSwitchProjects={() => navigate('/projects')}
+        currentProjectId={id}
       />
 
       </div>{/* end main content */}

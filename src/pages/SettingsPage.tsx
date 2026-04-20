@@ -152,7 +152,7 @@ export function SettingsPage() {
           </Section>
 
           {/* Display name */}
-          <Section title="Display name" hint="Shown on your boards and assigned cards.">
+          <Section title="Display name" hint="Shown on your projects and assigned cards.">
             <div className="flex gap-2">
               <input
                 type="text"

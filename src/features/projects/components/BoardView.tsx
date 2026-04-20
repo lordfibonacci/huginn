@@ -89,7 +89,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
   }
 
   if (loading) {
-    return <LoadingScreen message="Loading board" />
+    return <LoadingScreen message="Loading project" />
   }
 
   // Group tasks by list_id, preserving the order they arrive in (parent owns order)

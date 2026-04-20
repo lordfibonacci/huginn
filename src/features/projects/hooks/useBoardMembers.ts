@@ -81,7 +81,7 @@ export function useBoardMembers(projectId: string) {
   async function addMember(userId: string, role: MemberRole = 'member'): Promise<InviteResult> {
     if (members.some(m => m.user_id === userId)) {
       const existing = members.find(m => m.user_id === userId)!
-      const message = existing.status === 'pending' ? 'Already invited (pending).' : 'Already a member of this board.'
+      const message = existing.status === 'pending' ? 'Already invited (pending).' : 'Already a member of this project.'
       return { ok: false, reason: 'already_member', message }
     }
 

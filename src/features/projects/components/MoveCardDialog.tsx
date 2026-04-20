@@ -59,10 +59,10 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
   return (
     <ModalShell onDismiss={onDone} title="Move card">
       <p className="text-xs text-huginn-text-muted mb-4">
-        Pick a destination board and list. The card's position is reset to the top of the chosen list.
+        Pick a destination project and list. The card's position is reset to the top of the chosen list.
       </p>
 
-      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">Board</label>
+      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">Project</label>
       <select
         value={selectedBoardId}
         onChange={(e) => setSelectedBoardId(e.target.value)}
@@ -83,7 +83,7 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
         className="w-full bg-huginn-surface text-white text-sm rounded-lg px-3 py-2 outline-none border border-huginn-border focus:border-huginn-accent mb-5 appearance-none disabled:opacity-50"
       >
         {loadingLists && <option>Loading lists…</option>}
-        {!loadingLists && lists.length === 0 && <option value="">(no lists on this board)</option>}
+        {!loadingLists && lists.length === 0 && <option value="">(no lists on this project)</option>}
         {!loadingLists && lists.map((l) => (
           <option key={l.id} value={l.id}>
             {l.name}{l.id === currentListId && selectedBoardId === currentProjectId ? ' (current)' : ''}

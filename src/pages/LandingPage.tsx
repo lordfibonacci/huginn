@@ -41,7 +41,7 @@ export function LandingPage() {
           </h1>
           <p className="mt-5 text-base md:text-lg text-huginn-text-secondary max-w-xl">
             Capture every thought the moment it strikes - by text or voice - then triage them into
-            Trello-style boards so nothing slips and everything ships.
+            Trello-style projects so nothing slips and everything ships.
           </p>
 
           <div className="mt-9 flex items-center gap-3">
@@ -74,8 +74,8 @@ export function LandingPage() {
             }
           />
           <FeatureTile
-            title="Trello-style boards"
-            body="One board per project. Custom lists, drag-and-drop cards, labels, checklists, comments, attachments — the full kit."
+            title="Trello-style projects"
+            body="One project, one workspace. Custom lists, drag-and-drop cards, labels, checklists, comments, attachments — the full kit."
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h11A2.5 2.5 0 0 1 18 4.5v2a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-2ZM2.5 8h15a.5.5 0 0 1 .5.5v7A2.5 2.5 0 0 1 15.5 18h-11A2.5 2.5 0 0 1 2 15.5v-7a.5.5 0 0 1 .5-.5Z" />
@@ -84,7 +84,7 @@ export function LandingPage() {
           />
           <FeatureTile
             title="Team-ready"
-            body="Invite collaborators with role-based access. They accept the invite, jump in, and you're working on the same board in real time."
+            body="Invite collaborators with role-based access. They accept the invite, jump in, and you're working on the same project in real time."
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-7 9a7 7 0 1 1 14 0H3Z" />

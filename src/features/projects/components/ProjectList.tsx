@@ -32,7 +32,7 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <EmptyState
           title="No projects yet"
-          hint="Create your first board to get started."
+          hint="Create your first project to get started."
         />
         {onCreateProject && (
           <button
@@ -42,7 +42,7 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
               <path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z" />
             </svg>
-            Create your first board
+            Create your first project
           </button>
         )}
       </div>
@@ -62,7 +62,7 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
           <div className="flex flex-col items-center justify-center py-10">
             <EmptyState
               title="No projects yet"
-              hint="Create your first board, or accept an invitation above."
+              hint="Create your first project, or accept an invitation above."
             />
             <button
               onClick={onCreateProject}
@@ -109,7 +109,7 @@ function NewProjectTile({ onClick }: { onClick: () => void }) {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 group-hover:text-huginn-accent transition-colors">
         <path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z" />
       </svg>
-      <span className="text-xs font-medium">New board</span>
+      <span className="text-xs font-medium">New project</span>
     </button>
   )
 }

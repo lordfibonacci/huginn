@@ -18,8 +18,8 @@ const ROLE_LABEL: Record<MemberRole, string> = {
 }
 
 const ROLE_HINT: Record<MemberRole, string> = {
-  owner: 'Full control. Can delete the board.',
-  admin: 'Manage members and settings. Cannot delete the board.',
+  owner: 'Full control. Can delete the project.',
+  admin: 'Manage members and settings. Cannot delete the project.',
   member: 'Edit cards, lists, comments.',
 }
 
@@ -36,7 +36,7 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
   const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
-    <ModalShell onDismiss={onDone} title="Board members">
+    <ModalShell onDismiss={onDone} title="Project members">
       {loading ? (
         <p className="text-sm text-huginn-text-muted py-6 text-center">Loading members…</p>
       ) : (
@@ -118,12 +118,12 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
                   {((canManage && !isOwner) || isMe) && !isOwner && (
                     <button
                       onClick={() => {
-                        if (window.confirm(isMe ? 'Leave this board?' : `Remove ${m.profile?.display_name || m.profile?.email || 'this member'}?`)) {
+                        if (window.confirm(isMe ? 'Leave this project?' : `Remove ${m.profile?.display_name || m.profile?.email || 'this member'}?`)) {
                           removeMember(m.id)
                         }
                       }}
                       className="opacity-0 group-hover:opacity-100 text-huginn-text-muted hover:text-huginn-danger transition-all p-1 rounded hover:bg-huginn-danger/10"
-                      title={isMe ? 'Leave board' : 'Remove'}
+                      title={isMe ? 'Leave project' : 'Remove'}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                         <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
@@ -138,7 +138,7 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
 
           {!canManage && myMembership && (
             <p className="text-[11px] text-huginn-text-muted mt-4 px-1">
-              You are a {ROLE_LABEL[myMembership.role].toLowerCase()} on this board. {ROLE_HINT[myMembership.role]}
+              You are a {ROLE_LABEL[myMembership.role].toLowerCase()} on this project. {ROLE_HINT[myMembership.role]}
             </p>
           )}
         </>

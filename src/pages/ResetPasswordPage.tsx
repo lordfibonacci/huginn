@@ -73,7 +73,7 @@ export function ResetPasswordPage() {
               </svg>
             </div>
             <h2 className="text-base font-bold text-white">Password updated</h2>
-            <p className="text-sm text-huginn-text-secondary">Taking you to your boards…</p>
+            <p className="text-sm text-huginn-text-secondary">Taking you to your projects…</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
