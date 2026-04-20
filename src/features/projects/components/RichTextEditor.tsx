@@ -25,7 +25,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert prose-sm max-w-none outline-none min-h-[80px] px-4 py-3',
+        class: 'prose prose-invert prose-sm max-w-none outline-none min-h-[80px] px-4 py-3 break-words [overflow-wrap:anywhere]',
       },
     },
   })

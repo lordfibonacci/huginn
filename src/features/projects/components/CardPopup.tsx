@@ -518,7 +518,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                 </>
               ) : task.notes ? (
                 <div
-                  className="prose prose-invert prose-sm max-w-none bg-huginn-surface/60 border border-huginn-border/60 rounded-lg px-4 py-3"
+                  className="prose prose-invert prose-sm max-w-none bg-huginn-surface/60 border border-huginn-border/60 rounded-lg px-4 py-3 break-words [overflow-wrap:anywhere]"
                   dangerouslySetInnerHTML={{ __html: task.notes }}
                 />
               ) : (
