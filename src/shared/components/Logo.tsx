@@ -13,7 +13,7 @@ export function Mark({ size = 32, className = '', pulse = false }: LogoProps) {
       height={size}
       draggable={false}
       className={`select-none ${pulse ? 'animate-pulse' : ''} ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, filter: 'brightness(1.25) saturate(1.1)' }}
     />
   )
 }
