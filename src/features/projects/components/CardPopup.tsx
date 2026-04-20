@@ -14,6 +14,7 @@ import { CommentSection } from './CommentSection'
 import { MemberAvatars } from './MemberAvatars'
 import { MemberPicker } from './MemberPicker'
 import { useAuth } from '../../../shared/hooks/useAuth'
+import { useProfile } from '../../../shared/hooks/useProfile'
 import { DatePicker } from './DatePicker'
 import { useBoardMembers } from '../hooks/useBoardMembers'
 import { useTaskMembers } from '../hooks/useTaskMembers'
@@ -47,6 +48,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { user } = useAuth()
+  const { profile: selfProfile } = useProfile()
   const { checklists, addChecklist, deleteChecklist, renameChecklist, addItem, toggleItem, updateItemText, deleteItem } = useChecklists(task.id)
   const { labels: projectLabels, createLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
@@ -399,6 +401,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               comments={comments}
               activities={activities}
               currentUserId={user?.id ?? ''}
+              profileById={(() => {
+                const map: Record<string, import('../../../shared/lib/types').Profile> = {}
+                for (const m of boardMembers) {
+                  if (m.profile) map[m.user_id] = m.profile
+                }
+                if (selfProfile) map[selfProfile.id] = selfProfile
+                return map
+              })()}
               onAddComment={addComment}
               onDeleteComment={deleteComment}
             />

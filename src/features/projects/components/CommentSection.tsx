@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import type { Comment, Activity } from '../../../shared/lib/types'
+import type { Comment, Activity, Profile } from '../../../shared/lib/types'
 import { timeAgo } from '../../../shared/lib/dateUtils'
+import { Avatar } from '../../../shared/components/Avatar'
 
 interface CommentSectionProps {
   comments: Comment[]
   activities: Activity[]
   currentUserId: string
+  /** Map of user_id -> profile. Built by the caller from board members + self. */
+  profileById?: Record<string, Profile>
   onAddComment: (body: string) => Promise<unknown>
   onDeleteComment: (commentId: string) => void
 }
@@ -14,7 +17,7 @@ type FeedItem =
   | { type: 'comment'; data: Comment }
   | { type: 'activity'; data: Activity }
 
-export function CommentSection({ comments, activities, currentUserId, onAddComment, onDeleteComment }: CommentSectionProps) {
+export function CommentSection({ comments, activities, currentUserId, profileById, onAddComment, onDeleteComment }: CommentSectionProps) {
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -27,7 +30,16 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
     setSubmitting(false)
   }
 
-  // Merge comments and activities into a single feed, sorted by created_at descending (newest first)
+  function resolveAuthor(userId: string) {
+    const profile = profileById?.[userId]
+    const isSelf = userId === currentUserId
+    const displayName =
+      profile?.display_name?.trim() ||
+      profile?.email ||
+      (isSelf ? 'You' : 'Unknown user')
+    return { profile, isSelf, displayName }
+  }
+
   const feed: FeedItem[] = [
     ...comments.map(c => ({ type: 'comment' as const, data: c })),
     ...activities.map(a => ({ type: 'activity' as const, data: a })),
@@ -35,7 +47,6 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
 
   return (
     <div>
-      {/* Header */}
       <p className="text-sm text-huginn-text-muted font-semibold mb-3 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
           <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v6a1.5 1.5 0 0 1-1.5 1.5H10l-3.5 2.5V11H2.5A1.5 1.5 0 0 1 1 9.5v-6Z" />
@@ -71,26 +82,31 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
         {feed.map((item) => {
           if (item.type === 'comment') {
             const comment = item.data as Comment
-            const isOwn = comment.user_id === currentUserId
+            const { profile, isSelf, displayName } = resolveAuthor(comment.user_id)
             return (
               <div key={`c-${comment.id}`} className="group">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-huginn-accent/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-[10px] font-bold text-huginn-accent">
-                      {isOwn ? 'You' : 'U'}
-                    </span>
-                  </div>
+                  <Avatar
+                    url={profile?.avatar_url}
+                    name={profile?.display_name}
+                    email={profile?.email}
+                    size={26}
+                    className="mt-0.5"
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-semibold text-huginn-text-primary">
-                        {isOwn ? 'You' : 'User'}
+                        {displayName}
                       </span>
+                      {isSelf && profile && (
+                        <span className="text-[10px] text-huginn-text-muted">(you)</span>
+                      )}
                       <span className="text-[10px] text-huginn-text-muted">{timeAgo(comment.created_at)}</span>
                     </div>
-                    <p className="text-sm text-huginn-text-primary mt-0.5 bg-huginn-card rounded-lg px-3 py-2">
+                    <p className="text-sm text-huginn-text-primary mt-0.5 bg-huginn-card rounded-lg px-3 py-2 whitespace-pre-wrap break-words">
                       {comment.body}
                     </p>
-                    {isOwn && (
+                    {isSelf && (
                       <button
                         onClick={() => onDeleteComment(comment.id)}
                         className="text-[10px] text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
@@ -102,16 +118,25 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
                 </div>
               </div>
             )
-          } else {
-            const activity = item.data as Activity
-            return (
-              <div key={`a-${activity.id}`} className="flex items-center gap-2 text-xs text-huginn-text-muted py-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-huginn-text-muted shrink-0" />
-                <span>{activity.action}</span>
-                <span className="text-[10px]">{timeAgo(activity.created_at)}</span>
-              </div>
-            )
           }
+          const activity = item.data as Activity
+          const { profile, displayName } = resolveAuthor(activity.user_id)
+          return (
+            <div key={`a-${activity.id}`} className="flex items-center gap-2 text-xs text-huginn-text-muted py-0.5">
+              <Avatar
+                url={profile?.avatar_url}
+                name={profile?.display_name}
+                email={profile?.email}
+                size={16}
+              />
+              <span>
+                <span className="font-semibold text-huginn-text-secondary">{displayName}</span>
+                {' '}
+                {formatActivityAction(activity)}
+              </span>
+              <span className="text-[10px]">{timeAgo(activity.created_at)}</span>
+            </div>
+          )
         })}
 
         {feed.length === 0 && (
@@ -120,4 +145,16 @@ export function CommentSection({ comments, activities, currentUserId, onAddComme
       </div>
     </div>
   )
+}
+
+function formatActivityAction(activity: Activity): string {
+  const details = activity.details ?? {}
+  switch (activity.action) {
+    case 'attached': {
+      const name = typeof details.name === 'string' ? details.name : 'a file'
+      return `attached ${name}`
+    }
+    default:
+      return activity.action
+  }
 }
