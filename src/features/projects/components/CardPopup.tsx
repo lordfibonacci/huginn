@@ -237,7 +237,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
       <div className="absolute inset-0 bg-black/60" />
 
       <div
-        className={`relative bg-huginn-card rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-transform duration-200 ${
+        className={`relative bg-huginn-card rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden transition-transform duration-200 ${
           visible ? 'scale-100' : 'scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -657,7 +657,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
           </div>
 
           {/* Right column — comments & activity */}
-          <div className="w-full mt-6 md:mt-0 md:w-[360px] md:shrink-0 md:border-l md:border-huginn-border/60 md:bg-huginn-base/30 md:pl-6 md:pr-6 md:-mr-6 md:rounded-r-xl pt-2 md:pt-6 pb-2">
+          <div className="w-full mt-6 md:mt-0 md:w-[360px] md:shrink-0 md:border-l md:border-huginn-border/60 md:bg-huginn-base/30 md:pl-6 md:pr-6 md:rounded-r-xl pt-2 md:pt-6 pb-2">
             <CommentSection
               comments={comments}
               activities={activities}
