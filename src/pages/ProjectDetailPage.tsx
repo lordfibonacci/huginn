@@ -213,11 +213,12 @@ export function ProjectDetailPage() {
     const activeTaskObj = localTasks.find(t => t.id === activeId)
     if (!activeTaskObj) return // inbox card — no in-list preview
 
-    // Hovering the inbox panel (or any card inside it) — pull the dragged card
-    // out of localTasks so it visibly leaves the board mid-drag.
-    const hoveringInbox = overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)
-    if (hoveringInbox) {
-      setLocalTasks(prev => prev.filter(t => t.id !== activeId))
+    // Don't mutate localTasks when hovering the inbox panel. Removing the
+    // active card from its source list mid-drag unmounts its <SortableCard>,
+    // which kills the useSortable instance and makes dnd-kit lose track of
+    // the active draggable — `over` becomes null on release, the drop is
+    // ignored. The inbox panel's own `isOver` ring is enough hover feedback.
+    if (overId === INBOX_DROPPABLE_ID || inboxCards.some(c => c.id === overId)) {
       return
     }
 
