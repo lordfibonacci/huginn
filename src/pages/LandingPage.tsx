@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mark, Wordmark } from '../shared/components/Logo'
+import { LanguageToggle } from '../shared/components/LanguageToggle'
 
 export function LandingPage() {
   return (
@@ -46,6 +47,7 @@ function TopBar() {
         <Wordmark height={20} />
       </Link>
       <div className="flex items-center gap-2">
+        <LanguageToggle className="mr-1" />
         <Link
           to="/login"
           className="text-xs md:text-sm text-huginn-text-secondary hover:text-white px-3 py-2 rounded-lg hover:bg-huginn-hover transition-colors"

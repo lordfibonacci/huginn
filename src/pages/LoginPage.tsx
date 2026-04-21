@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../shared/hooks/useAuth'
 import { Lockup } from '../shared/components/Logo'
+import { LanguageToggle } from '../shared/components/LanguageToggle'
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'check-inbox' | 'reset-sent'
 
@@ -78,6 +79,9 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
       <div className="w-full max-w-sm space-y-4">
         <div className="flex justify-center pb-2">
           <Lockup markSize={104} wordmarkHeight={40} gap={6} />
