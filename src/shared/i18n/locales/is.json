@@ -1,18 +1,18 @@
 {
-  "common": {
-    "cancel": "Hætta við",
-    "save": "Vista",
-    "delete": "Eyða",
-    "edit": "Breyta",
-    "close": "Loka",
-    "loading": "Hleð…"
-  },
   "account": {
     "menu": {
-      "account": "Reikningur",
-      "settings": "Stillingar reiknings",
+      "account": "Aðgangur",
       "language": "Tungumál",
+      "settings": "Aðgangsstillingar",
       "signOut": "Skrá út"
     }
+  },
+  "common": {
+    "cancel": "Hætta við",
+    "close": "Loka",
+    "delete": "Eyða",
+    "edit": "Breyta",
+    "loading": "Hleður…",
+    "save": "Vista"
   }
 }

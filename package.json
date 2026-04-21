@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "brand": "node scripts/build-brand-assets.mjs"
+    "brand": "node scripts/build-brand-assets.mjs",
+    "translate": "node scripts/translate-is.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

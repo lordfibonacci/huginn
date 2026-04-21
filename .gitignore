@@ -4,3 +4,6 @@ dist
 .superpowers/
 .playwright-mcp/
 login-with-brand*.png
+
+# i18n translator cache (hash-indexed)
+src/shared/i18n/locales/.is.cache.json
