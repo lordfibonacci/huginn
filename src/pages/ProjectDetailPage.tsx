@@ -613,6 +613,7 @@ export function ProjectDetailPage() {
           onRenameList={handleRenameList}
           onArchiveList={archiveList}
           onAddList={handleAddList}
+          onStatusChange={(taskId, status) => { updateTask(taskId, { status }) }}
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
           coverImageMap={coverImageMap}

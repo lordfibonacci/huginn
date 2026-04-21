@@ -7,12 +7,6 @@ const PRIORITY_LABELS: Record<string, { text: string; class: string }> = {
   low: { text: 'Low', class: 'bg-huginn-text-muted/20 text-huginn-text-muted' },
 }
 
-const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
-  todo: 'doing',
-  doing: 'done',
-  done: 'todo',
-}
-
 interface TaskCardProps {
   task: Task
   onClick?: () => void
@@ -31,7 +25,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
   function handleToggle(e: React.MouseEvent) {
     e.stopPropagation()
     if (onStatusChange) {
-      onStatusChange(task.id, NEXT_STATUS[task.status])
+      onStatusChange(task.id, task.status === 'done' ? 'todo' : 'done')
     }
   }
 

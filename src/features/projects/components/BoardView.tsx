@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Task, List, Label } from '../../../shared/lib/types'
+import type { Task, TaskStatus, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
 import { ListColumn } from './ListColumn'
 import { LoadingScreen } from '../../../shared/components/Logo'
@@ -14,13 +14,14 @@ interface BoardViewProps {
   onRenameList: (listId: string, name: string) => void
   onArchiveList: (listId: string) => void
   onAddList: (name: string) => void
+  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void
   selectedTaskId?: string
   loading?: boolean
   taskLabelsMap?: Record<string, Label[]>
   coverImageMap?: Record<string, string>
 }
 
-function SortableCard({ task, onTaskTap, selectedTaskId, labels, coverImageUrl }: { task: Task; onTaskTap: (task: Task) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null }) {
+function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
@@ -42,6 +43,7 @@ function SortableCard({ task, onTaskTap, selectedTaskId, labels, coverImageUrl }
       <TaskCard
         task={task}
         onClick={() => onTaskTap(task)}
+        onStatusChange={onStatusChange}
         selected={task.id === selectedTaskId}
         labels={labels}
         coverImageUrl={coverImageUrl}
@@ -50,7 +52,7 @@ function SortableCard({ task, onTaskTap, selectedTaskId, labels, coverImageUrl }
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, selectedTaskId, loading, taskLabelsMap, coverImageMap }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap }: BoardViewProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
 
@@ -129,6 +131,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
                   key={task.id}
                   task={task}
                   onTaskTap={onTaskTap}
+                  onStatusChange={onStatusChange}
                   selectedTaskId={selectedTaskId}
                   labels={taskLabelsMap?.[task.id]}
                   coverImageUrl={coverImageMap?.[task.id]}
