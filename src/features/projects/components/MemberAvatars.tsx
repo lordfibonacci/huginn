@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Profile } from '../../../shared/lib/types'
 
 interface MemberAvatarsProps {
@@ -31,6 +32,7 @@ function getAvatarColor(id: string): string {
 }
 
 export function MemberAvatars({ profiles, size = 'md', max = 5 }: MemberAvatarsProps) {
+  const { t } = useTranslation()
   if (profiles.length === 0) return null
 
   const shown = profiles.slice(0, max)
@@ -46,7 +48,7 @@ export function MemberAvatars({ profiles, size = 'md', max = 5 }: MemberAvatarsP
         <div
           key={profile.id}
           className={`${sizeClasses} rounded-full ${getAvatarColor(profile.id)} flex items-center justify-center font-bold text-white ring-2 ring-huginn-surface`}
-          title={profile.display_name || profile.email || 'User'}
+          title={profile.display_name || profile.email || t('members.fallbackUser')}
         >
           {profile.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />

@@ -248,5 +248,206 @@
       "low": "Low"
     },
     "hasNotes": "Has notes"
+  },
+  "card": {
+    "title": {
+      "placeholder": "Card title"
+    },
+    "checkbox": {
+      "markDone": "Mark as done",
+      "markNotDone": "Mark as not done"
+    },
+    "inbox": "Inbox",
+    "cover": {
+      "open": "Open cover image"
+    },
+    "menu": {
+      "open": "More actions"
+    },
+    "actions": {
+      "members": "Members",
+      "labels": "Labels",
+      "checklist": "Checklist",
+      "attachment": "Attachment",
+      "dates": "Dates",
+      "move": "Move",
+      "copy": "Copy card",
+      "archive": "Archive",
+      "moveToInbox": "Move to Inbox"
+    },
+    "delete": {
+      "trigger": "Delete card",
+      "confirm": "Click again to delete"
+    },
+    "sections": {
+      "labels": "Labels",
+      "members": "Members",
+      "lastUpdated": "Last updated",
+      "description": "Description",
+      "priority": "Priority",
+      "attachments": "Attachments"
+    },
+    "description": {
+      "unsaved": "Unsaved",
+      "placeholder": "Add a more detailed description...",
+      "emptyCta": "Add a more detailed description…"
+    },
+    "attachments": {
+      "uploading": "uploading…",
+      "added": "Added {{when}}",
+      "sizeKb": "{{kb}} KB",
+      "typeLink": "Link",
+      "typeFile": "File",
+      "delete": "Delete attachment",
+      "open": "Open"
+    },
+    "checklist": {
+      "defaultName": "Checklist"
+    },
+    "defaultChecklistName": "Checklist",
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "lightbox": {
+      "openNewTab": "Open in new tab ↗",
+      "download": "Download",
+      "makeCover": "Make cover",
+      "delete": "Delete",
+      "close": "Close (Esc)"
+    }
+  },
+  "checklist": {
+    "itemPlaceholder": "Add an item...",
+    "add": "Add",
+    "deleteChecklist": "Delete checklist"
+  },
+  "comments": {
+    "heading": "Comments and activity",
+    "placeholder": "Write a comment…",
+    "saving": "…",
+    "you": "(you)",
+    "unknownUser": "Unknown user",
+    "selfLabel": "You",
+    "empty": "No activity yet."
+  },
+  "labels": {
+    "header": {
+      "list": "Labels",
+      "create": "Create label",
+      "edit": "Edit label"
+    },
+    "back": "Back",
+    "searchPlaceholder": "Search labels...",
+    "sectionHeading": "Labels",
+    "selectAria": "Select {{name}}",
+    "unselectAria": "Unselect {{name}}",
+    "editAria": "Edit {{name}}",
+    "colorAria": "Color {{hex}}",
+    "empty": "No labels yet",
+    "noMatch": "No labels match",
+    "createButton": "Create a new label",
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "Label name",
+      "selectColor": "Select a color"
+    },
+    "preview": "Label preview",
+    "createSubmit": "Create"
+  },
+  "members": {
+    "heading": "Members",
+    "empty": "No board members",
+    "unknown": "Unknown",
+    "fallbackUser": "User",
+    "stack": {
+      "titleOne": "{{count}} member — click to manage",
+      "titleOther": "{{count}} members — click to manage",
+      "label": "Members"
+    },
+    "drawer": {
+      "title": "Project members",
+      "loading": "Loading members…",
+      "addMember": "Add member",
+      "pending": "Pending",
+      "you": "(you)",
+      "unknownUser": "Unknown user",
+      "leaveConfirm": "Leave this project?",
+      "removeConfirm": "Remove {{name}}?",
+      "removeFallback": "this member",
+      "leaveTitle": "Leave project",
+      "removeTitle": "Remove",
+      "roleHintLead": "You are a {{role}} on this project. {{hint}}",
+      "invite": {
+        "heading": "Add member",
+        "cancel": "Cancel",
+        "searchPlaceholder": "Search by name or email…",
+        "roleTitle": "Role",
+        "hintMinChars": "Type at least 2 characters to search.",
+        "searching": "Searching…",
+        "noMatches": "No matching users. They need a Huginn account first.",
+        "busy": "…",
+        "add": "Add",
+        "addFailed": "Could not add"
+      },
+      "role": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      },
+      "roleHint": {
+        "owner": "Full control. Can delete the project.",
+        "admin": "Manage members and settings. Cannot delete the project.",
+        "member": "Edit cards, lists, comments."
+      }
+    }
+  },
+  "dates": {
+    "picker": {
+      "placeholder": "M/D/YYYY",
+      "start": "Start",
+      "due": "Due",
+      "repeat": "Repeat",
+      "enableStart": "Enable start date",
+      "enableDue": "Enable due date",
+      "save": "Save",
+      "remove": "Remove",
+      "recurring": {
+        "never": "Never",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      }
+    }
+  },
+  "move": {
+    "title": "Move card",
+    "hint": "Pick a destination project and list. The card's position is reset to the top of the chosen list.",
+    "project": "Project",
+    "list": "List",
+    "current": "(current)",
+    "loadingLists": "Loading lists…",
+    "noLists": "(no lists on this project)",
+    "submit": "Move",
+    "submitting": "…"
+  },
+  "richText": {
+    "placeholder": "Write something...",
+    "bold": "Bold",
+    "italic": "Italic",
+    "strike": "Strikethrough",
+    "bulletList": "Bullet list",
+    "orderedList": "Numbered list",
+    "codeBlock": "Code block"
+  },
+  "calendar": {
+    "today": "Today",
+    "moreCount": "+{{count}} more"
+  },
+  "activity": {
+    "attached": "attached {{name}}",
+    "attachedFallback": "a file"
   }
 }

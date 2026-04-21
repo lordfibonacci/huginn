@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from '../../../shared/components/ModalShell'
 import { Avatar } from '../../../shared/components/Avatar'
 import { useAuth } from '../../../shared/hooks/useAuth'
@@ -11,19 +12,20 @@ interface BoardMembersDrawerProps {
   onDone: () => void
 }
 
-const ROLE_LABEL: Record<MemberRole, string> = {
-  owner: 'Owner',
-  admin: 'Admin',
-  member: 'Member',
+const ROLE_LABEL_KEY: Record<MemberRole, string> = {
+  owner: 'members.drawer.role.owner',
+  admin: 'members.drawer.role.admin',
+  member: 'members.drawer.role.member',
 }
 
-const ROLE_HINT: Record<MemberRole, string> = {
-  owner: 'Full control. Can delete the project.',
-  admin: 'Manage members and settings. Cannot delete the project.',
-  member: 'Edit cards, lists, comments.',
+const ROLE_HINT_KEY: Record<MemberRole, string> = {
+  owner: 'members.drawer.roleHint.owner',
+  admin: 'members.drawer.roleHint.admin',
+  member: 'members.drawer.roleHint.member',
 }
 
 export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { members, loading, addMember, changeRole, removeMember } = useBoardMembers(projectId)
 
@@ -36,9 +38,9 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
   const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
-    <ModalShell onDismiss={onDone} title="Project members">
+    <ModalShell onDismiss={onDone} title={t('members.drawer.title')}>
       {loading ? (
-        <p className="text-sm text-huginn-text-muted py-6 text-center">Loading members…</p>
+        <p className="text-sm text-huginn-text-muted py-6 text-center">{t('members.drawer.loading')}</p>
       ) : (
         <>
           {canManage && (
@@ -61,7 +63,7 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                     <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-7 9a7 7 0 1 1 14 0H3Z" />
                   </svg>
-                  Add member
+                  {t('members.drawer.addMember')}
                 </button>
               )}
             </div>
@@ -85,11 +87,11 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white truncate flex items-center gap-2">
-                      {m.profile?.display_name || m.profile?.email || 'Unknown user'}
-                      {isMe && <span className="text-huginn-text-muted font-normal">(you)</span>}
+                      {m.profile?.display_name || m.profile?.email || t('members.drawer.unknownUser')}
+                      {isMe && <span className="text-huginn-text-muted font-normal">{t('members.drawer.you')}</span>}
                       {isPending && (
                         <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-huginn-warning/20 text-huginn-warning">
-                          Pending
+                          {t('members.drawer.pending')}
                         </span>
                       )}
                     </p>
@@ -104,26 +106,29 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
                       onChange={(e) => changeRole(m.id, e.target.value as MemberRole)}
                       className="bg-huginn-surface border border-huginn-border text-xs text-huginn-text-primary rounded-md px-2 py-1 outline-none focus:border-huginn-accent cursor-pointer"
                     >
-                      <option value="admin">Admin</option>
-                      <option value="member">Member</option>
+                      <option value="admin">{t('members.drawer.role.admin')}</option>
+                      <option value="member">{t('members.drawer.role.member')}</option>
                     </select>
                   ) : (
                     <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
                       isOwner ? 'bg-huginn-accent/20 text-huginn-accent' : 'bg-huginn-surface text-huginn-text-secondary'
                     }`}>
-                      {ROLE_LABEL[m.role]}
+                      {t(ROLE_LABEL_KEY[m.role])}
                     </span>
                   )}
 
                   {((canManage && !isOwner) || isMe) && !isOwner && (
                     <button
                       onClick={() => {
-                        if (window.confirm(isMe ? 'Leave this project?' : `Remove ${m.profile?.display_name || m.profile?.email || 'this member'}?`)) {
+                        const confirmMsg = isMe
+                          ? t('members.drawer.leaveConfirm')
+                          : t('members.drawer.removeConfirm', { name: m.profile?.display_name || m.profile?.email || t('members.drawer.removeFallback') })
+                        if (window.confirm(confirmMsg)) {
                           removeMember(m.id)
                         }
                       }}
                       className="opacity-0 group-hover:opacity-100 text-huginn-text-muted hover:text-huginn-danger transition-all p-1 rounded hover:bg-huginn-danger/10"
-                      title={isMe ? 'Leave project' : 'Remove'}
+                      title={isMe ? t('members.drawer.leaveTitle') : t('members.drawer.removeTitle')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                         <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
@@ -138,7 +143,10 @@ export function BoardMembersDrawer({ projectId, onDone }: BoardMembersDrawerProp
 
           {!canManage && myMembership && (
             <p className="text-[11px] text-huginn-text-muted mt-4 px-1">
-              You are a {ROLE_LABEL[myMembership.role].toLowerCase()} on this project. {ROLE_HINT[myMembership.role]}
+              {t('members.drawer.roleHintLead', {
+                role: t(ROLE_LABEL_KEY[myMembership.role]).toLowerCase(),
+                hint: t(ROLE_HINT_KEY[myMembership.role]),
+              })}
             </p>
           )}
         </>
@@ -156,6 +164,7 @@ function InviteSearch({
   onAdd: (userId: string, role: MemberRole) => Promise<{ ok: boolean; message?: string; reason?: string }>
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [role, setRole] = useState<MemberRole>('member')
   const [error, setError] = useState<string | null>(null)
@@ -167,14 +176,14 @@ function InviteSearch({
     setBusyId(userId)
     const result = await onAdd(userId, role)
     setBusyId(null)
-    if (!result.ok) setError(result.message ?? 'Could not add')
+    if (!result.ok) setError(result.message ?? t('members.drawer.invite.addFailed'))
   }
 
   return (
     <div className="bg-huginn-surface/60 border border-huginn-border/60 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">Add member</span>
-        <button onClick={onCancel} className="text-huginn-text-muted hover:text-white text-xs">Cancel</button>
+        <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">{t('members.drawer.invite.heading')}</span>
+        <button onClick={onCancel} className="text-huginn-text-muted hover:text-white text-xs">{t('members.drawer.invite.cancel')}</button>
       </div>
 
       <div className="flex gap-2 mb-2">
@@ -183,26 +192,26 @@ function InviteSearch({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or email…"
+          placeholder={t('members.drawer.invite.searchPlaceholder')}
           className="flex-1 bg-huginn-card text-sm text-white rounded-md px-3 py-2 outline-none border border-huginn-border focus:border-huginn-accent placeholder-huginn-text-muted"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as MemberRole)}
           className="bg-huginn-card border border-huginn-border text-xs text-huginn-text-primary rounded-md px-2 py-1 outline-none cursor-pointer"
-          title="Role"
+          title={t('members.drawer.invite.roleTitle')}
         >
-          <option value="admin">Admin</option>
-          <option value="member">Member</option>
+          <option value="admin">{t('members.drawer.role.admin')}</option>
+          <option value="member">{t('members.drawer.role.member')}</option>
         </select>
       </div>
 
       {query.trim().length < 2 ? (
-        <p className="text-[11px] text-huginn-text-muted px-1 py-1">Type at least 2 characters to search.</p>
+        <p className="text-[11px] text-huginn-text-muted px-1 py-1">{t('members.drawer.invite.hintMinChars')}</p>
       ) : loading ? (
-        <p className="text-[11px] text-huginn-text-muted px-1 py-1">Searching…</p>
+        <p className="text-[11px] text-huginn-text-muted px-1 py-1">{t('members.drawer.invite.searching')}</p>
       ) : results.length === 0 ? (
-        <p className="text-[11px] text-huginn-text-muted px-1 py-1">No matching users. They need a Huginn account first.</p>
+        <p className="text-[11px] text-huginn-text-muted px-1 py-1">{t('members.drawer.invite.noMatches')}</p>
       ) : (
         <div className="space-y-1 max-h-56 overflow-y-auto">
           {results.map((p) => (
@@ -220,7 +229,7 @@ function InviteSearch({
                 )}
               </div>
               <span className="text-[10px] uppercase tracking-wider font-bold text-huginn-accent">
-                {busyId === p.id ? '…' : 'Add'}
+                {busyId === p.id ? t('members.drawer.invite.busy') : t('members.drawer.invite.add')}
               </span>
             </button>
           ))}

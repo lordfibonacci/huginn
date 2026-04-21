@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 interface DatePickerProps {
   startDate: string
@@ -21,14 +22,15 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const DAY_NAMES = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 const RECURRING_OPTIONS = [
-  { value: 'never', label: 'Never' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly', label: 'Yearly' },
+  { value: 'never', labelKey: 'dates.picker.recurring.never' },
+  { value: 'daily', labelKey: 'dates.picker.recurring.daily' },
+  { value: 'weekly', labelKey: 'dates.picker.recurring.weekly' },
+  { value: 'monthly', labelKey: 'dates.picker.recurring.monthly' },
+  { value: 'yearly', labelKey: 'dates.picker.recurring.yearly' },
 ]
 
 export function DatePicker({ startDate: initialStart, dueDate: initialDue, recurring: initialRecurring, onSave, onClose }: DatePickerProps) {
+  const { t } = useTranslation()
   const today = new Date()
   const initial = initialDue ? new Date(initialDue + 'T00:00:00') : today
 
@@ -163,7 +165,7 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
               className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                 startEnabled ? 'bg-huginn-accent border-huginn-accent' : 'border-huginn-text-muted'
               }`}
-              aria-label="Enable start date"
+              aria-label={t('dates.picker.enableStart')}
             >
               {startEnabled && (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" className="w-3 h-3">
@@ -171,14 +173,14 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
                 </svg>
               )}
             </button>
-            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">Start</span>
+            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">{t('dates.picker.start')}</span>
             <button
               onClick={() => setSelecting('start')}
               className={`flex-1 text-xs px-2.5 py-1 rounded-md border text-left transition-colors ${
                 selecting === 'start' ? 'border-huginn-accent text-huginn-text-primary' : 'border-huginn-border text-huginn-text-secondary hover:border-huginn-text-muted'
               } ${startEnabled ? '' : 'opacity-50'}`}
             >
-              {startEnabled && startDate ? formatDate(startDate) : 'M/D/YYYY'}
+              {startEnabled && startDate ? formatDate(startDate) : t('dates.picker.placeholder')}
             </button>
           </div>
 
@@ -188,7 +190,7 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
               className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                 dueEnabled ? 'bg-huginn-accent border-huginn-accent' : 'border-huginn-text-muted'
               }`}
-              aria-label="Enable due date"
+              aria-label={t('dates.picker.enableDue')}
             >
               {dueEnabled && (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" className="w-3 h-3">
@@ -196,27 +198,27 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
                 </svg>
               )}
             </button>
-            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">Due</span>
+            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">{t('dates.picker.due')}</span>
             <button
               onClick={() => setSelecting('due')}
               className={`flex-1 text-xs px-2.5 py-1 rounded-md border text-left transition-colors ${
                 selecting === 'due' ? 'border-huginn-accent text-huginn-text-primary' : 'border-huginn-border text-huginn-text-secondary hover:border-huginn-text-muted'
               } ${dueEnabled ? '' : 'opacity-50'}`}
             >
-              {dueEnabled && dueDate ? formatDate(dueDate) : 'M/D/YYYY'}
+              {dueEnabled && dueDate ? formatDate(dueDate) : t('dates.picker.placeholder')}
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="w-4 shrink-0" />
-            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">Repeat</span>
+            <span className="text-[11px] uppercase tracking-wider font-bold text-huginn-text-secondary w-10 shrink-0">{t('dates.picker.repeat')}</span>
             <select
               value={recurring}
               onChange={(e) => setRecurring(e.target.value)}
               className="flex-1 bg-huginn-surface text-xs text-huginn-text-primary rounded-md px-2 py-1 outline-none border border-huginn-border focus:border-huginn-accent appearance-none cursor-pointer"
             >
               {RECURRING_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
               ))}
             </select>
           </div>
@@ -228,14 +230,14 @@ export function DatePicker({ startDate: initialStart, dueDate: initialDue, recur
             onClick={handleSave}
             className="flex-1 bg-huginn-accent text-white text-xs font-semibold rounded-md py-1.5 hover:bg-huginn-accent-hover transition-colors"
           >
-            Save
+            {t('dates.picker.save')}
           </button>
           {(startDate || dueDate) && (
             <button
               onClick={handleRemove}
               className="px-3 bg-huginn-surface text-huginn-text-secondary text-xs font-medium rounded-md py-1.5 hover:text-white hover:bg-huginn-hover transition-colors"
             >
-              Remove
+              {t('dates.picker.remove')}
             </button>
           )}
         </div>

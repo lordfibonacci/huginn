@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from '../../../shared/components/ModalShell'
 import { supabase } from '../../../shared/lib/supabase'
 import { useProjects } from '../hooks/useProjects'
@@ -12,6 +13,7 @@ interface MoveCardDialogProps {
 }
 
 export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone }: MoveCardDialogProps) {
+  const { t } = useTranslation()
   const { projects } = useProjects()
   const [selectedBoardId, setSelectedBoardId] = useState<string>(currentProjectId)
   const [lists, setLists] = useState<List[]>([])
@@ -57,12 +59,12 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
   }
 
   return (
-    <ModalShell onDismiss={onDone} title="Move card">
+    <ModalShell onDismiss={onDone} title={t('move.title')}>
       <p className="text-xs text-huginn-text-muted mb-4">
-        Pick a destination project and list. The card's position is reset to the top of the chosen list.
+        {t('move.hint')}
       </p>
 
-      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">Project</label>
+      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">{t('move.project')}</label>
       <select
         value={selectedBoardId}
         onChange={(e) => setSelectedBoardId(e.target.value)}
@@ -70,23 +72,23 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
       >
         {projects.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.name}{p.id === currentProjectId ? ' (current)' : ''}
+            {p.name}{p.id === currentProjectId ? ' ' + t('move.current') : ''}
           </option>
         ))}
       </select>
 
-      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">List</label>
+      <label className="block text-xs font-semibold text-huginn-text-muted mb-1.5">{t('move.list')}</label>
       <select
         value={selectedListId}
         onChange={(e) => setSelectedListId(e.target.value)}
         disabled={loadingLists || lists.length === 0}
         className="w-full bg-huginn-surface text-white text-sm rounded-lg px-3 py-2 outline-none border border-huginn-border focus:border-huginn-accent mb-5 appearance-none disabled:opacity-50"
       >
-        {loadingLists && <option>Loading lists…</option>}
-        {!loadingLists && lists.length === 0 && <option value="">(no lists on this project)</option>}
+        {loadingLists && <option>{t('move.loadingLists')}</option>}
+        {!loadingLists && lists.length === 0 && <option value="">{t('move.noLists')}</option>}
         {!loadingLists && lists.map((l) => (
           <option key={l.id} value={l.id}>
-            {l.name}{l.id === currentListId && selectedBoardId === currentProjectId ? ' (current)' : ''}
+            {l.name}{l.id === currentListId && selectedBoardId === currentProjectId ? ' ' + t('move.current') : ''}
           </option>
         ))}
       </select>
@@ -97,7 +99,7 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
           onClick={onDone}
           className="text-sm text-huginn-text-secondary hover:text-white px-4 py-2 rounded-lg"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="button"
@@ -105,7 +107,7 @@ export function MoveCardDialog({ currentProjectId, currentListId, onMove, onDone
           disabled={!canSubmit}
           className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-sm font-semibold rounded-lg px-5 py-2 disabled:opacity-50"
         >
-          {moving ? '…' : 'Move'}
+          {moving ? t('move.submitting') : t('move.submit')}
         </button>
       </div>
     </ModalShell>

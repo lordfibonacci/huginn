@@ -7,6 +7,10 @@
       "signOut": "Skrá út"
     }
   },
+  "activity": {
+    "attached": "hengdi við {{name}}",
+    "attachedFallback": "skrá"
+  },
   "auth": {
     "callback": {
       "backToSignIn": "Aftur í innskráningu",
@@ -97,6 +101,93 @@
     "settings": "Stillingar",
     "you": "Þú"
   },
+  "calendar": {
+    "moreCount": "+{{count}} fleiri",
+    "today": "Í dag"
+  },
+  "card": {
+    "actions": {
+      "archive": "Setja í geymslu",
+      "attachment": "Viðhengi",
+      "checklist": "Gátlisti",
+      "copy": "Afrita spjald",
+      "dates": "Dagsetningar",
+      "labels": "Merkimiðar",
+      "members": "Meðlimir",
+      "move": "Færa",
+      "moveToInbox": "Færa í pósthólf"
+    },
+    "attachments": {
+      "added": "Bætt við {{when}}",
+      "delete": "Eyða viðhengi",
+      "open": "Opna",
+      "sizeKb": "{{kb}} KB",
+      "typeFile": "Skrá",
+      "typeLink": "Tengill",
+      "uploading": "hleður upp…"
+    },
+    "checkbox": {
+      "markDone": "Merkja sem lokið",
+      "markNotDone": "Merkja sem ólokið"
+    },
+    "checklist": {
+      "defaultName": "Gátlisti"
+    },
+    "cover": {
+      "open": "Opna forsíðumynd"
+    },
+    "defaultChecklistName": "Gátlisti",
+    "delete": {
+      "confirm": "Smelltu aftur til að eyða",
+      "trigger": "Eyða spjaldi"
+    },
+    "description": {
+      "emptyCta": "Bæta við nánari lýsingu…",
+      "placeholder": "Bæta við nánari lýsingu...",
+      "unsaved": "Óvistað"
+    },
+    "inbox": "Pósthólf",
+    "lightbox": {
+      "close": "Loka (Esc)",
+      "delete": "Eyða",
+      "download": "Sækja",
+      "makeCover": "Gera að forsíðu",
+      "openNewTab": "Opna í nýjum flipa ↗"
+    },
+    "menu": {
+      "open": "Fleiri aðgerðir"
+    },
+    "priority": {
+      "high": "Hár",
+      "low": "Lágur",
+      "medium": "Miðlungs"
+    },
+    "sections": {
+      "attachments": "Viðhengi",
+      "description": "Lýsing",
+      "labels": "Merkimiðar",
+      "lastUpdated": "Síðast uppfært",
+      "members": "Meðlimir",
+      "priority": "Forgangur"
+    },
+    "title": {
+      "placeholder": "Titill spjalds"
+    }
+  },
+  "checklist": {
+    "add": "Bæta við",
+    "deleteChecklist": "Eyða gátlista",
+    "itemPlaceholder": "Bæta við atriði..."
+  },
+  "comments": {
+    "empty": "Engin virkni ennþá.",
+    "heading": "Athugasemdir og virkni",
+    "placeholder": "Skrifa athugasemd…",
+    "saving": "…",
+    "selfLabel": "Þú",
+    "unknownUser": "Óþekktur notandi",
+    "you": "(þú)"
+  },
   "common": {
     "cancel": "Hætta við",
     "close": "Loka",
@@ -104,6 +195,49 @@
     "edit": "Breyta",
     "loading": "Hleður…",
     "save": "Vista"
+  },
+  "dates": {
+    "picker": {
+      "due": "Eindagi",
+      "enableDue": "Virkja eindaga",
+      "enableStart": "Virkja upphafsdagsetningu",
+      "placeholder": "DD.MM.ÁÁÁÁ",
+      "recurring": {
+        "daily": "Daglega",
+        "monthly": "Mánaðarlega",
+        "never": "Aldrei",
+        "weekly": "Vikulega",
+        "yearly": "Árlega"
+      },
+      "remove": "Fjarlægja",
+      "repeat": "Endurtaka",
+      "save": "Vista",
+      "start": "Upphaf"
+    }
+  },
+  "labels": {
+    "back": "Til baka",
+    "colorAria": "Litur {{hex}}",
+    "createButton": "Búa til nýjan merkimiða",
+    "createSubmit": "Búa til",
+    "editAria": "Breyta {{name}}",
+    "empty": "Engir merkimiðar ennþá",
+    "fields": {
+      "selectColor": "Velja lit",
+      "title": "Titill",
+      "titlePlaceholder": "Nafn merkimiða"
+    },
+    "header": {
+      "create": "Búa til merkimiða",
+      "edit": "Breyta merkimiða",
+      "list": "Merkimiðar"
+    },
+    "noMatch": "Engir merkimiðar fundust",
+    "preview": "Forskoðun merkimiða",
+    "searchPlaceholder": "Leita að merkimiðum...",
+    "sectionHeading": "Merkimiðar",
+    "selectAria": "Velja {{name}}",
+    "unselectAria": "Afvelja {{name}}"
   },
   "landing": {
     "capture": {
@@ -208,6 +342,64 @@
       "open": "Aðgerðir lista"
     }
   },
+  "members": {
+    "drawer": {
+      "addMember": "Bæta við meðlim",
+      "invite": {
+        "add": "Bæta við",
+        "addFailed": "Gat ekki bætt við",
+        "busy": "…",
+        "cancel": "Hætta við",
+        "heading": "Bæta við meðlim",
+        "hintMinChars": "Sláðu inn að minnsta kosti 2 stafi til að leita.",
+        "noMatches": "Engir notendur fundust. Þeir þurfa að vera með Huginn aðgang fyrst.",
+        "roleTitle": "Hlutverk",
+        "searchPlaceholder": "Leita eftir nafni eða netfangi…",
+        "searching": "Leita…"
+      },
+      "leaveConfirm": "Yfirgefa þetta verkefni?",
+      "leaveTitle": "Yfirgefa verkefni",
+      "loading": "Hleð meðlimum…",
+      "pending": "Í bið",
+      "removeConfirm": "Fjarlægja {{name}}?",
+      "removeFallback": "þennan meðlim",
+      "removeTitle": "Fjarlægja",
+      "role": {
+        "admin": "Stjórnandi",
+        "member": "Meðlimur",
+        "owner": "Eigandi"
+      },
+      "roleHint": {
+        "admin": "Stjórnar meðlimum og stillingum. Getur ekki eytt verkefninu.",
+        "member": "Getur breytt spjöldum, listum og athugasemdum.",
+        "owner": "Full stjórn. Getur eytt verkefninu."
+      },
+      "roleHintLead": "Þú ert {{role}} í þessu verkefni. {{hint}}",
+      "title": "Meðlimir verkefnis",
+      "unknownUser": "Óþekktur notandi",
+      "you": "(þú)"
+    },
+    "empty": "Engir meðlimir á töflu",
+    "fallbackUser": "Notandi",
+    "heading": "Meðlimir",
+    "stack": {
+      "label": "Meðlimir",
+      "titleOne": "{{count}} meðlimur — smelltu til að stjórna",
+      "titleOther": "{{count}} meðlimir — smelltu til að stjórna"
+    },
+    "unknown": "Óþekkt"
+  },
+  "move": {
+    "current": "(núverandi)",
+    "hint": "Veldu verkefni og lista. Spjaldið verður fært efst í valinn lista.",
+    "list": "Listi",
+    "loadingLists": "Hleð listum…",
+    "noLists": "(engir listar í þessu verkefni)",
+    "project": "Verkefni",
+    "submit": "Færa",
+    "submitting": "…",
+    "title": "Færa spjald"
+  },
   "projects": {
     "actions": {
       "newProject": "Nýtt verkefni"
@@ -240,6 +432,15 @@
       "hold": "Í bið",
       "idea": "Hugmynd"
     }
+  },
+  "richText": {
+    "bold": "Feitletrað",
+    "bulletList": "Punktalisti",
+    "codeBlock": "Kóðablokk",
+    "italic": "Skáletrað",
+    "orderedList": "Tölusettur listi",
+    "placeholder": "Skrifaðu eitthvað...",
+    "strike": "Yfirstrikað"
   },
   "task": {
     "hasNotes": "Er með minnispunkta",

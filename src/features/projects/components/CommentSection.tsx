@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Comment, Activity, Profile } from '../../../shared/lib/types'
 import { timeAgo } from '../../../shared/lib/dateUtils'
 import { Avatar } from '../../../shared/components/Avatar'
@@ -23,6 +24,7 @@ const AVATAR_SIZE = 32
 const AVATAR_COLUMN = 'w-10 shrink-0' // 40px column for the avatar (avatar + breathing room)
 
 export function CommentSection({ comments, activities, currentUserId, profileById, onOpenImage, onAddComment, onDeleteComment }: CommentSectionProps) {
+  const { t } = useTranslation()
   const [body, setBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -41,7 +43,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
     const displayName =
       profile?.display_name?.trim() ||
       profile?.email ||
-      (isSelf ? 'You' : 'Unknown user')
+      (isSelf ? t('comments.selfLabel') : t('comments.unknownUser'))
     return { profile, isSelf, displayName }
   }
 
@@ -59,7 +61,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-huginn-text-secondary">
           <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h11A2.5 2.5 0 0 1 18 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-4.793l-3.853 3.854A.5.5 0 0 1 6 17.5V14H4.5A2.5 2.5 0 0 1 2 11.5v-7Z" />
         </svg>
-        <h3 className="text-sm font-bold text-huginn-text-primary">Comments and activity</h3>
+        <h3 className="text-sm font-bold text-huginn-text-primary">{t('comments.heading')}</h3>
       </div>
 
       {/* Comment composer */}
@@ -76,7 +78,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Write a comment…"
+            placeholder={t('comments.placeholder')}
             rows={body.trim() ? 3 : 1}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() }
@@ -90,14 +92,14 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
                 disabled={submitting}
                 className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-xs font-semibold rounded-md px-4 py-1.5 disabled:opacity-50"
               >
-                {submitting ? '…' : 'Save'}
+                {submitting ? t('comments.saving') : t('common.save')}
               </button>
               <button
                 type="button"
                 onClick={() => setBody('')}
                 className="text-xs text-huginn-text-muted hover:text-white px-2 py-1.5"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           )}
@@ -126,7 +128,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
                       {displayName}
                     </span>
                     {isSelf && profile && (
-                      <span className="text-[10px] text-huginn-text-muted">(you)</span>
+                      <span className="text-[10px] text-huginn-text-muted">{t('comments.you')}</span>
                     )}
                     <span className="text-[11px] text-huginn-text-muted">{timeAgo(comment.created_at)}</span>
                   </div>
@@ -138,7 +140,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
                       onClick={() => onDeleteComment(comment.id)}
                       className="text-[11px] text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity mt-1"
                     >
-                      Delete
+                      {t('common.delete')}
                     </button>
                   )}
                 </div>
@@ -165,7 +167,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
                 <p className="text-xs text-huginn-text-secondary leading-relaxed">
                   <span className="font-bold text-huginn-text-primary">{displayName}</span>
                   {' '}
-                  {formatActivityAction(activity)}
+                  {formatActivityAction(activity, t)}
                 </p>
                 <p className="text-[11px] text-huginn-text-muted mt-0.5">{timeAgo(activity.created_at)}</p>
                 {imageUrl && (
@@ -173,7 +175,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
                     type="button"
                     onClick={() => onOpenImage?.(imageUrl, imageName)}
                     className="mt-2 block w-full rounded-lg overflow-hidden border border-huginn-border hover:border-huginn-accent/60 bg-huginn-card transition-colors group/thumb"
-                    title="Open"
+                    title={t('card.attachments.open')}
                   >
                     <img
                       src={imageUrl}
@@ -192,7 +194,7 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
         {feed.length === 0 && (
           <div className="flex items-start gap-3 opacity-60">
             <div className={AVATAR_COLUMN} />
-            <p className="text-xs text-huginn-text-muted py-2">No activity yet.</p>
+            <p className="text-xs text-huginn-text-muted py-2">{t('comments.empty')}</p>
           </div>
         )}
       </div>
@@ -200,12 +202,12 @@ export function CommentSection({ comments, activities, currentUserId, profileByI
   )
 }
 
-function formatActivityAction(activity: Activity): string {
+function formatActivityAction(activity: Activity, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const details = activity.details ?? {}
   switch (activity.action) {
     case 'attached': {
-      const name = typeof details.name === 'string' ? details.name : 'a file'
-      return `attached ${name}`
+      const name = typeof details.name === 'string' ? details.name : t('activity.attachedFallback')
+      return t('activity.attached', { name })
     }
     default:
       return activity.action

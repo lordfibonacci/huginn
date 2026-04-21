@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Task } from '../../../shared/lib/types'
 
 interface CalendarViewProps {
@@ -18,6 +19,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function CalendarView({ tasks, onTaskTap }: CalendarViewProps) {
+  const { t } = useTranslation()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -78,7 +80,7 @@ export function CalendarView({ tasks, onTaskTap }: CalendarViewProps) {
           </svg>
         </button>
         <button onClick={goToday} className="text-xs text-huginn-accent hover:text-white ml-2">
-          Today
+          {t('calendar.today')}
         </button>
       </div>
 
@@ -125,7 +127,7 @@ export function CalendarView({ tasks, onTaskTap }: CalendarViewProps) {
                   </button>
                 ))}
                 {dayTasks.length > 3 && (
-                  <span className="text-[9px] text-huginn-text-muted px-1">+{dayTasks.length - 3} more</span>
+                  <span className="text-[9px] text-huginn-text-muted px-1">{t('calendar.moreCount', { count: dayTasks.length - 3 })}</span>
                 )}
               </div>
             </div>

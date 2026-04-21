@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface RichTextEditorProps {
   content: string
@@ -11,13 +12,14 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+  const { t } = useTranslation()
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
       Link.configure({ openOnClick: true }),
-      Placeholder.configure({ placeholder: placeholder || 'Write something...' }),
+      Placeholder.configure({ placeholder: placeholder || t('richText.placeholder') }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -49,21 +51,21 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton
           active={editor.isActive('bold')}
           onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Bold"
+          title={t('richText.bold')}
         >
           <span className="font-bold text-xs">B</span>
         </ToolbarButton>
         <ToolbarButton
           active={editor.isActive('italic')}
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Italic"
+          title={t('richText.italic')}
         >
           <span className="italic text-xs">I</span>
         </ToolbarButton>
         <ToolbarButton
           active={editor.isActive('strike')}
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          title="Strikethrough"
+          title={t('richText.strike')}
         >
           <span className="line-through text-xs">S</span>
         </ToolbarButton>
@@ -71,7 +73,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton
           active={editor.isActive('bulletList')}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Bullet list"
+          title={t('richText.bulletList')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M3 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3.75-1.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5ZM6 8a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 8Zm.75 3.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5ZM4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
@@ -80,7 +82,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton
           active={editor.isActive('orderedList')}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          title="Numbered list"
+          title={t('richText.orderedList')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M2.003 2.5a.5.5 0 0 1 .723-.447l.276.138a.5.5 0 0 1-.276.862v1.199a.5.5 0 0 1-1 0v-1.5a.5.5 0 0 1 .277-.252ZM6 3.75a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 3.75ZM6 8a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 8Zm.75 3.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" />
@@ -89,7 +91,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton
           active={editor.isActive('codeBlock')}
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          title="Code block"
+          title={t('richText.codeBlock')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M5.78 4.22a.75.75 0 0 0-1.06 0l-3.5 3.5a.75.75 0 0 0 0 1.06l3.5 3.5a.75.75 0 0 0 1.06-1.06L2.81 8.25l2.97-2.97a.75.75 0 0 0 0-1.06Zm4.44 0a.75.75 0 1 0-1.06 1.06l2.97 2.97-2.97 2.97a.75.75 0 1 0 1.06 1.06l3.5-3.5a.75.75 0 0 0 0-1.06l-3.5-3.5Z" />

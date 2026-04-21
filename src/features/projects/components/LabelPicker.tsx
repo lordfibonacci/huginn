@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import type { Label } from '../../../shared/lib/types'
 import { getContrastTextColor } from '../../../shared/lib/contrast'
 
@@ -32,6 +33,7 @@ type Mode =
   | { kind: 'edit'; labelId: string }
 
 export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpdate, onDelete, onClose }: LabelPickerProps) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
   const [query, setQuery] = useState('')
   const [formName, setFormName] = useState('')
@@ -93,7 +95,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
             <button
               onClick={backToList}
               className="absolute left-2 text-huginn-text-muted hover:text-huginn-text-primary p-1 rounded hover:bg-huginn-hover"
-              aria-label="Back"
+              aria-label={t('labels.back')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                 <path fillRule="evenodd" d="M10.28 3.22a.75.75 0 0 1 0 1.06L6.56 8l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clipRule="evenodd" />
@@ -101,12 +103,12 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
             </button>
           )}
           <p className="text-sm font-semibold text-huginn-text-primary">
-            {mode.kind === 'edit' ? 'Edit label' : mode.kind === 'create' ? 'Create label' : 'Labels'}
+            {mode.kind === 'edit' ? t('labels.header.edit') : mode.kind === 'create' ? t('labels.header.create') : t('labels.header.list')}
           </p>
           <button
             onClick={onClose}
             className="absolute right-2 text-huginn-text-muted hover:text-huginn-text-primary p-1 rounded hover:bg-huginn-hover"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
               <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
@@ -121,14 +123,14 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search labels..."
+                placeholder={t('labels.searchPlaceholder')}
                 className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-md px-2.5 py-1.5 outline-none border border-huginn-border focus:border-huginn-accent placeholder-huginn-text-muted"
               />
             </div>
 
             {/* Label rows */}
             <div className="px-3 pb-2 flex-1 min-h-0 overflow-y-auto">
-              <p className="text-[11px] font-semibold text-huginn-text-secondary mb-1.5 mt-1">Labels</p>
+              <p className="text-[11px] font-semibold text-huginn-text-secondary mb-1.5 mt-1">{t('labels.sectionHeading')}</p>
               <div className="space-y-1.5">
                 {filtered.map((label) => {
                   const isActive = activeLabelIds.includes(label.id)
@@ -141,7 +143,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                             ? 'bg-huginn-accent border-huginn-accent text-white'
                             : 'border-huginn-text-muted hover:border-huginn-text-secondary'
                         }`}
-                        aria-label={isActive ? `Unselect ${label.name}` : `Select ${label.name}`}
+                        aria-label={isActive ? t('labels.unselectAria', { name: label.name }) : t('labels.selectAria', { name: label.name })}
                       >
                         {isActive && (
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
@@ -160,7 +162,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                         <button
                           onClick={() => openEdit(label)}
                           className="text-huginn-text-muted hover:text-huginn-text-primary p-1 rounded hover:bg-huginn-hover shrink-0"
-                          aria-label={`Edit ${label.name}`}
+                          aria-label={t('labels.editAria', { name: label.name })}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                             <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25a1.75 1.75 0 0 1 .445-.758l8.61-8.61Zm1.414 1.06a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354l-1.086-1.086Zm-1.177 3.3L9.811 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064l6.286-6.286Z" />
@@ -172,7 +174,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                 })}
                 {filtered.length === 0 && (
                   <p className="text-xs text-huginn-text-muted py-3 text-center">
-                    {query ? 'No labels match' : 'No labels yet'}
+                    {query ? t('labels.noMatch') : t('labels.empty')}
                   </p>
                 )}
               </div>
@@ -184,7 +186,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                 onClick={openCreate}
                 className="w-full bg-huginn-surface hover:bg-huginn-hover text-huginn-text-primary text-xs font-semibold rounded-md px-2.5 py-2 transition-colors"
               >
-                Create a new label
+                {t('labels.createButton')}
               </button>
             </div>
           </>
@@ -197,16 +199,16 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                 className="text-xs font-semibold rounded-md px-3 py-1.5 shadow-sm max-w-[14rem] truncate"
                 style={{ backgroundColor: formColor, color: getContrastTextColor(formColor) }}
               >
-                {formName.trim() || 'Label preview'}
+                {formName.trim() || t('labels.preview')}
               </span>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-huginn-text-secondary mb-1">Title</label>
+              <label className="block text-[11px] font-semibold text-huginn-text-secondary mb-1">{t('labels.fields.title')}</label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="Label name"
+                placeholder={t('labels.fields.titlePlaceholder')}
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSave() }}
                 className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-md px-2.5 py-1.5 outline-none border border-huginn-border focus:border-huginn-accent placeholder-huginn-text-muted"
@@ -214,7 +216,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
             </div>
 
             <div>
-              <p className="block text-[11px] font-semibold text-huginn-text-secondary mb-1.5">Select a color</p>
+              <p className="block text-[11px] font-semibold text-huginn-text-secondary mb-1.5">{t('labels.fields.selectColor')}</p>
               <div className="grid grid-cols-6 gap-1.5">
                 {LABEL_COLORS.map((c) => (
                   <button
@@ -224,7 +226,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                       formColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-huginn-card' : ''
                     }`}
                     style={{ backgroundColor: c }}
-                    aria-label={`Color ${c}`}
+                    aria-label={t('labels.colorAria', { hex: c })}
                   />
                 ))}
               </div>
@@ -236,7 +238,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                   onClick={handleDelete}
                   className="bg-huginn-surface hover:bg-huginn-danger/20 text-huginn-danger text-xs font-semibold rounded-md px-3 py-1.5 transition-colors"
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               ) : (
                 <span />
@@ -246,7 +248,7 @@ export function LabelPicker({ labels, activeLabelIds, onToggle, onCreate, onUpda
                 disabled={!formName.trim()}
                 className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50 transition-colors"
               >
-                {mode.kind === 'edit' ? 'Save' : 'Create'}
+                {mode.kind === 'edit' ? t('common.save') : t('labels.createSubmit')}
               </button>
             </div>
           </div>

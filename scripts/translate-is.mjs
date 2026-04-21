@@ -94,7 +94,7 @@ function stripJsonFence(s) {
   return trimmed
 }
 
-async function translateBatch(batch) {
+async function translateBatchOnce(batch) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: {
@@ -116,7 +116,7 @@ async function translateBatch(batch) {
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`OpenRouter ${res.status}: ${body}`)
+    throw new Error(`OpenRouter ${res.status}: ${body.slice(0, 500)}`)
   }
   const json = await res.json()
   const content = json?.choices?.[0]?.message?.content
@@ -128,6 +128,23 @@ async function translateBatch(batch) {
     throw new Error(`Model did not return JSON: ${content.slice(0, 500)}`)
   }
   return parsed
+}
+
+async function translateBatch(batch, attempts = 3) {
+  let lastErr
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await translateBatchOnce(batch)
+    } catch (err) {
+      lastErr = err
+      if (i < attempts) {
+        const waitMs = 1500 * i
+        console.warn(`    retry ${i}/${attempts - 1} after ${waitMs}ms (${err.message.slice(0, 100)})`)
+        await new Promise((r) => setTimeout(r, waitMs))
+      }
+    }
+  }
+  throw lastErr
 }
 
 async function main() {
@@ -171,6 +188,22 @@ async function main() {
   const translated = { ...isFlat }
   const nextCache = { ...cache }
 
+  async function persist() {
+    const cleanCache = { ...nextCache }
+    const cleanTranslated = { ...translated }
+    for (const k of Object.keys(cleanCache)) {
+      if (!(k in enFlat)) delete cleanCache[k]
+    }
+    for (const k of Object.keys(cleanTranslated)) {
+      if (!(k in enFlat)) delete cleanTranslated[k]
+    }
+    const finalIs = sortKeysDeep(unflatten(cleanTranslated))
+    const finalCache = sortKeysDeep(cleanCache)
+    await mkdir(dirname(IS_PATH), { recursive: true })
+    await writeFile(IS_PATH, JSON.stringify(finalIs, null, 2) + '\n', 'utf8')
+    await writeFile(CACHE_PATH, JSON.stringify(finalCache, null, 2) + '\n', 'utf8')
+  }
+
   for (let i = 0; i < keys.length; i += BATCH_SIZE) {
     const chunk = keys.slice(i, i + BATCH_SIZE)
     const input = Object.fromEntries(chunk.map((k) => [k, pending[k]]))
@@ -187,21 +220,9 @@ async function main() {
       translated[k] = String(output[k])
       nextCache[k] = { hash: hash(String(pending[k])), value: String(output[k]) }
     }
-  }
 
-  for (const k of Object.keys(nextCache)) {
-    if (!(k in enFlat)) delete nextCache[k]
+    await persist()
   }
-  for (const k of Object.keys(translated)) {
-    if (!(k in enFlat)) delete translated[k]
-  }
-
-  const finalIs = sortKeysDeep(unflatten(translated))
-  const finalCache = sortKeysDeep(nextCache)
-
-  await mkdir(dirname(IS_PATH), { recursive: true })
-  await writeFile(IS_PATH, JSON.stringify(finalIs, null, 2) + '\n', 'utf8')
-  await writeFile(CACHE_PATH, JSON.stringify(finalCache, null, 2) + '\n', 'utf8')
 
   console.log(`✓ wrote ${IS_PATH}`)
   console.log(`✓ wrote ${CACHE_PATH}`)

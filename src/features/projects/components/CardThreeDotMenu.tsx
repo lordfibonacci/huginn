@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface CardThreeDotMenuProps {
   onMove: () => void
@@ -10,6 +11,7 @@ interface CardThreeDotMenuProps {
 }
 
 export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMode }: CardThreeDotMenuProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -48,7 +50,7 @@ export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMod
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="w-9 h-9 flex items-center justify-center rounded-lg text-huginn-text-muted hover:text-white bg-huginn-surface/80 hover:bg-huginn-hover transition-colors"
-        aria-label="More actions"
+        aria-label={t('card.menu.open')}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -70,7 +72,7 @@ export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMod
                   <path d="M10.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 1 1-1.06-1.06l2.97-2.97H1.75a.75.75 0 0 1 0-1.5h11.44l-2.97-2.97a.75.75 0 0 1 0-1.06Z" />
                 </svg>
               }
-              label="Move"
+              label={t('card.actions.move')}
             />
           )}
           <MenuItem
@@ -81,7 +83,7 @@ export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMod
                 <path d="M3.5 5A.5.5 0 0 0 3 5.5v7a1.5 1.5 0 0 0 1.5 1.5h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 1-.5-.5V5.5a.5.5 0 0 0-.5-.5Z" />
               </svg>
             }
-            label="Copy card"
+            label={t('card.actions.copy')}
           />
           {!inboxMode && (
             <MenuItem
@@ -92,7 +94,7 @@ export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMod
                   <path d="M2.5 7h11v5.5A1.5 1.5 0 0 1 12 14H4a1.5 1.5 0 0 1-1.5-1.5V7Zm3 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5Z" />
                 </svg>
               }
-              label="Archive"
+              label={t('card.actions.archive')}
             />
           )}
           <div className="my-1 border-t border-huginn-border/60" />
@@ -109,7 +111,7 @@ export function CardThreeDotMenu({ onMove, onCopy, onArchive, onDelete, inboxMod
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-huginn-danger">
               <path d="M6 2a1 1 0 0 0-.894.553L4.382 4H2a.5.5 0 0 0 0 1h.522l.615 7.379A2 2 0 0 0 5.124 14h5.752a2 2 0 0 0 1.988-1.621L13.478 5H14a.5.5 0 0 0 0-1h-2.382l-.724-1.447A1 1 0 0 0 10 2H6Z" />
             </svg>
-            {confirmDelete ? 'Click again to delete' : 'Delete card'}
+            {confirmDelete ? t('card.delete.confirm') : t('card.delete.trigger')}
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ChecklistItem } from '../../../shared/lib/types'
 
 interface ChecklistData {
@@ -46,6 +47,7 @@ function SingleChecklist({ checklist, onDelete, onRename, onAddItem, onToggleIte
   onUpdateItemText: (itemId: string, text: string) => Promise<void>
   onDeleteItem: (itemId: string) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [newText, setNewText] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -123,7 +125,7 @@ function SingleChecklist({ checklist, onDelete, onRename, onAddItem, onToggleIte
                 onClick={() => { onDelete(); setShowMenu(false) }}
                 className="w-full text-left text-xs text-huginn-danger hover:bg-huginn-surface px-3 py-1.5"
               >
-                Delete checklist
+                {t('checklist.deleteChecklist')}
               </button>
             </div>
           )}
@@ -191,12 +193,12 @@ function SingleChecklist({ checklist, onDelete, onRename, onAddItem, onToggleIte
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem() }}
-          placeholder="Add an item..."
+          placeholder={t('checklist.itemPlaceholder')}
           className="flex-1 bg-transparent text-sm text-huginn-text-primary outline-none placeholder-huginn-text-muted border-b border-transparent focus:border-huginn-border py-1"
         />
         {newText.trim() && (
           <button onClick={handleAddItem} className="text-xs text-huginn-accent font-semibold hover:text-white">
-            Add
+            {t('checklist.add')}
           </button>
         )}
       </div>

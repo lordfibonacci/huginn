@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Task, TaskStatus, ThoughtPriority, List, Profile } from '../../../shared/lib/types'
 import { RichTextEditor } from './RichTextEditor'
 import { ChecklistSection } from './ChecklistSection'
@@ -38,13 +39,14 @@ interface CardPopupProps {
   onClose: () => void
 }
 
-const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
-  { value: 'low', label: 'Low', color: 'bg-gray-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-huginn-warning' },
-  { value: 'high', label: 'High', color: 'bg-huginn-danger' },
+const PRIORITY_OPTIONS: { value: ThoughtPriority; labelKey: string; color: string }[] = [
+  { value: 'low', labelKey: 'card.priority.low', color: 'bg-gray-500' },
+  { value: 'medium', labelKey: 'card.priority.medium', color: 'bg-huginn-warning' },
+  { value: 'high', labelKey: 'card.priority.high', color: 'bg-huginn-danger' },
 ]
 
 export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose, onMovedAway, onArchive, onCopy, onMoveToBoard }: CardPopupProps) {
+  const { t } = useTranslation()
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.notes ?? '')
   const [descOriginal, setDescOriginal] = useState(task.notes ?? '')
@@ -248,7 +250,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
             type="button"
             onClick={() => openImageInLightbox(coverImage.url, coverImage.name)}
             className="block w-full bg-black/30 overflow-hidden"
-            title="Open cover image"
+            title={t('card.cover.open')}
           >
             <img
               src={coverImage.url}
@@ -298,7 +300,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M3.5 7.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-4Zm1 2v2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-2H10a2.5 2.5 0 0 1-4 0H4.5Z" />
               </svg>
-              Inbox
+              {t('card.inbox')}
             </span>
           ) : <div />}
 
@@ -324,7 +326,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               type="button"
               onClick={handleClose}
               className="w-9 h-9 flex items-center justify-center text-huginn-text-muted hover:text-white bg-huginn-surface/80 hover:bg-huginn-hover rounded-lg transition-colors"
-              aria-label="Close"
+              aria-label={t('common.close')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
@@ -347,7 +349,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                     ? 'bg-huginn-success border-huginn-success text-white'
                     : 'border-huginn-text-muted hover:border-huginn-accent'
                 }`}
-                aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
+                aria-label={isDone ? t('card.checkbox.markNotDone') : t('card.checkbox.markDone')}
               >
                 {isDone && (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
@@ -369,7 +371,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                 className={`w-full bg-transparent text-2xl font-bold outline-none placeholder-huginn-text-muted leading-snug resize-none overflow-hidden ${
                   isDone ? 'text-huginn-text-muted line-through' : 'text-huginn-text-primary'
                 }`}
-                placeholder="Card title"
+                placeholder={t('card.title.placeholder')}
               />
             </div>
 
@@ -378,7 +380,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               {!isInboxCard && (
                 <div className="relative">
                   <QuickButton onClick={() => setShowMemberPicker(o => !o)} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.7 14a6.98 6.98 0 0 0-9.4 0 .5.5 0 0 0 .35.85h8.7a.5.5 0 0 0 .35-.85Z" /></svg>}>
-                    Members
+                    {t('card.actions.members')}
                   </QuickButton>
                   {showMemberPicker && (
                     <MemberPicker
@@ -393,7 +395,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               {!isInboxCard && (
                 <div className="relative">
                   <QuickButton onClick={() => setShowLabelPicker(o => !o)} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path d="M3.5 1A1.5 1.5 0 0 0 2 2.5v9.793a.5.5 0 0 0 .854.354l2.646-2.647 2.646 2.647a.5.5 0 0 0 .854-.354V2.5A1.5 1.5 0 0 0 7.5 1h-4Z" /></svg>}>
-                    Labels
+                    {t('card.actions.labels')}
                   </QuickButton>
                   {showLabelPicker && (
                     <LabelPicker
@@ -408,12 +410,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   )}
                 </div>
               )}
-              <QuickButton onClick={() => addChecklist('Checklist')} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path fillRule="evenodd" d="M12.4 4.7a.75.75 0 0 1 .1 1.06l-5.25 6a.75.75 0 0 1-1.1.02L3.6 9.1a.75.75 0 1 1 1.1-1.02l2.05 2.22 4.7-5.37a.75.75 0 0 1 1.06-.1l-.1-.13Z" clipRule="evenodd" /></svg>}>
-                Checklist
+              <QuickButton onClick={() => addChecklist(t('card.defaultChecklistName'))} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path fillRule="evenodd" d="M12.4 4.7a.75.75 0 0 1 .1 1.06l-5.25 6a.75.75 0 0 1-1.1.02L3.6 9.1a.75.75 0 1 1 1.1-1.02l2.05 2.22 4.7-5.37a.75.75 0 0 1 1.06-.1l-.1-.13Z" clipRule="evenodd" /></svg>}>
+                {t('card.actions.checklist')}
               </QuickButton>
               <label className="flex items-center gap-1.5 text-xs font-semibold bg-huginn-surface hover:bg-huginn-hover text-huginn-text-primary rounded-md px-3 py-1.5 transition-colors cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" /></svg>
-                Attachment
+                {t('card.actions.attachment')}
                 <input
                   type="file"
                   className="hidden"
@@ -429,7 +431,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               </label>
               <div className="relative">
                 <QuickButton onClick={() => setShowDatePicker(true)} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5"><path d="M5 4a.75.75 0 0 0-1.5 0v1H2.75A.75.75 0 0 0 2 5.75v.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75v-.5a.75.75 0 0 0-.75-.75H12.5V4a.75.75 0 0 0-1.5 0v1h-5V4Z" /><path d="M2 9.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v4a1.75 1.75 0 0 1-1.75 1.75H3.75A1.75 1.75 0 0 1 2 13.25v-4Z" /></svg>}>
-                  Dates
+                  {t('card.actions.dates')}
                 </QuickButton>
                 {showDatePicker && (
                   <DatePicker
@@ -451,19 +453,19 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               <div className="flex items-start gap-6 flex-wrap">
                 {taskLabels.length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Labels</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">{t('card.sections.labels')}</p>
                     <LabelBadges labels={taskLabels} />
                   </div>
                 )}
                 {assignedProfiles.length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Members</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">{t('card.sections.members')}</p>
                     <MemberAvatars profiles={assignedProfiles} />
                   </div>
                 )}
                 {task.updated_at && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">Last updated</p>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-1.5">{t('card.sections.lastUpdated')}</p>
                     <p className="text-xs text-huginn-text-primary">{timeAgo(task.updated_at)}</p>
                   </div>
                 )}
@@ -477,10 +479,10 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7ZM4 5.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4ZM4 8a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H4Z" />
                   </svg>
-                  Description
+                  {t('card.sections.description')}
                   {descriptionDirty && (
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-huginn-warning/20 text-huginn-warning px-1.5 py-0.5 rounded">
-                      Unsaved
+                      {t('card.description.unsaved')}
                     </span>
                   )}
                 </p>
@@ -490,7 +492,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                     onClick={handleEditDescription}
                     className="text-xs text-huginn-text-secondary hover:text-white bg-huginn-surface hover:bg-huginn-hover rounded-md px-3 py-1 transition-colors"
                   >
-                    Edit
+                    {t('common.edit')}
                   </button>
                 )}
               </div>
@@ -499,7 +501,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   <RichTextEditor
                     content={description}
                     onChange={setDescription}
-                    placeholder="Add a more detailed description..."
+                    placeholder={t('card.description.placeholder')}
                   />
                   <div className="flex gap-2 mt-2">
                     <button
@@ -507,14 +509,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                       onClick={handleSaveDescription}
                       className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-xs font-semibold rounded-md px-4 py-1.5"
                     >
-                      Save
+                      {t('common.save')}
                     </button>
                     <button
                       type="button"
                       onClick={handleCancelDescription}
                       className="text-huginn-text-secondary hover:text-white text-xs px-3 py-1.5"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </>
@@ -529,7 +531,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   onClick={handleEditDescription}
                   className="w-full text-left text-sm text-huginn-text-muted bg-huginn-surface/60 hover:bg-huginn-hover border border-huginn-border/60 rounded-lg px-4 py-3 transition-colors"
                 >
-                  Add a more detailed description…
+                  {t('card.description.emptyCta')}
                 </button>
               )}
             </div>
@@ -537,7 +539,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
             {/* Priority chips (board cards only) */}
             {!isInboxCard && (
               <div className="pt-4 border-t border-huginn-border/50">
-                <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-2">Priority</p>
+                <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-secondary mb-2">{t('card.sections.priority')}</p>
                 <div className="flex gap-1.5">
                   {PRIORITY_OPTIONS.map((opt) => (
                     <button
@@ -554,7 +556,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                           : 'bg-huginn-surface text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
                       }`}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -584,8 +586,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                     <path d="M11.5 2a3.5 3.5 0 0 0-2.475 1.025L3.22 8.83a2.2 2.2 0 0 0 3.111 3.111l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a3.7 3.7 0 0 1-5.232-5.232l5.805-5.805A5 5 0 0 1 15.025 9.05l-5.805 5.805a3.2 3.2 0 0 1-4.525-4.525l4.87-4.87a.75.75 0 1 1 1.06 1.06l-4.87 4.87a1.7 1.7 0 0 0 2.404 2.404l5.805-5.805A3.5 3.5 0 0 0 11.5 2Z" />
                   </svg>
-                  Attachments
-                  {pasting && <span className="text-[10px] font-normal text-huginn-accent animate-pulse ml-1">uploading…</span>}
+                  {t('card.sections.attachments')}
+                  {pasting && <span className="text-[10px] font-normal text-huginn-accent animate-pulse ml-1">{t('card.attachments.uploading')}</span>}
                 </p>
                 <div className="space-y-2">
                   {attachments.map((att) => {
@@ -597,7 +599,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                             type="button"
                             onClick={() => setLightbox({ attachmentId: att.id, url: att.url, name: att.name })}
                             className="shrink-0 rounded overflow-hidden focus:outline-none focus:ring-2 focus:ring-huginn-accent"
-                            title="Open"
+                            title={t('card.attachments.open')}
                           >
                             <img src={att.url} alt={att.name} className="w-20 h-14 object-cover" />
                           </button>
@@ -623,13 +625,13 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                             </a>
                           )}
                           <p className="text-[11px] text-huginn-text-muted mt-0.5">
-                            Added {timeAgo(att.created_at)}{' · '}{att.size ? `${(att.size / 1024).toFixed(0)} KB` : att.type === 'link' ? 'Link' : 'File'}
+                            {t('card.attachments.added', { when: timeAgo(att.created_at) })}{' · '}{att.size ? t('card.attachments.sizeKb', { kb: (att.size / 1024).toFixed(0) }) : att.type === 'link' ? t('card.attachments.typeLink') : t('card.attachments.typeFile')}
                           </p>
                         </div>
                         <button
                           onClick={() => deleteAttachment(att.id)}
                           className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                          aria-label="Delete attachment"
+                          aria-label={t('card.attachments.delete')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
@@ -652,7 +654,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                     <path d="M3.5 7.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-4Zm1 2v2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-2H10a2.5 2.5 0 0 1-4 0H4.5Z" />
                   </svg>
-                  Move to Inbox
+                  {t('card.actions.moveToInbox')}
                 </button>
               </div>
             )}
@@ -701,14 +703,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               rel="noopener noreferrer"
               className="text-huginn-accent hover:text-white transition-colors"
             >
-              Open in new tab ↗
+              {t('card.lightbox.openNewTab')}
             </a>
             <a
               href={lightbox.url}
               download={lightbox.name}
               className="text-white/80 hover:text-white transition-colors"
             >
-              Download
+              {t('card.lightbox.download')}
             </a>
             {lightbox.attachmentId && (
               <>
@@ -719,7 +721,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   }}
                   className="text-white/80 hover:text-white transition-colors"
                 >
-                  Make cover
+                  {t('card.lightbox.makeCover')}
                 </button>
                 <button
                   type="button"
@@ -730,7 +732,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                   }}
                   className="text-huginn-danger hover:text-white transition-colors"
                 >
-                  Delete
+                  {t('card.lightbox.delete')}
                 </button>
               </>
             )}
@@ -739,7 +741,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               onClick={() => setLightbox(null)}
               className="text-white/60 hover:text-white transition-colors"
             >
-              Close (Esc)
+              {t('card.lightbox.close')}
             </button>
           </div>
         </div>

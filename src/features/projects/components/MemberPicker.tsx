@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Profile } from '../../../shared/lib/types'
 
 interface BoardMemberInfo {
@@ -22,6 +23,7 @@ function getInitials(profile?: Profile): string {
 }
 
 export function MemberPicker({ boardMembers, assignedIds, onToggle, onClose }: MemberPickerProps) {
+  const { t } = useTranslation()
   return (
     <>
       {/* Backdrop to close on outside click */}
@@ -29,7 +31,7 @@ export function MemberPicker({ boardMembers, assignedIds, onToggle, onClose }: M
 
       <div className="absolute top-full left-0 mt-1.5 z-50 bg-huginn-card border border-huginn-border rounded-lg shadow-2xl p-3 w-60">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-huginn-text-secondary">Members</p>
+        <p className="text-xs font-semibold text-huginn-text-secondary">{t('members.heading')}</p>
         <button onClick={onClose} className="text-huginn-text-muted hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
@@ -53,7 +55,7 @@ export function MemberPicker({ boardMembers, assignedIds, onToggle, onClose }: M
                 {getInitials(profile)}
               </div>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-huginn-text-primary truncate">{profile?.display_name || profile?.email || 'Unknown'}</p>
+                <p className="text-huginn-text-primary truncate">{profile?.display_name || profile?.email || t('members.unknown')}</p>
                 {profile?.display_name && profile?.email && (
                   <p className="text-[10px] text-huginn-text-muted truncate">{profile.email}</p>
                 )}
@@ -67,7 +69,7 @@ export function MemberPicker({ boardMembers, assignedIds, onToggle, onClose }: M
           )
         })}
         {boardMembers.length === 0 && (
-          <p className="text-xs text-huginn-text-muted py-2 text-center">No board members</p>
+          <p className="text-xs text-huginn-text-muted py-2 text-center">{t('members.empty')}</p>
         )}
       </div>
       </div>
