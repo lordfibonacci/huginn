@@ -6,5 +6,13 @@
     "edit": "Breyta",
     "close": "Loka",
     "loading": "Hleð…"
+  },
+  "account": {
+    "menu": {
+      "account": "Reikningur",
+      "settings": "Stillingar reiknings",
+      "language": "Tungumál",
+      "signOut": "Skrá út"
+    }
   }
 }
