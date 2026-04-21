@@ -76,6 +76,12 @@
       "subtitle": "Stofnaðu aðgang"
     }
   },
+  "bottomNav": {
+    "inbox": "Pósthólf",
+    "projects": "Verkefni",
+    "settings": "Stillingar",
+    "you": "Þú"
+  },
   "common": {
     "cancel": "Hætta við",
     "close": "Loka",
@@ -175,5 +181,14 @@
       "titleAccent": "Það lendir í pósthólfinu þínu.",
       "titleLead": "Ýttu. Talaðu."
     }
+  },
+  "toolbar": {
+    "accountSettings": "Reikningsstillingar",
+    "current": "Núverandi",
+    "inbox": "Pósthólf",
+    "noProjects": "Engin verkefni ennþá.",
+    "switchProjects": "Skipta um verkefni",
+    "viewAllProjects": "Skoða öll verkefni →",
+    "yourProjects": "Þín verkefni"
   }
 }

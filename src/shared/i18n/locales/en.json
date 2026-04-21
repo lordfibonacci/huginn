@@ -166,5 +166,20 @@
       "copyright": "© {{year}} Huginn",
       "signIn": "Sign in"
     }
+  },
+  "toolbar": {
+    "accountSettings": "Account settings",
+    "current": "Current",
+    "inbox": "Inbox",
+    "noProjects": "No projects yet.",
+    "switchProjects": "Switch projects",
+    "viewAllProjects": "View all projects →",
+    "yourProjects": "Your projects"
+  },
+  "bottomNav": {
+    "inbox": "Inbox",
+    "projects": "Projects",
+    "settings": "Settings",
+    "you": "You"
   }
 }

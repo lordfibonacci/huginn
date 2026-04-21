@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Mark } from './Logo'
 import { Avatar } from './Avatar'
 import { AccountSettingsDrawer } from './AccountSettingsDrawer'
@@ -16,6 +17,7 @@ interface ToolBarProps {
 }
 
 export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId }: ToolBarProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { profile } = useProfile()
   const { projects } = useProjects()
@@ -74,7 +76,7 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
             <path d="M3.5 9.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-6Zm1 2v4a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4h-3.09a3 3 0 0 1-5.82 0H4.5Z" />
           </svg>
-          Inbox
+          {t('toolbar.inbox')}
           {inboxCount > 0 && (
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
               inboxOpen ? 'bg-white/20' : 'bg-huginn-accent text-white'
@@ -95,17 +97,17 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
               <path d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.28a.75.75 0 0 0-.75.75v3.955a.75.75 0 0 0 1.5 0v-2.174l.307.306a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.437-.354Zm-9.624-2.848a.75.75 0 0 0 1.437.354A5.5 5.5 0 0 1 16.2 11.39l.312.311h-2.433a.75.75 0 0 0 0 1.5H18.03a.75.75 0 0 0 .75-.75V8.495a.75.75 0 0 0-1.5 0v2.174l-.307-.306A7 7 0 0 0 5.261 13.5a.75.75 0 0 0 .427-1.424Z" />
             </svg>
-            Switch projects
+            {t('toolbar.switchProjects')}
           </button>
 
           {showSwitcher && (
             <div className="absolute bottom-full right-0 mb-2 w-72 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl overflow-hidden">
               <div className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-huginn-text-secondary">
-                Your projects
+                {t('toolbar.yourProjects')}
               </div>
               <div className="max-h-80 overflow-y-auto px-2 pb-2">
                 {projects.length === 0 && (
-                  <p className="text-xs text-huginn-text-muted px-2 py-3 text-center">No projects yet.</p>
+                  <p className="text-xs text-huginn-text-muted px-2 py-3 text-center">{t('toolbar.noProjects')}</p>
                 )}
                 {projects.map((p) => {
                   const isCurrent = p.id === currentProjectId
@@ -122,7 +124,7 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
                       <ProjectGlyph color={p.color} size={24} />
                       <span className="flex-1 text-sm truncate">{p.name}</span>
                       {isCurrent && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-huginn-accent">Current</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-huginn-accent">{t('toolbar.current')}</span>
                       )}
                     </button>
                   )
@@ -132,7 +134,7 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
                 onClick={handleViewAll}
                 className="w-full border-t border-huginn-border text-sm font-semibold text-huginn-accent hover:bg-huginn-hover py-2.5 transition-colors"
               >
-                View all projects →
+                {t('toolbar.viewAllProjects')}
               </button>
             </div>
           )}
@@ -143,7 +145,7 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
         <button
           onClick={() => setShowAccount(true)}
           className="rounded-full p-0.5 hover:bg-huginn-hover transition-colors"
-          title="Account settings"
+          title={t('toolbar.accountSettings')}
         >
           <Avatar
             url={profile?.avatar_url}

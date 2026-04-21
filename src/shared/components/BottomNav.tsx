@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Avatar } from './Avatar'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useInbox } from '../../features/inbox/hooks/useInbox'
 
 export function BottomNav() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { user } = useAuth()
   const { profile } = useProfile()
@@ -19,7 +21,7 @@ export function BottomNav() {
       <NavTab
         to="/inbox"
         active={isInbox}
-        label="Inbox"
+        label={t('bottomNav.inbox')}
         badge={inboxCount > 0 ? inboxCount : undefined}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -30,7 +32,7 @@ export function BottomNav() {
       <NavTab
         to="/projects"
         active={isProjects}
-        label="Projects"
+        label={t('bottomNav.projects')}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M4 4a2 2 0 0 0-2 2v1h20V6a2 2 0 0 0-2-2h-6.18a2 2 0 0 1-1.41-.59l-.83-.82A2 2 0 0 0 10.18 2H4Zm-2 5v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9H2Z" />
@@ -42,7 +44,7 @@ export function BottomNav() {
         className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 relative ${
           isSettings ? 'text-huginn-accent' : 'text-gray-500'
         }`}
-        aria-label="Settings"
+        aria-label={t('bottomNav.settings')}
       >
         {isSettings && <span className="w-1 h-1 rounded-full bg-huginn-accent absolute top-1.5" />}
         <Avatar
@@ -51,7 +53,7 @@ export function BottomNav() {
           email={user?.email}
           size={22}
         />
-        <span className="text-[10px] font-semibold">You</span>
+        <span className="text-[10px] font-semibold">{t('bottomNav.you')}</span>
       </Link>
     </nav>
   )
