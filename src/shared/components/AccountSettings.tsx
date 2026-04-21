@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useAvatarUpload } from '../hooks/useAvatarUpload'
 import { Avatar } from './Avatar'
+import { LanguageToggle } from './LanguageToggle'
 import { supabase } from '../lib/supabase'
 
 type Status = { kind: 'idle' } | { kind: 'success'; message: string } | { kind: 'error'; message: string }
@@ -193,6 +194,11 @@ export function AccountSettings({ onSignOut }: { onSignOut?: () => void }) {
           </div>
         </div>
         <StatusLine status={passwordStatus} />
+      </Section>
+
+      {/* Language */}
+      <Section title={t('settings.account.sections.language')} hint={t('settings.account.sections.languageHint')}>
+        <LanguageToggle />
       </Section>
 
       {/* Account actions */}

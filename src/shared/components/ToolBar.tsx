@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Mark } from './Logo'
 import { Avatar } from './Avatar'
 import { AccountSettingsDrawer } from './AccountSettingsDrawer'
+import { LanguageToggle } from './LanguageToggle'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useProjects } from '../../features/projects/hooks/useProjects'
@@ -139,6 +140,10 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
             </div>
           )}
         </div>
+
+        <div className="w-px h-5 bg-huginn-border mx-1" aria-hidden />
+
+        <LanguageToggle className="scale-95" />
 
         <div className="w-px h-5 bg-huginn-border mx-1" aria-hidden />
 

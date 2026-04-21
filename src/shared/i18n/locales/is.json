@@ -582,6 +582,8 @@
         "email": "Netfang",
         "emailHintDrawer": "Til að breyta þarf að staðfesta bæði gamla og nýja netfangið.",
         "emailHintPage": "Notað til að skrá inn. Til að breyta þarf að staðfesta bæði gamla og nýja netfangið.",
+        "language": "Tungumál",
+        "languageHint": "Veldu tungumálið sem Huginn viðmótið á að nota.",
         "password": "Lykilorð",
         "passwordHint": "Að minnsta kosti 6 stafir.",
         "profile": "Prófíll"

@@ -516,6 +516,8 @@
         "emailHintPage": "Used to sign in. Changing it requires confirming both your old and new address.",
         "password": "Password",
         "passwordHint": "At least 6 characters.",
+        "language": "Language",
+        "languageHint": "Pick the language the Huginn interface should use.",
         "account": "Account"
       },
       "avatar": {
