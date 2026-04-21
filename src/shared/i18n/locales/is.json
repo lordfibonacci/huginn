@@ -14,5 +14,97 @@
     "edit": "Breyta",
     "loading": "Hleður…",
     "save": "Vista"
+  },
+  "landing": {
+    "capture": {
+      "body": "Sjáðu hugmyndina lenda í pósthólfinu og færast yfir á þann lista sem hún á heima á — nákvæmlega það flæði sem Huginn keyrir á hverjum degi.",
+      "capturePlaceholder": "Grípa hugmynd…",
+      "columns": {
+        "done": "Búið",
+        "inProgress": "Í vinnslu",
+        "todo": "Að gera"
+      },
+      "demos": {
+        "0": {
+          "label": "Kynning",
+          "text": "Endurvinna verðlagskynninguna fyrir mánudaginn"
+        },
+        "1": {
+          "label": "Heimili",
+          "text": "Hringja í pípulagningamanninn út af vaskinum"
+        },
+        "2": {
+          "label": "Skrif",
+          "text": "Skrifa uppkast að bloggfærslu um smáforrit"
+        }
+      },
+      "emptyInbox": "Tómt í bili…",
+      "eyebrow": "Hvernig þetta virkar",
+      "inboxLabel": "Pósthólf",
+      "projectLabel": "Verkefni · Huginn.pro",
+      "seeds": {
+        "done": "Setja upp Supabase",
+        "inProgress": "Móttökuflæði",
+        "inProgressLabel": "UX",
+        "todo": "Yfirfara farsímaútlit"
+      },
+      "titleAccent": "í réttan dálk.",
+      "titleLead": "Frá flöktandi hugmynd"
+    },
+    "cta": {
+      "body": "Ókeypis á meðan beta stendur yfir. Tekur 30 sekúndur að nýskrá sig. Þú kemst í pósthólfið þitt eftir mínútu.",
+      "primary": "Búðu til pósthólf",
+      "secondary": "Skrá inn →",
+      "titleAccent": "loksins geymdar.",
+      "titleLead": "Hugsanir þínar,"
+    },
+    "features": {
+      "capture": {
+        "body": "Alltaf opið pósthólf fyrir hverja hugmynd sem kviknar. Skrifaðu hratt eða notaðu röddina fyrir handfrjálsa innslátt.",
+        "title": "Gríptu hvar sem er"
+      },
+      "eyebrow": "Það sem þú færð",
+      "projects": {
+        "body": "Sérsniðnir listar, drag-og-slepp spjöld, merkimiðar, gátlistar, athugasemdir, viðhengi — allur pakkinn, ekkert vantar.",
+        "title": "Verkefni í Trello-stíl"
+      },
+      "team": {
+        "body": "Bjóddu samstarfsfólki með hlutverkatengdum aðgangi. Þau samþykkja, hoppa inn og þið vinnið að sama verkefni í rauntíma.",
+        "title": "Teymisvænt"
+      },
+      "title": "Lítið verkfærasett, notað daglega."
+    },
+    "footer": {
+      "copyright": "© {{year}} Huginn",
+      "signIn": "Skrá inn"
+    },
+    "hero": {
+      "ambient": {
+        "0": "Hringja í pípulagningamanninn út af eldhúsvaskinum",
+        "1": "Endurvinna verðlagskynninguna fyrir mánudaginn",
+        "2": "Skrifa uppkast að bloggfærslu um smáforrit",
+        "3": "Bóka vinnuferð fyrir teymið í maí",
+        "4": "Undirbúa uppfærslu fyrir fjárfesta",
+        "5": "Bæta við umsögnum á vefsíðuna"
+      },
+      "capturingLabel": "Einmitt núna er Huginn að grípa:",
+      "ctaPrimary": "Byrja frítt",
+      "ctaSecondary": "Ég er nú þegar með aðgang →",
+      "scroll": "Skruna",
+      "subtitle": "Gríptu hverja hugmynd um leið og hún kviknar — með texta eða rödd — og flokkaðu hana í verkefni í Trello-stíl svo ekkert gleymist og allt klárist.",
+      "titleAccent": "skipulagður.",
+      "titleLead": "Annar heilinn þinn,"
+    },
+    "nav": {
+      "getStarted": "Byrja",
+      "signIn": "Skrá inn"
+    },
+    "voice": {
+      "body": "Byggt á innbyggðu Web Speech API í vafranum — engin öpp, engar innskráningar á öðrum tækjum, engin töf. Frábært fyrir aksturinn, göngutúrinn með hundinn, eða þessa tveggja sekúndna hugmynd áður en hún gufar upp.",
+      "cta": "Prófaðu núna",
+      "eyebrow": "Handfrjáls skráning",
+      "titleAccent": "Það lendir í pósthólfinu þínu.",
+      "titleLead": "Ýttu. Talaðu."
+    }
   }
 }

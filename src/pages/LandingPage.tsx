@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Mark, Wordmark } from '../shared/components/Logo'
 
 export function LandingPage() {
@@ -21,6 +22,7 @@ export function LandingPage() {
    ============================================================ */
 
 function TopBar() {
+  const { t } = useTranslation()
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -48,13 +50,13 @@ function TopBar() {
           to="/login"
           className="text-xs md:text-sm text-huginn-text-secondary hover:text-white px-3 py-2 rounded-lg hover:bg-huginn-hover transition-colors"
         >
-          Sign in
+          {t('landing.nav.signIn')}
         </Link>
         <Link
           to="/login?mode=signup"
           className="text-xs md:text-sm font-semibold bg-huginn-accent hover:bg-huginn-accent-hover text-white px-4 py-2 rounded-lg shadow-md shadow-huginn-accent/30 transition-colors"
         >
-          Get started
+          {t('landing.nav.getStarted')}
         </Link>
       </div>
     </header>
@@ -65,18 +67,22 @@ function TopBar() {
    Hero
    ============================================================ */
 
-const AMBIENT_THOUGHTS = [
-  'Call the plumber about the kitchen sink',
-  'Rework Monday\u2019s pricing deck',
-  'Draft the blog post on micro-apps',
-  'Book the team offsite for May',
-  'Prep the investor update',
-  'Add testimonial section to the site',
-]
-
 function HeroSection() {
+  const { t } = useTranslation()
   const heroRef = useRef<HTMLDivElement>(null)
   const orbRef = useRef<HTMLDivElement>(null)
+
+  const ambientThoughts = useMemo(
+    () => [
+      t('landing.hero.ambient.0'),
+      t('landing.hero.ambient.1'),
+      t('landing.hero.ambient.2'),
+      t('landing.hero.ambient.3'),
+      t('landing.hero.ambient.4'),
+      t('landing.hero.ambient.5'),
+    ],
+    [t],
+  )
 
   useEffect(() => {
     const el = heroRef.current
@@ -97,17 +103,14 @@ function HeroSection() {
       ref={heroRef}
       className="relative flex items-center justify-center px-5 py-20 md:py-28 overflow-hidden min-h-[88vh]"
     >
-      {/* Ambient glows — parallax on mouse */}
       <div ref={orbRef} className="absolute inset-0 pointer-events-none will-change-transform transition-transform duration-[1200ms] ease-out">
         <div className="absolute top-[10%] left-[8%] w-[520px] h-[520px] rounded-full bg-huginn-accent/14 blur-[130px]" />
         <div className="absolute bottom-[5%] right-[5%] w-[560px] h-[560px] rounded-full bg-[#8b7dff]/10 blur-[150px]" />
         <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-[#3a2f8f]/20 blur-[160px]" />
       </div>
 
-      {/* Particle field */}
       <ParticleField />
 
-      {/* Grid overlay for depth */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.05]"
         style={{
@@ -119,7 +122,6 @@ function HeroSection() {
       />
 
       <div className="relative max-w-4xl text-center flex flex-col items-center">
-        {/* Lockup entrance */}
         <div className="mb-10 flex flex-col items-center" style={{ gap: 4 }}>
           <div style={{ animation: 'lp-mark-in 900ms cubic-bezier(0.2,0.9,0.2,1) both' }}>
             <Mark size={112} />
@@ -129,9 +131,8 @@ function HeroSection() {
           </div>
         </div>
 
-        {/* Split headline */}
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-white">
-          <SplitText text="Your second brain," delay={700} />
+          <SplitText text={t('landing.hero.titleLead')} delay={700} />
           <br className="hidden md:block" />
           <span
             className="inline-block bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent leading-[1.2] pb-1"
@@ -141,43 +142,39 @@ function HeroSection() {
                 'lp-rise 700ms cubic-bezier(0.2,0.7,0.2,1) 1200ms both, lp-shimmer 6s linear 1200ms infinite',
             }}
           >
-            organised.
+            {t('landing.hero.titleAccent')}
           </span>
         </h1>
 
-        {/* Subtitle + typewriter */}
         <div style={{ animation: 'lp-rise 700ms cubic-bezier(0.2,0.7,0.2,1) 1400ms both' }}>
           <p className="mt-6 text-base md:text-lg text-huginn-text-secondary max-w-xl mx-auto">
-            Capture every thought the moment it strikes — by text or voice — then triage it into Trello-style
-            projects so nothing slips and everything ships.
+            {t('landing.hero.subtitle')}
           </p>
           <div className="mt-5 text-sm md:text-base text-huginn-text-secondary/80 h-6 flex items-center justify-center">
-            <span className="opacity-60 mr-2">Right now, Huginn is capturing:</span>
-            <Typewriter words={AMBIENT_THOUGHTS} />
+            <span className="opacity-60 mr-2">{t('landing.hero.capturingLabel')}</span>
+            <Typewriter words={ambientThoughts} />
           </div>
         </div>
 
-        {/* CTA row */}
         <div
           className="mt-10 flex items-center gap-3 flex-wrap justify-center"
           style={{ animation: 'lp-rise 700ms cubic-bezier(0.2,0.7,0.2,1) 1600ms both' }}
         >
-          <MagneticCTA to="/login?mode=signup">Get started free</MagneticCTA>
+          <MagneticCTA to="/login?mode=signup">{t('landing.hero.ctaPrimary')}</MagneticCTA>
           <Link
             to="/login"
             className="text-sm md:text-base text-huginn-text-secondary hover:text-white px-4 py-3 transition-colors"
           >
-            I already have an account →
+            {t('landing.hero.ctaSecondary')}
           </Link>
         </div>
       </div>
 
-      {/* Scroll cue — positioned relative to the section */}
       <div
         className="absolute left-1/2 -translate-x-1/2 bottom-6 flex flex-col items-center gap-2 text-huginn-text-muted pointer-events-none"
         style={{ animation: 'lp-rise 700ms cubic-bezier(0.2,0.7,0.2,1) 1900ms both' }}
       >
-        <span className="text-[10px] tracking-[0.25em] uppercase">Scroll</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase">{t('landing.hero.scroll')}</span>
         <span className="w-px h-10 bg-gradient-to-b from-huginn-text-muted/60 to-transparent" />
       </div>
     </section>
@@ -357,19 +354,15 @@ function MagneticCTA({ to, children }: { to: string; children: React.ReactNode }
    Capture Scene — the product's story, animated
    ============================================================ */
 
+type CaptureColumn = 'todo' | 'inProgress' | 'done'
 type CaptureDemo = {
   text: string
-  list: 'To do' | 'In progress' | 'Done'
+  list: CaptureColumn
   label?: { text: string; color: string }
 }
 
-const CAPTURE_DEMOS: CaptureDemo[] = [
-  { text: 'Rework Monday\u2019s pricing deck', list: 'To do', label: { text: 'Deck', color: '#6c5ce7' } },
-  { text: 'Call the plumber about the sink', list: 'To do', label: { text: 'Home', color: '#00b894' } },
-  { text: 'Draft blog post on micro-apps', list: 'In progress', label: { text: 'Writing', color: '#fdcb6e' } },
-]
-
 function CaptureScene() {
+  const { t } = useTranslation()
   const [reveal, setReveal] = useState<'out' | 'in'>('out')
   const sectionRef = useRef<HTMLDivElement>(null)
   const [demoIdx, setDemoIdx] = useState(0)
@@ -377,6 +370,21 @@ function CaptureScene() {
   const [typed, setTyped] = useState('')
   const [landedInbox, setLandedInbox] = useState<CaptureDemo[]>([])
   const [landedBoard, setLandedBoard] = useState<CaptureDemo[]>([])
+
+  const demos: CaptureDemo[] = useMemo(
+    () => [
+      { text: t('landing.capture.demos.0.text'), list: 'todo', label: { text: t('landing.capture.demos.0.label'), color: '#6c5ce7' } },
+      { text: t('landing.capture.demos.1.text'), list: 'todo', label: { text: t('landing.capture.demos.1.label'), color: '#00b894' } },
+      { text: t('landing.capture.demos.2.text'), list: 'inProgress', label: { text: t('landing.capture.demos.2.label'), color: '#fdcb6e' } },
+    ],
+    [t],
+  )
+
+  const columnLabels: Record<CaptureColumn, string> = {
+    todo: t('landing.capture.columns.todo'),
+    inProgress: t('landing.capture.columns.inProgress'),
+    done: t('landing.capture.columns.done'),
+  }
 
   useEffect(() => {
     const el = sectionRef.current
@@ -389,7 +397,6 @@ function CaptureScene() {
     return () => io.disconnect()
   }, [])
 
-  // Orchestrate the demo loop — tracks index via a local counter so closure is clean
   useEffect(() => {
     if (reveal !== 'in') return
     let cancelled = false
@@ -397,8 +404,8 @@ function CaptureScene() {
     const run = async () => {
       await wait(500)
       while (!cancelled) {
-        const demo = CAPTURE_DEMOS[localIdx % CAPTURE_DEMOS.length]
-        setDemoIdx(localIdx % CAPTURE_DEMOS.length)
+        const demo = demos[localIdx % demos.length]
+        setDemoIdx(localIdx % demos.length)
 
         setPhase('typing')
         setTyped('')
@@ -438,9 +445,9 @@ function CaptureScene() {
     return () => {
       cancelled = true
     }
-  }, [reveal])
+  }, [reveal, demos])
 
-  const activeDemo = CAPTURE_DEMOS[demoIdx]
+  const activeDemo = demos[demoIdx]
 
   return (
     <section
@@ -450,28 +457,26 @@ function CaptureScene() {
     >
       <div className="text-center mb-14">
         <div className="inline-block text-[11px] tracking-[0.25em] uppercase text-huginn-accent/80 mb-4">
-          How it works
+          {t('landing.capture.eyebrow')}
         </div>
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
-          From a fleeting thought<br />
+          {t('landing.capture.titleLead')}<br />
           <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
-            to the right column.
+            {t('landing.capture.titleAccent')}
           </span>
         </h2>
         <p className="mt-4 text-base md:text-lg text-huginn-text-secondary max-w-2xl mx-auto">
-          Watch a thought get caught in the inbox and ride into the list where it belongs — the exact flow
-          Huginn runs on every day.
+          {t('landing.capture.body')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-start relative">
-        {/* Inbox pane */}
         <div className="bg-huginn-card/90 backdrop-blur-sm border border-huginn-border rounded-2xl p-4 shadow-2xl shadow-black/30">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-huginn-danger" />
             <div className="w-2 h-2 rounded-full bg-huginn-warning" />
             <div className="w-2 h-2 rounded-full bg-huginn-success" />
-            <div className="ml-3 text-[11px] tracking-[0.2em] uppercase text-huginn-text-muted">Inbox</div>
+            <div className="ml-3 text-[11px] tracking-[0.2em] uppercase text-huginn-text-muted">{t('landing.capture.inboxLabel')}</div>
           </div>
           <div className="rounded-xl bg-huginn-base border border-huginn-border px-3 py-2.5 flex items-center gap-2 min-h-[44px]">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-huginn-text-muted">
@@ -486,7 +491,7 @@ function CaptureScene() {
                   style={{ animation: 'lp-caret 1s steps(2) infinite' }}
                 />
               )}
-              {phase !== 'typing' && <span className="text-huginn-text-muted">Capture a thought…</span>}
+              {phase !== 'typing' && <span className="text-huginn-text-muted">{t('landing.capture.capturePlaceholder')}</span>}
             </span>
           </div>
 
@@ -501,14 +506,12 @@ function CaptureScene() {
               </div>
             ))}
             {landedInbox.length === 0 && (
-              <div className="text-xs text-huginn-text-muted italic pt-2">Empty for now…</div>
+              <div className="text-xs text-huginn-text-muted italic pt-2">{t('landing.capture.emptyInbox')}</div>
             )}
           </div>
         </div>
 
-        {/* Flying card in the gap */}
         <div className="relative hidden md:flex items-center justify-center w-24 h-full min-h-[240px]">
-          {/* arrow hint */}
           <svg viewBox="0 0 120 40" className="absolute inset-0 w-full h-full opacity-25">
             <defs>
               <linearGradient id="lp-arrow" x1="0" x2="1">
@@ -519,7 +522,7 @@ function CaptureScene() {
             <path d="M5 20 Q 60 0, 115 20" stroke="url(#lp-arrow)" strokeWidth="1.5" fill="none" strokeDasharray="4 4" />
           </svg>
 
-          {phase === 'flying' && (
+          {phase === 'flying' && activeDemo && (
             <div
               className="absolute left-0 top-1/2 -translate-y-1/2 bg-huginn-card border border-huginn-accent/60 rounded-lg px-3 py-2 text-xs text-white shadow-xl shadow-huginn-accent/40 whitespace-nowrap"
               style={{
@@ -532,25 +535,24 @@ function CaptureScene() {
           )}
         </div>
 
-        {/* Board pane */}
         <div className="bg-huginn-card/90 backdrop-blur-sm border border-huginn-border rounded-2xl p-4 shadow-2xl shadow-black/30">
           <div className="flex items-center gap-2 mb-3">
             <div
               className="w-4 h-4 rounded-sm"
               style={{ background: 'linear-gradient(135deg, #6c5ce7, #a78bff)' }}
             />
-            <div className="text-[11px] tracking-[0.2em] uppercase text-huginn-text-muted">Project · Huginn.pro</div>
+            <div className="text-[11px] tracking-[0.2em] uppercase text-huginn-text-muted">{t('landing.capture.projectLabel')}</div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {(['To do', 'In progress', 'Done'] as const).map(col => (
+            {(['todo', 'inProgress', 'done'] as const).map(col => (
               <div key={col} className="bg-huginn-base/60 rounded-lg p-2">
                 <div className="text-[10px] tracking-[0.15em] uppercase text-huginn-text-muted mb-2 px-1">
-                  {col}
+                  {columnLabels[col]}
                 </div>
                 <div className="space-y-1.5 min-h-[80px]">
-                  {col === 'To do' && <SeedCard text="Review mobile layout" />}
-                  {col === 'In progress' && <SeedCard text="Onboarding flow" label={{ text: 'UX', color: '#00b894' }} />}
-                  {col === 'Done' && <SeedCard text="Set up Supabase" muted />}
+                  {col === 'todo' && <SeedCard text={t('landing.capture.seeds.todo')} />}
+                  {col === 'inProgress' && <SeedCard text={t('landing.capture.seeds.inProgress')} label={{ text: t('landing.capture.seeds.inProgressLabel'), color: '#00b894' }} />}
+                  {col === 'done' && <SeedCard text={t('landing.capture.seeds.done')} muted />}
 
                   {landedBoard
                     .filter(d => d.list === col)
@@ -578,13 +580,12 @@ function CaptureScene() {
         </div>
       </div>
 
-      {/* Phase dots */}
       <div className="mt-10 flex items-center justify-center gap-2">
-        {CAPTURE_DEMOS.map((_, i) => (
+        {demos.map((_, i) => (
           <span
             key={i}
             className={`h-1.5 rounded-full transition-all duration-500 ${
-              i === demoIdx % CAPTURE_DEMOS.length ? 'w-8 bg-huginn-accent' : 'w-1.5 bg-huginn-border'
+              i === demoIdx % demos.length ? 'w-8 bg-huginn-accent' : 'w-1.5 bg-huginn-border'
             }`}
           />
         ))}
@@ -624,6 +625,7 @@ function wait(ms: number) {
    ============================================================ */
 
 function FeaturesSection() {
+  const { t } = useTranslation()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [reveal, setReveal] = useState<'out' | 'in'>('out')
   useEffect(() => {
@@ -639,8 +641,8 @@ function FeaturesSection() {
 
   const features = [
     {
-      title: 'Capture anywhere',
-      body: 'An always-open inbox for every passing thought. Type fast or hit voice for hands-free dictation.',
+      title: t('landing.features.capture.title'),
+      body: t('landing.features.capture.body'),
       icon: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
           <path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4Zm7 8v2a7 7 0 0 1-6 6.93V22h-2v-3.07A7 7 0 0 1 5 12v-2h2v2a5 5 0 0 0 10 0v-2h2Z" />
@@ -648,8 +650,8 @@ function FeaturesSection() {
       ),
     },
     {
-      title: 'Trello-style projects',
-      body: 'Custom lists, drag-and-drop cards, labels, checklists, comments, attachments — the full kit, nothing missing.',
+      title: t('landing.features.projects.title'),
+      body: t('landing.features.projects.body'),
       icon: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
           <path d="M4 4h5v16H4zm7 0h5v10h-5zm7 0h3v6h-3z" />
@@ -657,8 +659,8 @@ function FeaturesSection() {
       ),
     },
     {
-      title: 'Team-ready',
-      body: 'Invite collaborators with role-based access. They accept, jump in, and you\u2019re working on the same project in real time.',
+      title: t('landing.features.team.title'),
+      body: t('landing.features.team.body'),
       icon: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
           <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-8 2-8 6v2h16v-2c0-4-4-6-8-6Zm6-7a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z" />
@@ -671,10 +673,10 @@ function FeaturesSection() {
     <section ref={sectionRef} data-reveal={reveal} className="px-5 md:px-10 py-20 md:py-28 max-w-6xl mx-auto w-full">
       <div className="text-center mb-14">
         <div className="inline-block text-[11px] tracking-[0.25em] uppercase text-huginn-accent/80 mb-4">
-          What you get
+          {t('landing.features.eyebrow')}
         </div>
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
-          A small kit, used daily.
+          {t('landing.features.title')}
         </h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -730,7 +732,6 @@ function TiltTile({
         animation: `lp-rise 700ms cubic-bezier(0.2,0.7,0.2,1) ${delay}ms both`,
       }}
     >
-      {/* Hover spotlight */}
       <div
         className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{
@@ -738,7 +739,6 @@ function TiltTile({
             'radial-gradient(circle at var(--lp-gx, 50%) var(--lp-gy, 50%), rgba(108, 92, 231, 0.18), transparent 60%)',
         }}
       />
-      {/* Gradient border on hover */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
@@ -769,6 +769,7 @@ function TiltTile({
    ============================================================ */
 
 function VoiceSection() {
+  const { t } = useTranslation()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [reveal, setReveal] = useState<'out' | 'in'>('out')
   useEffect(() => {
@@ -789,9 +790,7 @@ function VoiceSection() {
       className="relative px-5 md:px-10 py-24 md:py-32 overflow-hidden"
     >
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
-        {/* Orb */}
         <div className="relative flex items-center justify-center h-[300px] md:h-[360px]">
-          {/* rings */}
           {[0, 1, 2].map(i => (
             <span
               key={i}
@@ -799,7 +798,6 @@ function VoiceSection() {
               style={{ animation: `lp-ring-expand 3s ease-out ${i * 1}s infinite` }}
             />
           ))}
-          {/* orb */}
           <div
             className="relative w-40 h-40 rounded-full flex items-center justify-center"
             style={{
@@ -816,23 +814,21 @@ function VoiceSection() {
           </div>
         </div>
 
-        {/* Copy */}
         <div>
           <div className="text-[11px] tracking-[0.25em] uppercase text-huginn-accent/80 mb-4">
-            Hands-free capture
+            {t('landing.voice.eyebrow')}
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-[1.1]">
-            Tap it. Talk.<br />
+            {t('landing.voice.titleLead')}<br />
             <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent to-[#a78bff] bg-clip-text text-transparent">
-              It lands in your inbox.
+              {t('landing.voice.titleAccent')}
             </span>
           </h2>
           <p className="mt-5 text-base md:text-lg text-huginn-text-secondary max-w-lg">
-            Built on the browser&rsquo;s native Web Speech API — no apps, no logins on other devices, no lag. Great
-            for driving, walking the dog, or that two-second idea before it evaporates.
+            {t('landing.voice.body')}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <MagneticCTA to="/login?mode=signup">Try it now</MagneticCTA>
+            <MagneticCTA to="/login?mode=signup">{t('landing.voice.cta')}</MagneticCTA>
           </div>
         </div>
       </div>
@@ -845,6 +841,7 @@ function VoiceSection() {
    ============================================================ */
 
 function FinalCTASection() {
+  const { t } = useTranslation()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [reveal, setReveal] = useState<'out' | 'in'>('out')
   useEffect(() => {
@@ -864,7 +861,6 @@ function FinalCTASection() {
       data-reveal={reveal}
       className="relative px-5 md:px-10 py-28 md:py-36 overflow-hidden"
     >
-      {/* Raven silhouette flight */}
       <div
         className="absolute pointer-events-none"
         style={{ top: '10%', left: 0, animation: 'lp-raven-glide 14s ease-in-out infinite' }}
@@ -878,28 +874,27 @@ function FinalCTASection() {
         <Mark size={48} className="opacity-20" />
       </div>
 
-      {/* glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-huginn-accent/12 blur-[140px]" />
       </div>
 
       <div className="relative max-w-3xl mx-auto text-center">
         <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.05]">
-          Your thoughts,<br />
+          {t('landing.cta.titleLead')}<br />
           <span className="inline-block leading-[1.2] pb-1 bg-gradient-to-r from-huginn-accent via-[#a78bff] to-huginn-accent bg-clip-text text-transparent">
-            finally kept.
+            {t('landing.cta.titleAccent')}
           </span>
         </h2>
         <p className="mt-6 text-base md:text-lg text-huginn-text-secondary max-w-xl mx-auto">
-          Free while in beta. Takes 30 seconds to sign up. You&apos;ll be in your inbox a minute from now.
+          {t('landing.cta.body')}
         </p>
         <div className="mt-10 flex items-center justify-center gap-3 flex-wrap">
-          <MagneticCTA to="/login?mode=signup">Create your inbox</MagneticCTA>
+          <MagneticCTA to="/login?mode=signup">{t('landing.cta.primary')}</MagneticCTA>
           <Link
             to="/login"
             className="text-sm md:text-base text-huginn-text-secondary hover:text-white px-4 py-3 transition-colors"
           >
-            Sign in →
+            {t('landing.cta.secondary')}
           </Link>
         </div>
       </div>
@@ -912,14 +907,15 @@ function FinalCTASection() {
    ============================================================ */
 
 function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className="border-t border-huginn-border/60 px-5 md:px-10 py-6 flex items-center justify-between">
       <div className="flex items-center gap-2 select-none">
         <Mark size={20} />
-        <span className="text-xs text-huginn-text-muted">© {new Date().getFullYear()} Huginn</span>
+        <span className="text-xs text-huginn-text-muted">{t('landing.footer.copyright', { year: new Date().getFullYear() })}</span>
       </div>
       <Link to="/login" className="text-xs text-huginn-text-muted hover:text-white transition-colors">
-        Sign in
+        {t('landing.footer.signIn')}
       </Link>
     </footer>
   )

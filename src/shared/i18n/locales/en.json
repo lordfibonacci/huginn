@@ -14,5 +14,88 @@
       "language": "Language",
       "signOut": "Sign out"
     }
+  },
+  "landing": {
+    "nav": {
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "titleLead": "Your second brain,",
+      "titleAccent": "organised.",
+      "subtitle": "Capture every thought the moment it strikes — by text or voice — then triage it into Trello-style projects so nothing slips and everything ships.",
+      "capturingLabel": "Right now, Huginn is capturing:",
+      "ctaPrimary": "Get started free",
+      "ctaSecondary": "I already have an account →",
+      "scroll": "Scroll",
+      "ambient": {
+        "0": "Call the plumber about the kitchen sink",
+        "1": "Rework Monday\u2019s pricing deck",
+        "2": "Draft the blog post on micro-apps",
+        "3": "Book the team offsite for May",
+        "4": "Prep the investor update",
+        "5": "Add testimonial section to the site"
+      }
+    },
+    "capture": {
+      "eyebrow": "How it works",
+      "titleLead": "From a fleeting thought",
+      "titleAccent": "to the right column.",
+      "body": "Watch a thought get caught in the inbox and ride into the list where it belongs — the exact flow Huginn runs on every day.",
+      "inboxLabel": "Inbox",
+      "capturePlaceholder": "Capture a thought…",
+      "emptyInbox": "Empty for now…",
+      "projectLabel": "Project · Huginn.pro",
+      "columns": {
+        "todo": "To do",
+        "inProgress": "In progress",
+        "done": "Done"
+      },
+      "demos": {
+        "0": { "text": "Rework Monday\u2019s pricing deck", "label": "Deck" },
+        "1": { "text": "Call the plumber about the sink", "label": "Home" },
+        "2": { "text": "Draft blog post on micro-apps", "label": "Writing" }
+      },
+      "seeds": {
+        "todo": "Review mobile layout",
+        "inProgress": "Onboarding flow",
+        "inProgressLabel": "UX",
+        "done": "Set up Supabase"
+      }
+    },
+    "features": {
+      "eyebrow": "What you get",
+      "title": "A small kit, used daily.",
+      "capture": {
+        "title": "Capture anywhere",
+        "body": "An always-open inbox for every passing thought. Type fast or hit voice for hands-free dictation."
+      },
+      "projects": {
+        "title": "Trello-style projects",
+        "body": "Custom lists, drag-and-drop cards, labels, checklists, comments, attachments — the full kit, nothing missing."
+      },
+      "team": {
+        "title": "Team-ready",
+        "body": "Invite collaborators with role-based access. They accept, jump in, and you\u2019re working on the same project in real time."
+      }
+    },
+    "voice": {
+      "eyebrow": "Hands-free capture",
+      "titleLead": "Tap it. Talk.",
+      "titleAccent": "It lands in your inbox.",
+      "body": "Built on the browser\u2019s native Web Speech API — no apps, no logins on other devices, no lag. Great for driving, walking the dog, or that two-second idea before it evaporates.",
+      "cta": "Try it now"
+    },
+    "cta": {
+      "titleLead": "Your thoughts,",
+      "titleAccent": "finally kept.",
+      "body": "Free while in beta. Takes 30 seconds to sign up. You\u2019ll be in your inbox a minute from now.",
+      "primary": "Create your inbox",
+      "secondary": "Sign in →"
+    },
+    "footer": {
+      "copyright": "© {{year}} Huginn",
+      "signIn": "Sign in"
+    }
   }
 }
