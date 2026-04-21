@@ -1,0 +1,10 @@
+{
+  "common": {
+    "cancel": "Hætta við",
+    "save": "Vista",
+    "delete": "Eyða",
+    "edit": "Breyta",
+    "close": "Loka",
+    "loading": "Hleð…"
+  }
+}
