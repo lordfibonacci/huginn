@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Label, ThoughtPriority } from '../../../shared/lib/types'
+import { getContrastTextColor } from '../../../shared/lib/contrast'
 
 export interface BoardFilters {
   labelIds: string[]
@@ -84,9 +85,9 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
                       key={label.id}
                       onClick={() => toggleLabel(label.id)}
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${
-                        active ? 'text-white ring-1 ring-white/50' : 'text-white opacity-60 hover:opacity-100'
+                        active ? 'ring-1 ring-white/50' : 'opacity-60 hover:opacity-100'
                       }`}
-                      style={{ backgroundColor: label.color }}
+                      style={{ backgroundColor: label.color, color: getContrastTextColor(label.color) }}
                     >
                       {label.name}
                     </button>

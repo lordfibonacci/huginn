@@ -69,6 +69,22 @@ export function useLists(projectId: string) {
     return true
   }
 
+  async function reorderLists(orderedIds: string[]) {
+    const writes: Promise<unknown>[] = []
+    orderedIds.forEach((listId, index) => {
+      const current = lists.find(l => l.id === listId)
+      if (current && current.position !== index) {
+        writes.push(
+          (async () => {
+            const { error } = await supabase.from('huginn_lists').update({ position: index }).eq('id', listId)
+            if (error) console.error('Failed to reorder list:', error)
+          })()
+        )
+      }
+    })
+    await Promise.all(writes)
+  }
+
   async function archiveList(listId: string) {
     const { error } = await supabase
       .from('huginn_lists')
@@ -82,5 +98,5 @@ export function useLists(projectId: string) {
     return true
   }
 
-  return { lists, loading, addList, updateList, archiveList }
+  return { lists, loading, addList, updateList, archiveList, reorderLists }
 }

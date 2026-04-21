@@ -1,4 +1,5 @@
 import type { Label } from '../../../shared/lib/types'
+import { getContrastTextColor } from '../../../shared/lib/contrast'
 
 interface LabelBadgesProps {
   labels: Label[]
@@ -29,8 +30,8 @@ export function LabelBadges({ labels, size = 'md' }: LabelBadgesProps) {
       {labels.map((label) => (
         <span
           key={label.id}
-          className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md text-white"
-          style={{ backgroundColor: label.color }}
+          className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md"
+          style={{ backgroundColor: label.color, color: getContrastTextColor(label.color) }}
         >
           {label.name}
         </span>

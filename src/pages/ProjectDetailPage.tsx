@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../shared/lib/supabase'
-import { DndContext, DragOverlay, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, closestCorners, defaultDropAnimationSideEffects, useSensor, useSensors } from '@dnd-kit/core'
+import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, DropAnimation } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
   BoardView,
@@ -25,7 +25,7 @@ import { LoadingScreen } from '../shared/components/Logo'
 import { ProjectGlyph } from '../features/projects/components/ProjectGlyph'
 import { BoardMembersStack } from '../features/projects/components/BoardMembersStack'
 import { BoardMembersDrawer } from '../features/projects/components/BoardMembersDrawer'
-import type { Project, Task, Label } from '../shared/lib/types'
+import type { Project, Task, Label, List } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -36,7 +36,7 @@ export function ProjectDetailPage() {
   // Hooks
   const { updateProject, deleteProject } = useProjects()
   const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask, removeTaskLocal, archiveTask, copyTask, moveTaskToBoard } = useProjectTasks(id ?? '')
-  const { lists, loading: loadingLists, addList, updateList, archiveList } = useLists(id ?? '')
+  const { lists, loading: loadingLists, addList, updateList, archiveList, reorderLists } = useLists(id ?? '')
   const { labels } = useLabels(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
 
@@ -126,6 +126,7 @@ export function ProjectDetailPage() {
   // during a drag without waiting on the server. Synced from server-truth
   // (`tasks`) whenever a drag is NOT in progress.
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
+  const [localLists, setLocalLists] = useState<List[]>(lists)
   const isDraggingRef = useRef(false)
   useEffect(() => {
     if (!isDraggingRef.current) {
@@ -135,6 +136,9 @@ export function ProjectDetailPage() {
       }))
     }
   }, [tasks])
+  useEffect(() => {
+    if (!isDraggingRef.current) setLocalLists(lists)
+  }, [lists])
 
   // Preview slot for an incoming inbox card during drag. When set, a phantom
   // task is injected into localTasks at the hover position so the destination
@@ -230,6 +234,7 @@ export function ProjectDetailPage() {
   // ===== Drag-and-drop (board cards + inbox cards) =====
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [activeListId, setActiveListId] = useState<string | null>(null)
   const [explosion, setExplosion] = useState<{ x: number; y: number } | null>(null)
   const explosionPendingRef = useRef(false)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -254,18 +259,57 @@ export function ProjectDetailPage() {
   // - If over.id IS a list id, that's the container.
   // - If over.id is a task id (a card under the pointer), use that task's list.
   function resolveContainer(id: string): string | null {
-    if (lists.some(l => l.id === id)) return id
+    if (localLists.some(l => l.id === id)) return id
     const task = localTasks.find(t => t.id === id)
     return task?.list_id ?? null
   }
 
+  function isListDrag(event: { active: { data: { current?: unknown } } }): boolean {
+    const data = event.active.data.current as { type?: string } | undefined
+    return data?.type === 'list'
+  }
+
+  // When dragging a list, restrict collision targets to other lists so the
+  // outer horizontal SortableContext gets clean `over` events (cards would
+  // otherwise be picked, stranding the list at its start position). Cards and
+  // inbox drags keep the default closestCorners across all droppables.
+  // Smooth snap-into-place when the user releases a drag. A gentle ease-out
+  // feels less abrupt than the default hard transform.
+  const dropAnimation: DropAnimation = {
+    duration: 240,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: { active: { opacity: '0.5' } },
+    }),
+  }
+
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    const activeType = (args.active.data.current as { type?: string } | null)?.type
+    if (activeType === 'list') {
+      const listsOnly = args.droppableContainers.filter(
+        (c) => (c.data.current as { type?: string } | null)?.type === 'list'
+      )
+      return closestCorners({ ...args, droppableContainers: listsOnly })
+    }
+    return closestCorners(args)
+  }, [])
+
   function handleDragStart(event: DragStartEvent) {
     isDraggingRef.current = true
-    const task = findTaskAnywhere(event.active.id as string)
-    setActiveTask(task ?? null)
-    setInboxPreview(null)
+    // Always reset the hold-to-explode state at the start of ANY drag so
+    // stale `true` from a previous drag doesn't trip the dragEnd bail-out.
     explosionPendingRef.current = false
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
+    setInboxPreview(null)
+
+    if (isListDrag(event)) {
+      setActiveTask(null)
+      setActiveListId(event.active.id as string)
+      return
+    }
+    setActiveListId(null)
+    const task = findTaskAnywhere(event.active.id as string)
+    setActiveTask(task ?? null)
     holdTimerRef.current = setTimeout(() => {
       explosionPendingRef.current = true
       setExplosion({ ...lastPointerRef.current })
@@ -280,8 +324,10 @@ export function ProjectDetailPage() {
       holdTimerRef.current = null
     }
     setActiveTask(null)
+    setActiveListId(null)
     setInboxPreview(null)
     setLocalTasks(tasks)
+    setLocalLists(lists)
   }
 
   // Live-reorder localTasks while dragging so cards visibly slide to make room.
@@ -293,6 +339,18 @@ export function ProjectDetailPage() {
     const activeId = active.id as string
     const overId = over.id as string
     if (activeId === overId) return
+
+    // List reorder — arrayMove localLists while hovering over another list.
+    if (isListDrag(event)) {
+      if (!localLists.some(l => l.id === overId)) return
+      setLocalLists(prev => {
+        const from = prev.findIndex(l => l.id === activeId)
+        const to = prev.findIndex(l => l.id === overId)
+        if (from === -1 || to === -1 || from === to) return prev
+        return arrayMove(prev, from, to)
+      })
+      return
+    }
 
     const activeTaskObj = localTasks.find(t => t.id === activeId)
 
@@ -379,6 +437,7 @@ export function ProjectDetailPage() {
       holdTimerRef.current = null
     }
     setActiveTask(null)
+    setActiveListId(null)
     setInboxPreview(null)
 
     if (explosionPendingRef.current) {
@@ -388,6 +447,17 @@ export function ProjectDetailPage() {
     }
 
     const { active, over } = event
+
+    // List reorder — persist new order if localLists diverges from server lists.
+    if (isListDrag(event)) {
+      if (!over) { setLocalLists(lists); return }
+      const newOrder = localLists.map(l => l.id)
+      const originalOrder = lists.map(l => l.id)
+      const changed = newOrder.some((id, i) => id !== originalOrder[i])
+      if (changed) await reorderLists(newOrder)
+      return
+    }
+
     if (!over) {
       setLocalTasks(tasks)
       return
@@ -512,7 +582,7 @@ export function ProjectDetailPage() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -605,7 +675,7 @@ export function ProjectDetailPage() {
       <div className="flex-1 flex flex-col min-h-0" style={{ background: getBackground(project.background ?? 'default').style }}>
       {view === 'board' ? (
         <BoardView
-          lists={lists}
+          lists={localLists}
           tasks={filteredTasks}
           loading={loadingLists || loadingTasks}
           onTaskTap={setSelectedTask}
@@ -673,12 +743,34 @@ export function ProjectDetailPage() {
       )}
     </div>
 
-    <DragOverlay>
+    <DragOverlay dropAnimation={dropAnimation}>
       {activeTask && (
-        <div className="w-[250px] rotate-2 opacity-90 pointer-events-none">
+        <div className="w-[250px] rotate-2 opacity-95 pointer-events-none drop-shadow-2xl">
           <TaskCard task={activeTask} />
         </div>
       )}
+      {activeListId && (() => {
+        const list = localLists.find(l => l.id === activeListId)
+        if (!list) return null
+        const listTasks = localTasks.filter(t => t.list_id === list.id).slice(0, 4)
+        return (
+          <div className="w-[272px] rotate-1 bg-black/40 backdrop-blur-sm rounded-xl p-2 pointer-events-none shadow-2xl ring-1 ring-huginn-accent/40">
+            <div className="text-sm font-bold text-huginn-text-primary px-2 py-1 mb-1">
+              {list.name}
+            </div>
+            <div className="space-y-1.5">
+              {listTasks.map(t => (
+                <div key={t.id} className="bg-huginn-card rounded-lg px-3 py-2 text-sm text-huginn-text-primary shadow-sm">
+                  {t.title}
+                </div>
+              ))}
+              {listTasks.length === 0 && (
+                <div className="h-6" />
+              )}
+            </div>
+          </div>
+        )
+      })()}
     </DragOverlay>
 
     {explosion && <ExplosionFx x={explosion.x} y={explosion.y} />}

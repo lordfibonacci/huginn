@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, TaskStatus, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
@@ -25,6 +25,7 @@ function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels,
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
+    transition: { duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
   })
 
   const style = {
@@ -113,34 +114,36 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
       onMouseUp={handleBoardMouseUp}
       onMouseLeave={handleBoardMouseUp}
     >
-      {lists.map((list) => {
-        const listTasks = tasksByList[list.id] || []
-        const itemIds = listTasks.map(t => t.id)
-        return (
-          <SortableContext key={list.id} id={list.id} items={itemIds} strategy={verticalListSortingStrategy}>
-            <ListColumn
-              list={list}
-              tasks={listTasks}
-              onTaskTap={onTaskTap}
-              onAddCard={onAddCard}
-              onRenameList={onRenameList}
-              onArchiveList={onArchiveList}
-              selectedTaskId={selectedTaskId}
-              renderDraggableCard={(task) => (
-                <SortableCard
-                  key={task.id}
-                  task={task}
-                  onTaskTap={onTaskTap}
-                  onStatusChange={onStatusChange}
-                  selectedTaskId={selectedTaskId}
-                  labels={taskLabelsMap?.[task.id]}
-                  coverImageUrl={coverImageMap?.[task.id]}
-                />
-              )}
-            />
-          </SortableContext>
-        )
-      })}
+      <SortableContext items={lists.map(l => l.id)} strategy={horizontalListSortingStrategy}>
+        {lists.map((list) => {
+          const listTasks = tasksByList[list.id] || []
+          const itemIds = listTasks.map(t => t.id)
+          return (
+            <SortableContext key={list.id} id={list.id} items={itemIds} strategy={verticalListSortingStrategy}>
+              <ListColumn
+                list={list}
+                tasks={listTasks}
+                onTaskTap={onTaskTap}
+                onAddCard={onAddCard}
+                onRenameList={onRenameList}
+                onArchiveList={onArchiveList}
+                selectedTaskId={selectedTaskId}
+                renderDraggableCard={(task) => (
+                  <SortableCard
+                    key={task.id}
+                    task={task}
+                    onTaskTap={onTaskTap}
+                    onStatusChange={onStatusChange}
+                    selectedTaskId={selectedTaskId}
+                    labels={taskLabelsMap?.[task.id]}
+                    coverImageUrl={coverImageMap?.[task.id]}
+                  />
+                )}
+              />
+            </SortableContext>
+          )
+        })}
+      </SortableContext>
 
       {/* Add another list */}
       <div className="w-[272px] min-w-[272px] shrink-0">

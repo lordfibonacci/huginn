@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useDroppable } from '@dnd-kit/core'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Task, List } from '../../../shared/lib/types'
 
 interface ListColumnProps {
@@ -71,9 +72,20 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
 }
 
 export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, renderDraggableCard }: ListColumnProps) {
-  // Droppable on the entire list so dropping in whitespace below cards still
-  // lands in this list (defaults to end-of-list position).
-  const { setNodeRef, isOver } = useDroppable({ id: list.id, data: { type: 'list' } })
+  // Sortable makes the list both a drag source (reorderable) and a droppable
+  // target for cards. The drag listeners are applied ONLY to the header, so
+  // clicking inside the cards area or on buttons doesn't start a list drag.
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+    id: list.id,
+    data: { type: 'list' },
+    transition: { duration: 260, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(list.name)
   const [showMenu, setShowMenu] = useState(false)
@@ -91,20 +103,29 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
   return (
     <div
       ref={setNodeRef}
+      style={style}
       className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-colors backdrop-blur-sm ${
-        isOver ? 'bg-huginn-accent/8 ring-1 ring-huginn-accent/30' : 'bg-black/20'
+        isDragging ? 'opacity-30' : ''
+      } ${
+        isOver && !isDragging ? 'bg-huginn-accent/8 ring-1 ring-huginn-accent/30' : 'bg-black/20'
       }`}
       data-list-id={list.id}
     >
-      {/* List header */}
-      <div className="flex items-center gap-1 px-2 pt-2 pb-1">
+      {/* List header — drag handle for reordering lists */}
+      <div
+        {...attributes}
+        {...listeners}
+        className={`flex items-center gap-1 px-2 pt-2 pb-1 ${editingName ? '' : 'cursor-grab active:cursor-grabbing'} touch-none`}
+      >
         {editingName ? (
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleRename}
+            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') { setName(list.name); setEditingName(false) } }}
             autoFocus
+            onPointerDown={(e) => e.stopPropagation()}
             className="flex-1 bg-huginn-surface text-sm font-bold text-huginn-text-primary rounded px-2 py-1 outline-none border border-huginn-accent"
           />
         ) : (
@@ -118,6 +139,7 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
+            onPointerDown={(e) => e.stopPropagation()}
             className="text-huginn-text-muted hover:text-white p-1 rounded hover:bg-huginn-surface/50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
@@ -125,7 +147,10 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
             </svg>
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-huginn-card border border-huginn-border rounded-lg shadow-xl py-1 z-50 w-36">
+            <div
+              className="absolute right-0 top-full mt-1 bg-huginn-card border border-huginn-border rounded-lg shadow-xl py-1 z-50 w-36"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <button
                 onClick={() => { onArchiveList(list.id); setShowMenu(false) }}
                 className="w-full text-left text-xs text-huginn-text-secondary hover:text-white hover:bg-huginn-surface px-3 py-1.5"

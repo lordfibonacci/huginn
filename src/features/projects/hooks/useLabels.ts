@@ -54,5 +54,29 @@ export function useLabels(projectId: string) {
     return data as Label
   }
 
-  return { labels, loading, createLabel }
+  async function updateLabel(labelId: string, updates: { name?: string; color?: string }) {
+    const prev = labels
+    setLabels(ls => ls.map(l => (l.id === labelId ? { ...l, ...updates } : l)).sort((a, b) => a.name.localeCompare(b.name)))
+    const { error } = await supabase.from('huginn_labels').update(updates).eq('id', labelId)
+    if (error) {
+      console.error('Failed to update label:', error)
+      setLabels(prev)
+      return false
+    }
+    return true
+  }
+
+  async function deleteLabel(labelId: string) {
+    const prev = labels
+    setLabels(ls => ls.filter(l => l.id !== labelId))
+    const { error } = await supabase.from('huginn_labels').delete().eq('id', labelId)
+    if (error) {
+      console.error('Failed to delete label:', error)
+      setLabels(prev)
+      return false
+    }
+    return true
+  }
+
+  return { labels, loading, createLabel, updateLabel, deleteLabel }
 }

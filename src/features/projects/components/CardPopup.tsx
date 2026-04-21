@@ -61,7 +61,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   const { user } = useAuth()
   const { profile: selfProfile } = useProfile()
   const { checklists, addChecklist, deleteChecklist, renameChecklist, addItem, toggleItem, updateItemText, deleteItem } = useChecklists(task.id)
-  const { labels: projectLabels, createLabel } = useLabels(projectId)
+  const { labels: projectLabels, createLabel, updateLabel, deleteLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
   const { comments, addComment, deleteComment } = useComments(task.id)
   const { activities, logActivity } = useActivity(task.id)
@@ -401,6 +401,8 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                       activeLabelIds={labelIds}
                       onToggle={(labelId) => hasLabel(labelId) ? removeLabel(labelId) : addLabel(labelId)}
                       onCreate={createLabel}
+                      onUpdate={updateLabel}
+                      onDelete={deleteLabel}
                       onClose={() => setShowLabelPicker(false)}
                     />
                   )}

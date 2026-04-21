@@ -1,5 +1,6 @@
 import type { Task, TaskStatus } from '../../../shared/lib/types'
 import { formatDueDate } from '../../../shared/lib/dateUtils'
+import { getContrastTextColor } from '../../../shared/lib/contrast'
 
 const PRIORITY_LABELS: Record<string, { text: string; class: string }> = {
   high: { text: 'High', class: 'bg-huginn-danger/20 text-huginn-danger' },
@@ -62,8 +63,8 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
           {labels.map((label) => (
             <span
               key={label.id}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded text-white"
-              style={{ backgroundColor: label.color }}
+              className="text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ backgroundColor: label.color, color: getContrastTextColor(label.color) }}
             >
               {label.name}
             </span>
