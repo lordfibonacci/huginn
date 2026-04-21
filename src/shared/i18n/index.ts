@@ -30,6 +30,12 @@ i18n
     interpolation: { escapeValue: false },
     returnNull: false,
     load: 'languageOnly',
+    saveMissing: import.meta.env.DEV,
+    missingKeyHandler: (lngs, _ns, key) => {
+      if (import.meta.env.DEV) {
+        console.warn(`[i18n] missing key: ${key} (in ${lngs.join(',')})`)
+      }
+    },
   })
 
 const stored = localStorage.getItem('huginn.lang')
