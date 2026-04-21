@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectGlyph, parseColor } from './ProjectGlyph'
 import { HexInput } from '../../../shared/components/HexInput'
 
@@ -29,6 +30,7 @@ interface ProjectColorPickerProps {
 }
 
 export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps) {
+  const { t } = useTranslation()
   const parsed = parseColor(value)
   const isPreset = SOLID_PRESETS.includes(value)
   const [expanded, setExpanded] = useState(!isPreset)
@@ -54,6 +56,7 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
           active={!isPreset}
           expanded={expanded}
           onClick={() => setExpanded((e) => !e)}
+          label={t('settings.color.moreColors')}
         />
       </div>
 
@@ -62,7 +65,7 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
         <div className="bg-huginn-surface/60 rounded-lg p-3 border border-huginn-border/60 space-y-3">
           {/* Solid / Gradient toggle */}
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">More colors</span>
+            <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">{t('settings.color.moreColors')}</span>
             <div className="flex gap-1 bg-huginn-base rounded-md p-0.5">
               <button
                 type="button"
@@ -74,7 +77,7 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
                   customMode === 'solid' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                 }`}
               >
-                Solid
+                {t('settings.color.solid')}
               </button>
               <button
                 type="button"
@@ -86,7 +89,7 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
                   customMode === 'gradient' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                 }`}
               >
-                Gradient
+                {t('settings.color.gradient')}
               </button>
             </div>
           </div>
@@ -111,7 +114,7 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
                 if (customMode === 'solid') onChange(customSolid)
                 else onChange(`gradient:${customFrom},${customTo}`)
               }}
-              title={isPreset ? 'Click to apply' : 'Custom is active'}
+              title={isPreset ? t('settings.color.applyTitle') : t('settings.color.activeTitle')}
               className="rounded-md p-0.5 hover:bg-huginn-hover transition-colors"
             >
               <ProjectGlyph
@@ -136,9 +139,9 @@ export function ProjectColorPicker({ value, onChange }: ProjectColorPickerProps)
                 <button
                   type="button"
                   onClick={() => onChange(`gradient:${customTo},${customFrom}`)}
-                  title="Swap colors"
+                  title={t('settings.color.swap')}
                   className="text-huginn-text-muted hover:text-huginn-accent text-base p-1 rounded hover:bg-huginn-hover transition-colors"
-                  aria-label="Swap colors"
+                  aria-label={t('settings.color.swap')}
                 >
                   ⇆
                 </button>
@@ -172,7 +175,7 @@ function Swatch({ color, selected, onClick }: { color: string; selected: boolean
   )
 }
 
-function CustomTile({ active, expanded, onClick }: { active: boolean; expanded: boolean; onClick: () => void }) {
+function CustomTile({ active, expanded, onClick, label }: { active: boolean; expanded: boolean; onClick: () => void; label: string }) {
   const id = useId().replace(/:/g, '')
   return (
     <button
@@ -181,8 +184,8 @@ function CustomTile({ active, expanded, onClick }: { active: boolean; expanded: 
       className={`relative flex items-center justify-center w-9 h-9 rounded-md transition-all ${
         active ? 'bg-huginn-hover ring-2 ring-huginn-accent' : expanded ? 'bg-huginn-hover/70' : 'hover:bg-huginn-hover/50'
       }`}
-      aria-label="More colors"
-      title="More colors"
+      aria-label={label}
+      title={label}
     >
       <svg width={22} height={22} viewBox="0 0 16 16" aria-hidden>
         <defs>

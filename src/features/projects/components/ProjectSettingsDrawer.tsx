@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import type { Project, ProjectStatus } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
 import { ProjectColorPicker } from './ProjectColorPicker'
@@ -13,6 +14,7 @@ interface ProjectSettingsDrawerProps {
 }
 
 export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: ProjectSettingsDrawerProps) {
+  const { t } = useTranslation()
   const { canManage, canDelete, role, loading: roleLoading } = useBoardRole(project.id)
   const [name, setName] = useState(project.name)
   const [description, setDescription] = useState(project.description ?? '')
@@ -51,10 +53,14 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
   const readOnly = !canManage && !roleLoading
 
   return (
-    <ModalShell onDismiss={onDone} title={readOnly ? 'Project info' : 'Project settings'}>
+    <ModalShell onDismiss={onDone} title={readOnly ? t('settings.project.titleInfo') : t('settings.project.titleSettings')}>
       {readOnly && (
         <p className="text-xs text-huginn-text-muted bg-huginn-surface/60 border border-huginn-border/60 rounded-md px-3 py-2 mb-4">
-          You're a <span className="font-semibold text-huginn-text-secondary">{role}</span> on this project — only owners and admins can change settings.
+          <Trans
+            i18nKey="settings.project.readOnlyHint"
+            values={{ role: role ?? '' }}
+            components={{ 1: <span className="font-semibold text-huginn-text-secondary" /> }}
+          />
         </p>
       )}
 
@@ -62,27 +68,27 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Project name"
+        placeholder={t('settings.project.namePlaceholder')}
         readOnly={readOnly}
         className={`w-full bg-huginn-surface text-white rounded-lg px-4 py-3 text-sm outline-none border border-huginn-border placeholder-huginn-text-muted mb-3 ${readOnly ? 'opacity-70 cursor-not-allowed' : 'focus:border-huginn-accent'}`}
       />
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description (optional)"
+        placeholder={t('settings.project.descriptionPlaceholder')}
         rows={3}
         readOnly={readOnly}
         className={`w-full bg-huginn-surface text-white rounded-lg px-4 py-3 text-sm outline-none border border-huginn-border placeholder-huginn-text-muted resize-none mb-4 ${readOnly ? 'opacity-70 cursor-not-allowed' : 'focus:border-huginn-accent'}`}
       />
 
       {/* Project color */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Color</p>
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('settings.project.colorLabel')}</p>
       <div className={`mb-5 ${readOnly ? 'pointer-events-none opacity-60' : ''}`}>
         <ProjectColorPicker value={color} onChange={setColor} />
       </div>
 
       {/* Project background */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Project background</p>
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('settings.project.backgroundLabel')}</p>
       <div className={`mb-5 ${readOnly ? 'pointer-events-none opacity-60' : ''}`}>
         <BoardBackgroundPicker value={background} onChange={setBackground} />
       </div>
@@ -97,7 +103,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
                 confirmDelete ? 'text-red-400 bg-huginn-danger/10 font-semibold' : 'text-red-400 hover:bg-huginn-danger/10'
               }`}
             >
-              {confirmDelete ? 'Are you sure?' : 'Delete project'}
+              {confirmDelete ? t('settings.project.deleteConfirm') : t('settings.project.delete')}
             </button>
           )}
           <div className="flex-1" />
@@ -107,7 +113,7 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
               disabled={!name.trim() || saving}
               className="bg-huginn-accent text-white text-xs font-semibold rounded-md py-1.5 px-5 disabled:opacity-50"
             >
-              {saving ? '...' : 'Save'}
+              {saving ? t('settings.project.saving') : t('common.save')}
             </button>
           )}
         </div>

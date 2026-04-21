@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ModalShellProps {
   onDismiss: () => void
@@ -7,6 +8,7 @@ interface ModalShellProps {
 }
 
 export function ModalShell({ onDismiss, children, title }: ModalShellProps) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export function ModalShell({ onDismiss, children, title }: ModalShellProps) {
           {title && (
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-semibold text-huginn-text-primary">{title}</p>
-              <button onClick={dismiss} className="text-huginn-text-muted hover:text-white transition-colors">
+              <button onClick={dismiss} className="text-huginn-text-muted hover:text-white transition-colors" aria-label={t('common.close')}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                   <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                 </svg>
@@ -56,7 +58,7 @@ export function ModalShell({ onDismiss, children, title }: ModalShellProps) {
             </div>
           )}
           {!title && (
-            <button onClick={dismiss} className="absolute top-4 right-4 text-huginn-text-muted hover:text-white transition-colors">
+            <button onClick={dismiss} className="absolute top-4 right-4 text-huginn-text-muted hover:text-white transition-colors" aria-label={t('common.close')}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
               </svg>

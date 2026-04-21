@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../shared/hooks/useAuth'
 import { useProfile } from '../shared/hooks/useProfile'
 import { useAvatarUpload } from '../shared/hooks/useAvatarUpload'
@@ -10,6 +11,7 @@ import { supabase } from '../shared/lib/supabase'
 type Status = { kind: 'idle' } | { kind: 'success'; message: string } | { kind: 'error'; message: string }
 
 export function SettingsPage() {
+  const { t } = useTranslation()
   const { user, signOut } = useAuth()
   const { profile, updateProfile } = useProfile()
   const { upload, uploading, error: uploadError } = useAvatarUpload()
@@ -52,8 +54,8 @@ export function SettingsPage() {
     setNameStatus({ kind: 'idle' })
     const ok = await updateProfile({ display_name: trimmed })
     setNameStatus(ok
-      ? { kind: 'success', message: 'Saved' }
-      : { kind: 'error', message: 'Could not save name' })
+      ? { kind: 'success', message: t('settings.account.status.saved') }
+      : { kind: 'error', message: t('settings.account.status.couldNotSaveName') })
     setSavingName(false)
   }
 
@@ -65,25 +67,25 @@ export function SettingsPage() {
     const { error } = await supabase.auth.updateUser({ email: trimmed })
     setEmailStatus(error
       ? { kind: 'error', message: error.message }
-      : { kind: 'success', message: 'Check your old AND new inbox to confirm the change.' })
+      : { kind: 'success', message: t('settings.account.status.emailCheckInbox') })
     setSavingEmail(false)
   }
 
   async function handleSavePassword() {
     if (savingPassword) return
     if (newPassword.length < 6) {
-      setPasswordStatus({ kind: 'error', message: 'Password must be at least 6 characters.' })
+      setPasswordStatus({ kind: 'error', message: t('auth.errors.passwordTooShort') })
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordStatus({ kind: 'error', message: 'Passwords do not match.' })
+      setPasswordStatus({ kind: 'error', message: t('auth.errors.passwordMismatch') })
       return
     }
     setSavingPassword(true)
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordStatus(error
       ? { kind: 'error', message: error.message }
-      : { kind: 'success', message: 'Password updated.' })
+      : { kind: 'success', message: t('settings.account.status.passwordUpdated') })
     if (!error) {
       setNewPassword('')
       setConfirmPassword('')
@@ -103,28 +105,28 @@ export function SettingsPage() {
           <Mark size={32} />
           <div className="flex flex-col">
             <Wordmark height={20} />
-            <p className="text-[11px] text-huginn-text-secondary mt-0.5">Settings</p>
+            <p className="text-[11px] text-huginn-text-secondary mt-0.5">{t('settings.account.pageSubtitle')}</p>
           </div>
         </Link>
         <Link
           to="/projects"
           className="text-xs text-huginn-text-muted hover:text-white transition-colors"
         >
-          ← Back to projects
+          {t('settings.account.backToProjects')}
         </Link>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Avatar + identity */}
-          <Section title="Profile">
+          <Section title={t('settings.account.sections.profile')}>
             <div className="flex items-center gap-5">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="relative group rounded-full"
-                title="Change avatar"
+                title={t('settings.account.avatar.changeTitle')}
               >
                 <Avatar
                   url={profile?.avatar_url}
@@ -133,7 +135,7 @@ export function SettingsPage() {
                   size={88}
                 />
                 <span className="absolute inset-0 rounded-full bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-bold uppercase tracking-wider text-white">
-                  {uploading ? 'Uploading…' : 'Change'}
+                  {uploading ? t('settings.account.avatar.uploading') : t('settings.account.avatar.change')}
                 </span>
               </button>
               <input
@@ -144,21 +146,21 @@ export function SettingsPage() {
                 className="hidden"
               />
               <div className="text-xs text-huginn-text-muted leading-relaxed">
-                <p>Click your avatar to upload a new image.</p>
-                <p>PNG, JPEG, WEBP or GIF. Max 2 MB.</p>
+                <p>{t('settings.account.avatar.instructionsLine1')}</p>
+                <p>{t('settings.account.avatar.instructionsLine2')}</p>
                 {uploadError && <p className="text-huginn-danger mt-1">{uploadError}</p>}
               </div>
             </div>
           </Section>
 
           {/* Display name */}
-          <Section title="Display name" hint="Shown on your projects and assigned cards.">
+          <Section title={t('settings.account.sections.displayName')} hint={t('settings.account.sections.displayNameHint')}>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
+                placeholder={t('settings.account.fields.namePlaceholder')}
                 className="flex-1 bg-huginn-surface text-white text-sm rounded-lg px-4 py-2.5 outline-none border border-huginn-border focus:border-huginn-accent"
               />
               <button
@@ -166,20 +168,20 @@ export function SettingsPage() {
                 disabled={savingName || !displayName.trim() || displayName.trim() === profile?.display_name}
                 className="bg-huginn-accent text-white text-sm font-semibold rounded-lg px-5 disabled:opacity-50"
               >
-                {savingName ? '…' : 'Save'}
+                {savingName ? t('settings.account.actions.saving') : t('settings.account.actions.save')}
               </button>
             </div>
             <StatusLine status={nameStatus} />
           </Section>
 
           {/* Email */}
-          <Section title="Email" hint="Used to sign in. Changing it requires confirming both your old and new address.">
+          <Section title={t('settings.account.sections.email')} hint={t('settings.account.sections.emailHintPage')}>
             <div className="flex gap-2">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('settings.account.fields.emailPlaceholder')}
                 className="flex-1 bg-huginn-surface text-white text-sm rounded-lg px-4 py-2.5 outline-none border border-huginn-border focus:border-huginn-accent"
               />
               <button
@@ -187,27 +189,27 @@ export function SettingsPage() {
                 disabled={savingEmail || !email.trim() || email.trim().toLowerCase() === user?.email}
                 className="bg-huginn-accent text-white text-sm font-semibold rounded-lg px-5 disabled:opacity-50"
               >
-                {savingEmail ? '…' : 'Save'}
+                {savingEmail ? t('settings.account.actions.saving') : t('settings.account.actions.save')}
               </button>
             </div>
             <StatusLine status={emailStatus} />
           </Section>
 
           {/* Password */}
-          <Section title="Password" hint="At least 6 characters.">
+          <Section title={t('settings.account.sections.password')} hint={t('settings.account.sections.passwordHint')}>
             <div className="space-y-2">
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password"
+                placeholder={t('settings.account.fields.newPasswordPlaceholder')}
                 className="w-full bg-huginn-surface text-white text-sm rounded-lg px-4 py-2.5 outline-none border border-huginn-border focus:border-huginn-accent"
               />
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t('settings.account.fields.confirmPasswordPlaceholder')}
                 className="w-full bg-huginn-surface text-white text-sm rounded-lg px-4 py-2.5 outline-none border border-huginn-border focus:border-huginn-accent"
               />
               <div className="flex justify-end">
@@ -216,7 +218,7 @@ export function SettingsPage() {
                   disabled={savingPassword || !newPassword || !confirmPassword}
                   className="bg-huginn-accent text-white text-sm font-semibold rounded-lg px-5 py-2 disabled:opacity-50"
                 >
-                  {savingPassword ? '…' : 'Update password'}
+                  {savingPassword ? t('settings.account.actions.saving') : t('settings.account.actions.updatePassword')}
                 </button>
               </div>
             </div>
@@ -224,12 +226,12 @@ export function SettingsPage() {
           </Section>
 
           {/* Account actions */}
-          <Section title="Account">
+          <Section title={t('settings.account.sections.account')}>
             <button
               onClick={handleSignOut}
               className="text-sm text-huginn-text-secondary hover:text-white transition-colors py-2"
             >
-              Sign out
+              {t('settings.account.actions.signOut')}
             </button>
           </Section>
         </div>

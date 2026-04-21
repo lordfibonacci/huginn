@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface HexInputProps {
   value: string
   onChange: (hex: string) => void
@@ -7,6 +9,7 @@ interface HexInputProps {
 }
 
 export function HexInput({ value, onChange, copyFromOther, copyDirection, className = '' }: HexInputProps) {
+  const { t } = useTranslation()
   return (
     <div className={`relative flex items-center gap-1.5 group ${className}`}>
       <input
@@ -28,10 +31,10 @@ export function HexInput({ value, onChange, copyFromOther, copyDirection, classN
         <button
           type="button"
           onClick={copyFromOther}
-          title="Copy from other color"
+          title={t('settings.hexInput.copyFrom')}
           className="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity text-[10px] text-huginn-text-muted hover:text-huginn-accent px-1.5 py-0.5 rounded hover:bg-huginn-hover"
         >
-          {copyDirection === 'left' ? '← copy' : 'copy →'}
+          {copyDirection === 'left' ? t('settings.hexInput.copyLeft') : t('settings.hexInput.copyRight')}
         </button>
       )}
     </div>

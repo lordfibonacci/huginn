@@ -450,6 +450,105 @@
     "attached": "attached {{name}}",
     "attachedFallback": "a file"
   },
+  "settings": {
+    "project": {
+      "titleInfo": "Project info",
+      "titleSettings": "Project settings",
+      "readOnlyHint": "You're a <1>{{role}}</1> on this project — only owners and admins can change settings.",
+      "namePlaceholder": "Project name",
+      "descriptionPlaceholder": "Description (optional)",
+      "colorLabel": "Color",
+      "backgroundLabel": "Project background",
+      "delete": "Delete project",
+      "deleteConfirm": "Are you sure?",
+      "saving": "..."
+    },
+    "account": {
+      "title": "Account settings",
+      "pageSubtitle": "Settings",
+      "backToProjects": "← Back to projects",
+      "sections": {
+        "profile": "Profile",
+        "displayName": "Display name",
+        "displayNameHint": "Shown on your projects and assigned cards.",
+        "email": "Email",
+        "emailHintDrawer": "Changing it requires confirming both your old and new address.",
+        "emailHintPage": "Used to sign in. Changing it requires confirming both your old and new address.",
+        "password": "Password",
+        "passwordHint": "At least 6 characters.",
+        "account": "Account"
+      },
+      "avatar": {
+        "changeTitle": "Change avatar",
+        "uploading": "Uploading…",
+        "change": "Change",
+        "instructionsLine1": "Click your avatar to upload a new image.",
+        "instructionsLine2": "PNG, JPEG, WEBP or GIF. Max 2 MB."
+      },
+      "fields": {
+        "namePlaceholder": "Your name",
+        "emailPlaceholder": "you@example.com",
+        "newPasswordPlaceholder": "New password",
+        "confirmPasswordPlaceholder": "Confirm new password"
+      },
+      "actions": {
+        "save": "Save",
+        "saving": "…",
+        "updatePassword": "Update password",
+        "signOut": "Sign out"
+      },
+      "status": {
+        "saved": "Saved",
+        "couldNotSaveName": "Could not save name",
+        "emailCheckInbox": "Check your old AND new inbox to confirm the change.",
+        "passwordUpdated": "Password updated.",
+        "passwordTooShort": "Password must be at least 6 characters.",
+        "passwordMismatch": "Passwords do not match."
+      }
+    },
+    "color": {
+      "moreColors": "More colors",
+      "moreColorsTitle": "More colors",
+      "solid": "Solid",
+      "gradient": "Gradient",
+      "applyTitle": "Click to apply",
+      "activeTitle": "Custom is active",
+      "swap": "Swap colors"
+    },
+    "background": {
+      "custom": "Custom",
+      "active": "Active",
+      "solid": "Solid",
+      "gradient": "Gradient",
+      "twoStops": "2 stops",
+      "threeStops": "3 stops",
+      "twoStopsTitle": "Two-stop gradient",
+      "threeStopsTitle": "Three-stop ridge gradient",
+      "apply": "Apply",
+      "applyTitle": "Click to apply",
+      "activeTitle": "Custom is active",
+      "swap": "Swap colors",
+      "presets": {
+        "default": "Default",
+        "ocean": "Ocean",
+        "sunset": "Sunset",
+        "forest": "Forest",
+        "ember": "Ember",
+        "arctic": "Arctic",
+        "midnight": "Midnight",
+        "aurora": "Aurora",
+        "storm": "Storm"
+      }
+    },
+    "hexInput": {
+      "copyFrom": "Copy from other color",
+      "copyLeft": "← copy",
+      "copyRight": "copy →"
+    },
+    "modal": {
+      "close": "Close"
+    }
+  },
   "inbox": {
     "header": {
       "label": "Inbox",

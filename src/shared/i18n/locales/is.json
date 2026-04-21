@@ -512,6 +512,105 @@
     "placeholder": "Skrifaðu eitthvað...",
     "strike": "Yfirstrikað"
   },
+  "settings": {
+    "account": {
+      "actions": {
+        "save": "Vista",
+        "saving": "…",
+        "signOut": "Skrá út",
+        "updatePassword": "Uppfæra lykilorð"
+      },
+      "avatar": {
+        "change": "Breyta",
+        "changeTitle": "Breyta mynd",
+        "instructionsLine1": "Smelltu á myndina þína til að hlaða upp nýrri.",
+        "instructionsLine2": "PNG, JPEG, WEBP eða GIF. Hámark 2 MB.",
+        "uploading": "Hleður upp…"
+      },
+      "backToProjects": "← Aftur í verkefni",
+      "fields": {
+        "confirmPasswordPlaceholder": "Staðfesta nýtt lykilorð",
+        "emailPlaceholder": "netfang@daemi.is",
+        "namePlaceholder": "Nafnið þitt",
+        "newPasswordPlaceholder": "Nýtt lykilorð"
+      },
+      "pageSubtitle": "Stillingar",
+      "sections": {
+        "account": "Aðgangur",
+        "displayName": "Birt nafn",
+        "displayNameHint": "Sýnilegt í verkefnum og á úthlutuðum spjöldum.",
+        "email": "Netfang",
+        "emailHintDrawer": "Til að breyta þarf að staðfesta bæði gamla og nýja netfangið.",
+        "emailHintPage": "Notað til að skrá inn. Til að breyta þarf að staðfesta bæði gamla og nýja netfangið.",
+        "password": "Lykilorð",
+        "passwordHint": "Að minnsta kosti 6 stafir.",
+        "profile": "Prófíll"
+      },
+      "status": {
+        "couldNotSaveName": "Gat ekki vistað nafn",
+        "emailCheckInbox": "Athugaðu bæði gamla OG nýja pósthólfið þitt til að staðfesta breytinguna.",
+        "passwordMismatch": "Lykilorð stemma ekki.",
+        "passwordTooShort": "Lykilorð verður að vera að minnsta kosti 6 stafir.",
+        "passwordUpdated": "Lykilorð uppfært.",
+        "saved": "Vistað"
+      },
+      "title": "Aðgangsstillingar"
+    },
+    "background": {
+      "active": "Virkt",
+      "activeTitle": "Sérsniðið er virkt",
+      "apply": "Nota",
+      "applyTitle": "Smelltu til að nota",
+      "custom": "Sérsniðið",
+      "gradient": "Litastigull",
+      "presets": {
+        "arctic": "Norðurskaut",
+        "aurora": "Norðurljós",
+        "default": "Sjálfgefið",
+        "ember": "Glóð",
+        "forest": "Skógur",
+        "midnight": "Miðnætti",
+        "ocean": "Haf",
+        "storm": "Stormur",
+        "sunset": "Sólarlag"
+      },
+      "solid": "Heillitur",
+      "swap": "Víxla litum",
+      "threeStops": "3 stopp",
+      "threeStopsTitle": "Þriggja stoppa litastigull",
+      "twoStops": "2 stopp",
+      "twoStopsTitle": "Tveggja stoppa litastigull"
+    },
+    "color": {
+      "activeTitle": "Sérsniðið er virkt",
+      "applyTitle": "Smelltu til að nota",
+      "gradient": "Litastigull",
+      "moreColors": "Fleiri litir",
+      "moreColorsTitle": "Fleiri litir",
+      "solid": "Heillitur",
+      "swap": "Víxla litum"
+    },
+    "hexInput": {
+      "copyFrom": "Afrita frá öðrum lit",
+      "copyLeft": "← afrita",
+      "copyRight": "afrita →"
+    },
+    "modal": {
+      "close": "Loka"
+    },
+    "project": {
+      "backgroundLabel": "Bakgrunnur verkefnis",
+      "colorLabel": "Litur",
+      "delete": "Eyða verkefni",
+      "deleteConfirm": "Ertu viss?",
+      "descriptionPlaceholder": "Lýsing (valfrjálst)",
+      "namePlaceholder": "Nafn verkefnis",
+      "readOnlyHint": "Þú ert <1>{{role}}</1> í þessu verkefni — aðeins eigendur og stjórnendur geta breytt stillingum.",
+      "saving": "...",
+      "titleInfo": "Verkefnisupplýsingar",
+      "titleSettings": "Verkefnisstillingar"
+    }
+  },
   "task": {
     "hasNotes": "Er með minnispunkta",
     "priority": {

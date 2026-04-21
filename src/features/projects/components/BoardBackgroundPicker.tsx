@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BOARD_BACKGROUNDS,
   isCustomBackground,
@@ -14,6 +15,7 @@ interface BoardBackgroundPickerProps {
 }
 
 export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPickerProps) {
+  const { t } = useTranslation()
   const customMode: 'solid' | 'gradient' | null = isCustomBackground(value)
     ? value.startsWith('linear-gradient') || value.startsWith('radial-gradient') ? 'gradient' : 'solid'
     : null
@@ -40,6 +42,7 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
       <div className="grid grid-cols-3 gap-2">
         {BOARD_BACKGROUNDS.map((bg) => {
           const selected = value === bg.id
+          const label = t(`settings.background.presets.${bg.id}`, { defaultValue: bg.name })
           return (
             <button
               key={bg.id}
@@ -49,9 +52,9 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                 selected ? 'ring-2 ring-huginn-accent ring-offset-1 ring-offset-huginn-card' : ''
               }`}
               style={{ background: bg.style }}
-              title={bg.name}
+              title={label}
             >
-              <span className="text-[10px] font-medium text-white/70">{bg.name}</span>
+              <span className="text-[10px] font-medium text-white/70">{label}</span>
             </button>
           )
         })}
@@ -61,10 +64,10 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
       <div className="bg-huginn-surface/60 rounded-lg p-3 border border-huginn-border/60">
         <div className="flex items-center justify-between mb-2.5 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">Custom</span>
+            <span className="text-[11px] text-huginn-text-muted font-semibold uppercase tracking-wider">{t('settings.background.custom')}</span>
             {customMode && (
               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-huginn-accent/15 text-huginn-accent">
-                Active
+                {t('settings.background.active')}
               </span>
             )}
           </div>
@@ -80,9 +83,9 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
                     stops === 2 ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                   }`}
-                  title="Two-stop gradient"
+                  title={t('settings.background.twoStopsTitle')}
                 >
-                  2 stops
+                  {t('settings.background.twoStops')}
                 </button>
                 <button
                   type="button"
@@ -93,9 +96,9 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
                     stops === 3 ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                   }`}
-                  title="Three-stop ridge gradient"
+                  title={t('settings.background.threeStopsTitle')}
                 >
-                  3 stops
+                  {t('settings.background.threeStops')}
                 </button>
               </div>
             )}
@@ -110,7 +113,7 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                   mode === 'solid' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                 }`}
               >
-                Solid
+                {t('settings.background.solid')}
               </button>
               <button
                 type="button"
@@ -122,7 +125,7 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                   mode === 'gradient' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
                 }`}
               >
-                Gradient
+                {t('settings.background.gradient')}
               </button>
             </div>
           </div>
@@ -133,7 +136,7 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
           <button
             type="button"
             onClick={applyPreview}
-            title={customMode ? 'Custom is active' : 'Click to apply'}
+            title={customMode ? t('settings.background.activeTitle') : t('settings.background.applyTitle')}
             className={`relative w-14 h-12 rounded-md border shrink-0 transition-all ${
               customMode
                 ? 'border-huginn-accent ring-2 ring-huginn-accent/40'
@@ -143,7 +146,7 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
           >
             {!customMode && (
               <span className="absolute inset-0 flex items-center justify-center text-[9px] uppercase tracking-wider font-bold text-white/90 bg-black/30 rounded-md opacity-0 hover:opacity-100 transition-opacity">
-                Apply
+                {t('settings.background.apply')}
               </span>
             )}
           </button>
@@ -165,9 +168,9 @@ export function BoardBackgroundPicker({ value, onChange }: BoardBackgroundPicker
                 <button
                   type="button"
                   onClick={() => onChange(buildCustomGradient(customTo, customFrom, stops))}
-                  title="Swap colors"
+                  title={t('settings.background.swap')}
                   className="text-huginn-text-muted hover:text-huginn-accent text-base p-1 rounded hover:bg-huginn-hover transition-colors"
-                  aria-label="Swap colors"
+                  aria-label={t('settings.background.swap')}
                 >
                   ⇆
                 </button>

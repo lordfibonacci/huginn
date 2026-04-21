@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ModalShell } from './ModalShell'
 import { AccountSettings } from './AccountSettings'
 
@@ -6,8 +7,9 @@ interface AccountSettingsDrawerProps {
 }
 
 export function AccountSettingsDrawer({ onDone }: AccountSettingsDrawerProps) {
+  const { t } = useTranslation()
   return (
-    <ModalShell onDismiss={onDone} title="Account settings">
+    <ModalShell onDismiss={onDone} title={t('settings.account.title')}>
       <AccountSettings onSignOut={onDone} />
     </ModalShell>
   )
