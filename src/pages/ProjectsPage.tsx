@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../shared/hooks/useAuth'
 import { useProfile } from '../shared/hooks/useProfile'
 import { ProjectList, NewProjectDrawer, useProjects } from '../features/projects'
@@ -8,6 +9,7 @@ import { Avatar } from '../shared/components/Avatar'
 import type { Project } from '../shared/lib/types'
 
 export function ProjectsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { profile } = useProfile()
   const { projects, loading, addProject, count } = useProjects()
@@ -31,14 +33,14 @@ export function ProjectsPage() {
           <div className="flex flex-col">
             <Wordmark height={20} />
             <p className="text-[11px] text-huginn-text-secondary mt-0.5">
-              {count} project{count !== 1 ? 's' : ''}
+              {count === 1 ? t('projects.header.countOne', { count }) : t('projects.header.countOther', { count })}
             </p>
           </div>
         </div>
         <Link
           to="/settings"
           className="flex items-center gap-2 rounded-full pl-2 pr-1 py-1 hover:bg-huginn-hover transition-colors group"
-          title="Account settings"
+          title={t('projects.header.accountSettings')}
         >
           <span className="text-xs text-huginn-text-muted group-hover:text-white hidden sm:inline">
             {profile?.display_name || user?.email}
@@ -64,7 +66,7 @@ export function ProjectsPage() {
       <button
         onClick={() => setShowNewProject(true)}
         className="md:hidden absolute bottom-20 right-4 w-12 h-12 bg-huginn-accent rounded-full flex items-center justify-center shadow-lg active:bg-huginn-accent-hover transition-colors"
-        aria-label="New project"
+        aria-label={t('projects.actions.newProject')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
           <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1Z" />

@@ -181,5 +181,38 @@
     "projects": "Projects",
     "settings": "Settings",
     "you": "You"
+  },
+  "projects": {
+    "header": {
+      "countOne": "{{count}} project",
+      "countOther": "{{count}} projects",
+      "accountSettings": "Account settings"
+    },
+    "actions": {
+      "newProject": "New project"
+    },
+    "card": {
+      "onHold": "On hold"
+    },
+    "status": {
+      "idea": "Idea",
+      "active": "Active",
+      "hold": "On hold",
+      "done": "Done"
+    },
+    "role": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "invites": {
+      "heading": "Project invitations",
+      "countSuffix": "({{count}})",
+      "inviterFallback": "Someone",
+      "invitedYouAs": "invited you as",
+      "decline": "Decline",
+      "accept": "Accept",
+      "confirmDecline": "Decline invite to \"{{name}}\"?"
+    }
   }
 }

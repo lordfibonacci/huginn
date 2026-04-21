@@ -182,6 +182,39 @@
       "titleLead": "Ýttu. Talaðu."
     }
   },
+  "projects": {
+    "actions": {
+      "newProject": "Nýtt verkefni"
+    },
+    "card": {
+      "onHold": "Í bið"
+    },
+    "header": {
+      "accountSettings": "Reikningsstillingar",
+      "countOne": "{{count}} verkefni",
+      "countOther": "{{count}} verkefni"
+    },
+    "invites": {
+      "accept": "Samþykkja",
+      "confirmDecline": "Hafna boði í \"{{name}}\"?",
+      "countSuffix": "({{count}})",
+      "decline": "Hafna",
+      "heading": "Boð í verkefni",
+      "invitedYouAs": "bauð þér sem",
+      "inviterFallback": "Einhver"
+    },
+    "role": {
+      "admin": "Stjórnandi",
+      "member": "Meðlimur",
+      "owner": "Eigandi"
+    },
+    "status": {
+      "active": "Virkt",
+      "done": "Lokið",
+      "hold": "Í bið",
+      "idea": "Hugmynd"
+    }
+  },
   "toolbar": {
     "accountSettings": "Reikningsstillingar",
     "current": "Núverandi",

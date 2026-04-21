@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Project } from '../../../shared/lib/types'
 import { ProjectGlyph } from './ProjectGlyph'
 import { getBackground } from '../../../shared/lib/boardBackgrounds'
@@ -9,6 +10,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, taskCount, onClick }: ProjectCardProps) {
+  const { t } = useTranslation()
   const bg = getBackground(project.background ?? 'default')
 
   return (
@@ -24,7 +26,7 @@ export function ProjectCard({ project, taskCount, onClick }: ProjectCardProps) {
           <ProjectGlyph color={project.color} size={18} />
           {project.status !== 'active' && (
             <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-black/40 text-white/80 backdrop-blur-sm">
-              {project.status === 'hold' ? 'On hold' : project.status}
+              {t(`projects.status.${project.status}`)}
             </span>
           )}
         </div>
