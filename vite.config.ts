@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Huginn',
         short_name: 'Huginn',
-        description: 'Personal project management & second brain',
+        description: 'Persónulegt annað heila — hugsanir, listar og teymisverkefni.',
         display: 'standalone',
         background_color: '#1d2125',
         theme_color: '#1d2125',
