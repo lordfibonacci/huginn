@@ -215,6 +215,76 @@
       "start": "Upphaf"
     }
   },
+  "inbox": {
+    "capture": {
+      "add": "Bæta við",
+      "adding": "…",
+      "enterHint": "Ýttu á <0>Enter</0> til að vista · <1>Shift</1>+<2>Enter</2> fyrir nýja línu",
+      "listening": "Hlustar…",
+      "placeholder": "Skráðu hugmynd…",
+      "startVoice": "Hefja raddupptöku",
+      "stopVoice": "Stöðva upptöku",
+      "stopWithDuration": "Stoppa · {{duration}}",
+      "voice": "Rödd"
+    },
+    "classify": {
+      "doLater": "Gera seinna",
+      "noProject": "Ekkert verkefni",
+      "save": "Vista",
+      "saving": "...",
+      "title": "Setja í verkefni"
+    },
+    "empty": {
+      "hint": "Skráðar hugmyndir lenda hér. Flokkaðu þær í verkefni í tölvunni.",
+      "title": "Pósthólfið er tómt"
+    },
+    "header": {
+      "label": "Pósthólf",
+      "labelWithCount": "Pósthólf · {{count}}",
+      "projectsLink": "Verkefni →"
+    },
+    "list": {
+      "daysAgo": "fyrir {{count}} d",
+      "deleteAria": "Eyða",
+      "deleteConfirm": "Eyða þessari hugmynd?",
+      "hrAgo": "fyrir {{count}} klst",
+      "justNow": "rétt í þessu",
+      "minAgo": "fyrir {{count}} mín"
+    },
+    "panel": {
+      "addCardPlaceholder": "Sláðu inn titil...",
+      "addCardSubmit": "Bæta við spjaldi",
+      "addCardTrigger": "Bæta við spjaldi",
+      "cancel": "Hætta við",
+      "close": "Loka",
+      "deleteCard": "Eyða spjaldi",
+      "emptyHint": "Skráðu snöggar hugmyndir hér.",
+      "emptyTitle": "Pósthólfið þitt er tómt",
+      "title": "Pósthólf"
+    },
+    "thought": {
+      "archive": "Geyma",
+      "clearDate": "Hreinsa dagsetningu",
+      "confirmDelete": "Ertu viss?",
+      "convertToTask": "Breyta í verk",
+      "delete": "Eyða",
+      "dueDate": "Eindagi",
+      "noProject": "Ekkert verkefni",
+      "priority": {
+        "high": "Hár",
+        "low": "Lágur",
+        "medium": "Miðlungs"
+      },
+      "priorityLabel": "Forgangur",
+      "project": "Verkefni",
+      "save": "Vista",
+      "saving": "..."
+    },
+    "voiceButton": {
+      "startTitle": "Hefja raddglósu",
+      "stopTitle": "Stöðva upptöku"
+    }
+  },
   "labels": {
     "back": "Til baka",
     "colorAria": "Litur {{hex}}",

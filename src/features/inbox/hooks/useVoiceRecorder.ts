@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList
@@ -11,6 +12,7 @@ const SpeechRecognition =
     : null
 
 export function useVoiceRecorder() {
+  const { i18n } = useTranslation()
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [duration, setDuration] = useState(0)
@@ -45,7 +47,7 @@ export function useVoiceRecorder() {
     const recognition = new SpeechRecognition()
     recognition.continuous = true
     recognition.interimResults = true
-    recognition.lang = 'en-US'
+    recognition.lang = i18n.language === 'is' ? 'is-IS' : 'en-US'
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = ''
@@ -83,7 +85,7 @@ export function useVoiceRecorder() {
     timerRef.current = setInterval(() => {
       setDuration((d) => d + 1)
     }, 1000)
-  }, [stopRecording])
+  }, [stopRecording, i18n.language])
 
   useEffect(() => {
     return () => {

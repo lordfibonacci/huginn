@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../shared/lib/supabase'
 import type { Project, Thought, ThoughtPriority } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
@@ -17,13 +18,13 @@ interface ThoughtDetailDrawerProps {
   onDone: () => void
 }
 
-const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
-  { value: 'low', label: 'Low', color: 'bg-gray-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-huginn-warning' },
-  { value: 'high', label: 'High', color: 'bg-huginn-danger' },
-]
-
 export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, onConvertToTask, onDone }: ThoughtDetailDrawerProps) {
+  const { t } = useTranslation()
+  const PRIORITY_OPTIONS = useMemo<{ value: ThoughtPriority; label: string; color: string }[]>(() => [
+    { value: 'low', label: t('inbox.thought.priority.low'), color: 'bg-gray-500' },
+    { value: 'medium', label: t('inbox.thought.priority.medium'), color: 'bg-huginn-warning' },
+    { value: 'high', label: t('inbox.thought.priority.high'), color: 'bg-huginn-danger' },
+  ], [t])
   const [body, setBody] = useState(thought.body)
   const [selectedProject, setSelectedProject] = useState<string | null>(thought.project_id)
   const [selectedPriority, setSelectedPriority] = useState<ThoughtPriority | null>(thought.priority)
@@ -113,7 +114,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
           onChange={(e) => setSelectedProject(e.target.value || null)}
           className="w-full bg-huginn-surface text-white rounded-lg px-3 py-2.5 text-sm outline-none border border-huginn-border focus:border-huginn-accent mb-4 appearance-none"
         >
-          <option value="">No project</option>
+          <option value="">{t('inbox.thought.noProject')}</option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
@@ -121,7 +122,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
       )}
 
       {/* Priority chips */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Priority</p>
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('inbox.thought.priorityLabel')}</p>
       <div className="flex gap-2 mb-4">
         {PRIORITY_OPTIONS.map((opt) => (
           <button
@@ -139,7 +140,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
       </div>
 
       {/* Due date */}
-      <p className="text-xs text-huginn-text-muted font-semibold mb-2">Due date</p>
+      <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('inbox.thought.dueDate')}</p>
       <div className="flex items-center gap-2 mb-4">
         <input
           type="date"
@@ -148,7 +149,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
           className="flex-1 bg-huginn-surface text-white rounded-lg px-3 py-2.5 text-sm outline-none border border-huginn-border focus:border-huginn-accent [color-scheme:dark]"
         />
         {dueDate && (
-          <button onClick={() => setDueDate('')} className="text-huginn-text-muted hover:text-white text-sm px-2">✕</button>
+          <button onClick={() => setDueDate('')} aria-label={t('inbox.thought.clearDate')} className="text-huginn-text-muted hover:text-white text-sm px-2">✕</button>
         )}
       </div>
 
@@ -159,11 +160,11 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
             onClick={handleConvertToTask}
             className="text-xs py-1.5 px-3 rounded-md text-huginn-accent bg-huginn-accent/10 font-semibold hover:bg-huginn-accent/20 transition-colors"
           >
-            Convert to task
+            {t('inbox.thought.convertToTask')}
           </button>
         )}
         <button onClick={handleArchive} className="text-xs py-1.5 px-3 rounded-md text-huginn-text-muted hover:text-white transition-colors">
-          Archive
+          {t('inbox.thought.archive')}
         </button>
         <button
           onClick={handleDelete}
@@ -171,7 +172,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
             confirmDelete ? 'text-red-400 bg-huginn-danger/10 font-semibold' : 'text-red-400 hover:bg-huginn-danger/10'
           }`}
         >
-          {confirmDelete ? 'Are you sure?' : 'Delete'}
+          {confirmDelete ? t('inbox.thought.confirmDelete') : t('inbox.thought.delete')}
         </button>
         <div className="flex-1" />
         <button
@@ -179,7 +180,7 @@ export function ThoughtDetailDrawer({ thought, onUpdate, onDelete, onArchive, on
           disabled={!canSave || saving}
           className="bg-huginn-accent text-white text-xs font-semibold rounded-md py-1.5 px-5 disabled:opacity-50"
         >
-          {saving ? '...' : 'Save'}
+          {saving ? t('inbox.thought.saving') : t('inbox.thought.save')}
         </button>
       </div>
     </ModalShell>

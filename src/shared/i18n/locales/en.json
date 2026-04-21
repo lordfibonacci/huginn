@@ -449,5 +449,75 @@
   "activity": {
     "attached": "attached {{name}}",
     "attachedFallback": "a file"
+  },
+  "inbox": {
+    "header": {
+      "label": "Inbox",
+      "labelWithCount": "Inbox · {{count}}",
+      "projectsLink": "Projects →"
+    },
+    "capture": {
+      "placeholder": "Capture a thought…",
+      "listening": "Listening…",
+      "voice": "Voice",
+      "stopWithDuration": "Stop · {{duration}}",
+      "startVoice": "Start voice capture",
+      "stopVoice": "Stop recording",
+      "add": "Add",
+      "adding": "…",
+      "enterHint": "Press <0>Enter</0> to save · <1>Shift</1>+<2>Enter</2> for new line"
+    },
+    "empty": {
+      "title": "Inbox is empty",
+      "hint": "Captured thoughts land here. Triage them into projects on desktop."
+    },
+    "list": {
+      "deleteConfirm": "Delete this thought?",
+      "deleteAria": "Delete",
+      "justNow": "just now",
+      "minAgo": "{{count}} min ago",
+      "hrAgo": "{{count}} hr ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "panel": {
+      "title": "Inbox",
+      "close": "Close",
+      "addCardTrigger": "Add a card",
+      "addCardPlaceholder": "Enter a title...",
+      "addCardSubmit": "Add card",
+      "cancel": "Cancel",
+      "emptyTitle": "Your inbox is empty",
+      "emptyHint": "Capture quick ideas here.",
+      "deleteCard": "Delete card"
+    },
+    "voiceButton": {
+      "startTitle": "Start voice note",
+      "stopTitle": "Stop recording"
+    },
+    "thought": {
+      "priorityLabel": "Priority",
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "dueDate": "Due date",
+      "clearDate": "Clear date",
+      "project": "Project",
+      "noProject": "No project",
+      "convertToTask": "Convert to task",
+      "archive": "Archive",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure?",
+      "save": "Save",
+      "saving": "..."
+    },
+    "classify": {
+      "title": "Assign to project",
+      "noProject": "No project",
+      "doLater": "Do later",
+      "save": "Save",
+      "saving": "..."
+    }
   }
 }

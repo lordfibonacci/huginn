@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface VoiceButtonProps {
   isRecording: boolean
   duration: number
@@ -11,6 +13,7 @@ function formatDuration(seconds: number): string {
 }
 
 export function VoiceButton({ isRecording, duration, onToggle }: VoiceButtonProps) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
@@ -20,7 +23,7 @@ export function VoiceButton({ isRecording, duration, onToggle }: VoiceButtonProp
           ? 'bg-red-500 animate-pulse'
           : 'bg-huginn-accent hover:bg-huginn-accent-hover'
       }`}
-      title={isRecording ? 'Stop recording' : 'Start voice note'}
+      title={isRecording ? t('inbox.voiceButton.stopTitle') : t('inbox.voiceButton.startTitle')}
     >
       {isRecording ? (
         <span className="text-xs font-mono text-white">{formatDuration(duration)}</span>

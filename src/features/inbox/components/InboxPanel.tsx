@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import type { Task } from '../../../shared/lib/types'
 import { EmptyState } from '../../../shared/components/Logo'
@@ -15,6 +16,7 @@ interface InboxPanelProps {
 }
 
 export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap, onClose }: InboxPanelProps) {
+  const { t } = useTranslation()
   const [newTitle, setNewTitle] = useState('')
   const [adding, setAdding] = useState(false)
   const { setNodeRef, isOver } = useDroppable({ id: INBOX_DROPPABLE_ID, data: { type: 'inbox' } })
@@ -39,9 +41,9 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-huginn-text-secondary">
             <path d="M3.5 9.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-6Zm1 2v4a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4h-3.09a3 3 0 0 1-5.82 0H4.5Z" />
           </svg>
-          <h2 className="text-sm font-bold text-huginn-text-primary">Inbox</h2>
+          <h2 className="text-sm font-bold text-huginn-text-primary">{t('inbox.panel.title')}</h2>
         </div>
-        <button onClick={onClose} className="text-huginn-text-muted hover:text-white transition-colors p-1 rounded hover:bg-huginn-hover">
+        <button onClick={onClose} aria-label={t('inbox.panel.close')} className="text-huginn-text-muted hover:text-white transition-colors p-1 rounded hover:bg-huginn-hover">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94 6.28 5.22Z" />
           </svg>
@@ -55,7 +57,7 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
             <textarea
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Enter a title..."
+              placeholder={t('inbox.panel.addCardPlaceholder')}
               autoFocus
               rows={2}
               onKeyDown={(e) => {
@@ -70,10 +72,10 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
                 disabled={!newTitle.trim()}
                 className="bg-huginn-accent text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50"
               >
-                Add card
+                {t('inbox.panel.addCardSubmit')}
               </button>
               <button onClick={() => { setAdding(false); setNewTitle('') }} className="text-huginn-text-muted hover:text-white text-xs">
-                Cancel
+                {t('inbox.panel.cancel')}
               </button>
             </div>
           </div>
@@ -85,7 +87,7 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
               <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
             </svg>
-            Add a card
+            {t('inbox.panel.addCardTrigger')}
           </button>
         )}
       </div>
@@ -93,11 +95,11 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
       {/* Cards */}
       <div className="flex-1 overflow-y-auto px-3 py-1">
         {loading ? (
-          <p className="text-xs text-huginn-text-muted py-4 text-center">Loading...</p>
+          <p className="text-xs text-huginn-text-muted py-4 text-center">{t('common.loading')}</p>
         ) : cards.length === 0 ? (
           <EmptyState
-            title="Your inbox is empty"
-            hint="Capture quick ideas here."
+            title={t('inbox.panel.emptyTitle')}
+            hint={t('inbox.panel.emptyHint')}
           />
         ) : (
           cards.map((card) => (
@@ -115,6 +117,7 @@ export function InboxPanel({ cards, loading, onAddCard, onDeleteCard, onCardTap,
 }
 
 function DraggableInboxCard({ card, onTap, onDelete }: { card: Task; onTap: () => void; onDelete: () => void }) {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id })
 
   return (
@@ -132,6 +135,7 @@ function DraggableInboxCard({ card, onTap, onDelete }: { card: Task; onTap: () =
         <button
           onClick={(e) => { e.stopPropagation(); onDelete() }}
           onPointerDown={(e) => e.stopPropagation()}
+          aria-label={t('inbox.panel.deleteCard')}
           className="text-huginn-text-muted hover:text-huginn-danger opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">

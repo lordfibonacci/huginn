@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../shared/lib/supabase'
 import type { Project, Thought, ThoughtPriority } from '../../../shared/lib/types'
 import { timeAgo } from '../../../shared/lib/dateUtils'
@@ -17,13 +18,13 @@ interface ThoughtDetailPanelProps {
   onClose: () => void
 }
 
-const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }[] = [
-  { value: 'low', label: 'Low', color: 'bg-gray-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-huginn-warning' },
-  { value: 'high', label: 'High', color: 'bg-huginn-danger' },
-]
-
 export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onConvertToTask, onClose }: ThoughtDetailPanelProps) {
+  const { t } = useTranslation()
+  const PRIORITY_OPTIONS = useMemo<{ value: ThoughtPriority; label: string; color: string }[]>(() => [
+    { value: 'low', label: t('inbox.thought.priority.low'), color: 'bg-gray-500' },
+    { value: 'medium', label: t('inbox.thought.priority.medium'), color: 'bg-huginn-warning' },
+    { value: 'high', label: t('inbox.thought.priority.high'), color: 'bg-huginn-danger' },
+  ], [t])
   const [body, setBody] = useState(thought.body)
   const [selectedProject, setSelectedProject] = useState<string | null>(thought.project_id)
   const [selectedPriority, setSelectedPriority] = useState<ThoughtPriority | null>(thought.priority)
@@ -110,7 +111,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
         <div>
           <p className="text-xs text-huginn-text-muted">{timeAgo(thought.created_at)} · {thought.source}</p>
         </div>
-        <button onClick={onClose} className="text-huginn-text-muted hover:text-white transition-colors">
+        <button onClick={onClose} aria-label={t('common.close')} className="text-huginn-text-muted hover:text-white transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
           </svg>
@@ -133,13 +134,13 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
         {/* Project */}
         {projects.length > 0 && (
           <div>
-            <p className="text-xs text-huginn-text-muted font-semibold mb-2">Project</p>
+            <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('inbox.thought.project')}</p>
             <select
               value={selectedProject ?? ''}
               onChange={(e) => setSelectedProject(e.target.value || null)}
               className="w-full bg-huginn-surface text-white rounded-lg px-3 py-2.5 text-sm outline-none border border-huginn-border focus:border-huginn-accent appearance-none"
             >
-              <option value="">No project</option>
+              <option value="">{t('inbox.thought.noProject')}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -149,7 +150,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
 
         {/* Priority */}
         <div>
-          <p className="text-xs text-huginn-text-muted font-semibold mb-2">Priority</p>
+          <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('inbox.thought.priorityLabel')}</p>
           <div className="flex gap-2">
             {PRIORITY_OPTIONS.map((opt) => (
               <button
@@ -169,7 +170,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
 
         {/* Due date */}
         <div>
-          <p className="text-xs text-huginn-text-muted font-semibold mb-2">Due date</p>
+          <p className="text-xs text-huginn-text-muted font-semibold mb-2">{t('inbox.thought.dueDate')}</p>
           <div className="flex items-center gap-2">
             <input
               type="date"
@@ -178,7 +179,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
               className="flex-1 bg-huginn-surface text-white rounded-lg px-3 py-2.5 text-sm outline-none border border-huginn-border focus:border-huginn-accent [color-scheme:dark]"
             />
             {dueDate && (
-              <button onClick={() => setDueDate('')} className="text-huginn-text-muted hover:text-white text-sm px-2">✕</button>
+              <button onClick={() => setDueDate('')} aria-label={t('inbox.thought.clearDate')} className="text-huginn-text-muted hover:text-white text-sm px-2">✕</button>
             )}
           </div>
         </div>
@@ -191,14 +192,14 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
             onClick={handleConvertToTask}
             className="text-xs py-1.5 px-3 rounded-md text-huginn-accent bg-huginn-accent/10 font-semibold hover:bg-huginn-accent/20 transition-colors"
           >
-            Convert to task
+            {t('inbox.thought.convertToTask')}
           </button>
         )}
         <button
           onClick={handleArchive}
           className="text-xs py-1.5 px-3 rounded-md text-huginn-text-muted hover:text-white transition-colors"
         >
-          Archive
+          {t('inbox.thought.archive')}
         </button>
         <button
           onClick={handleDelete}
@@ -208,7 +209,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
               : 'text-red-400 hover:bg-huginn-danger/10'
           }`}
         >
-          {confirmDelete ? 'Are you sure?' : 'Delete'}
+          {confirmDelete ? t('inbox.thought.confirmDelete') : t('inbox.thought.delete')}
         </button>
         <div className="flex-1" />
         <button
@@ -216,7 +217,7 @@ export function ThoughtDetailPanel({ thought, onUpdate, onDelete, onArchive, onC
           disabled={!canSave || saving}
           className="bg-huginn-accent text-white text-xs font-semibold rounded-md py-1.5 px-5 disabled:opacity-50"
         >
-          {saving ? '...' : 'Save'}
+          {saving ? t('inbox.thought.saving') : t('inbox.thought.save')}
         </button>
       </div>
     </div>
