@@ -7,6 +7,75 @@
       "signOut": "Skrá út"
     }
   },
+  "auth": {
+    "callback": {
+      "backToSignIn": "Aftur í innskráningu",
+      "confirming": "Staðfesti aðganginn þinn",
+      "emailConfirmed": "Netfang staðfest",
+      "linkExpired": "Staðfestingartengill útrunninn eða þegar notaður. Reyndu að skrá þig inn aftur.",
+      "recoveryVerified": "Staðfest — veldu nýtt lykilorð",
+      "takingYouIn": "Skrái þig inn…"
+    },
+    "checkInbox": {
+      "body": "Smelltu á tengilinn í tölvupóstinum til að klára nýskráningu.",
+      "resend": "Fékkstu hann ekki? Senda aftur",
+      "sentTo": "Við höfum sent staðfestingartengil á",
+      "title": "Kíktu í pósthólfið"
+    },
+    "errors": {
+      "generic": "Villa kom upp",
+      "inviteInvalid": "Ógildur boðskóði.",
+      "passwordMismatch": "Lykilorð stemma ekki.",
+      "passwordTooShort": "Lykilorð verður að vera að minnsta kosti 6 stafir.",
+      "resendFailed": "Gat ekki endursent"
+    },
+    "fields": {
+      "email": "Netfang",
+      "inviteCode": "Boðskóði",
+      "password": "Lykilorð"
+    },
+    "forgot": {
+      "backLink": "← Aftur í innskráningu",
+      "submit": "Senda endurstillingartengil",
+      "subtitle": "Sláðu inn netfangið þitt og við sendum þér endurstillingartengil."
+    },
+    "login": {
+      "confirmationResent": "Staðfestingarpóstur sendur.",
+      "createLink": "Stofna aðgang",
+      "forgotLink": "Gleymt lykilorð?",
+      "resendConfirmation": "Senda staðfestingarpóst aftur",
+      "submit": "Skrá inn",
+      "subtitle": "Skráðu þig inn til að halda áfram"
+    },
+    "reset": {
+      "done": {
+        "body": "Förum í verkefnin þín…",
+        "title": "Lykilorð uppfært"
+      },
+      "expired": {
+        "body": "Endurstillingartengillinn þinn er ekki lengur gildur. Biddu um nýjan til að halda áfram.",
+        "title": "Endurstillingartengill útrunninn"
+      },
+      "form": {
+        "confirmPassword": "Staðfesta nýtt lykilorð",
+        "hint": "Að minnsta kosti 6 stafir.",
+        "newPassword": "Nýtt lykilorð",
+        "submit": "Uppfæra lykilorð",
+        "title": "Veldu nýtt lykilorð"
+      }
+    },
+    "resetSent": {
+      "bodyLead": "Ef",
+      "bodyTail": "er með aðgang, færðu tölvupóst með endurstillingartengli innan skamms.",
+      "title": "Endurstillingartengill sendur"
+    },
+    "signup": {
+      "haveAccountLink": "Ertu þegar með aðgang? Skrá inn",
+      "inviteHint": "Huginn er aðeins fyrir boðsgesti á meðan snemmaðgangur stendur yfir.",
+      "submit": "Stofna aðgang",
+      "subtitle": "Stofnaðu aðgang"
+    }
+  },
   "common": {
     "cancel": "Hætta við",
     "close": "Loka",

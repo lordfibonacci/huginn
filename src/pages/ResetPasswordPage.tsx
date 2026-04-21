@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
 import { useAuth } from '../shared/hooks/useAuth'
 import { Lockup, LoadingScreen } from '../shared/components/Logo'
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
@@ -23,11 +25,11 @@ export function ResetPasswordPage() {
     e.preventDefault()
     setError(null)
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+      setError(t('auth.errors.passwordTooShort'))
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(t('auth.errors.passwordMismatch'))
       return
     }
     setSaving(true)
@@ -43,7 +45,7 @@ export function ResetPasswordPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
-        <LoadingScreen message="Loading" />
+        <LoadingScreen message={t('common.loading')} />
       </div>
     )
   }
@@ -57,12 +59,12 @@ export function ResetPasswordPage() {
 
         {!user ? (
           <div className="bg-huginn-card border border-huginn-border rounded-xl p-5 text-center space-y-3">
-            <h2 className="text-base font-bold text-white">Reset link expired</h2>
+            <h2 className="text-base font-bold text-white">{t('auth.reset.expired.title')}</h2>
             <p className="text-sm text-huginn-text-secondary">
-              Your reset link is no longer valid. Request a new one to continue.
+              {t('auth.reset.expired.body')}
             </p>
             <Link to="/login" className="inline-block text-xs text-huginn-accent hover:underline pt-1">
-              ← Back to sign in
+              {t('auth.forgot.backLink')}
             </Link>
           </div>
         ) : done ? (
@@ -72,14 +74,14 @@ export function ResetPasswordPage() {
                 <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
               </svg>
             </div>
-            <h2 className="text-base font-bold text-white">Password updated</h2>
-            <p className="text-sm text-huginn-text-secondary">Taking you to your projects…</p>
+            <h2 className="text-base font-bold text-white">{t('auth.reset.done.title')}</h2>
+            <p className="text-sm text-huginn-text-secondary">{t('auth.reset.done.body')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-center">
-              <h2 className="text-base font-bold text-white">Choose a new password</h2>
-              <p className="text-xs text-huginn-text-secondary mt-1">At least 6 characters.</p>
+              <h2 className="text-base font-bold text-white">{t('auth.reset.form.title')}</h2>
+              <p className="text-xs text-huginn-text-secondary mt-1">{t('auth.reset.form.hint')}</p>
             </div>
 
             {error && (
@@ -90,7 +92,7 @@ export function ResetPasswordPage() {
 
             <input
               type="password"
-              placeholder="New password"
+              placeholder={t('auth.reset.form.newPassword')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -101,7 +103,7 @@ export function ResetPasswordPage() {
             />
             <input
               type="password"
-              placeholder="Confirm new password"
+              placeholder={t('auth.reset.form.confirmPassword')}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
@@ -114,10 +116,10 @@ export function ResetPasswordPage() {
               disabled={saving || !password || !confirm}
               className="w-full bg-huginn-accent text-white font-semibold rounded-xl py-3 disabled:opacity-50 shadow-md shadow-huginn-accent/30"
             >
-              {saving ? '…' : 'Update password'}
+              {saving ? '…' : t('auth.reset.form.submit')}
             </button>
             <Link to="/login" className="block text-center text-xs text-huginn-text-muted hover:text-white transition-colors">
-              ← Back to sign in
+              {t('auth.forgot.backLink')}
             </Link>
           </form>
         )}

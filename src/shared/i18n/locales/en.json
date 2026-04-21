@@ -15,6 +15,75 @@
       "signOut": "Sign out"
     }
   },
+  "auth": {
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "inviteCode": "Invite code"
+    },
+    "login": {
+      "subtitle": "Sign in to continue",
+      "submit": "Sign In",
+      "forgotLink": "Forgot password?",
+      "createLink": "Create account",
+      "resendConfirmation": "Resend confirmation email",
+      "confirmationResent": "Confirmation email sent."
+    },
+    "signup": {
+      "subtitle": "Create your account",
+      "submit": "Create Account",
+      "inviteHint": "Huginn is invite-only during early access.",
+      "haveAccountLink": "Already have an account? Sign in"
+    },
+    "forgot": {
+      "subtitle": "Enter your email and we'll send a reset link.",
+      "submit": "Send reset link",
+      "backLink": "← Back to sign in"
+    },
+    "checkInbox": {
+      "title": "Check your inbox",
+      "sentTo": "We've sent a confirmation link to",
+      "body": "Click the link in the email to finish signing up.",
+      "resend": "Didn't get it? Resend"
+    },
+    "resetSent": {
+      "title": "Reset link sent",
+      "bodyLead": "If",
+      "bodyTail": "has an account, you'll get an email with a reset link shortly."
+    },
+    "reset": {
+      "expired": {
+        "title": "Reset link expired",
+        "body": "Your reset link is no longer valid. Request a new one to continue."
+      },
+      "done": {
+        "title": "Password updated",
+        "body": "Taking you to your projects…"
+      },
+      "form": {
+        "title": "Choose a new password",
+        "hint": "At least 6 characters.",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "submit": "Update password"
+      }
+    },
+    "callback": {
+      "confirming": "Confirming your account",
+      "emailConfirmed": "Email confirmed",
+      "recoveryVerified": "Verified — choose a new password",
+      "linkExpired": "Confirmation link expired or already used. Try signing in again.",
+      "takingYouIn": "Taking you in…",
+      "backToSignIn": "Back to sign in"
+    },
+    "errors": {
+      "generic": "An error occurred",
+      "inviteInvalid": "Invalid invite code.",
+      "resendFailed": "Could not resend",
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "passwordMismatch": "Passwords do not match."
+    }
+  },
   "landing": {
     "nav": {
       "signIn": "Sign in",

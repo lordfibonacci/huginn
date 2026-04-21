@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
 import { LoadingScreen, Lockup } from '../shared/components/Logo'
 
@@ -9,6 +10,7 @@ type State =
   | { kind: 'error'; message: string }
 
 export function AuthCallbackPage() {
+  const { t } = useTranslation()
   const [state, setState] = useState<State>({ kind: 'processing' })
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -31,32 +33,31 @@ export function AuthCallbackPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
       if (event === 'PASSWORD_RECOVERY') {
-        setState({ kind: 'success', redirectTo: '/reset-password', message: 'Verified — choose a new password' })
+        setState({ kind: 'success', redirectTo: '/reset-password', message: t('auth.callback.recoveryVerified') })
         return
       }
       if (event === 'SIGNED_IN' && session) {
         setState({
           kind: 'success',
           redirectTo: '/projects',
-          message: flowType === 'recovery' ? 'Verified — choose a new password' : 'Email confirmed',
+          message: flowType === 'recovery' ? t('auth.callback.recoveryVerified') : t('auth.callback.emailConfirmed'),
         })
       }
     })
 
-    // Fallback in case Supabase already processed the hash before we mounted.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted || !session) return
       if (flowType === 'recovery') {
-        setState({ kind: 'success', redirectTo: '/reset-password', message: 'Verified — choose a new password' })
+        setState({ kind: 'success', redirectTo: '/reset-password', message: t('auth.callback.recoveryVerified') })
       } else {
-        setState({ kind: 'success', redirectTo: '/projects', message: 'Email confirmed' })
+        setState({ kind: 'success', redirectTo: '/projects', message: t('auth.callback.emailConfirmed') })
       }
     })
 
     const timeout = setTimeout(() => {
       if (!mounted) return
       setState((s) => s.kind === 'processing'
-        ? { kind: 'error', message: 'Confirmation link expired or already used. Try signing in again.' }
+        ? { kind: 'error', message: t('auth.callback.linkExpired') }
         : s)
     }, 8000)
 
@@ -65,7 +66,7 @@ export function AuthCallbackPage() {
       subscription.unsubscribe()
       clearTimeout(timeout)
     }
-  }, [searchParams])
+  }, [searchParams, t])
 
   useEffect(() => {
     if (state.kind !== 'success') return
@@ -76,7 +77,7 @@ export function AuthCallbackPage() {
   if (state.kind === 'processing') {
     return (
       <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
-        <LoadingScreen message="Confirming your account" />
+        <LoadingScreen message={t('auth.callback.confirming')} />
       </div>
     )
   }
@@ -88,13 +89,13 @@ export function AuthCallbackPage() {
         {state.kind === 'success' ? (
           <>
             <p className="text-huginn-success text-sm font-semibold">{state.message}</p>
-            <p className="text-xs text-huginn-text-muted">Taking you in…</p>
+            <p className="text-xs text-huginn-text-muted">{t('auth.callback.takingYouIn')}</p>
           </>
         ) : (
           <>
             <p className="text-huginn-danger text-sm font-semibold">{state.message}</p>
             <Link to="/login" className="text-xs text-huginn-accent hover:underline">
-              Back to sign in
+              {t('auth.callback.backToSignIn')}
             </Link>
           </>
         )}
