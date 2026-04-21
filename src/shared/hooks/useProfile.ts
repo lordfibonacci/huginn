@@ -20,7 +20,7 @@ export function useProfile() {
       })
   }, [user])
 
-  async function updateProfile(updates: { display_name?: string; avatar_url?: string }) {
+  async function updateProfile(updates: { display_name?: string; avatar_url?: string; locale?: string }) {
     if (!user) return false
 
     const { error } = await supabase
