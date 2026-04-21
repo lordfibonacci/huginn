@@ -404,6 +404,14 @@
     }
   },
   "dates": {
+    "justNow": "just now",
+    "overdue_one": "{{count}}d overdue",
+    "overdue_other": "{{count}}d overdue",
+    "dueToday": "due today",
+    "dueTomorrow": "due tomorrow",
+    "dueInDays_one": "due in {{count}}d",
+    "dueInDays_other": "due in {{count}}d",
+    "dueOn": "due {{date}}",
     "picker": {
       "placeholder": "M/D/YYYY",
       "start": "Start",

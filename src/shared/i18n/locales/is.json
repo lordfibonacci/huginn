@@ -197,6 +197,14 @@
     "save": "Vista"
   },
   "dates": {
+    "dueInDays_one": "skil eftir {{count}}d",
+    "dueInDays_other": "skil eftir {{count}}d",
+    "dueOn": "skil {{date}}",
+    "dueToday": "skil í dag",
+    "dueTomorrow": "skil á morgun",
+    "justNow": "rétt í þessu",
+    "overdue_one": "{{count}}d fram yfir",
+    "overdue_other": "{{count}}d fram yfir",
     "picker": {
       "due": "Eindagi",
       "enableDue": "Virkja eindaga",
