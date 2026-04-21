@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Label, ThoughtPriority } from '../../../shared/lib/types'
 import { getContrastTextColor } from '../../../shared/lib/contrast'
 
@@ -24,7 +25,13 @@ interface BoardFilterBarProps {
 }
 
 export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFilterBarProps) {
+  const { t } = useTranslation()
   const [showPanel, setShowPanel] = useState(false)
+
+  const priorityLabel = (p: ThoughtPriority) =>
+    p === 'high' ? t('board.filter.priorityHigh')
+    : p === 'medium' ? t('board.filter.priorityMedium')
+    : t('board.filter.priorityLow')
 
   function toggleLabel(labelId: string) {
     const newIds = filters.labelIds.includes(labelId)
@@ -58,7 +65,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
           <path d="M14 2H2a1 1 0 0 0-1 1v1.5a.5.5 0 0 0 .146.354L6 9.707V13.5a.5.5 0 0 0 .276.447l3 1.5A.5.5 0 0 0 10 15V9.707l4.854-4.853A.5.5 0 0 0 15 4.5V3a1 1 0 0 0-1-1Z" />
         </svg>
-        Filter
+        {t('board.filter.trigger')}
         {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
       </button>
 
@@ -69,14 +76,14 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
             type="text"
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
-            placeholder="Search cards..."
+            placeholder={t('board.filter.searchPlaceholder')}
             className="w-full bg-huginn-surface text-sm text-huginn-text-primary rounded-lg px-3 py-2 outline-none border border-huginn-border focus:border-huginn-accent placeholder-huginn-text-muted mb-3"
           />
 
           {/* Labels */}
           {labels.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Labels</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">{t('board.filter.labels')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {labels.map((label) => {
                   const active = filters.labelIds.includes(label.id)
@@ -99,7 +106,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
 
           {/* Priority */}
           <div className="mb-3">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Priority</p>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">{t('board.filter.priority')}</p>
             <div className="flex gap-1.5">
               {(['high', 'medium', 'low'] as ThoughtPriority[]).map((p) => (
                 <button
@@ -111,7 +118,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
                       : 'bg-huginn-surface text-huginn-text-secondary hover:bg-huginn-hover'
                   }`}
                 >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                  {priorityLabel(p)}
                 </button>
               ))}
             </div>
@@ -119,12 +126,12 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
 
           {/* Due date */}
           <div className="mb-3">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">Due date</p>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted mb-1.5">{t('board.filter.dueDate')}</p>
             <div className="flex flex-wrap gap-1.5">
               {([
-                { value: 'overdue' as const, label: 'Overdue' },
-                { value: 'due-soon' as const, label: 'Due soon' },
-                { value: 'no-date' as const, label: 'No date' },
+                { value: 'overdue' as const, label: t('board.filter.overdue') },
+                { value: 'due-soon' as const, label: t('board.filter.dueSoon') },
+                { value: 'no-date' as const, label: t('board.filter.noDate') },
               ]).map((opt) => (
                 <button
                   key={opt.value}
@@ -147,7 +154,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
               onClick={clearAll}
               className="text-xs text-huginn-text-muted hover:text-white transition-colors"
             >
-              Clear all filters
+              {t('board.filter.clearAll')}
             </button>
           )}
         </div>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface AvatarProps {
   url?: string | null
   name?: string | null
@@ -7,14 +9,16 @@ interface AvatarProps {
 }
 
 export function Avatar({ url, name, email, size = 32, className = '' }: AvatarProps) {
+  const { t } = useTranslation()
   const initials = getInitials(name, email)
   const bg = colorFromString(name || email || 'huginn')
+  const fallbackLabel = name ?? email ?? t('common.avatar')
 
   if (url) {
     return (
       <img
         src={url}
-        alt={name ?? email ?? 'avatar'}
+        alt={fallbackLabel}
         width={size}
         height={size}
         draggable={false}
@@ -33,7 +37,7 @@ export function Avatar({ url, name, email, size = 32, className = '' }: AvatarPr
         background: bg,
         fontSize: Math.max(10, Math.round(size * 0.42)),
       }}
-      aria-label={name ?? email ?? 'avatar'}
+      aria-label={fallbackLabel}
     >
       {initials}
     </div>

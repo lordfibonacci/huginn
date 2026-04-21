@@ -5,7 +5,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "avatar": "avatar"
   },
   "account": {
     "menu": {
@@ -200,6 +201,23 @@
       "hold": "On hold",
       "done": "Done"
     },
+    "list": {
+      "loading": "Loading projects",
+      "emptyTitle": "No projects yet",
+      "emptyHint": "Create your first project to get started.",
+      "emptyHintWithInvites": "Create your first project, or accept an invitation above.",
+      "createFirst": "Create your first project",
+      "createBoard": "Create a board",
+      "newProjectTile": "New project"
+    },
+    "new": {
+      "title": "New project",
+      "namePlaceholder": "Project name",
+      "colorLabel": "Color",
+      "cancel": "Cancel",
+      "create": "Create",
+      "saving": "..."
+    },
     "role": {
       "owner": "Owner",
       "admin": "Admin",
@@ -228,6 +246,20 @@
       "trigger": "Add another list",
       "placeholder": "Enter list title...",
       "submit": "Add list"
+    },
+    "filter": {
+      "trigger": "Filter",
+      "searchPlaceholder": "Search cards...",
+      "labels": "Labels",
+      "priority": "Priority",
+      "priorityHigh": "High",
+      "priorityMedium": "Medium",
+      "priorityLow": "Low",
+      "dueDate": "Due date",
+      "overdue": "Overdue",
+      "dueSoon": "Due soon",
+      "noDate": "No date",
+      "clearAll": "Clear all filters"
     }
   },
   "list": {

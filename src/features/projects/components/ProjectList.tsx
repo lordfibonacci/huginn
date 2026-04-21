@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Project, ProjectStatus } from '../../../shared/lib/types'
 import { ProjectCard } from './ProjectCard'
 import { PendingInvitesPanel } from './PendingInvitesPanel'
@@ -12,27 +13,28 @@ interface ProjectListProps {
   onCreateProject?: () => void
 }
 
-const STATUS_ORDER: { key: ProjectStatus; label: string }[] = [
-  { key: 'active', label: 'Active' },
-  { key: 'hold', label: 'On hold' },
-  { key: 'idea', label: 'Idea' },
-  { key: 'done', label: 'Done' },
+const STATUS_ORDER: { key: ProjectStatus; labelKey: string }[] = [
+  { key: 'active', labelKey: 'projects.status.active' },
+  { key: 'hold', labelKey: 'projects.status.hold' },
+  { key: 'idea', labelKey: 'projects.status.idea' },
+  { key: 'done', labelKey: 'projects.status.done' },
 ]
 
 export function ProjectList({ projects, loading, onProjectTap, onCreateProject }: ProjectListProps) {
+  const { t } = useTranslation()
   const { counts } = useTaskCounts()
   const { count: invitesCount } = usePendingInvites()
 
   if (loading) {
-    return <LoadingScreen message="Loading projects" />
+    return <LoadingScreen message={t('projects.list.loading')} />
   }
 
   if (projects.length === 0 && invitesCount === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <EmptyState
-          title="No projects yet"
-          hint="Create your first project to get started."
+          title={t('projects.list.emptyTitle')}
+          hint={t('projects.list.emptyHint')}
         />
         {onCreateProject && (
           <button
@@ -42,15 +44,16 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
               <path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z" />
             </svg>
-            Create your first project
+            {t('projects.list.createFirst')}
           </button>
         )}
       </div>
     )
   }
 
-  const grouped = STATUS_ORDER.map(({ key, label }) => ({
-    label,
+  const grouped = STATUS_ORDER.map(({ key, labelKey }) => ({
+    key,
+    label: t(labelKey),
     items: projects.filter((p) => p.status === key),
   })).filter((g) => g.items.length > 0)
 
@@ -61,8 +64,8 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
         {projects.length === 0 && onCreateProject && (
           <div className="flex flex-col items-center justify-center py-10">
             <EmptyState
-              title="No projects yet"
-              hint="Create your first project, or accept an invitation above."
+              title={t('projects.list.emptyTitle')}
+              hint={t('projects.list.emptyHintWithInvites')}
             />
             <button
               onClick={onCreateProject}
@@ -71,12 +74,12 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z" />
               </svg>
-              Create a board
+              {t('projects.list.createBoard')}
             </button>
           </div>
         )}
         {grouped.map((group, groupIdx) => (
-          <section key={group.label} className="mb-8">
+          <section key={group.key} className="mb-8">
             <h2 className="text-[11px] uppercase tracking-widest text-huginn-text-secondary font-semibold mb-3 px-0.5">
               {group.label}
             </h2>
@@ -90,7 +93,7 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
                 />
               ))}
               {groupIdx === 0 && onCreateProject && (
-                <NewProjectTile onClick={onCreateProject} />
+                <NewProjectTile onClick={onCreateProject} label={t('projects.list.newProjectTile')} />
               )}
             </div>
           </section>
@@ -100,7 +103,7 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
   )
 }
 
-function NewProjectTile({ onClick }: { onClick: () => void }) {
+function NewProjectTile({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
@@ -109,7 +112,7 @@ function NewProjectTile({ onClick }: { onClick: () => void }) {
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 group-hover:text-huginn-accent transition-colors">
         <path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z" />
       </svg>
-      <span className="text-xs font-medium">New project</span>
+      <span className="text-xs font-medium">{label}</span>
     </button>
   )
 }

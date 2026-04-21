@@ -87,6 +87,20 @@
       "trigger": "Bæta við öðrum lista"
     },
     "backToProjects": "Aftur í verkefni",
+    "filter": {
+      "clearAll": "Hreinsa allar síur",
+      "dueDate": "Eindagi",
+      "dueSoon": "Rennur út bráðum",
+      "labels": "Merkimiðar",
+      "noDate": "Engin dagsetning",
+      "overdue": "Komið framyfir",
+      "priority": "Forgangur",
+      "priorityHigh": "Hár",
+      "priorityLow": "Lágur",
+      "priorityMedium": "Miðlungs",
+      "searchPlaceholder": "Leita að spjöldum...",
+      "trigger": "Sía"
+    },
     "loading": "Hleður verkefni",
     "notFound": "Verkefni fannst ekki.",
     "projectSettings": "Stillingar verkefnis",
@@ -189,6 +203,7 @@
     "you": "(þú)"
   },
   "common": {
+    "avatar": "notendamynd",
     "cancel": "Hætta við",
     "close": "Loka",
     "delete": "Eyða",
@@ -498,6 +513,23 @@
       "heading": "Boð í verkefni",
       "invitedYouAs": "bauð þér sem",
       "inviterFallback": "Einhver"
+    },
+    "list": {
+      "createBoard": "Búa til töflu",
+      "createFirst": "Búðu til þitt fyrsta verkefni",
+      "emptyHint": "Búðu til þitt fyrsta verkefni til að byrja.",
+      "emptyHintWithInvites": "Búðu til þitt fyrsta verkefni, eða samþykktu boð hér að ofan.",
+      "emptyTitle": "Engin verkefni ennþá",
+      "loading": "Sæki verkefni",
+      "newProjectTile": "Nýtt verkefni"
+    },
+    "new": {
+      "cancel": "Hætta við",
+      "colorLabel": "Litur",
+      "create": "Búa til",
+      "namePlaceholder": "Nafn verkefnis",
+      "saving": "...",
+      "title": "Nýtt verkefni"
     },
     "role": {
       "admin": "Stjórnandi",
