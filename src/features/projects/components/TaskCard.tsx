@@ -1,11 +1,12 @@
+import { useTranslation } from 'react-i18next'
 import type { Task, TaskStatus } from '../../../shared/lib/types'
 import { formatDueDate } from '../../../shared/lib/dateUtils'
 import { getContrastTextColor } from '../../../shared/lib/contrast'
 
-const PRIORITY_LABELS: Record<string, { text: string; class: string }> = {
-  high: { text: 'High', class: 'bg-huginn-danger/20 text-huginn-danger' },
-  medium: { text: 'Med', class: 'bg-huginn-warning/20 text-huginn-warning' },
-  low: { text: 'Low', class: 'bg-huginn-text-muted/20 text-huginn-text-muted' },
+const PRIORITY_CLASS: Record<string, string> = {
+  high: 'bg-huginn-danger/20 text-huginn-danger',
+  medium: 'bg-huginn-warning/20 text-huginn-warning',
+  low: 'bg-huginn-text-muted/20 text-huginn-text-muted',
 }
 
 interface TaskCardProps {
@@ -20,8 +21,11 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl }: TaskCardProps) {
+  const { t } = useTranslation()
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
-  const priority = task.priority ? PRIORITY_LABELS[task.priority] : null
+  const priority = task.priority
+    ? { text: t(`task.priority.${task.priority}`), class: PRIORITY_CLASS[task.priority] }
+    : null
 
   function handleToggle(e: React.MouseEvent) {
     e.stopPropagation()
@@ -112,7 +116,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
               </span>
             )}
             {task.notes && (
-              <span className="text-huginn-text-muted" title="Has notes">
+              <span className="text-huginn-text-muted" title={t('task.hasNotes')}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
                   <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7ZM4 5.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4ZM4 8a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H4Z" />
                 </svg>

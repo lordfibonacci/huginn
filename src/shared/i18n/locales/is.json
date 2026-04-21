@@ -76,6 +76,21 @@
       "subtitle": "Stofnaðu aðgang"
     }
   },
+  "board": {
+    "addList": {
+      "placeholder": "Sláðu inn titil lista...",
+      "submit": "Bæta við lista",
+      "trigger": "Bæta við öðrum lista"
+    },
+    "backToProjects": "Aftur í verkefni",
+    "loading": "Hleður verkefni",
+    "notFound": "Verkefni fannst ekki.",
+    "projectSettings": "Stillingar verkefnis",
+    "view": {
+      "calendar": "Dagatal",
+      "cards": "Spjöld"
+    }
+  },
   "bottomNav": {
     "inbox": "Pósthólf",
     "projects": "Verkefni",
@@ -182,6 +197,17 @@
       "titleLead": "Ýttu. Talaðu."
     }
   },
+  "list": {
+    "addCard": {
+      "placeholder": "Sláðu inn titil...",
+      "submit": "Bæta við spjaldi",
+      "trigger": "Bæta við spjaldi"
+    },
+    "menu": {
+      "archive": "Safnvista lista",
+      "open": "Aðgerðir lista"
+    }
+  },
   "projects": {
     "actions": {
       "newProject": "Nýtt verkefni"
@@ -213,6 +239,14 @@
       "done": "Lokið",
       "hold": "Í bið",
       "idea": "Hugmynd"
+    }
+  },
+  "task": {
+    "hasNotes": "Er með minnispunkta",
+    "priority": {
+      "high": "Hár",
+      "low": "Lágur",
+      "medium": "Miðlungs"
     }
   },
   "toolbar": {

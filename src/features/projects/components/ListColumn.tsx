@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, List } from '../../../shared/lib/types'
@@ -15,6 +16,7 @@ interface ListColumnProps {
 }
 
 function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
+  const { t } = useTranslation()
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
 
@@ -34,7 +36,7 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
           <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
         </svg>
-        Add a card
+        {t('list.addCard.trigger')}
       </button>
     )
   }
@@ -44,7 +46,7 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
       <textarea
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Enter a title..."
+        placeholder={t('list.addCard.placeholder')}
         autoFocus
         rows={2}
         onKeyDown={(e) => {
@@ -59,7 +61,7 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
           disabled={!title.trim()}
           className="bg-huginn-accent text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50"
         >
-          Add card
+          {t('list.addCard.submit')}
         </button>
         <button onClick={() => { setAdding(false); setTitle('') }} className="text-huginn-text-muted hover:text-white text-xs px-2 py-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
@@ -72,6 +74,7 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
 }
 
 export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, renderDraggableCard }: ListColumnProps) {
+  const { t } = useTranslation()
   // Sortable makes the list both a drag source (reorderable) and a droppable
   // target for cards. The drag listeners are applied ONLY to the header, so
   // clicking inside the cards area or on buttons doesn't start a list drag.
@@ -140,6 +143,7 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
           <button
             onClick={() => setShowMenu(!showMenu)}
             onPointerDown={(e) => e.stopPropagation()}
+            aria-label={t('list.menu.open')}
             className="text-huginn-text-muted hover:text-white p-1 rounded hover:bg-huginn-surface/50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
@@ -155,7 +159,7 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
                 onClick={() => { onArchiveList(list.id); setShowMenu(false) }}
                 className="w-full text-left text-xs text-huginn-text-secondary hover:text-white hover:bg-huginn-surface px-3 py-1.5"
               >
-                Archive list
+                {t('list.menu.archive')}
               </button>
             </div>
           )}

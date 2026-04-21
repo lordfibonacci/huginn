@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
 import { DndContext, DragOverlay, PointerSensor, closestCorners, defaultDropAnimationSideEffects, useSensor, useSensors } from '@dnd-kit/core'
 import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, DropAnimation } from '@dnd-kit/core'
@@ -28,6 +29,7 @@ import { BoardMembersDrawer } from '../features/projects/components/BoardMembers
 import type { Project, Task, Label, List } from '../shared/lib/types'
 
 export function ProjectDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [project, setProject] = useState<Project | null>(null)
@@ -568,13 +570,13 @@ export function ProjectDetailPage() {
   }, [explosion])
 
   if (loadingProject) {
-    return <LoadingScreen message="Loading project" />
+    return <LoadingScreen message={t('board.loading')} />
   }
 
   if (!project) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-huginn-text-muted text-sm">Project not found.</p>
+        <p className="text-huginn-text-muted text-sm">{t('board.notFound')}</p>
       </div>
     )
   }
@@ -608,7 +610,7 @@ export function ProjectDetailPage() {
         <Link
           to="/projects"
           className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors -ml-1.5"
-          aria-label="Back to projects"
+          aria-label={t('board.backToProjects')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
@@ -620,7 +622,7 @@ export function ProjectDetailPage() {
         <button
           onClick={() => setShowSettings(true)}
           className="flex items-center gap-3 min-w-0 flex-1 group rounded-lg px-2 py-1.5 -mx-2 hover:bg-huginn-hover/40 transition-colors"
-          title="Project settings"
+          title={t('board.projectSettings')}
         >
           <ProjectGlyph color={project.color} size={20} />
           <h1 className="text-lg font-bold tracking-tight truncate text-white group-hover:text-white">
@@ -636,7 +638,7 @@ export function ProjectDetailPage() {
               view === 'board' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
-            Cards
+            {t('board.view.cards')}
           </button>
           <button
             onClick={() => setView('calendar')}
@@ -644,7 +646,7 @@ export function ProjectDetailPage() {
               view === 'calendar' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
-            Calendar
+            {t('board.view.calendar')}
           </button>
         </div>
 
@@ -663,7 +665,7 @@ export function ProjectDetailPage() {
         <button
           onClick={() => setShowSettings(true)}
           className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors"
-          aria-label="Project settings"
+          aria-label={t('board.projectSettings')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
             <path fillRule="evenodd" d="M8.34 1.804A1 1 0 0 1 9.32 1h1.36a1 1 0 0 1 .98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 0 1 1.262.125l.962.962a1 1 0 0 1 .125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 0 1 .804.98v1.362a1 1 0 0 1-.804.98l-1.473.295a6.95 6.95 0 0 1-.587 1.416l.834 1.25a1 1 0 0 1-.125 1.262l-.962.962a1 1 0 0 1-1.262.125l-1.25-.834a6.953 6.953 0 0 1-1.416.587l-.294 1.473a1 1 0 0 1-.98.804H9.32a1 1 0 0 1-.98-.804l-.295-1.473a6.957 6.957 0 0 1-1.416-.587l-1.25.834a1 1 0 0 1-1.262-.125l-.962-.962a1 1 0 0 1-.125-1.262l.834-1.25a6.957 6.957 0 0 1-.587-1.416l-1.473-.294A1 1 0 0 1 1 11.36V9.998a1 1 0 0 1 .804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 0 1 .125-1.262l.962-.962A1 1 0 0 1 5.38 3.708l1.25.834a6.957 6.957 0 0 1 1.416-.587l.294-1.473ZM13 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />

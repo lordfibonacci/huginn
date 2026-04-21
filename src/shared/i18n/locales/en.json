@@ -214,5 +214,39 @@
       "accept": "Accept",
       "confirmDecline": "Decline invite to \"{{name}}\"?"
     }
+  },
+  "board": {
+    "backToProjects": "Back to projects",
+    "projectSettings": "Project settings",
+    "view": {
+      "cards": "Cards",
+      "calendar": "Calendar"
+    },
+    "loading": "Loading project",
+    "notFound": "Project not found.",
+    "addList": {
+      "trigger": "Add another list",
+      "placeholder": "Enter list title...",
+      "submit": "Add list"
+    }
+  },
+  "list": {
+    "addCard": {
+      "trigger": "Add a card",
+      "placeholder": "Enter a title...",
+      "submit": "Add card"
+    },
+    "menu": {
+      "open": "List actions",
+      "archive": "Archive list"
+    }
+  },
+  "task": {
+    "priority": {
+      "high": "High",
+      "medium": "Med",
+      "low": "Low"
+    },
+    "hasNotes": "Has notes"
   }
 }

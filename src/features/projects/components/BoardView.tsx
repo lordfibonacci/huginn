@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SortableContext, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, TaskStatus, List, Label } from '../../../shared/lib/types'
@@ -54,6 +55,7 @@ function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels,
 }
 
 export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap }: BoardViewProps) {
+  const { t } = useTranslation()
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
 
@@ -92,7 +94,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
   }
 
   if (loading) {
-    return <LoadingScreen message="Loading project" />
+    return <LoadingScreen message={t('board.loading')} />
   }
 
   // Group tasks by list_id, preserving the order they arrive in (parent owns order)
@@ -152,7 +154,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
             <input
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
-              placeholder="Enter list title..."
+              placeholder={t('board.addList.placeholder')}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleAddList()
@@ -166,7 +168,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
                 disabled={!newListName.trim()}
                 className="bg-huginn-accent text-white text-xs font-semibold rounded-md px-3 py-1.5 disabled:opacity-50"
               >
-                Add list
+                {t('board.addList.submit')}
               </button>
               <button onClick={() => { setAddingList(false); setNewListName('') }} className="text-huginn-text-muted hover:text-white text-xs">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
@@ -183,7 +185,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
               <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
             </svg>
-            Add another list
+            {t('board.addList.trigger')}
           </button>
         )}
       </div>
