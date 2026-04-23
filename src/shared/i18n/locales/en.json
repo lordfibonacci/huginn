@@ -348,6 +348,10 @@
       "makeCover": "Make cover",
       "delete": "Delete",
       "close": "Close (Esc)"
+    },
+    "textViewer": {
+      "loading": "Loading…",
+      "error": "Couldn't load file: {{message}}"
     }
   },
   "checklist": {

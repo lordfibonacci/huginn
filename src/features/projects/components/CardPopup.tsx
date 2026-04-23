@@ -16,6 +16,7 @@ import { MemberAvatars } from './MemberAvatars'
 import { MemberPicker } from './MemberPicker'
 import { CardThreeDotMenu } from './CardThreeDotMenu'
 import { MoveCardDialog } from './MoveCardDialog'
+import { TextAttachmentViewer, textAttachmentKind } from './TextAttachmentViewer'
 import { useAuth } from '../../../shared/hooks/useAuth'
 import { useProfile } from '../../../shared/hooks/useProfile'
 import { DatePicker } from './DatePicker'
@@ -91,6 +92,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
 
   // Lightbox state for image-attachment viewer
   const [lightbox, setLightbox] = useState<{ attachmentId: string | null; url: string; name: string } | null>(null)
+  const [textViewer, setTextViewer] = useState<{ attachmentId: string | null; url: string; name: string; kind: 'markdown' | 'text' } | null>(null)
   useEffect(() => {
     if (!lightbox) return
     function onEsc(e: KeyboardEvent) {
@@ -592,6 +594,11 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                 <div className="space-y-2">
                   {attachments.map((att) => {
                     const isImage = att.type === 'image'
+                    const textKind = !isImage && att.type !== 'link' ? textAttachmentKind(att.name) : null
+                    const openTextViewer = () => {
+                      if (!textKind) return
+                      setTextViewer({ attachmentId: att.id, url: att.url, name: att.name, kind: textKind })
+                    }
                     return (
                       <div key={att.id} className="flex items-center gap-3 bg-huginn-surface/60 rounded-lg p-2.5 group">
                         {isImage ? (
@@ -602,6 +609,17 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                             title={t('card.attachments.open')}
                           >
                             <img src={att.url} alt={att.name} className="w-20 h-14 object-cover" />
+                          </button>
+                        ) : textKind ? (
+                          <button
+                            type="button"
+                            onClick={openTextViewer}
+                            className="w-20 h-14 rounded bg-huginn-card flex items-center justify-center shrink-0 focus:outline-none focus:ring-2 focus:ring-huginn-accent hover:bg-huginn-hover transition-colors"
+                            title={t('card.attachments.open')}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-huginn-text-muted">
+                              <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V6.621a1.5 1.5 0 0 0-.44-1.06L9.94 2.44A1.5 1.5 0 0 0 8.878 2H3.5Z" />
+                            </svg>
                           </button>
                         ) : (
                           <div className="w-20 h-14 rounded bg-huginn-card flex items-center justify-center shrink-0">
@@ -615,6 +633,14 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                             <button
                               type="button"
                               onClick={() => setLightbox({ attachmentId: att.id, url: att.url, name: att.name })}
+                              className="text-sm font-medium text-huginn-text-primary hover:text-huginn-accent truncate block text-left w-full"
+                            >
+                              {att.name}
+                            </button>
+                          ) : textKind ? (
+                            <button
+                              type="button"
+                              onClick={openTextViewer}
                               className="text-sm font-medium text-huginn-text-primary hover:text-huginn-accent truncate block text-left w-full"
                             >
                               {att.name}
@@ -745,6 +771,17 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
             </button>
           </div>
         </div>
+      )}
+
+      {textViewer && (
+        <TextAttachmentViewer
+          url={textViewer.url}
+          name={textViewer.name}
+          attachmentId={textViewer.attachmentId}
+          kind={textViewer.kind}
+          onClose={() => setTextViewer(null)}
+          onDelete={async (id) => { await deleteAttachment(id) }}
+        />
       )}
 
       {showMoveDialog && !isInboxCard && (

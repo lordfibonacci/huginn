@@ -138,3 +138,33 @@
   }
   [data-reveal="out"] { opacity: 1; transform: none; }
 }
+
+/* Markdown rendering (attachment viewer) */
+.huginn-markdown h1,
+.huginn-markdown h2,
+.huginn-markdown h3,
+.huginn-markdown h4 { font-weight: 600; color: var(--color-huginn-text-primary); margin: 1.25em 0 0.5em; line-height: 1.25; }
+.huginn-markdown h1 { font-size: 1.5rem; }
+.huginn-markdown h2 { font-size: 1.25rem; }
+.huginn-markdown h3 { font-size: 1.1rem; }
+.huginn-markdown h4 { font-size: 1rem; }
+.huginn-markdown p { margin: 0.5em 0; }
+.huginn-markdown a { color: var(--color-huginn-accent); text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--color-huginn-accent) 40%, transparent); text-underline-offset: 2px; }
+.huginn-markdown a:hover { color: var(--color-huginn-accent-hover); }
+.huginn-markdown ul, .huginn-markdown ol { margin: 0.5em 0; padding-left: 1.5em; }
+.huginn-markdown ul { list-style: disc; }
+.huginn-markdown ol { list-style: decimal; }
+.huginn-markdown li { margin: 0.2em 0; }
+.huginn-markdown li > p { margin: 0.2em 0; }
+.huginn-markdown blockquote { border-left: 3px solid var(--color-huginn-border); padding: 0.2em 0.9em; color: var(--color-huginn-text-secondary); margin: 0.75em 0; }
+.huginn-markdown code { background: rgba(255, 255, 255, 0.06); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.huginn-markdown pre { background: rgba(0, 0, 0, 0.35); border: 1px solid var(--color-huginn-border); border-radius: 6px; padding: 0.75em 1em; overflow-x: auto; margin: 0.75em 0; }
+.huginn-markdown pre code { background: none; padding: 0; font-size: 0.85em; }
+.huginn-markdown table { border-collapse: collapse; margin: 0.75em 0; width: 100%; }
+.huginn-markdown th, .huginn-markdown td { border: 1px solid var(--color-huginn-border); padding: 0.4em 0.75em; text-align: left; vertical-align: top; }
+.huginn-markdown th { background: rgba(255, 255, 255, 0.04); font-weight: 600; }
+.huginn-markdown hr { border: 0; border-top: 1px solid var(--color-huginn-border); margin: 1.25em 0; }
+.huginn-markdown img { max-width: 100%; border-radius: 6px; }
+.huginn-markdown strong { font-weight: 600; color: var(--color-huginn-text-primary); }
+.huginn-markdown em { font-style: italic; }
+.huginn-markdown input[type="checkbox"] { margin-right: 0.5em; }

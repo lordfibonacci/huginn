@@ -184,6 +184,10 @@
       "members": "Meðlimir",
       "priority": "Forgangur"
     },
+    "textViewer": {
+      "error": "Gat ekki opnað skrána: {{message}}",
+      "loading": "Hleður…"
+    },
     "title": {
       "placeholder": "Titill spjalds"
     }
