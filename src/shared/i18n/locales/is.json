@@ -113,10 +113,13 @@
     "inbox": "Pósthólf",
     "projects": "Verkefni",
     "settings": "Stillingar",
+    "today": "Í dag",
     "you": "Þú"
   },
   "calendar": {
+    "empty": "Ekkert á dagatalinu.",
     "moreCount": "+{{count}} fleiri",
+    "pageSubtitle": "Dagatal",
     "today": "Í dag"
   },
   "card": {
@@ -129,7 +132,9 @@
       "labels": "Merkimiðar",
       "members": "Meðlimir",
       "move": "Færa",
-      "moveToInbox": "Færa í pósthólf"
+      "moveToInbox": "Færa í pósthólf",
+      "star": "Stjörnumerkja spjald",
+      "unstar": "Taka stjörnu af spjaldi"
     },
     "attachments": {
       "added": "Bætt við {{when}}",
@@ -185,7 +190,7 @@
       "priority": "Forgangur"
     },
     "textViewer": {
-      "error": "Gat ekki opnað skrána: {{message}}",
+      "error": "Gat ekki hlaðið skrá: {{message}}",
       "loading": "Hleður…"
     },
     "title": {
@@ -436,7 +441,26 @@
     },
     "menu": {
       "archive": "Safnvista lista",
+      "archiveConfirm": "Setja \"{{name}}\" í geymslu? Þú getur endurheimt það síðar í stillingum verkefnis.",
       "open": "Aðgerðir lista"
+    },
+    "sort": {
+      "badge": {
+        "created_asc": "Gamalt",
+        "created_desc": "Nýtt",
+        "due_asc": "Gjaldd. ↑",
+        "due_desc": "Gjaldd. ↓",
+        "priority": "Forg.",
+        "title": "A–Ö"
+      },
+      "created_asc": "Elst fyrst",
+      "created_desc": "Nýjast fyrst",
+      "due_asc": "Gjalddagi (fyrst)",
+      "due_desc": "Gjalddagi (síðast)",
+      "label": "Raða eftir",
+      "manual": "Handvirkt",
+      "priority": "Forgangur",
+      "title": "Titill (A–Ö)"
     }
   },
   "members": {
@@ -496,6 +520,29 @@
     "submit": "Færa",
     "submitting": "…",
     "title": "Færa spjald"
+  },
+  "nav": {
+    "calendar": "Dagatal",
+    "inbox": "Pósthólf",
+    "projects": "Töflur",
+    "today": "Í dag"
+  },
+  "palette": {
+    "actions": {
+      "calendar": "Fara í dagatal",
+      "inbox": "Fara í pósthólf",
+      "projects": "Fara á töflur",
+      "settings": "Stillingar",
+      "today": "Fara á Í dag"
+    },
+    "empty": "Engar niðurstöður.",
+    "inboxLabel": "Pósthólf",
+    "placeholder": "Leita í töflum, spjöldum eða fara á…",
+    "sections": {
+      "actions": "Fara á",
+      "boards": "Töflur",
+      "cards": "Spjöld"
+    }
   },
   "projects": {
     "actions": {
@@ -645,6 +692,8 @@
       "close": "Loka"
     },
     "project": {
+      "archivedLists_one": "Geymdur listi ({{count}})",
+      "archivedLists_other": "Geymdir listar ({{count}})",
       "backgroundLabel": "Bakgrunnur verkefnis",
       "colorLabel": "Litur",
       "delete": "Eyða verkefni",
@@ -652,6 +701,7 @@
       "descriptionPlaceholder": "Lýsing (valfrjálst)",
       "namePlaceholder": "Nafn verkefnis",
       "readOnlyHint": "Þú ert <1>{{role}}</1> í þessu verkefni — aðeins eigendur og stjórnendur geta breytt stillingum.",
+      "restoreList": "Endurheimta",
       "saving": "...",
       "titleInfo": "Verkefnisupplýsingar",
       "titleSettings": "Verkefnisstillingar"
@@ -663,14 +713,37 @@
       "high": "Hár",
       "low": "Lágur",
       "medium": "Miðlungs"
+    },
+    "starred": "Stjörnumerkt"
+  },
+  "today": {
+    "completedToday_one": "{{count}} klárað í dag",
+    "completedToday_other": "{{count}} kláruð í dag",
+    "empty": {
+      "all": {
+        "hint": "Ekkert á gjalddaga, úthlutað eða stjörnumerkt á töflunum þínum.",
+        "title": "Allt klárt"
+      },
+      "overdueToday": "Ekkert á dagskrá í dag. Vel gert."
+    },
+    "overdueChip_one": "{{count}} framyfir",
+    "overdueChip_other": "{{count}} framyfir",
+    "sections": {
+      "myWork": "Mín verkefni",
+      "overdueToday": "Framyfir og í dag",
+      "starred": "Stjörnumerkt",
+      "thisWeek": "Lýkur í vikunni"
     }
   },
   "toolbar": {
     "accountSettings": "Reikningsstillingar",
+    "calendar": "Dagatal",
+    "commandPalette": "Leita (⌘K)",
     "current": "Núverandi",
     "inbox": "Pósthólf",
     "noProjects": "Engin verkefni ennþá.",
     "switchProjects": "Skipta um verkefni",
+    "today": "Í dag",
     "viewAllProjects": "Skoða öll verkefni →",
     "yourProjects": "Þín verkefni"
   }

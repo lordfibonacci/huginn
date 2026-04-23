@@ -1,17 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../shared/hooks/useAuth'
-import { useProfile } from '../shared/hooks/useProfile'
 import { ProjectList, NewProjectDrawer, useProjects } from '../features/projects'
 import { Mark, Wordmark } from '../shared/components/Logo'
-import { Avatar } from '../shared/components/Avatar'
 import type { Project } from '../shared/lib/types'
 
 export function ProjectsPage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
-  const { profile } = useProfile()
   const { projects, loading, addProject, count } = useProjects()
   const [showNewProject, setShowNewProject] = useState(false)
   const navigate = useNavigate()
@@ -26,9 +21,9 @@ export function ProjectsPage() {
 
   return (
     <>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border md:px-6">
-        <div className="flex items-center gap-3">
+      {/* Mobile header only — desktop nav is in GlobalTopBar. */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border gap-4 md:hidden">
+        <div className="flex items-center gap-3 shrink-0">
           <Mark size={32} />
           <div className="flex flex-col">
             <Wordmark height={20} />
@@ -37,21 +32,6 @@ export function ProjectsPage() {
             </p>
           </div>
         </div>
-        <Link
-          to="/settings"
-          className="flex items-center gap-2 rounded-full pl-2 pr-1 py-1 hover:bg-huginn-hover transition-colors group"
-          title={t('projects.header.accountSettings')}
-        >
-          <span className="text-xs text-huginn-text-muted group-hover:text-white hidden sm:inline">
-            {profile?.display_name || user?.email}
-          </span>
-          <Avatar
-            url={profile?.avatar_url}
-            name={profile?.display_name}
-            email={user?.email}
-            size={32}
-          />
-        </Link>
       </header>
 
       {/* Project list */}

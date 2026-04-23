@@ -4,6 +4,7 @@ import { Avatar } from './Avatar'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useInbox } from '../../features/inbox/hooks/useInbox'
+import { useOverdueCount } from '../../features/agenda'
 
 export function BottomNav() {
   const { t } = useTranslation()
@@ -11,13 +12,26 @@ export function BottomNav() {
   const { user } = useAuth()
   const { profile } = useProfile()
   const { count: inboxCount } = useInbox()
+  const overdueCount = useOverdueCount()
 
+  const isToday = pathname.startsWith('/today')
   const isInbox = pathname.startsWith('/inbox')
   const isProjects = pathname.startsWith('/projects')
   const isSettings = pathname.startsWith('/settings')
 
   return (
     <nav className="flex items-stretch border-t border-huginn-border bg-huginn-base pb-[env(safe-area-inset-bottom,0px)]">
+      <NavTab
+        to="/today"
+        active={isToday}
+        label={t('bottomNav.today')}
+        badge={overdueCount > 0 ? overdueCount : undefined}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+            <path fillRule="evenodd" d="M6.75 2a.75.75 0 0 1 .75.75V4h9V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 21 6.75v12.5A2.75 2.75 0 0 1 18.25 22H5.75A2.75 2.75 0 0 1 3 19.25V6.75A2.75 2.75 0 0 1 5.75 4H6V2.75A.75.75 0 0 1 6.75 2ZM4.5 9.5v9.75c0 .69.56 1.25 1.25 1.25h12.5c.69 0 1.25-.56 1.25-1.25V9.5h-15Zm3.75 3a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5Zm4.5 0a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5Z" clipRule="evenodd" />
+          </svg>
+        }
+      />
       <NavTab
         to="/inbox"
         active={isInbox}

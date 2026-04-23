@@ -66,9 +66,9 @@ export function InboxPage() {
 
   return (
     <>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border md:px-6 shrink-0">
-        <Link to="/projects" className="flex items-center gap-3 group">
+      {/* Header — mobile only; desktop orientation lives in GlobalTopBar. */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-huginn-border shrink-0 gap-4 md:hidden">
+        <Link to="/projects" className="flex items-center gap-3 group shrink-0">
           <Mark size={32} />
           <div className="flex flex-col">
             <Wordmark height={20} />
@@ -85,118 +85,124 @@ export function InboxPage() {
         </Link>
       </header>
 
-      {/* Capture surface — always above the fold */}
-      <div className="px-4 pt-4 pb-2 md:px-6 shrink-0">
-        <div className="max-w-2xl mx-auto">
-          <div className={`relative rounded-2xl bg-huginn-card border transition-colors ${
-            isRecording ? 'border-huginn-accent ring-2 ring-huginn-accent/30' : 'border-huginn-border focus-within:border-huginn-accent'
-          }`}>
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isRecording ? t('inbox.capture.listening') : t('inbox.capture.placeholder')}
-              rows={3}
-              autoFocus
-              className="w-full bg-transparent text-white text-base leading-relaxed rounded-2xl px-4 pt-3.5 pb-12 resize-none outline-none placeholder-huginn-text-muted"
-            />
+      {/* Desktop: two-pane. Mobile: stacked. Mobile shell is unchanged below. */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row md:gap-6 md:px-6 md:py-4 md:overflow-hidden">
+        {/* Capture pane */}
+        <div className="px-4 pt-4 pb-2 md:p-0 md:w-[420px] md:shrink-0 shrink-0">
+          <div className="max-w-2xl mx-auto md:mx-0">
+            <div className={`relative rounded-2xl bg-huginn-card border transition-colors ${
+              isRecording ? 'border-huginn-accent ring-2 ring-huginn-accent/30' : 'border-huginn-border focus-within:border-huginn-accent'
+            }`}>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isRecording ? t('inbox.capture.listening') : t('inbox.capture.placeholder')}
+                rows={3}
+                autoFocus
+                className="w-full bg-transparent text-white text-base leading-relaxed rounded-2xl px-4 pt-3.5 pb-12 resize-none outline-none placeholder-huginn-text-muted"
+              />
 
-            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-              {isSupported ? (
+              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                {isSupported ? (
+                  <button
+                    type="button"
+                    onClick={toggleRecording}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                      isRecording
+                        ? 'bg-huginn-accent text-white'
+                        : 'bg-huginn-surface text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
+                    }`}
+                    aria-label={isRecording ? t('inbox.capture.stopVoice') : t('inbox.capture.startVoice')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-4 h-4 ${isRecording ? 'animate-pulse' : ''}`}>
+                      <path d="M7 4a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V4Z" />
+                      <path d="M5.5 9.5a.75.75 0 0 1 .75.75 3.75 3.75 0 0 0 7.5 0 .75.75 0 1 1 1.5 0 5.25 5.25 0 0 1-4.5 5.197V17h2a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5h2v-1.553A5.25 5.25 0 0 1 4.75 10.25.75.75 0 0 1 5.5 9.5Z" />
+                    </svg>
+                    {isRecording ? t('inbox.capture.stopWithDuration', { duration: formatDuration(duration) }) : t('inbox.capture.voice')}
+                  </button>
+                ) : <div />}
+
                 <button
                   type="button"
-                  onClick={toggleRecording}
-                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-                    isRecording
-                      ? 'bg-huginn-accent text-white'
-                      : 'bg-huginn-surface text-huginn-text-secondary hover:text-white hover:bg-huginn-hover'
-                  }`}
-                  aria-label={isRecording ? t('inbox.capture.stopVoice') : t('inbox.capture.startVoice')}
+                  onClick={() => handleSave()}
+                  disabled={!text.trim() || adding}
+                  className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-xs font-semibold px-4 py-1.5 rounded-full disabled:opacity-40 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-4 h-4 ${isRecording ? 'animate-pulse' : ''}`}>
-                    <path d="M7 4a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V4Z" />
-                    <path d="M5.5 9.5a.75.75 0 0 1 .75.75 3.75 3.75 0 0 0 7.5 0 .75.75 0 1 1 1.5 0 5.25 5.25 0 0 1-4.5 5.197V17h2a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5h2v-1.553A5.25 5.25 0 0 1 4.75 10.25.75.75 0 0 1 5.5 9.5Z" />
-                  </svg>
-                  {isRecording ? t('inbox.capture.stopWithDuration', { duration: formatDuration(duration) }) : t('inbox.capture.voice')}
+                  {adding ? t('inbox.capture.adding') : t('inbox.capture.add')}
                 </button>
-              ) : <div />}
-
-              <button
-                type="button"
-                onClick={() => handleSave()}
-                disabled={!text.trim() || adding}
-                className="bg-huginn-accent hover:bg-huginn-accent-hover text-white text-xs font-semibold px-4 py-1.5 rounded-full disabled:opacity-40 transition-colors"
-              >
-                {adding ? t('inbox.capture.adding') : t('inbox.capture.add')}
-              </button>
+              </div>
             </div>
+            <p className="text-[11px] text-huginn-text-muted mt-2 px-1 hidden sm:block">
+              <Trans
+                i18nKey="inbox.capture.enterHint"
+                components={{
+                  0: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
+                  1: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
+                  2: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
+                }}
+              />
+            </p>
           </div>
-          <p className="text-[11px] text-huginn-text-muted mt-2 px-1 hidden sm:block">
-            <Trans
-              i18nKey="inbox.capture.enterHint"
-              components={{
-                0: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
-                1: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
-                2: <kbd className="bg-huginn-surface border border-huginn-border rounded px-1 py-0.5 text-[10px] font-mono" />,
-              }}
-            />
-          </p>
         </div>
-      </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-6">
-        <div className="max-w-2xl mx-auto pt-2">
-          {loading ? (
-            <p className="text-xs text-huginn-text-muted py-4 text-center">{t('common.loading')}</p>
-          ) : cards.length === 0 ? (
-            <EmptyState
-              title={t('inbox.empty.title')}
-              hint={t('inbox.empty.hint')}
-            />
-          ) : (
-            <ul className="space-y-2">
-              {cards.map((card) => (
-                <li key={card.id}>
-                  <button
-                    onClick={() => setSelectedCard(card)}
-                    className="w-full text-left bg-huginn-card border border-huginn-border/60 hover:border-huginn-accent/40 rounded-xl px-4 py-3 flex items-start gap-3 group transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-huginn-text-primary whitespace-pre-wrap break-words">
-                        {card.title}
-                      </p>
-                      <p className="text-[11px] text-huginn-text-muted mt-1">
-                        {formatRelativeTime(card.created_at, t)}
-                      </p>
-                    </div>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (window.confirm(t('inbox.list.deleteConfirm'))) deleteCard(card.id)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+        {/* List pane */}
+        <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-2 min-h-0">
+          <div className="max-w-2xl mx-auto md:mx-0 pt-2">
+            <p className="hidden md:block text-[11px] font-bold uppercase tracking-wide text-huginn-text-muted px-1 pb-2">
+              {count > 0 ? t('inbox.header.labelWithCount', { count }) : t('inbox.header.label')}
+            </p>
+            {loading ? (
+              <p className="text-xs text-huginn-text-muted py-4 text-center">{t('common.loading')}</p>
+            ) : cards.length === 0 ? (
+              <EmptyState
+                title={t('inbox.empty.title')}
+                hint={t('inbox.empty.hint')}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {cards.map((card) => (
+                  <li key={card.id}>
+                    <button
+                      onClick={() => setSelectedCard(card)}
+                      className="w-full text-left bg-huginn-card border border-huginn-border/60 hover:border-huginn-accent/40 rounded-xl px-4 py-3 flex items-start gap-3 group transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-huginn-text-primary whitespace-pre-wrap break-words">
+                          {card.title}
+                        </p>
+                        <p className="text-[11px] text-huginn-text-muted mt-1">
+                          {formatRelativeTime(card.created_at, t)}
+                        </p>
+                      </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
                           e.stopPropagation()
                           if (window.confirm(t('inbox.list.deleteConfirm'))) deleteCard(card.id)
-                        }
-                      }}
-                      className="text-huginn-text-muted hover:text-huginn-danger opacity-50 group-hover:opacity-100 transition-opacity shrink-0 -mr-1 p-1"
-                      aria-label={t('inbox.list.deleteAria')}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                        <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
-                        <path fillRule="evenodd" d="M4.5 7a.5.5 0 0 1 .5.5v9.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.5a.5.5 0 0 1 1 0v9.5a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7.5a.5.5 0 0 1 .5-.5Z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation()
+                            if (window.confirm(t('inbox.list.deleteConfirm'))) deleteCard(card.id)
+                          }
+                        }}
+                        className="text-huginn-text-muted hover:text-huginn-danger opacity-50 group-hover:opacity-100 transition-opacity shrink-0 -mr-1 p-1"
+                        aria-label={t('inbox.list.deleteAria')}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2h12a1 1 0 1 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9Z" />
+                          <path fillRule="evenodd" d="M4.5 7a.5.5 0 0 1 .5.5v9.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.5a.5.5 0 0 1 1 0v9.5a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7.5a.5.5 0 0 1 .5-.5Z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 

@@ -4,8 +4,53 @@ import { SortableContext, useSortable, verticalListSortingStrategy, horizontalLi
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, TaskStatus, List, Label } from '../../../shared/lib/types'
 import { TaskCard } from './TaskCard'
-import { ListColumn } from './ListColumn'
+import { ListColumn, type ListSortKey } from './ListColumn'
 import { LoadingScreen } from '../../../shared/components/Logo'
+
+const PRIORITY_WEIGHT: Record<string, number> = { high: 0, medium: 1, low: 2 }
+
+function sortTasks(tasks: Task[], key: ListSortKey): Task[] {
+  if (key === 'manual') return tasks
+  const sorted = [...tasks]
+  switch (key) {
+    case 'due_asc':
+      // Soonest first; no-date cards sink to the bottom.
+      sorted.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return a.due_date.localeCompare(b.due_date)
+      })
+      break
+    case 'due_desc':
+      // Latest first; no-date cards still sink to the bottom (same rationale:
+      // they're the least date-informative, not the most).
+      sorted.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return b.due_date.localeCompare(a.due_date)
+      })
+      break
+    case 'priority':
+      sorted.sort((a, b) => {
+        const wa = a.priority ? PRIORITY_WEIGHT[a.priority] ?? 3 : 3
+        const wb = b.priority ? PRIORITY_WEIGHT[b.priority] ?? 3 : 3
+        return wa - wb
+      })
+      break
+    case 'title':
+      sorted.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+      break
+    case 'created_desc':
+      sorted.sort((a, b) => b.created_at.localeCompare(a.created_at))
+      break
+    case 'created_asc':
+      sorted.sort((a, b) => a.created_at.localeCompare(b.created_at))
+      break
+  }
+  return sorted
+}
 
 interface BoardViewProps {
   lists: List[]
@@ -20,18 +65,27 @@ interface BoardViewProps {
   loading?: boolean
   taskLabelsMap?: Record<string, Label[]>
   coverImageMap?: Record<string, string>
+  sortByList: Record<string, ListSortKey>
+  onSortChange: (listId: string, key: ListSortKey) => void
+  // When a card is being dragged from a list, that list's sort is visually
+  // suspended (treated as 'manual') so dnd-kit's arrayMove reordering works
+  // without the sort re-applying on every render.
+  dragSourceListId: string | null
 }
 
 function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
-    transition: { duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    // No transition / no layout animation: drop should be instant (Trello-style).
+    // A transition causes hover-time transforms to finish animating back to zero
+    // AFTER the user releases, which reads as 200–400 ms of drop lag.
+    transition: null,
+    animateLayoutChanges: () => false,
   })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
   }
 
   return (
@@ -54,7 +108,7 @@ function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels,
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap, sortByList, onSortChange, dragSourceListId }: BoardViewProps) {
   const { t } = useTranslation()
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -118,7 +172,14 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
     >
       <SortableContext items={lists.map(l => l.id)} strategy={horizontalListSortingStrategy}>
         {lists.map((list) => {
-          const listTasks = tasksByList[list.id] || []
+          const persistedSort = sortByList[list.id] ?? 'manual'
+          // A card being dragged FROM this list suspends the sort visually
+          // (treated as 'manual' for rendering) so dnd-kit's arrayMove during
+          // hover actually shifts the cards around. If the user drops same-list,
+          // handleDragEnd persists the flip to manual; cross-list drops restore.
+          const sortKey: ListSortKey = list.id === dragSourceListId ? 'manual' : persistedSort
+          const rawTasks = tasksByList[list.id] || []
+          const listTasks = sortKey === 'manual' ? rawTasks : sortTasks(rawTasks, sortKey)
           const itemIds = listTasks.map(t => t.id)
           return (
             <SortableContext key={list.id} id={list.id} items={itemIds} strategy={verticalListSortingStrategy}>
@@ -130,6 +191,8 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
                 onRenameList={onRenameList}
                 onArchiveList={onArchiveList}
                 selectedTaskId={selectedTaskId}
+                sortKey={persistedSort}
+                onSortChange={(key) => onSortChange(list.id, key)}
                 renderDraggableCard={(task) => (
                   <SortableCard
                     key={task.id}

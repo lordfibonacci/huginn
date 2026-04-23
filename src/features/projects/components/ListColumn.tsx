@@ -1,8 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, List } from '../../../shared/lib/types'
+
+export const LIST_SORT_KEYS = [
+  'manual',
+  'due_asc',
+  'due_desc',
+  'priority',
+  'title',
+  'created_desc',
+  'created_asc',
+] as const
+export type ListSortKey = typeof LIST_SORT_KEYS[number]
 
 interface ListColumnProps {
   list: List
@@ -12,6 +23,8 @@ interface ListColumnProps {
   onRenameList: (listId: string, name: string) => void
   onArchiveList: (listId: string) => void
   selectedTaskId?: string
+  sortKey: ListSortKey
+  onSortChange: (key: ListSortKey) => void
   renderDraggableCard: (task: Task) => React.ReactNode
 }
 
@@ -73,25 +86,48 @@ function AddCardInput({ onAdd }: { onAdd: (title: string) => void }) {
   )
 }
 
-export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, renderDraggableCard }: ListColumnProps) {
+export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList, sortKey, onSortChange, renderDraggableCard }: ListColumnProps) {
   const { t } = useTranslation()
   // Sortable makes the list both a drag source (reorderable) and a droppable
   // target for cards. The drag listeners are applied ONLY to the header, so
   // clicking inside the cards area or on buttons doesn't start a list drag.
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, isDragging, isOver } = useSortable({
     id: list.id,
     data: { type: 'list' },
-    transition: { duration: 260, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    // No transition anywhere: drops must be instant (Trello-style). With a
+    // transition, residual hover-time transforms finish animating to zero
+    // AFTER the user releases, which reads as a drop lag.
+    transition: null,
+    animateLayoutChanges: () => false,
   })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
   }
 
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(list.name)
   const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close the menu on any pointerdown outside it.
+  useEffect(() => {
+    if (!showMenu) return
+    function onPointerDown(e: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [showMenu])
+
+  function handleArchive() {
+    const confirmed = window.confirm(t('list.menu.archiveConfirm', { name: list.name }))
+    if (!confirmed) return
+    onArchiveList(list.id)
+    setShowMenu(false)
+  }
 
   function handleRename() {
     const trimmed = name.trim()
@@ -134,12 +170,20 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
         ) : (
           <h3
             onClick={() => setEditingName(true)}
-            className="flex-1 text-sm font-bold text-huginn-text-primary px-2 py-1 cursor-pointer rounded hover:bg-huginn-surface/50"
+            className="flex-1 text-sm font-bold text-huginn-text-primary px-2 py-1 cursor-pointer rounded hover:bg-huginn-surface/50 flex items-center gap-1.5"
           >
-            {list.name}
+            <span className="truncate">{list.name}</span>
+            {sortKey !== 'manual' && (
+              <span
+                title={t(`list.sort.${sortKey}`)}
+                className="text-[10px] font-semibold text-huginn-accent bg-huginn-accent-soft rounded px-1.5 py-0.5 uppercase tracking-wide"
+              >
+                {t(`list.sort.badge.${sortKey}`)}
+              </span>
+            )}
           </h3>
         )}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             onPointerDown={(e) => e.stopPropagation()}
@@ -152,11 +196,31 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
           </button>
           {showMenu && (
             <div
-              className="absolute right-0 top-full mt-1 bg-huginn-card border border-huginn-border rounded-lg shadow-xl py-1 z-50 w-36"
+              className="absolute right-0 top-full mt-1 bg-huginn-card border border-huginn-border rounded-lg shadow-xl py-1 z-50 w-44"
               onPointerDown={(e) => e.stopPropagation()}
             >
+              <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wide text-huginn-text-muted">
+                {t('list.sort.label')}
+              </div>
+              {LIST_SORT_KEYS.map((key) => (
+                <button
+                  key={key}
+                  onClick={() => { onSortChange(key); setShowMenu(false) }}
+                  className={`w-full text-left text-xs px-3 py-1.5 flex items-center justify-between ${
+                    sortKey === key ? 'text-huginn-accent' : 'text-huginn-text-secondary hover:text-white hover:bg-huginn-surface'
+                  }`}
+                >
+                  <span>{t(`list.sort.${key}`)}</span>
+                  {sortKey === key && (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 1 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+              <div className="border-t border-huginn-border my-1" />
               <button
-                onClick={() => { onArchiveList(list.id); setShowMenu(false) }}
+                onClick={handleArchive}
                 className="w-full text-left text-xs text-huginn-text-secondary hover:text-white hover:bg-huginn-surface px-3 py-1.5"
               >
                 {t('list.menu.archive')}

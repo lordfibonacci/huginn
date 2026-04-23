@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
-import { DndContext, DragOverlay, PointerSensor, closestCorners, defaultDropAnimationSideEffects, useSensor, useSensors } from '@dnd-kit/core'
-import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent, DropAnimation } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core'
+import type { CollisionDetection, DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
   BoardView,
@@ -15,6 +15,22 @@ import {
   useLabels,
 } from '../features/projects'
 import { TaskCard } from '../features/projects/components/TaskCard'
+import { LIST_SORT_KEYS, type ListSortKey } from '../features/projects/components/ListColumn'
+
+function loadListSort(listId: string): ListSortKey {
+  try {
+    const v = localStorage.getItem(`huginn.sort.list.${listId}`)
+    if (v && (LIST_SORT_KEYS as readonly string[]).includes(v)) return v as ListSortKey
+  } catch { /* localStorage unavailable */ }
+  return 'manual'
+}
+
+function saveListSort(listId: string, key: ListSortKey) {
+  try {
+    if (key === 'manual') localStorage.removeItem(`huginn.sort.list.${listId}`)
+    else localStorage.setItem(`huginn.sort.list.${listId}`, key)
+  } catch { /* localStorage unavailable */ }
+}
 import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
@@ -38,7 +54,7 @@ export function ProjectDetailPage() {
   // Hooks
   const { updateProject, deleteProject } = useProjects()
   const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask, removeTaskLocal, archiveTask, copyTask, moveTaskToBoard } = useProjectTasks(id ?? '')
-  const { lists, loading: loadingLists, addList, updateList, archiveList, reorderLists } = useLists(id ?? '')
+  const { lists, archivedLists, loading: loadingLists, addList, updateList, archiveList, unarchiveList, reorderLists } = useLists(id ?? '')
   const { labels } = useLabels(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
 
@@ -130,8 +146,40 @@ export function ProjectDetailPage() {
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
   const [localLists, setLocalLists] = useState<List[]>(lists)
   const isDraggingRef = useRef(false)
+  // True while handleDragEnd's N parallel UPDATE writes are still in flight.
+  // Each UPDATE emits its own realtime event → `tasks`/`lists` refetches with
+  // a PARTIALLY-reordered server snapshot. Without this guard, the [tasks]
+  // effect below sorts that stale snapshot and stomps our optimistic
+  // localTasks — the card visibly jumps to whatever positions the partial
+  // state dictates before the final echo settles (perceived as 200-400 ms of
+  // drop "lag"). Same reasoning for localLists.
+  const pendingReorderRef = useRef(false)
+  // Per-list sort preferences. Lifted from BoardView because handleDragEnd
+  // needs to flip a list to 'manual' on same-list card drops.
+  const [sortByList, setSortByList] = useState<Record<string, ListSortKey>>({})
+  // Hydrate sort prefs from localStorage when lists arrive.
   useEffect(() => {
-    if (!isDraggingRef.current) {
+    setSortByList(prev => {
+      const next = { ...prev }
+      let changed = false
+      for (const list of lists) {
+        if (!next[list.id]) {
+          const hydrated = loadListSort(list.id)
+          if (hydrated !== 'manual') { next[list.id] = hydrated; changed = true }
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [lists])
+  const handleSortChange = useCallback((listId: string, key: ListSortKey) => {
+    setSortByList(prev => ({ ...prev, [listId]: key }))
+    saveListSort(listId, key)
+  }, [])
+  // The list the currently-dragged card came from. Used to suspend that
+  // list's sort visually during the drag so dnd-kit can reorder its cards.
+  const [dragSourceListId, setDragSourceListId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!isDraggingRef.current && !pendingReorderRef.current) {
       setLocalTasks([...tasks].sort((a, b) => {
         if ((a.list_id ?? '') !== (b.list_id ?? '')) return 0
         return (a.position ?? 0) - (b.position ?? 0)
@@ -139,7 +187,7 @@ export function ProjectDetailPage() {
     }
   }, [tasks])
   useEffect(() => {
-    if (!isDraggingRef.current) setLocalLists(lists)
+    if (!isDraggingRef.current && !pendingReorderRef.current) setLocalLists(lists)
   }, [lists])
 
   // Preview slot for an incoming inbox card during drag. When set, a phantom
@@ -198,6 +246,24 @@ export function ProjectDetailPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Deep-link: ?card=<taskId> (e.g. from the ⌘K palette) opens the popup.
+  // Wait for the tasks fetch to settle so we don't prematurely give up on a
+  // card that exists but hasn't loaded yet.
+  useEffect(() => {
+    const cardId = searchParams.get('card')
+    if (!cardId || loadingTasks) return
+    const match = tasks.find((t) => t.id === cardId)
+    if (match) setSelectedTask(match)
+    // Strip the param either way so refresh/back doesn't re-open, and so a
+    // missing card doesn't stay stuck in the URL.
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('card')
+      return next
+    }, { replace: true })
+  }, [searchParams, tasks, loadingTasks, setSearchParams])
 
   // Keep selected task in sync with latest data (could be a project task OR an inbox card)
   const currentTask = selectedTask
@@ -275,15 +341,6 @@ export function ProjectDetailPage() {
   // outer horizontal SortableContext gets clean `over` events (cards would
   // otherwise be picked, stranding the list at its start position). Cards and
   // inbox drags keep the default closestCorners across all droppables.
-  // Smooth snap-into-place when the user releases a drag. A gentle ease-out
-  // feels less abrupt than the default hard transform.
-  const dropAnimation: DropAnimation = {
-    duration: 240,
-    easing: 'cubic-bezier(0.2, 0, 0, 1)',
-    sideEffects: defaultDropAnimationSideEffects({
-      styles: { active: { opacity: '0.5' } },
-    }),
-  }
 
   const collisionDetection = useCallback<CollisionDetection>((args) => {
     const activeType = (args.active.data.current as { type?: string } | null)?.type
@@ -312,6 +369,10 @@ export function ProjectDetailPage() {
     setActiveListId(null)
     const task = findTaskAnywhere(event.active.id as string)
     setActiveTask(task ?? null)
+    // Track source list so BoardView can render that list as manual during
+    // the drag (suspends sort so dnd-kit's arrayMove actually works visually).
+    if (task?.list_id) setDragSourceListId(task.list_id)
+    else setDragSourceListId(null)
     holdTimerRef.current = setTimeout(() => {
       explosionPendingRef.current = true
       setExplosion({ ...lastPointerRef.current })
@@ -327,6 +388,7 @@ export function ProjectDetailPage() {
     }
     setActiveTask(null)
     setActiveListId(null)
+    setDragSourceListId(null)
     setInboxPreview(null)
     setLocalTasks(tasks)
     setLocalLists(lists)
@@ -440,6 +502,7 @@ export function ProjectDetailPage() {
     }
     setActiveTask(null)
     setActiveListId(null)
+    setDragSourceListId(null)
     setInboxPreview(null)
 
     if (explosionPendingRef.current) {
@@ -449,6 +512,11 @@ export function ProjectDetailPage() {
     }
 
     const { active, over } = event
+
+    // Gate the [tasks]/[lists] resync effects for the duration of any DB
+    // writes we fire below. See pendingReorderRef declaration for why.
+    pendingReorderRef.current = true
+    try {
 
     // List reorder — persist new order if localLists diverges from server lists.
     if (isListDrag(event)) {
@@ -540,6 +608,14 @@ export function ProjectDetailPage() {
     if (!movedTask) return
 
     const originalTask = tasks.find(t => t.id === activeId)
+    // If user manually reordered within a sorted list, the act of reordering
+    // expresses manual intent — flip that list's sort to 'manual' so the new
+    // order persists visually. Cross-list drops leave the source list's sort
+    // alone (user is just moving a card out, not ordering within).
+    const sameList = originalTask?.list_id && movedTask.list_id === originalTask.list_id
+    if (sameList && movedTask.list_id && (sortByList[movedTask.list_id] ?? 'manual') !== 'manual') {
+      handleSortChange(movedTask.list_id, 'manual')
+    }
     const affectedLists = new Set<string>()
     if (movedTask.list_id) affectedLists.add(movedTask.list_id)
     if (originalTask?.list_id && originalTask.list_id !== movedTask.list_id) {
@@ -560,6 +636,10 @@ export function ProjectDetailPage() {
       })
     }
     await Promise.all(writes)
+
+    } finally {
+      pendingReorderRef.current = false
+    }
   }
 
   // Auto-clear the explosion after the animation finishes
@@ -689,6 +769,9 @@ export function ProjectDetailPage() {
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
           coverImageMap={coverImageMap}
+          sortByList={sortByList}
+          onSortChange={handleSortChange}
+          dragSourceListId={dragSourceListId}
         />
       ) : (
         <CalendarView
@@ -730,8 +813,10 @@ export function ProjectDetailPage() {
       {showSettings && (
         <ProjectSettingsDrawer
           project={project}
+          archivedLists={archivedLists}
           onUpdate={handleUpdateProject}
           onDelete={handleDeleteProject}
+          onRestoreList={unarchiveList}
           onDone={() => setShowSettings(false)}
         />
       )}
@@ -745,7 +830,7 @@ export function ProjectDetailPage() {
       )}
     </div>
 
-    <DragOverlay dropAnimation={dropAnimation}>
+    <DragOverlay dropAnimation={null}>
       {activeTask && (
         <div className="w-[250px] rotate-2 opacity-95 pointer-events-none drop-shadow-2xl">
           <TaskCard task={activeTask} />

@@ -65,6 +65,7 @@ export function useProjectTasks(projectId: string) {
       due_date: null,
       recurring: null,
       archived: false,
+      starred: false,
       created_at: nowIso,
       updated_at: nowIso,
     }
@@ -94,7 +95,7 @@ export function useProjectTasks(projectId: string) {
 
   async function updateTask(
     taskId: string,
-    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; start_date?: string | null; due_date?: string | null; recurring?: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null; list_id?: string; position?: number }
+    updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: 'low' | 'medium' | 'high' | null; start_date?: string | null; due_date?: string | null; recurring?: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null; list_id?: string; position?: number; starred?: boolean }
   ) {
     const prev = tasks
     setTasks((t) => t.map((tk) => (tk.id === taskId ? { ...tk, ...updates } : tk)))

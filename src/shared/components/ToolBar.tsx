@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Mark } from './Logo'
-import { Avatar } from './Avatar'
-import { AccountSettingsDrawer } from './AccountSettingsDrawer'
-import { LanguageToggle } from './LanguageToggle'
-import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
 import { useProjects } from '../../features/projects/hooks/useProjects'
 import { ProjectGlyph } from '../../features/projects/components/ProjectGlyph'
 
@@ -19,10 +13,7 @@ interface ToolBarProps {
 
 export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId }: ToolBarProps) {
   const { t } = useTranslation()
-  const { user } = useAuth()
-  const { profile } = useProfile()
   const { projects } = useProjects()
-  const [showAccount, setShowAccount] = useState(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
   const switcherRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -58,13 +49,9 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
 
   return (
     <>
+      {/* Board-specific floating toolbar: inbox sidebar + project switcher.
+          Global nav / ⌘K / avatar / language live in GlobalTopBar above. */}
       <div className="hidden md:flex fixed bottom-4 left-1/2 -translate-x-1/2 z-30 items-center gap-1 py-1.5 pl-2 pr-2 bg-huginn-base/95 backdrop-blur-md border border-huginn-border rounded-full shadow-xl shadow-black/40">
-        <div className="flex items-center pl-1 pr-2">
-          <Mark size={22} />
-        </div>
-
-        <div className="w-px h-5 bg-huginn-border mr-1" aria-hidden />
-
         {/* Inbox toggle */}
         <button
           onClick={onToggleInbox}
@@ -141,27 +128,7 @@ export function ToolBar({ inboxOpen, inboxCount, onToggleInbox, currentProjectId
           )}
         </div>
 
-        <div className="w-px h-5 bg-huginn-border mx-1" aria-hidden />
-
-        <LanguageToggle className="scale-95" />
-
-        <div className="w-px h-5 bg-huginn-border mx-1" aria-hidden />
-
-        <button
-          onClick={() => setShowAccount(true)}
-          className="rounded-full p-0.5 hover:bg-huginn-hover transition-colors"
-          title={t('toolbar.accountSettings')}
-        >
-          <Avatar
-            url={profile?.avatar_url}
-            name={profile?.display_name}
-            email={user?.email}
-            size={26}
-          />
-        </button>
       </div>
-
-      {showAccount && <AccountSettingsDrawer onDone={() => setShowAccount(false)} />}
     </>
   )
 }

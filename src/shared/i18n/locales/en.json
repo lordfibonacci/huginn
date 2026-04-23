@@ -170,10 +170,13 @@
   },
   "toolbar": {
     "accountSettings": "Account settings",
+    "calendar": "Calendar",
+    "commandPalette": "Search (\u2318K)",
     "current": "Current",
     "inbox": "Inbox",
     "noProjects": "No projects yet.",
     "switchProjects": "Switch projects",
+    "today": "Today",
     "viewAllProjects": "View all projects →",
     "yourProjects": "Your projects"
   },
@@ -181,7 +184,33 @@
     "inbox": "Inbox",
     "projects": "Projects",
     "settings": "Settings",
+    "today": "Today",
     "you": "You"
+  },
+  "nav": {
+    "today": "Today",
+    "inbox": "Inbox",
+    "projects": "Boards",
+    "calendar": "Calendar"
+  },
+  "today": {
+    "overdueChip_one": "{{count}} overdue",
+    "overdueChip_other": "{{count}} overdue",
+    "completedToday_one": "{{count}} completed today",
+    "completedToday_other": "{{count}} completed today",
+    "sections": {
+      "overdueToday": "Overdue & today",
+      "thisWeek": "Due this week",
+      "myWork": "My assignments",
+      "starred": "Starred"
+    },
+    "empty": {
+      "overdueToday": "Nothing due today. Nice.",
+      "all": {
+        "title": "All clear",
+        "hint": "Nothing due, assigned, or starred across your boards."
+      }
+    }
   },
   "projects": {
     "header": {
@@ -270,7 +299,26 @@
     },
     "menu": {
       "open": "List actions",
-      "archive": "Archive list"
+      "archive": "Archive list",
+      "archiveConfirm": "Archive \"{{name}}\"? You can restore it later from Project settings."
+    },
+    "sort": {
+      "label": "Sort by",
+      "manual": "Manual",
+      "due_asc": "Due date (soonest)",
+      "due_desc": "Due date (latest)",
+      "priority": "Priority",
+      "title": "Title (A–Z)",
+      "created_desc": "Newest first",
+      "created_asc": "Oldest first",
+      "badge": {
+        "due_asc": "Due ↑",
+        "due_desc": "Due ↓",
+        "priority": "Pri",
+        "title": "A–Z",
+        "created_desc": "New",
+        "created_asc": "Old"
+      }
     }
   },
   "task": {
@@ -279,7 +327,8 @@
       "medium": "Med",
       "low": "Low"
     },
-    "hasNotes": "Has notes"
+    "hasNotes": "Has notes",
+    "starred": "Starred"
   },
   "card": {
     "title": {
@@ -305,7 +354,9 @@
       "move": "Move",
       "copy": "Copy card",
       "archive": "Archive",
-      "moveToInbox": "Move to Inbox"
+      "moveToInbox": "Move to Inbox",
+      "star": "Star card",
+      "unstar": "Unstar card"
     },
     "delete": {
       "trigger": "Delete card",
@@ -477,6 +528,23 @@
     "submit": "Move",
     "submitting": "…"
   },
+  "palette": {
+    "placeholder": "Search boards, cards, or go to…",
+    "empty": "No matches.",
+    "inboxLabel": "Inbox",
+    "sections": {
+      "actions": "Go to",
+      "boards": "Boards",
+      "cards": "Cards"
+    },
+    "actions": {
+      "today": "Go to Today",
+      "inbox": "Go to Inbox",
+      "projects": "Go to Boards",
+      "calendar": "Go to Calendar",
+      "settings": "Settings"
+    }
+  },
   "richText": {
     "placeholder": "Write something...",
     "bold": "Bold",
@@ -488,7 +556,9 @@
   },
   "calendar": {
     "today": "Today",
-    "moreCount": "+{{count}} more"
+    "moreCount": "+{{count}} more",
+    "pageSubtitle": "Calendar",
+    "empty": "Nothing on the calendar."
   },
   "activity": {
     "attached": "attached {{name}}",
@@ -503,6 +573,9 @@
       "descriptionPlaceholder": "Description (optional)",
       "colorLabel": "Color",
       "backgroundLabel": "Project background",
+      "archivedLists_one": "Archived list ({{count}})",
+      "archivedLists_other": "Archived lists ({{count}})",
+      "restoreList": "Restore",
       "delete": "Delete project",
       "deleteConfirm": "Are you sure?",
       "saving": "..."

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import type { Project, ProjectStatus } from '../../../shared/lib/types'
+import type { List, Project, ProjectStatus } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
 import { ProjectColorPicker } from './ProjectColorPicker'
 import { BoardBackgroundPicker } from './BoardBackgroundPicker'
@@ -8,12 +8,14 @@ import { useBoardRole } from '../hooks/useBoardRole'
 
 interface ProjectSettingsDrawerProps {
   project: Project
+  archivedLists?: List[]
   onUpdate: (id: string, updates: { name?: string; description?: string | null; color?: string; status?: ProjectStatus; background?: string }) => Promise<boolean>
   onDelete: (id: string) => Promise<boolean>
+  onRestoreList?: (listId: string) => Promise<boolean>
   onDone: () => void
 }
 
-export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: ProjectSettingsDrawerProps) {
+export function ProjectSettingsDrawer({ project, archivedLists, onUpdate, onDelete, onRestoreList, onDone }: ProjectSettingsDrawerProps) {
   const { t } = useTranslation()
   const { canManage, canDelete, role, loading: roleLoading } = useBoardRole(project.id)
   const [name, setName] = useState(project.name)
@@ -92,6 +94,31 @@ export function ProjectSettingsDrawer({ project, onUpdate, onDelete, onDone }: P
       <div className={`mb-5 ${readOnly ? 'pointer-events-none opacity-60' : ''}`}>
         <BoardBackgroundPicker value={background} onChange={setBackground} />
       </div>
+
+      {/* Archived lists */}
+      {canManage && archivedLists && archivedLists.length > 0 && onRestoreList && (
+        <div className="mb-5">
+          <p className="text-xs text-huginn-text-muted font-semibold mb-2">
+            {t('settings.project.archivedLists', { count: archivedLists.length })}
+          </p>
+          <div className="space-y-1.5">
+            {archivedLists.map((list) => (
+              <div
+                key={list.id}
+                className="flex items-center gap-2 bg-huginn-surface/60 border border-huginn-border/60 rounded-md px-3 py-2"
+              >
+                <span className="flex-1 truncate text-xs text-huginn-text-secondary">{list.name}</span>
+                <button
+                  onClick={() => onRestoreList(list.id)}
+                  className="text-xs text-huginn-accent hover:text-huginn-accent-hover font-semibold px-2 py-0.5 rounded hover:bg-huginn-accent-soft"
+                >
+                  {t('settings.project.restoreList')}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions — only show what the user can actually do */}
       {(canManage || canDelete) && (

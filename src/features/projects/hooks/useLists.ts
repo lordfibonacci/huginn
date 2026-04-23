@@ -4,21 +4,26 @@ import type { List } from '../../../shared/lib/types'
 
 export function useLists(projectId: string) {
   const [lists, setLists] = useState<List[]>([])
+  const [archivedLists, setArchivedLists] = useState<List[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchLists = useCallback(async () => {
+    // Single round-trip, split client-side so the realtime handler only
+    // needs to fire one refetch regardless of whether a list was archived,
+    // restored, or created.
     const { data, error } = await supabase
       .from('huginn_lists')
       .select('*')
       .eq('project_id', projectId)
-      .eq('archived', false)
       .order('position')
 
     if (error) {
       console.error('Failed to fetch lists:', error)
       return
     }
-    setLists(data as List[])
+    const all = data as List[]
+    setLists(all.filter(l => !l.archived))
+    setArchivedLists(all.filter(l => l.archived).sort((a, b) => b.created_at.localeCompare(a.created_at)))
     setLoading(false)
   }, [projectId])
 
@@ -98,5 +103,21 @@ export function useLists(projectId: string) {
     return true
   }
 
-  return { lists, loading, addList, updateList, archiveList, reorderLists }
+  async function unarchiveList(listId: string) {
+    // Restore to the end of the active lists so it doesn't collide with an
+    // existing position. Caller can drag it elsewhere after restore.
+    const maxPos = lists.length > 0 ? Math.max(...lists.map(l => l.position)) + 1 : 0
+    const { error } = await supabase
+      .from('huginn_lists')
+      .update({ archived: false, position: maxPos })
+      .eq('id', listId)
+
+    if (error) {
+      console.error('Failed to unarchive list:', error)
+      return false
+    }
+    return true
+  }
+
+  return { lists, archivedLists, loading, addList, updateList, archiveList, unarchiveList, reorderLists }
 }

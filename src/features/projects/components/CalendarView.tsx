@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Task } from '../../../shared/lib/types'
+import { colorPrimary } from './ProjectGlyph'
 
 interface CalendarViewProps {
   tasks: Task[]
   onTaskTap: (task: Task) => void
+  // When provided, cross-board mode: prefix each cell's task with a dot in the
+  // owning project's color.
+  projectColorByTaskId?: Record<string, string>
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -18,7 +22,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-export function CalendarView({ tasks, onTaskTap }: CalendarViewProps) {
+export function CalendarView({ tasks, onTaskTap, projectColorByTaskId }: CalendarViewProps) {
   const { t } = useTranslation()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -117,15 +121,24 @@ export function CalendarView({ tasks, onTaskTap }: CalendarViewProps) {
                 {day}
               </span>
               <div className="space-y-0.5">
-                {dayTasks.slice(0, 3).map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => onTaskTap(task)}
-                    className="w-full text-left text-[10px] text-huginn-text-primary bg-huginn-card hover:bg-huginn-hover rounded px-1 py-0.5 truncate transition-colors"
-                  >
-                    {task.title}
-                  </button>
-                ))}
+                {dayTasks.slice(0, 3).map((task) => {
+                  const dotColor = projectColorByTaskId?.[task.id]
+                  return (
+                    <button
+                      key={task.id}
+                      onClick={() => onTaskTap(task)}
+                      className="w-full text-left text-[10px] text-huginn-text-primary bg-huginn-card hover:bg-huginn-hover rounded px-1 py-0.5 truncate transition-colors flex items-center gap-1"
+                    >
+                      {dotColor && (
+                        <span
+                          className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: colorPrimary(dotColor) }}
+                        />
+                      )}
+                      <span className="truncate">{task.title}</span>
+                    </button>
+                  )
+                })}
                 {dayTasks.length > 3 && (
                   <span className="text-[9px] text-huginn-text-muted px-1">{t('calendar.moreCount', { count: dayTasks.length - 3 })}</span>
                 )}

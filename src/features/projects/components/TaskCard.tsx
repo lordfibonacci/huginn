@@ -98,6 +98,11 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
           <p className={`text-sm leading-snug flex-1 ${task.status === 'done' ? 'text-huginn-text-muted line-through' : 'text-huginn-text-primary'}`}>
             {task.title}
           </p>
+          {task.starred && (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 shrink-0 mt-0.5 text-huginn-warning" aria-label={t('task.starred')}>
+              <path d="M10 2.5l2.47 5.01 5.53.8-4 3.9.94 5.49L10 15.1l-4.94 2.6.94-5.49-4-3.9 5.53-.8L10 2.5Z" />
+            </svg>
+          )}
         </div>
 
         {/* Metadata badges */}

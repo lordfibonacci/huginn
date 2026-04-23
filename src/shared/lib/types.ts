@@ -47,6 +47,7 @@ export interface Task {
   due_date: string | null
   recurring: 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
   archived: boolean
+  starred: boolean
   created_at: string
   updated_at: string
 }

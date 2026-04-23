@@ -29,7 +29,7 @@ interface CardPopupProps {
   task: Task
   projectId: string
   lists: List[]
-  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null; list_id?: string; position?: number }) => Promise<boolean>
+  onUpdate: (id: string, updates: { title?: string; notes?: string | null; status?: TaskStatus; priority?: ThoughtPriority | null; due_date?: string | null; list_id?: string; position?: number; starred?: boolean }) => Promise<boolean>
   /** Optional optimistic-remove for when the card leaves the current project (inbox / archive / move to board). */
   onMovedAway?: (id: string) => void
   onDelete: (id: string) => Promise<boolean>
@@ -307,6 +307,23 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
           ) : <div />}
 
           <div className="flex items-center gap-1.5">
+            {!isInboxCard && (
+              <button
+                type="button"
+                onClick={() => onUpdate(task.id, { starred: !task.starred })}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
+                  task.starred
+                    ? 'text-huginn-warning bg-huginn-warning/10 hover:bg-huginn-warning/20'
+                    : 'text-huginn-text-muted hover:text-huginn-warning bg-huginn-surface/80 hover:bg-huginn-hover'
+                }`}
+                aria-label={task.starred ? t('card.actions.unstar') : t('card.actions.star')}
+                title={task.starred ? t('card.actions.unstar') : t('card.actions.star')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill={task.starred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={task.starred ? 0 : 1.6} className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 2.5l2.47 5.01 5.53.8-4 3.9.94 5.49L10 15.1l-4.94 2.6.94-5.49-4-3.9 5.53-.8L10 2.5Z" />
+                </svg>
+              </button>
+            )}
             {!isInboxCard && (
               <CardThreeDotMenu
                 onMove={() => setShowMoveDialog(true)}
