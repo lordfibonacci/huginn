@@ -165,7 +165,8 @@ Brand: raven mark + `huginn` wordmark. `Lockup` / `Mark` / `Wordmark` components
 ## Key Patterns
 
 - **Hooks with Realtime.** Every data hook fetches on mount AND subscribes to Supabase Realtime. Channel names use `crypto.randomUUID()` to avoid collisions between hook instances.
-- **Beware the RLS filter trap.** Realtime filters like `project_id=eq.X` do NOT fire for rows that leave the filter (e.g. task moved to inbox → `project_id` becomes null). `useProjectTasks.removeTaskLocal` exists for the caller to drop the row optimistically in those cases.
+- **Beware the RLS filter trap.** Postgres realtime evaluates a filter like `project_id=eq.X` against the event's NEW row, so rows that LEAVE the filter (task moved to another board or to inbox → `project_id` becomes null/other) never emit on the source board. When a table's filtered column can change, subscribe unfiltered and scope in the fetch instead. `useProjectTasks` now does this so every viewer of the source board sees tasks leave; `useInbox` and `useTaskCounts` too. `removeTaskLocal` stays as an optimistic drop ahead of the realtime echo.
+- **Profile freshness across users.** `huginn_profiles` is in the realtime publication; `useProfile` watches the signed-in user's row, and `useBoardMembers` / `useTaskMembers` listen for UPDATEs on members' profile rows so teammate avatar/name/locale changes propagate without refresh.
 - **Optimistic updates with rollback.** Mutations update local state first; on error revert to previous state.
 - **ModalShell.** Centered modal on desktop, bottom drawer on mobile. Used by Project/Account settings + Move dialog.
 - **Shared DndContext.** `ProjectDetailPage` owns the DndContext so the inbox sidebar and board can drag cards to each other. BoardView lists are per-list `SortableContext`s using `verticalListSortingStrategy`. Never unmount the active sortable item mid-drag (causes dnd-kit to lose track).

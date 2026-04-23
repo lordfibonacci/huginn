@@ -25,11 +25,15 @@ export function useProjectTasks(projectId: string) {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
 
+  // Subscribe unfiltered so we also catch tasks LEAVING this project (moved
+  // to another board or to inbox). A `project_id=eq.X` filter would miss
+  // those UPDATEs because the event payload's NEW.project_id is no longer X.
+  // Fetch is still scoped by project, so the refetched list is correct.
   useEffect(() => {
     const channelName = `huginn_tasks_${projectId}_${crypto.randomUUID()}`
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks', filter: `project_id=eq.${projectId}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks' }, () => {
         fetchTasks()
       })
       .subscribe()

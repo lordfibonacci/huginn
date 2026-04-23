@@ -25,7 +25,7 @@ export function useTaskLabels(taskId: string) {
     const channelName = `huginn_task_labels_${taskId}_${crypto.randomUUID()}`
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_labels' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_labels', filter: `task_id=eq.${taskId}` }, () => {
         fetchTaskLabels()
       })
       .subscribe()

@@ -41,13 +41,27 @@ export function useTaskMembers(taskId: string) {
     const channelName = `huginn_task_members_${taskId}_${crypto.randomUUID()}`
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_members' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_members', filter: `task_id=eq.${taskId}` }, () => {
         fetchMembers()
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [taskId, fetchMembers])
+
+  // Refresh assignee avatars/names when one of them updates their profile.
+  useEffect(() => {
+    if (memberIds.length === 0) return
+    const channelName = `huginn_profiles_for_task_${taskId}_${crypto.randomUUID()}`
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'huginn_profiles' }, (payload) => {
+        const updatedId = (payload.new as { id?: string })?.id
+        if (updatedId && memberIds.includes(updatedId)) fetchMembers()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [taskId, memberIds, fetchMembers])
 
   async function assignMember(userId: string) {
     if (memberIds.includes(userId)) return

@@ -75,6 +75,24 @@ export function useBoardMembers(projectId: string) {
     return () => { supabase.removeChannel(channel) }
   }, [projectId, fetchMembers])
 
+  // Keep member avatars/display names fresh when a teammate updates their
+  // own profile. Realtime on huginn_profiles is unfiltered (small table;
+  // updates are rare) and we just refetch on any change.
+  useEffect(() => {
+    if (!projectId) return
+    const channelName = `huginn_profiles_for_board_${projectId}_${crypto.randomUUID()}`
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'huginn_profiles' }, (payload) => {
+        const updatedId = (payload.new as { id?: string })?.id
+        if (updatedId && members.some(m => m.user_id === updatedId)) {
+          fetchMembers()
+        }
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [projectId, members, fetchMembers])
+
   const activeMembers = useMemo(() => members.filter(m => m.status === 'active'), [members])
   const pendingMembers = useMemo(() => members.filter(m => m.status === 'pending'), [members])
 
