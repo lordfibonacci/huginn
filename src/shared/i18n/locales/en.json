@@ -583,6 +583,17 @@
   },
   "runes": {
     "adminOnly": "Only admins can enable or disable runes.",
+    "meta-social": {
+      "connect": "Connect Meta",
+      "disconnect": "Disconnect",
+      "igNotLinked": "No Instagram Business account linked",
+      "instagram": "Instagram",
+      "name": "Meta Social Planner",
+      "notConnected": "No Meta account connected.",
+      "page": "Page",
+      "reconnect": "Reconnect",
+      "tagline": "Schedule and auto-publish posts to Facebook & Instagram."
+    },
     "sectionHint": "Optional modules that add new powers to this board. Each board can enable its own set.",
     "sectionTitle": "Runes"
   },
