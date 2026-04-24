@@ -90,6 +90,7 @@ export function ProjectDetailPage() {
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_task_labels' }, () => {
+        if (isDraggingRef.current) { pendingLabelRefetchRef.current = true; return }
         setTaskLabelVersion(v => v + 1)
       })
       .subscribe()
@@ -100,6 +101,11 @@ export function ProjectDetailPage() {
   // Board-level cover image map: first image attachment per task (prefer is_cover).
   const [coverImageMap, setCoverImageMap] = useState<Record<string, string>>({})
   const [coverVersion, setCoverVersion] = useState(0)
+  // Mid-drag, attachment realtime events are deferred so a refetch doesn't
+  // produce a new coverImageMap reference and re-render every TaskCard while
+  // dnd-kit is mid-measure. The trailing flag fires once the drag releases.
+  const pendingCoverRefetchRef = useRef(false)
+  const pendingLabelRefetchRef = useRef(false)
 
   const fetchCoverImages = useCallback(() => {
     if (!tasks.length) { setCoverImageMap({}); return }
@@ -128,6 +134,7 @@ export function ProjectDetailPage() {
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_attachments' }, () => {
+        if (isDraggingRef.current) { pendingCoverRefetchRef.current = true; return }
         setCoverVersion(v => v + 1)
       })
       .subscribe()
@@ -307,6 +314,11 @@ export function ProjectDetailPage() {
   const explosionPendingRef = useRef(false)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  // Records the last cross-list move so we can suppress an immediate move
+  // BACK to the source list when collisionDetection oscillates between two
+  // adjacent lists (the cause of the image-card drag loop — tall cards make
+  // the over target flip-flop on every layout reflow).
+  const recentCrossListRef = useRef<{ taskId: string; from: string; to: string; ts: number } | null>(null)
 
   // Track the pointer continuously while a drag is active so we know where
   // to spawn the explosion when the 10-second easter egg fires.
@@ -358,6 +370,7 @@ export function ProjectDetailPage() {
     // Always reset the hold-to-explode state at the start of ANY drag so
     // stale `true` from a previous drag doesn't trip the dragEnd bail-out.
     explosionPendingRef.current = false
+    recentCrossListRef.current = null
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
     setInboxPreview(null)
 
@@ -382,6 +395,7 @@ export function ProjectDetailPage() {
 
   function handleDragCancel() {
     isDraggingRef.current = false
+    recentCrossListRef.current = null
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current)
       holdTimerRef.current = null
@@ -392,6 +406,7 @@ export function ProjectDetailPage() {
     setInboxPreview(null)
     setLocalTasks(tasks)
     setLocalLists(lists)
+    flushPendingRefetches()
   }
 
   // Live-reorder localTasks while dragging so cards visibly slide to make room.
@@ -471,6 +486,20 @@ export function ProjectDetailPage() {
       const currentList = currentActive.list_id ?? null
       if (currentList === overContainer) return prev // same-list — no-op here
 
+      // Suppress the inverse of a move we just made (collisionDetection
+      // ping-pong between adjacent lists). Without this, tall cards loop:
+      // L1 → L2 → L1 → L2 ... forever.
+      const recent = recentCrossListRef.current
+      if (
+        recent
+        && recent.taskId === activeId
+        && recent.from === overContainer
+        && currentList && recent.to === currentList
+        && Date.now() - recent.ts < 120
+      ) {
+        return prev
+      }
+
       // Cross-list move: detach from current list, insert into target list.
       const without = prev.filter(t => t.id !== activeId)
       const moved = { ...currentActive, list_id: overContainer }
@@ -485,12 +514,27 @@ export function ProjectDetailPage() {
         }
         without.splice(lastIndexInTarget + 1, 0, moved)
       }
+      if (currentList) {
+        recentCrossListRef.current = { taskId: activeId, from: currentList, to: overContainer, ts: Date.now() }
+      }
       return without
     })
   }
 
+  function flushPendingRefetches() {
+    if (pendingCoverRefetchRef.current) {
+      pendingCoverRefetchRef.current = false
+      setCoverVersion(v => v + 1)
+    }
+    if (pendingLabelRefetchRef.current) {
+      pendingLabelRefetchRef.current = false
+      setTaskLabelVersion(v => v + 1)
+    }
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     isDraggingRef.current = false
+    recentCrossListRef.current = null
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current)
       holdTimerRef.current = null
@@ -499,6 +543,7 @@ export function ProjectDetailPage() {
     setActiveListId(null)
     setDragSourceListId(null)
     setInboxPreview(null)
+    flushPendingRefetches()
 
     if (explosionPendingRef.current) {
       // Card was nuked — discard any optimistic moves
@@ -826,8 +871,12 @@ export function ProjectDetailPage() {
 
     <DragOverlay dropAnimation={null}>
       {activeTask && (
-        <div className="w-[250px] rotate-2 opacity-95 pointer-events-none drop-shadow-2xl">
-          <TaskCard task={activeTask} />
+        <div className="w-[248px] rotate-2 opacity-95 pointer-events-none drop-shadow-2xl">
+          <TaskCard
+            task={activeTask}
+            labels={taskLabelsMap[activeTask.id]}
+            coverImageUrl={coverImageMap[activeTask.id]}
+          />
         </div>
       )}
       {activeListId && (() => {
