@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../shared/hooks/useAuth'
 import { Layout } from '../shared/components/Layout'
+import { ErrorBoundary } from '../shared/components/ErrorBoundary'
 import { LandingPage } from '../pages/LandingPage'
 import { LoginPage } from '../pages/LoginPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
@@ -50,6 +51,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 export function AppRouter() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route
@@ -87,5 +89,6 @@ export function AppRouter() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

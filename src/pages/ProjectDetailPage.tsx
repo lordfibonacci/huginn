@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
 import { DndContext, DragOverlay, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core'
@@ -456,42 +456,37 @@ export function ProjectDetailPage() {
       return
     }
 
-    const activeContainer = activeTaskObj.list_id ?? null
     const overContainer = resolveContainer(overId)
     if (!overContainer) return
 
-    if (activeContainer === overContainer) {
-      // Same-list reorder
-      const overTask = localTasks.find(t => t.id === overId)
-      if (!overTask) return // hovering the list itself (whitespace) — skip
-      const fromIndex = localTasks.indexOf(activeTaskObj)
-      const toIndex = localTasks.indexOf(overTask)
-      if (fromIndex !== toIndex) {
-        setLocalTasks(prev => arrayMove(prev, fromIndex, toIndex))
-      }
-    } else {
-      // Cross-list move
-      setLocalTasks(prev => {
-        const without = prev.filter(t => t.id !== activeId)
-        const moved = { ...activeTaskObj, list_id: overContainer }
-        const overTask = prev.find(t => t.id === overId)
-        if (overTask && overTask.list_id === overContainer) {
-          // Inserting just before the hovered card
-          const insertAt = without.indexOf(overTask)
-          without.splice(insertAt, 0, moved)
-        } else {
-          // Hovering empty list whitespace — append to end of that list
-          const lastIndexInTarget = (() => {
-            for (let i = without.length - 1; i >= 0; i--) {
-              if (without[i].list_id === overContainer) return i
-            }
-            return -1
-          })()
-          without.splice(lastIndexInTarget + 1, 0, moved)
+    // Only mutate localTasks for CROSS-list moves (changing list_id). Same-list
+    // visual reordering is handled by dnd-kit's verticalListSortingStrategy via
+    // transforms — calling setLocalTasks every dragOver to arrayMove caused
+    // infinite render loops when the active card swapped with a card of
+    // different height (cursor stayed over the same target → re-fire → loop).
+    // Final same-list order is computed in dragEnd from over.id.
+    setLocalTasks(prev => {
+      const currentActive = prev.find(t => t.id === activeId)
+      if (!currentActive) return prev
+      const currentList = currentActive.list_id ?? null
+      if (currentList === overContainer) return prev // same-list — no-op here
+
+      // Cross-list move: detach from current list, insert into target list.
+      const without = prev.filter(t => t.id !== activeId)
+      const moved = { ...currentActive, list_id: overContainer }
+      const overTask = prev.find(t => t.id === overId)
+      if (overTask && overTask.list_id === overContainer) {
+        const insertAt = without.indexOf(overTask)
+        without.splice(insertAt, 0, moved)
+      } else {
+        let lastIndexInTarget = -1
+        for (let i = without.length - 1; i >= 0; i--) {
+          if (without[i].list_id === overContainer) { lastIndexInTarget = i; break }
         }
-        return without
-      })
-    }
+        without.splice(lastIndexInTarget + 1, 0, moved)
+      }
+      return without
+    })
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -608,11 +603,30 @@ export function ProjectDetailPage() {
     if (!movedTask) return
 
     const originalTask = tasks.find(t => t.id === activeId)
+    const sameList = originalTask?.list_id && movedTask.list_id === originalTask.list_id
+
+    // Same-list reorder: dragOver no longer mutates localTasks for same-list
+    // (caused infinite loops). Compute the final order here from over.id and
+    // apply via arrayMove so the persistence loop below sees the new order.
+    let workingTasks = localTasks
+    if (sameList && movedTask.list_id) {
+      const overTask = localTasks.find(t => t.id === overId)
+      const overIsSameList = overTask && overTask.list_id === movedTask.list_id
+      if (overIsSameList) {
+        const fromIndex = localTasks.indexOf(movedTask)
+        const toIndex = localTasks.indexOf(overTask)
+        if (fromIndex !== toIndex) {
+          workingTasks = arrayMove(localTasks, fromIndex, toIndex)
+          setLocalTasks(workingTasks)
+        }
+      }
+      // If user dropped on the list itself (whitespace), leave order unchanged.
+    }
+
     // If user manually reordered within a sorted list, the act of reordering
     // expresses manual intent — flip that list's sort to 'manual' so the new
     // order persists visually. Cross-list drops leave the source list's sort
     // alone (user is just moving a card out, not ordering within).
-    const sameList = originalTask?.list_id && movedTask.list_id === originalTask.list_id
     if (sameList && movedTask.list_id && (sortByList[movedTask.list_id] ?? 'manual') !== 'manual') {
       handleSortChange(movedTask.list_id, 'manual')
     }
@@ -624,7 +638,7 @@ export function ProjectDetailPage() {
 
     const writes: Promise<unknown>[] = []
     for (const listId of affectedLists) {
-      const tasksInList = localTasks.filter(t => t.list_id === listId)
+      const tasksInList = workingTasks.filter(t => t.list_id === listId)
       tasksInList.forEach((t, index) => {
         const orig = tasks.find(o => o.id === t.id)
         if (!orig) return
@@ -685,45 +699,35 @@ export function ProjectDetailPage() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-0 min-w-0">
-      {/* Header */}
-      <header className="relative flex items-center gap-3 px-5 py-3.5 border-b border-huginn-border bg-huginn-base/80 backdrop-blur-sm md:gap-4 md:px-6 md:py-4 shrink-0">
-        <Link
-          to="/projects"
-          className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors -ml-1.5"
-          aria-label={t('board.backToProjects')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59Z" />
-          </svg>
-        </Link>
-
-        <div className="w-px h-7 bg-huginn-border/70" aria-hidden />
-
+      {/* Slim board header — project context on left, board controls on right.
+          Back nav lives in the GlobalTopBar (Boards link). Project-name click
+          opens settings, so no separate gear. Avatar stack opens members. */}
+      <header className="relative z-20 flex items-center gap-2 px-4 py-1.5 border-b border-huginn-border bg-huginn-base/40 shrink-0">
         <button
           onClick={() => setShowSettings(true)}
-          className="flex items-center gap-3 min-w-0 flex-1 group rounded-lg px-2 py-1.5 -mx-2 hover:bg-huginn-hover/40 transition-colors"
+          className="flex items-center gap-2 min-w-0 flex-1 group rounded-md px-1.5 py-1 -mx-1.5 hover:bg-huginn-hover/40 transition-colors"
           title={t('board.projectSettings')}
         >
-          <ProjectGlyph color={project.color} size={20} />
-          <h1 className="text-lg font-bold tracking-tight truncate text-white group-hover:text-white">
+          <ProjectGlyph color={project.color} size={16} />
+          <h1 className="text-sm font-bold tracking-tight truncate text-white">
             {project.name}
           </h1>
         </button>
 
         {/* View switcher */}
-        <div className="flex bg-huginn-card rounded-lg p-0.5">
+        <div className="flex bg-huginn-card rounded-md p-0.5">
           <button
             onClick={() => setView('board')}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
-              view === 'board' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
+            className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors ${
+              view === 'board' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             {t('board.view.cards')}
           </button>
           <button
             onClick={() => setView('calendar')}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
-              view === 'calendar' ? 'bg-huginn-accent text-white shadow-sm' : 'text-huginn-text-secondary hover:text-white'
+            className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors ${
+              view === 'calendar' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             {t('board.view.calendar')}
@@ -741,16 +745,6 @@ export function ProjectDetailPage() {
           projectId={id!}
           onClick={() => setShowMembers(true)}
         />
-
-        <button
-          onClick={() => setShowSettings(true)}
-          className="flex items-center justify-center w-9 h-9 rounded-lg text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors"
-          aria-label={t('board.projectSettings')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-            <path fillRule="evenodd" d="M8.34 1.804A1 1 0 0 1 9.32 1h1.36a1 1 0 0 1 .98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 0 1 1.262.125l.962.962a1 1 0 0 1 .125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 0 1 .804.98v1.362a1 1 0 0 1-.804.98l-1.473.295a6.95 6.95 0 0 1-.587 1.416l.834 1.25a1 1 0 0 1-.125 1.262l-.962.962a1 1 0 0 1-1.262.125l-1.25-.834a6.953 6.953 0 0 1-1.416.587l-.294 1.473a1 1 0 0 1-.98.804H9.32a1 1 0 0 1-.98-.804l-.295-1.473a6.957 6.957 0 0 1-1.416-.587l-1.25.834a1 1 0 0 1-1.262-.125l-.962-.962a1 1 0 0 1-.125-1.262l.834-1.25a6.957 6.957 0 0 1-.587-1.416l-1.473-.294A1 1 0 0 1 1 11.36V9.998a1 1 0 0 1 .804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 0 1 .125-1.262l.962-.962A1 1 0 0 1 5.38 3.708l1.25.834a6.957 6.957 0 0 1 1.416-.587l.294-1.473ZM13 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />
-          </svg>
-        </button>
       </header>
 
       {/* Board or Calendar — with board background */}
@@ -841,7 +835,7 @@ export function ProjectDetailPage() {
         if (!list) return null
         const listTasks = localTasks.filter(t => t.list_id === list.id).slice(0, 4)
         return (
-          <div className="w-[272px] rotate-1 bg-black/40 backdrop-blur-sm rounded-xl p-2 pointer-events-none shadow-2xl ring-1 ring-huginn-accent/40">
+          <div className="w-[248px] rotate-1 bg-black/40 backdrop-blur-sm rounded-xl p-2 pointer-events-none shadow-2xl ring-1 ring-huginn-accent/40">
             <div className="text-sm font-bold text-huginn-text-primary px-2 py-1 mb-1">
               {list.name}
             </div>

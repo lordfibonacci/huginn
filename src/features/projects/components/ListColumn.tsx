@@ -143,7 +143,7 @@ export function ListColumn({ list, tasks, onAddCard, onRenameList, onArchiveList
     <div
       ref={setNodeRef}
       style={style}
-      className={`w-[272px] min-w-[272px] flex flex-col rounded-xl max-h-full transition-colors backdrop-blur-sm ${
+      className={`w-[248px] min-w-[248px] flex flex-col rounded-xl max-h-full transition-colors backdrop-blur-sm ${
         isDragging ? 'opacity-30' : ''
       } ${
         isOver && !isDragging ? 'bg-huginn-accent/8 ring-1 ring-huginn-accent/30' : 'bg-black/20'

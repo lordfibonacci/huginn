@@ -63,7 +63,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
 
       {/* Labels */}
       {labels && labels.length > 0 && (
-        <div className="flex gap-1 flex-wrap px-3 pt-2">
+        <div className="flex gap-1 flex-wrap px-2 pt-2">
           {labels.map((label) => (
             <span
               key={label.id}
@@ -76,7 +76,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
         </div>
       )}
 
-      <div className="p-3">
+      <div className="px-2 py-2">
         {/* Title row */}
         <div className="flex items-start gap-2">
           <button

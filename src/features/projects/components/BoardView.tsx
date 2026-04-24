@@ -164,7 +164,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
     <div
       ref={boardRef}
       data-board-bg
-      className="flex-1 flex gap-4 p-4 overflow-x-auto items-start cursor-grab active:cursor-grabbing"
+      className="flex-1 flex gap-2 px-2 py-3 overflow-x-auto items-start cursor-grab active:cursor-grabbing"
       onMouseDown={handleBoardMouseDown}
       onMouseMove={handleBoardMouseMove}
       onMouseUp={handleBoardMouseUp}
@@ -211,7 +211,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
       </SortableContext>
 
       {/* Add another list */}
-      <div className="w-[272px] min-w-[272px] shrink-0">
+      <div className="w-[248px] min-w-[248px] shrink-0">
         {addingList ? (
           <div className="bg-huginn-base/80 rounded-xl p-2">
             <input

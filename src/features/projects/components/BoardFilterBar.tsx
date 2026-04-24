@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Label, ThoughtPriority } from '../../../shared/lib/types'
 import { getContrastTextColor } from '../../../shared/lib/contrast'
@@ -27,6 +27,18 @@ interface BoardFilterBarProps {
 export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFilterBarProps) {
   const { t } = useTranslation()
   const [showPanel, setShowPanel] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showPanel) return
+    function handleDown(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowPanel(false)
+      }
+    }
+    document.addEventListener('mousedown', handleDown)
+    return () => document.removeEventListener('mousedown', handleDown)
+  }, [showPanel])
 
   const priorityLabel = (p: ThoughtPriority) =>
     p === 'high' ? t('board.filter.priorityHigh')
@@ -53,7 +65,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       <button
         onClick={() => setShowPanel(!showPanel)}
         className={`flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5 transition-colors ${
@@ -70,7 +82,7 @@ export function BoardFilterBar({ filters, onChange, labels, isActive }: BoardFil
       </button>
 
       {showPanel && (
-        <div className="absolute top-full right-0 mt-2 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl p-4 z-50 w-72" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-full right-0 mt-2 bg-huginn-card border border-huginn-border rounded-xl shadow-2xl p-4 z-50 w-72">
           {/* Search within board */}
           <input
             type="text"
