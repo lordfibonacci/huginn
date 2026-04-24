@@ -443,6 +443,18 @@
     "preview": "Label preview",
     "createSubmit": "Create"
   },
+  "mentions": {
+    "unread_one": "{{count}} unread mention",
+    "unread_other": "{{count}} unread mentions",
+    "bell": {
+      "title": "{{count}} unread mentions",
+      "heading": "Mentions",
+      "empty": "You're all caught up.",
+      "inbox": "Inbox",
+      "someone": "Someone",
+      "mentionedYouOn": "mentioned you on"
+    }
+  },
   "members": {
     "heading": "Members",
     "empty": "No board members",

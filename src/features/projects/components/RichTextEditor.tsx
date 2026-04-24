@@ -1,25 +1,90 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import { useEffect } from 'react'
+import Mention from '@tiptap/extension-mention'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { MentionSuggestionList, type MentionItem, type MentionSuggestionListHandle } from './MentionSuggestionList'
 
 interface RichTextEditorProps {
   content: string
   onChange: (html: string) => void
   placeholder?: string
+  /** Members available for @-mention. When undefined or empty, mentions are disabled. */
+  mentionMembers?: MentionItem[]
 }
 
-export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange, placeholder, mentionMembers }: RichTextEditorProps) {
   const { t } = useTranslation()
+  // Hold the latest member list in a ref so the suggestion source always sees
+  // current data — Tiptap captures the items() function once at extension
+  // configuration time.
+  const membersRef = useRef<MentionItem[]>(mentionMembers ?? [])
+  useEffect(() => { membersRef.current = mentionMembers ?? [] }, [mentionMembers])
+
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Link.configure({ openOnClick: true }),
       Placeholder.configure({ placeholder: placeholder || t('richText.placeholder') }),
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'inline-block rounded px-1 bg-huginn-accent-soft text-huginn-accent font-medium',
+        },
+        renderText: ({ node }) => `@${node.attrs.label ?? node.attrs.id}`,
+        suggestion: {
+          char: '@',
+          items: ({ query }) => {
+            const q = query.toLowerCase()
+            return membersRef.current
+              .filter(m => m.label.toLowerCase().includes(q))
+              .slice(0, 6)
+          },
+          render: () => {
+            let component: ReactRenderer<MentionSuggestionListHandle> | null = null
+            let popup: HTMLDivElement | null = null
+
+            const positionPopup = (rect: DOMRect | null) => {
+              if (!popup || !rect) return
+              popup.style.position = 'absolute'
+              popup.style.top = `${window.scrollY + rect.bottom + 4}px`
+              popup.style.left = `${window.scrollX + rect.left}px`
+              popup.style.zIndex = '70'
+            }
+
+            return {
+              onStart: (props) => {
+                component = new ReactRenderer(MentionSuggestionList, {
+                  props,
+                  editor: props.editor,
+                })
+                popup = document.createElement('div')
+                popup.appendChild(component.element)
+                document.body.appendChild(popup)
+                positionPopup(props.clientRect?.() ?? null)
+              },
+              onUpdate: (props) => {
+                component?.updateProps(props)
+                positionPopup(props.clientRect?.() ?? null)
+              },
+              onKeyDown: (props) => {
+                if (props.event.key === 'Escape') {
+                  popup?.remove()
+                  return true
+                }
+                return component?.ref?.onKeyDown(props.event) ?? false
+              },
+              onExit: () => {
+                popup?.remove()
+                component?.destroy()
+                popup = null
+                component = null
+              },
+            }
+          },
+        },
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {

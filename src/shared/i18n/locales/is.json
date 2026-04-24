@@ -510,6 +510,18 @@
     },
     "unknown": "Óþekkt"
   },
+  "mentions": {
+    "bell": {
+      "empty": "Þú ert með allt á hreinu.",
+      "heading": "Tilvísanir",
+      "inbox": "Pósthólf",
+      "mentionedYouOn": "minntist á þig í",
+      "someone": "Einhver",
+      "title": "{{count}} ólesnar tilvísanir"
+    },
+    "unread_one": "{{count}} ólesin tilvísun",
+    "unread_other": "{{count}} ólesnar tilvísanir"
+  },
   "move": {
     "current": "(núverandi)",
     "hint": "Veldu verkefni og lista. Spjaldið verður fært efst í valinn lista.",

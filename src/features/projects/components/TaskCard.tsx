@@ -17,10 +17,12 @@ interface TaskCardProps {
   checklistProgress?: { checked: number; total: number } | null
   labels?: { id: string; name: string; color: string }[]
   coverImageUrl?: string | null
+  /** Number of unread @-mentions for the current user on this card. */
+  unreadMentions?: number
   dragHandleProps?: Record<string, unknown>
 }
 
-export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl }: TaskCardProps) {
+export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl, unreadMentions }: TaskCardProps) {
   const { t } = useTranslation()
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
   const priority = task.priority
@@ -36,7 +38,7 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
 
   return (
     <div
-      className={`rounded-lg mb-2 cursor-pointer transition-all group ${
+      className={`relative rounded-lg mb-2 cursor-pointer transition-all group ${
         selected
           ? 'bg-huginn-accent/10 ring-1 ring-huginn-accent shadow-md'
           : 'bg-huginn-card hover:bg-huginn-hover shadow-sm shadow-black/20 hover:shadow-md hover:shadow-black/30'
@@ -44,6 +46,15 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
       onClick={onClick}
       data-task-id={task.id}
     >
+      {/* Unread @-mention badge — clears when card is opened. */}
+      {unreadMentions && unreadMentions > 0 ? (
+        <span
+          className="absolute -top-1.5 -right-1.5 z-10 min-w-[18px] h-[18px] px-1 rounded-full bg-huginn-accent text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-huginn-base shadow-md"
+          title={t('mentions.unread', { count: unreadMentions })}
+        >
+          {unreadMentions > 9 ? '9+' : unreadMentions}
+        </span>
+      ) : null}
       {/* Cover image — edge-to-edge at the top, Trello-style */}
       {coverImageUrl && (
         <div className="overflow-hidden rounded-t-lg bg-black/30">

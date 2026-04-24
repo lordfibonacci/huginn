@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Mark, Wordmark } from './Logo'
 import { Avatar } from './Avatar'
 import { LanguageToggle } from './LanguageToggle'
+import { MentionsBell } from './MentionsBell'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useCommandPalette } from '../hooks/useCommandPalette'
@@ -64,6 +65,8 @@ export function GlobalTopBar() {
           </svg>
           <kbd className="text-[10px] font-semibold bg-huginn-surface border border-huginn-border rounded px-1.5 py-0.5">⌘K</kbd>
         </button>
+
+        <MentionsBell />
 
         <LanguageToggle className="scale-90 -mx-0.5" />
 

@@ -65,6 +65,7 @@ interface BoardViewProps {
   loading?: boolean
   taskLabelsMap?: Record<string, Label[]>
   coverImageMap?: Record<string, string>
+  unreadMentionsByTask?: Record<string, number>
   sortByList: Record<string, ListSortKey>
   onSortChange: (listId: string, key: ListSortKey) => void
   // When a card is being dragged from a list, that list's sort is visually
@@ -73,7 +74,7 @@ interface BoardViewProps {
   dragSourceListId: string | null
 }
 
-function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null }) {
+function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl, unreadMentions }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null; unreadMentions?: number }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
@@ -103,12 +104,13 @@ function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels,
         selected={task.id === selectedTaskId}
         labels={labels}
         coverImageUrl={coverImageUrl}
+        unreadMentions={unreadMentions}
       />
     </div>
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap, sortByList, onSortChange, dragSourceListId }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap, unreadMentionsByTask, sortByList, onSortChange, dragSourceListId }: BoardViewProps) {
   const { t } = useTranslation()
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -202,6 +204,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
                     selectedTaskId={selectedTaskId}
                     labels={taskLabelsMap?.[task.id]}
                     coverImageUrl={coverImageMap?.[task.id]}
+                    unreadMentions={unreadMentionsByTask?.[task.id]}
                   />
                 )}
               />

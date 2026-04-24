@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Task, TaskStatus, ThoughtPriority } from '../../../shared/lib/types'
 import { ModalShell } from '../../../shared/components/ModalShell'
+import { useMarkCardViewed } from '../hooks/useMentions'
 
 interface TaskDetailDrawerProps {
   task: Task
@@ -22,6 +23,7 @@ const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }
 ]
 
 export function TaskDetailDrawer({ task, onUpdate, onDelete, onDone }: TaskDetailDrawerProps) {
+  useMarkCardViewed(task.id)
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
   const [status, setStatus] = useState<TaskStatus>(task.status)

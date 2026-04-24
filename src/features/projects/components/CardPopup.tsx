@@ -11,6 +11,7 @@ import { useTaskLabels } from '../hooks/useTaskLabels'
 import { useComments } from '../hooks/useComments'
 import { useActivity } from '../hooks/useActivity'
 import { useAttachments } from '../hooks/useAttachments'
+import { useMarkCardViewed } from '../hooks/useMentions'
 import { CommentSection } from './CommentSection'
 import { MemberAvatars } from './MemberAvatars'
 import { MemberPicker } from './MemberPicker'
@@ -24,6 +25,7 @@ import { useBoardMembers } from '../hooks/useBoardMembers'
 import { useTaskMembers } from '../hooks/useTaskMembers'
 import { supabase } from '../../../shared/lib/supabase'
 import { timeAgo } from '../../../shared/lib/dateUtils'
+import { syncDescriptionMentions } from '../lib/mentions'
 
 interface CardPopupProps {
   task: Task
@@ -63,6 +65,9 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
 
   const { user } = useAuth()
   const { profile: selfProfile } = useProfile()
+  // Mark this card as viewed for the current user — clears the unread @-mention
+  // dot on this card and decrements the global counter in real time.
+  useMarkCardViewed(task.id)
   const { checklists, addChecklist, deleteChecklist, renameChecklist, addItem, toggleItem, updateItemText, deleteItem } = useChecklists(task.id)
   const { labels: projectLabels, createLabel, updateLabel, deleteLabel } = useLabels(projectId)
   const { labelIds, addLabel, removeLabel, hasLabel } = useTaskLabels(task.id)
@@ -72,6 +77,17 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   const { members: boardMembers } = useBoardMembers(projectId)
   const { memberIds: assignedIds, profiles: assignedProfiles, assignMember, unassignMember, isAssigned } = useTaskMembers(task.id)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
+
+  // Active board members → MentionItem list for the @-picker (description and
+  // comments). Filter out the current user — self-mentions are no-ops.
+  const mentionMembers = boardMembers
+    .filter(m => m.status === 'active' && m.user_id !== user?.id)
+    .map(m => ({
+      id: m.user_id,
+      label: m.profile?.display_name?.trim() || m.profile?.email || 'Member',
+      avatarUrl: m.profile?.avatar_url ?? null,
+      email: m.profile?.email ?? null,
+    }))
 
   const currentList = lists.find(l => l.id === task.list_id)
   const isInboxCard = !task.project_id || !projectId
@@ -176,6 +192,9 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   async function handleSaveDescription() {
     const clean = description === '<p></p>' || description === '' ? null : description
     await onUpdate(task.id, { notes: clean })
+    if (user?.id) {
+      await syncDescriptionMentions(task.id, user.id, clean ?? '')
+    }
     setDescEditing(false)
   }
   function handleCancelDescription() {
@@ -521,6 +540,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
                     content={description}
                     onChange={setDescription}
                     placeholder={t('card.description.placeholder')}
+                    mentionMembers={mentionMembers}
                   />
                   <div className="flex gap-2 mt-2">
                     <button
@@ -706,10 +726,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
           {/* Right column — comments & activity */}
           <div className="w-full mt-6 md:mt-0 md:w-[360px] md:shrink-0 md:border-l md:border-huginn-border/60 md:bg-huginn-base/30 md:pl-6 md:pr-6 md:rounded-r-xl pt-2 md:pt-6 pb-2">
             <CommentSection
+              taskId={task.id}
               comments={comments}
               activities={activities}
               currentUserId={user?.id ?? ''}
               profileById={profileById}
+              mentionMembers={mentionMembers}
               onOpenImage={openImageInLightbox}
               onAddComment={addComment}
               onDeleteComment={deleteComment}

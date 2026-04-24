@@ -14,6 +14,7 @@ import {
   useLists,
   useLabels,
 } from '../features/projects'
+import { useUnreadMentionsByTask } from '../features/projects/hooks/useMentions'
 import { TaskCard } from '../features/projects/components/TaskCard'
 import { LIST_SORT_KEYS, type ListSortKey } from '../features/projects/components/ListColumn'
 
@@ -56,6 +57,7 @@ export function ProjectDetailPage() {
   const { tasks, loading: loadingTasks, addTask, updateTask, deleteTask, removeTaskLocal, archiveTask, copyTask, moveTaskToBoard } = useProjectTasks(id ?? '')
   const { lists, archivedLists, loading: loadingLists, addList, updateList, archiveList, unarchiveList, reorderLists } = useLists(id ?? '')
   const { labels } = useLabels(id ?? '')
+  const unreadMentionsByTask = useUnreadMentionsByTask(id ?? '')
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS)
 
   // Fetch all task labels for this project's tasks
@@ -808,6 +810,7 @@ export function ProjectDetailPage() {
           selectedTaskId={currentTask?.id}
           taskLabelsMap={taskLabelsMap}
           coverImageMap={coverImageMap}
+          unreadMentionsByTask={unreadMentionsByTask}
           sortByList={sortByList}
           onSortChange={handleSortChange}
           dragSourceListId={dragSourceListId}

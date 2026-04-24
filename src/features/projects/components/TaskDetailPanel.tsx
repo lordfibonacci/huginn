@@ -7,6 +7,7 @@ import { LabelPicker } from './LabelPicker'
 import { useChecklists } from '../hooks/useChecklists'
 import { useLabels } from '../hooks/useLabels'
 import { useTaskLabels } from '../hooks/useTaskLabels'
+import { useMarkCardViewed } from '../hooks/useMentions'
 
 interface TaskDetailPanelProps {
   task: Task
@@ -29,6 +30,7 @@ const PRIORITY_OPTIONS: { value: ThoughtPriority; label: string; color: string }
 ]
 
 export function TaskDetailPanel({ task, projectId, onUpdate, onDelete, onClose }: TaskDetailPanelProps) {
+  useMarkCardViewed(task.id)
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
   const [status, setStatus] = useState<TaskStatus>(task.status)

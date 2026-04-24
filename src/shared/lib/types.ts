@@ -161,3 +161,18 @@ export interface Note {
   from_thought_id: string | null
   created_at: string
 }
+
+export interface Mention {
+  id: string
+  task_id: string
+  comment_id: string | null
+  mentioned_user_id: string
+  mentioner_id: string
+  created_at: string
+}
+
+export interface CardView {
+  task_id: string
+  user_id: string
+  viewed_at: string
+}
