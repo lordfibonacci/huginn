@@ -1,13 +1,13 @@
-# Runes + Meta Social rune
+# Runes + Meta Social Planner rune
 
 ## Context
 
-Heimir runs several small businesses (real estate, camping, apps) and wants to manage their social media posting from inside Huginn rather than a separate app. Rather than bolt social features into every board, we introduce **Runes** — Trello-style Power-Ups, rebranded Norse. Each rune is an optional board module that attaches components to specific UI surfaces and is enabled per-board by an owner/admin. Most boards won't touch Runes; the social-media boards (one per business) will enable the Meta Social rune.
+Heimir runs several small businesses (real estate, camping, apps) and wants to manage their social media posting from inside Huginn rather than a separate app. Rather than bolt social features into every board, we introduce **Runes** — Trello-style Power-Ups, rebranded Norse. Each rune is an optional board module that attaches components to specific UI surfaces and is enabled per-board by an owner/admin. Most boards won't touch Runes; the social-media boards (one per business) will enable the Meta Social Planner rune.
 
 Scope covers two things at once, because one of them wouldn't exist without the other:
 
 1. The **Runes framework** — a minimal registry + surface-mount system + enable/disable UI. Kept thin; grows as later runes demand new surfaces.
-2. The **Meta Social rune** — the first rune. Schedules and auto-publishes posts to Facebook Pages and Instagram Business accounts via the Meta Graph API.
+2. The **Meta Social Planner rune** — the first rune. Registry id `meta-social`, display name "Meta Social Planner". Schedules and auto-publishes posts to Facebook Pages and Instagram Business accounts via the Meta Graph API.
 
 Only FB + IG are in scope. Heimir doesn't use X, TikTok, LinkedIn, or YouTube at any meaningful volume. No manual approval step — posts auto-publish at their scheduled time.
 
@@ -89,7 +89,7 @@ RLS:
 
 `ProjectSettingsDrawer` gets a new "Runes" section listing every entry in the registry with a toggle. Flipping a toggle upserts `huginn_board_runes` and calls the rune's `onEnable` / `onDisable`. Non-admins see toggles disabled with a tooltip.
 
-## Meta Social rune — data model
+## Meta Social Planner rune — data model
 
 ### `huginn_social_accounts`
 
@@ -123,7 +123,7 @@ create table huginn_social_posts (
   task_id              uuid primary key references huginn_tasks(id) on delete cascade,
   platforms            jsonb not null default '{"fb": false, "ig": false}'::jsonb,
   scheduled_at         timestamptz,
-  timezone             text not null default 'UTC',
+  timezone             text not null default 'UTC',  -- Iceland is UTC too, so UTC everywhere unless a later rune needs per-board overrides
   caption_base         text not null default '',
   caption_ig           text,
   caption_fb           text,
@@ -163,13 +163,13 @@ revoke all on function huginn_encrypt_token, huginn_decrypt_token from public, a
 grant execute on function huginn_encrypt_token, huginn_decrypt_token to service_role;
 ```
 
-## Meta Social rune — UX surfaces
+## Meta Social Planner rune — UX surfaces
 
-### `boardSettings` — "Meta Social" sub-panel
+### `boardSettings` — "Meta Social Planner" sub-panel
 
 - If no account connected: "Connect Meta account" button → kicks off OAuth
 - If connected: FB Page name + IG username (or "IG not linked" warning), "Reconnect" button, "Disconnect" button (danger, requires confirm)
-- Default timezone picker (defaults to Iceland on first save)
+- Default timezone picker (defaults to UTC; Heimir's businesses all operate on UTC/Iceland time)
 
 ### `boardButton` — "Social calendar"
 
@@ -200,7 +200,7 @@ Fields:
 
 Validation surfaced inline (not at schedule time):
 - IG images must be ≤ 8 MB, JPEG
-- IG videos: MP4/MOV, ≤ 100 MB for regular, aspect ratio within IG bounds
+- IG video (Reels): MP4/MOV, H.264 + AAC, ≤ 100 MB, 3s–15min duration, aspect ratio 0.01:1 – 10:1 (Meta's published limits; 9:16 vertical is the sweet spot for Reels surfacing)
 - FB similar but looser
 - Multi-image posts: IG needs 2–10 images, all same aspect ratio family
 
@@ -247,7 +247,8 @@ Flow:
    - **FB multi-image:** POST each photo with `published=false` → collect IDs → POST `/{page_id}/feed` with `attached_media=[{media_fbid: …}]`
    - **FB video:** POST `/{page_id}/videos` with `file_url` + `description`
    - **IG single image:** POST `/{ig_user}/media` with `image_url` + `caption` → get container ID → POST `/{ig_user}/media_publish` with `creation_id`
-   - **IG carousel:** same, but `media_type=CAROUSEL` + child container IDs
+   - **IG video (Reels):** POST `/{ig_user}/media` with `media_type=REELS` + `video_url` + `caption` → poll `/{container_id}?fields=status_code` until `FINISHED` (Meta transcodes; typical 30s–2min; timeout at 5min → `failed`) → POST `/{ig_user}/media_publish` with `creation_id`. All Instagram feed video is Reels in the current API.
+   - **IG carousel:** same 2-step, `media_type=CAROUSEL` + child container IDs (images only; mixed image/video carousels deferred)
    - **IG first comment:** after `media_publish`, POST `/{media_id}/comments` with `first_comment_ig`
 5. On success: store `fb_post_id` / `ig_post_id`, set `status='published'`, `published_at=now()`.
 6. On any platform failure: `status='failed'`, `error_message=<message>`. Partial success (FB posted, IG failed) counts as `failed` for v1 — we keep the FB post ID so the user sees "posted to FB, failed on IG" in the error UI.
@@ -382,14 +383,15 @@ Heimir has FB Pages + IG Business accounts linked. That clears the prerequisites
 - Validation for Meta media limits
 - Calendar view (reusing `CalendarView`) filtered to scheduled posts
 - Card front + back badges
-- `meta-publish` edge function handling FB + IG single/multi-image + IG carousel + first-comment
+- `meta-publish` edge function handling FB image/video + IG image/carousel/Reels + first-comment
 - `pg_cron` scheduler every minute
 - Status transitions with retry on failure
 
 ## Out of scope (deferred)
 
 - Analytics pull (likes, reach, comments on live posts)
-- Reels, Stories, video beyond basic upload
+- IG Stories (`media_type=STORIES` — separate API path, not the Reels one)
+- Mixed image/video carousels
 - Retry queueing / exponential backoff
 - Bulk CSV import
 - Recurring posts ("every Tuesday 10am") — reuse `huginn_tasks.recurring`?
