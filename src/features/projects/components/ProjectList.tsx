@@ -1,16 +1,21 @@
 import { useTranslation } from 'react-i18next'
+import { DndContext, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Project, ProjectStatus } from '../../../shared/lib/types'
 import { ProjectCard } from './ProjectCard'
 import { PendingInvitesPanel } from './PendingInvitesPanel'
 import { LoadingScreen, EmptyState } from '../../../shared/components/Logo'
 import { useTaskCounts } from '../../../shared/hooks/useTaskCounts'
 import { usePendingInvites } from '../hooks/usePendingInvites'
+import { useAllProjectMembers } from '../hooks/useAllProjectMembers'
 
 interface ProjectListProps {
   projects: Project[]
   loading: boolean
   onProjectTap: (project: Project) => void
   onCreateProject?: () => void
+  onReorder?: (status: ProjectStatus, orderedIds: string[]) => void
 }
 
 const STATUS_ORDER: { key: ProjectStatus; labelKey: string }[] = [
@@ -20,10 +25,15 @@ const STATUS_ORDER: { key: ProjectStatus; labelKey: string }[] = [
   { key: 'done', labelKey: 'projects.status.done' },
 ]
 
-export function ProjectList({ projects, loading, onProjectTap, onCreateProject }: ProjectListProps) {
+export function ProjectList({ projects, loading, onProjectTap, onCreateProject, onReorder }: ProjectListProps) {
   const { t } = useTranslation()
   const { counts } = useTaskCounts()
   const { count: invitesCount } = usePendingInvites()
+  const membersByProject = useAllProjectMembers()
+
+  // Require ~6px movement before a drag actually starts so card taps still
+  // navigate to the board instead of being interpreted as drags.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   if (loading) {
     return <LoadingScreen message={t('projects.list.loading')} />
@@ -79,26 +89,105 @@ export function ProjectList({ projects, loading, onProjectTap, onCreateProject }
           </div>
         )}
         {grouped.map((group, groupIdx) => (
-          <section key={group.key} className="mb-8">
-            <h2 className="text-[11px] uppercase tracking-widest text-huginn-text-secondary font-semibold mb-3 px-0.5">
-              {group.label}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {group.items.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  taskCount={counts[project.id]}
-                  onClick={() => onProjectTap(project)}
-                />
-              ))}
-              {groupIdx === 0 && onCreateProject && (
-                <NewProjectTile onClick={onCreateProject} label={t('projects.list.newProjectTile')} />
-              )}
-            </div>
-          </section>
+          <SortableProjectGrid
+            key={group.key}
+            group={group}
+            isFirst={groupIdx === 0}
+            counts={counts}
+            membersByProject={membersByProject}
+            onProjectTap={onProjectTap}
+            onCreateProject={onCreateProject}
+            sensors={sensors}
+            onReorder={onReorder ? (orderedIds) => onReorder(group.key, orderedIds) : undefined}
+          />
         ))}
       </div>
+    </div>
+  )
+}
+
+interface SortableProjectGridProps {
+  group: { key: ProjectStatus; label: string; items: Project[] }
+  isFirst: boolean
+  counts: Record<string, number>
+  membersByProject: Record<string, import('../../../shared/lib/types').Profile[]>
+  onProjectTap: (project: Project) => void
+  onCreateProject?: () => void
+  sensors: ReturnType<typeof useSensors>
+  onReorder?: (orderedIds: string[]) => void
+}
+
+function SortableProjectGrid({ group, isFirst, counts, membersByProject, onProjectTap, onCreateProject, sensors, onReorder }: SortableProjectGridProps) {
+  const { t } = useTranslation()
+  const itemIds = group.items.map((p) => p.id)
+
+  function handleDragEnd(event: DragEndEvent) {
+    if (!onReorder) return
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = itemIds.indexOf(String(active.id))
+    const newIndex = itemIds.indexOf(String(over.id))
+    if (oldIndex < 0 || newIndex < 0) return
+    const reordered = arrayMove(itemIds, oldIndex, newIndex)
+    onReorder(reordered)
+  }
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-[11px] uppercase tracking-widest text-huginn-text-secondary font-semibold mb-3 px-0.5">
+        {group.label}
+      </h2>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {group.items.map((project) => (
+              <SortableProjectCard
+                key={project.id}
+                project={project}
+                taskCount={counts[project.id]}
+                sharedWith={membersByProject[project.id]}
+                onClick={() => onProjectTap(project)}
+              />
+            ))}
+            {isFirst && onCreateProject && (
+              <NewProjectTile onClick={onCreateProject} label={t('projects.list.newProjectTile')} />
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </section>
+  )
+}
+
+interface SortableProjectCardProps {
+  project: Project
+  taskCount?: number
+  sharedWith?: import('../../../shared/lib/types').Profile[]
+  onClick: () => void
+}
+
+function SortableProjectCard({ project, taskCount, sharedWith, onClick }: SortableProjectCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={isDragging ? 'opacity-40' : ''}
+    >
+      <ProjectCard
+        project={project}
+        taskCount={taskCount}
+        sharedWith={sharedWith}
+        onClick={onClick}
+      />
     </div>
   )
 }

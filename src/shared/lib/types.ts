@@ -29,6 +29,7 @@ export interface Project {
   status: ProjectStatus
   pinned: boolean
   background: string
+  position: number
   created_at: string
 }
 

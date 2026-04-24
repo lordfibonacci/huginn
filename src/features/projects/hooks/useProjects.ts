@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../shared/lib/supabase'
 import type { Project, ProjectStatus } from '../../../shared/lib/types'
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  // Suppress realtime resync while a drag-reorder's parallel UPDATEs are in
+  // flight — same trick as the board's pendingReorderRef. Without this the
+  // grid visibly flips between intermediate orderings until the last write
+  // settles.
+  const pendingReorderRef = useRef(false)
 
   const fetchProjects = useCallback(async () => {
     const { data, error } = await supabase
       .from('huginn_projects')
       .select('*')
+      .order('position')
       .order('name')
 
     if (error) {
@@ -29,6 +35,7 @@ export function useProjects() {
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_projects' }, () => {
+        if (pendingReorderRef.current) return
         fetchProjects()
       })
       .subscribe()
@@ -55,6 +62,7 @@ export function useProjects() {
       status,
       pinned: false,
       background: 'default',
+      position: 0,
       created_at: new Date().toISOString(),
     }
 
@@ -115,5 +123,35 @@ export function useProjects() {
     return true
   }
 
-  return { projects, loading, addProject, updateProject, deleteProject, count: projects.length }
+  // Reorder projects within a status group. Caller passes the new full order
+  // (just the ids, in order) for the affected status. We assign sparse
+  // positions (1024-step) so future single-card moves usually only touch one
+  // row. Optimistic local update first, then parallel UPDATEs.
+  async function reorderProjects(_status: ProjectStatus, orderedIds: string[]) {
+    const STEP = 1024
+    const newPositions: Record<string, number> = {}
+    orderedIds.forEach((id, i) => { newPositions[id] = (i + 1) * STEP })
+
+    const prev = projects
+    pendingReorderRef.current = true
+    setProjects((p) =>
+      p.map((pr) => (newPositions[pr.id] !== undefined ? { ...pr, position: newPositions[pr.id] } : pr))
+    )
+
+    const results = await Promise.all(
+      orderedIds.map((id) =>
+        supabase.from('huginn_projects').update({ position: newPositions[id] }).eq('id', id)
+      )
+    )
+    pendingReorderRef.current = false
+    const failed = results.find((r) => r.error)
+    if (failed) {
+      console.error('Failed to reorder projects:', failed.error)
+      setProjects(prev)
+      return false
+    }
+    return true
+  }
+
+  return { projects, loading, addProject, updateProject, deleteProject, reorderProjects, count: projects.length }
 }

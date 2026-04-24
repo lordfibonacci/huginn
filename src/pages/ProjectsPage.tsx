@@ -7,7 +7,7 @@ import type { Project } from '../shared/lib/types'
 
 export function ProjectsPage() {
   const { t } = useTranslation()
-  const { projects, loading, addProject, count } = useProjects()
+  const { projects, loading, addProject, reorderProjects, count } = useProjects()
   const [showNewProject, setShowNewProject] = useState(false)
   const navigate = useNavigate()
 
@@ -40,6 +40,7 @@ export function ProjectsPage() {
         loading={loading}
         onProjectTap={handleProjectTap}
         onCreateProject={() => setShowNewProject(true)}
+        onReorder={reorderProjects}
       />
 
       {/* Mobile-only floating + (desktop uses inline tile in the grid) */}
