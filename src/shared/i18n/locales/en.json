@@ -584,15 +584,19 @@
   "runes": {
     "adminOnly": "Only admins can enable or disable runes.",
     "meta-social": {
+      "composerComingInTask10": "Composer coming in next task.",
       "connect": "Connect Meta",
+      "connectFirst": "Connect a Meta account in board settings to start planning posts.",
       "disconnect": "Disconnect",
       "igNotLinked": "No Instagram Business account linked",
       "instagram": "Instagram",
       "name": "Meta Social Planner",
+      "notAPost": "This card isn't a post yet.",
       "notConnected": "No Meta account connected.",
       "page": "Page",
       "reconnect": "Reconnect",
-      "tagline": "Schedule and auto-publish posts to Facebook & Instagram."
+      "tagline": "Schedule and auto-publish posts to Facebook & Instagram.",
+      "turnIntoPost": "Turn into post"
     },
     "sectionHint": "Optional modules that add new powers to this board. Each board can enable its own set.",
     "sectionTitle": "Runes"
