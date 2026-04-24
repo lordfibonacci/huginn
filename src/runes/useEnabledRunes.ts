@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../shared/lib/supabase'
 import { RUNES } from './index'
 import type { RuneDefinition } from './types'
@@ -33,12 +33,18 @@ export function useEnabledRunes(projectId: string | undefined) {
     return () => { supabase.removeChannel(channel) }
   }, [projectId, fetchRunes])
 
-  const enabled: RuneDefinition[] = rows
-    .filter(r => r.enabled)
-    .map(r => RUNES.find(def => def.id === r.rune_id))
-    .filter((d): d is RuneDefinition => !!d)
+  const enabled = useMemo<RuneDefinition[]>(
+    () => rows
+      .filter(r => r.enabled)
+      .map(r => RUNES.find(def => def.id === r.rune_id))
+      .filter((d): d is RuneDefinition => !!d),
+    [rows],
+  )
 
-  const settingsById = new Map(rows.map(r => [r.rune_id, r.settings]))
+  const settingsById = useMemo(
+    () => new Map(rows.map(r => [r.rune_id, r.settings])),
+    [rows],
+  )
 
   const toggle = useCallback(async (runeId: string, next: boolean) => {
     if (!projectId) return
