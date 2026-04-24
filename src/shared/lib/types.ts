@@ -186,3 +186,39 @@ export interface BoardRune {
   created_at: string
   updated_at: string
 }
+
+export interface SocialAccount {
+  id: string
+  project_id: string
+  provider: 'meta'
+  fb_page_id: string
+  fb_page_name: string
+  ig_business_id: string | null
+  ig_username: string | null
+  token_expires_at: string | null
+  connected_by: string | null
+  created_at: string
+  updated_at: string
+  // access_token_encrypted intentionally omitted — blocked by column-level RLS
+}
+
+export type SocialPostStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed'
+
+export interface SocialPost {
+  task_id: string
+  platforms: { fb: boolean; ig: boolean }
+  scheduled_at: string | null
+  timezone: string
+  caption_base: string
+  caption_ig: string | null
+  caption_fb: string | null
+  first_comment_ig: string | null
+  media_attachment_ids: string[]
+  status: SocialPostStatus
+  published_at: string | null
+  fb_post_id: string | null
+  ig_post_id: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
