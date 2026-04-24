@@ -5,6 +5,7 @@ import { ModalShell } from '../../../shared/components/ModalShell'
 import { ProjectColorPicker } from './ProjectColorPicker'
 import { BoardBackgroundPicker } from './BoardBackgroundPicker'
 import { useBoardRole } from '../hooks/useBoardRole'
+import { RunesSettingsSection } from '../../../runes/RunesSettingsSection'
 
 interface ProjectSettingsDrawerProps {
   project: Project
@@ -119,6 +120,8 @@ export function ProjectSettingsDrawer({ project, archivedLists, onUpdate, onDele
           </div>
         </div>
       )}
+
+      <RunesSettingsSection projectId={project.id} />
 
       {/* Actions — only show what the user can actually do */}
       {(canManage || canDelete) && (

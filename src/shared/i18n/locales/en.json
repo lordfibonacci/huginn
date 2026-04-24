@@ -581,6 +581,11 @@
     "attached": "attached {{name}}",
     "attachedFallback": "a file"
   },
+  "runes": {
+    "adminOnly": "Only admins can enable or disable runes.",
+    "sectionHint": "Optional modules that add new powers to this board. Each board can enable its own set.",
+    "sectionTitle": "Runes"
+  },
   "settings": {
     "project": {
       "titleInfo": "Project info",
