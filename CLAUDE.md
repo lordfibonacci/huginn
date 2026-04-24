@@ -93,6 +93,8 @@ src/
 - `huginn_board_members` — project membership. `role ∈ {owner, admin, member}`, `status ∈ {pending, active}`, `invited_by uuid`. Pending invites appear on the invitee's `/projects` as `PendingInvitesPanel`.
 - `huginn_task_members` — card assignees.
 - `huginn_profiles` — `display_name`, `email`, `avatar_url`.
+- `huginn_mentions` — one row per @ inserted in a description (`comment_id IS NULL`) or comment. RLS via `huginn_can_access_task`. Realtime-published.
+- `huginn_card_views` — `(task_id, user_id)` PK + `viewed_at`. Updated on `CardPopup` / `TaskDetailDrawer` / `TaskDetailPanel` mount. Unread-mention count = `huginn_mentions WHERE created_at > my last viewed_at`. Self-only RLS. Realtime-published.
 - (legacy, not used in UI) `huginn_thoughts`, `huginn_notes`.
 
 ### RLS — membership-based
@@ -181,6 +183,11 @@ Brand: raven mark + `huginn` wordmark. `Lockup` / `Mark` / `Wordmark` components
 - **Pending-reorder gate.** `handleDragEnd` in `ProjectDetailPage` fires N parallel per-row UPDATEs. Each emits its own realtime event → `tasks` / `lists` refetch with a PARTIALLY-reordered server snapshot mid-flight. The `[tasks]` and `[lists]` resync useEffects guard on `pendingReorderRef.current` to skip the resync until all writes complete. Without this, the card visibly jumps to wrong slots for 200–400 ms before the final echo settles ("drop lag").
 - **Instant, Trello-style drops.** `DragOverlay dropAnimation={null}` plus every `useSortable` uses `transition: null` + `animateLayoutChanges: () => false`. If you reintroduce a transition or layout-animation, hover-time transforms finish animating to zero *after* release — visible as a flash or lag.
 - **Per-list card sort lives in `ProjectDetailPage`**, not `BoardView`, because `handleDragEnd` needs to flip a list to `'manual'` on same-list card drops. `dragSourceListId` suspends the source list's sort visually during the drag (renders as manual) so dnd-kit's arrayMove has a stable order to reorder.
+- **`dragOver` is for cross-list state changes only.** Calling `arrayMove` in `dragOver` for same-list reorders causes max-update-depth crashes when the active card's height differs from its swap partner (cursor stays over the same target → re-fire → loop). Same-list reorder happens only in `dragEnd`. dnd-kit's `verticalListSortingStrategy` handles the visual via transforms (instant snap thanks to `transition: null`).
+- **Cross-list `dragOver` needs the `recentCrossListRef` guard.** Without it, `closestCorners` ping-pongs between cards in adjacent lists when the active card is tall (cover images), looping forever. Suppress the inverse of the most recent cross-list move within ~120 ms.
+- **Mid-drag realtime refetches must be gated by `isDraggingRef`.** A teammate uploading an attachment or labelling a card during your drag re-creates `coverImageMap` / `taskLabelsMap`, re-renders every `TaskCard`, and worsens collision-detection thrash. Queue a trailing refetch (`pendingCoverRefetchRef` / `pendingLabelRefetchRef`) and flush it on `dragEnd` / `dragCancel`.
+- **DragOverlay must render with the same data as the source card.** Pass `coverImageUrl` and `labels` to the overlay's `<TaskCard>` so the active rect's height matches what dnd-kit measured at drag start.
+- **`backdrop-blur-*` creates a stacking context.** Absolutely-positioned children can't z-index above the parent's siblings. If a popover renders behind sibling content, give the parent an explicit `z-*` or use a document-level `mousedown` listener (not a fixed overlay) for outside-click dismissal.
 
 ## Multi-User
 
@@ -199,3 +206,5 @@ Fully shipped. Owner / admin / member roles (viewer removed). Pending-invite flo
 - No tests yet.
 - `.env` and `.superpowers/` are gitignored. `.playwright-mcp/` + `login-with-brand*.png` also gitignored.
 - Favicon / branded icons are regenerated via `npm run brand`; source PNGs live outside the repo at `../Graffík/`.
+- Feature work uses the superpowers `brainstorming` skill: brainstorm → write spec to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` → implement. Existing specs live alongside as reference.
+- Top-level `ErrorBoundary` (`src/shared/components/ErrorBoundary.tsx`) wraps the router — render exceptions show the error panel instead of a blank screen. Useful for diagnosing live bugs from screenshots.
