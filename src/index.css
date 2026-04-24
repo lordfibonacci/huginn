@@ -168,3 +168,9 @@
 .huginn-markdown strong { font-weight: 600; color: var(--color-huginn-text-primary); }
 .huginn-markdown em { font-style: italic; }
 .huginn-markdown input[type="checkbox"] { margin-right: 0.5em; }
+
+/* Sandpack artifact preview: ensure the wrapper / layout / preview pane
+   all fill the modal body. The iframe itself has height set by Sandpack. */
+.sp-wrapper { height: 100% !important; width: 100% !important; }
+.sp-layout { height: 100% !important; flex-wrap: nowrap !important; }
+.sp-preview { height: 100% !important; min-height: 0 !important; }

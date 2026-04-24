@@ -12,6 +12,7 @@
     "translate": "node scripts/translate-is.mjs"
   },
   "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@supabase/supabase-js": "^2.103.0",

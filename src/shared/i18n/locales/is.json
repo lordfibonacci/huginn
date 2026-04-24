@@ -191,7 +191,10 @@
     },
     "textViewer": {
       "error": "Gat ekki hlaðið skrá: {{message}}",
-      "loading": "Hleður…"
+      "loading": "Hleður…",
+      "loadingPreview": "Býr til forskoðun…",
+      "preview": "Forskoðun",
+      "source": "Uppruni"
     },
     "title": {
       "placeholder": "Titill spjalds"
@@ -561,7 +564,9 @@
       "newProject": "Nýtt verkefni"
     },
     "card": {
-      "onHold": "Í bið"
+      "onHold": "Í bið",
+      "sharedWith_one": "Deilt með {{count}} öðrum",
+      "sharedWith_other": "Deilt með {{count}} öðrum"
     },
     "header": {
       "accountSettings": "Reikningsstillingar",
