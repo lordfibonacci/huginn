@@ -177,3 +177,12 @@ export interface CardView {
   user_id: string
   viewed_at: string
 }
+
+export interface BoardRune {
+  project_id: string
+  rune_id: string
+  enabled: boolean
+  settings: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
