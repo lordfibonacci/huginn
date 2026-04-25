@@ -8,10 +8,10 @@ function buildMetaAuthUrl(projectId: string, csrfToken: string): string {
   const state = btoa(JSON.stringify({ project_id: projectId, csrf: csrfToken }))
   // Legacy instagram_* scopes (not instagram_business_*) — those only work
   // with the Instagram Login dialog. We use Facebook Login + Page tokens.
-  // instagram_content_publish is added in Task 13 (actual publishing).
+  // instagram_content_publish is required for IG publishing (Task 13).
   const scopes = [
     'pages_show_list', 'pages_manage_posts', 'pages_read_engagement',
-    'instagram_basic', 'business_management',
+    'instagram_basic', 'instagram_content_publish', 'business_management',
   ].join(',')
   const u = new URL('https://www.facebook.com/v21.0/dialog/oauth')
   u.searchParams.set('client_id', appId)
