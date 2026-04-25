@@ -415,6 +415,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               />
             </div>
 
+            {/* Rune card-detail badges (e.g. Meta Social Planner schedule/published line) */}
+            {enabledRunes.map(rune => {
+              const Detail = rune.surfaces.cardDetailBadges
+              return Detail ? <Detail key={rune.id} task={task} /> : null
+            })}
+
             {/* Quick actions */}
             <div className="flex items-center gap-2 flex-wrap">
               {!isInboxCard && (

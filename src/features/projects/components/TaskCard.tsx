@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { Task, TaskStatus } from '../../../shared/lib/types'
+import type { RuneDefinition } from '../../../runes/types'
 import { formatDueDate } from '../../../shared/lib/dateUtils'
 import { getContrastTextColor } from '../../../shared/lib/contrast'
 
@@ -19,10 +20,12 @@ interface TaskCardProps {
   coverImageUrl?: string | null
   /** Number of unread @-mentions for the current user on this card. */
   unreadMentions?: number
+  /** Enabled runes — used to render `cardBadges` surfaces under the labels row. */
+  enabledRunes?: RuneDefinition[]
   dragHandleProps?: Record<string, unknown>
 }
 
-export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl, unreadMentions }: TaskCardProps) {
+export function TaskCard({ task, onClick, onStatusChange, selected, checklistProgress, labels, coverImageUrl, unreadMentions, enabledRunes }: TaskCardProps) {
   const { t } = useTranslation()
   const dueInfo = task.due_date ? formatDueDate(task.due_date) : null
   const priority = task.priority
@@ -84,6 +87,16 @@ export function TaskCard({ task, onClick, onStatusChange, selected, checklistPro
               {label.name}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Rune card-front badges (e.g. Meta Social Planner status chip) */}
+      {enabledRunes && enabledRunes.length > 0 && (
+        <div className="flex gap-1 flex-wrap px-2 pt-2">
+          {enabledRunes.map((rune) => {
+            const Badge = rune.surfaces.cardBadges
+            return Badge ? <Badge key={rune.id} task={task} /> : null
+          })}
         </div>
       )}
 

@@ -3,6 +3,8 @@ import { MetaIcon } from './MetaIcon'
 import { MetaBoardSettings } from './MetaBoardSettings'
 import { MetaPublishSection } from './MetaPublishSection'
 import { MetaCalendarView } from './MetaCalendarView'
+import { MetaCardBadges } from './MetaCardBadges'
+import { MetaCardDetailBadges } from './MetaCardDetailBadges'
 
 export const metaSocialRune: RuneDefinition = {
   id: 'meta-social',
@@ -13,5 +15,7 @@ export const metaSocialRune: RuneDefinition = {
     boardSettings: MetaBoardSettings,
     cardBackSection: MetaPublishSection,
     boardView: MetaCalendarView,
+    cardBadges: MetaCardBadges,
+    cardDetailBadges: MetaCardDetailBadges,
   },
 }

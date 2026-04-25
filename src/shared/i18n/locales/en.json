@@ -590,6 +590,13 @@
       "composerTitle": "Publish",
       "connect": "Connect Meta",
       "connectFirst": "Connect a Meta account in board settings to start planning posts.",
+      "detail": {
+        "failedNoMsg": "\u26a0 Publish failed",
+        "failedWithMsg": "\u26a0 Publish failed: {{msg}}",
+        "published": "\u2705 Published {{when}}",
+        "publishing": "\u23f3 Publishing\u2026",
+        "scheduled": "\ud83d\udcc5 Scheduled {{when}} \u00b7 {{platforms}}"
+      },
       "disconnect": "Disconnect",
       "facebook": "Facebook",
       "failed": "Publish failed",
@@ -624,6 +631,15 @@
         "scheduled": "Scheduled"
       },
       "tagline": "Schedule and auto-publish posts to Facebook & Instagram.",
+      "timeAgo": {
+        "days_one": "{{count}}d ago",
+        "days_other": "{{count}}d ago",
+        "hours_one": "{{count}}h ago",
+        "hours_other": "{{count}}h ago",
+        "justNow": "just now",
+        "minutes_one": "{{count}}m ago",
+        "minutes_other": "{{count}}m ago"
+      },
       "turnIntoPost": "Turn into post",
       "unschedule": "Unschedule",
       "validation": {

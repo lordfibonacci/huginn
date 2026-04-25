@@ -837,6 +837,7 @@ export function ProjectDetailPage() {
           sortByList={sortByList}
           onSortChange={handleSortChange}
           dragSourceListId={dragSourceListId}
+          enabledRunes={enabledRunes}
         />
       ) : (
         <CalendarView

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { SortableContext, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, TaskStatus, List, Label } from '../../../shared/lib/types'
+import type { RuneDefinition } from '../../../runes/types'
 import { TaskCard } from './TaskCard'
 import { ListColumn, type ListSortKey } from './ListColumn'
 import { LoadingScreen } from '../../../shared/components/Logo'
@@ -72,9 +73,11 @@ interface BoardViewProps {
   // suspended (treated as 'manual') so dnd-kit's arrayMove reordering works
   // without the sort re-applying on every render.
   dragSourceListId: string | null
+  /** Enabled runes — passed through to TaskCard for card-front surfaces (e.g. Meta status chip). */
+  enabledRunes?: RuneDefinition[]
 }
 
-function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl, unreadMentions }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null; unreadMentions?: number }) {
+function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels, coverImageUrl, unreadMentions, enabledRunes }: { task: Task; onTaskTap: (task: Task) => void; onStatusChange?: (taskId: string, newStatus: TaskStatus) => void; selectedTaskId?: string; labels?: Label[]; coverImageUrl?: string | null; unreadMentions?: number; enabledRunes?: RuneDefinition[] }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: task.id,
     data: { type: 'card', listId: task.list_id },
@@ -105,12 +108,13 @@ function SortableCard({ task, onTaskTap, onStatusChange, selectedTaskId, labels,
         labels={labels}
         coverImageUrl={coverImageUrl}
         unreadMentions={unreadMentions}
+        enabledRunes={enabledRunes}
       />
     </div>
   )
 }
 
-export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap, unreadMentionsByTask, sortByList, onSortChange, dragSourceListId }: BoardViewProps) {
+export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, onArchiveList, onAddList, onStatusChange, selectedTaskId, loading, taskLabelsMap, coverImageMap, unreadMentionsByTask, sortByList, onSortChange, dragSourceListId, enabledRunes }: BoardViewProps) {
   const { t } = useTranslation()
   const [addingList, setAddingList] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -205,6 +209,7 @@ export function BoardView({ lists, tasks, onTaskTap, onAddCard, onRenameList, on
                     labels={taskLabelsMap?.[task.id]}
                     coverImageUrl={coverImageMap?.[task.id]}
                     unreadMentions={unreadMentionsByTask?.[task.id]}
+                    enabledRunes={enabledRunes}
                   />
                 )}
               />
