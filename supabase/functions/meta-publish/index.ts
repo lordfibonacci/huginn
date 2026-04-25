@@ -3,6 +3,10 @@
 //
 // No CORS handlers — invoked server-side by pg_cron (Task 14), never from a browser.
 // Service-role only — runs as service_role for full DB access; no end-user JWT.
+//
+// IMPORTANT: deploy with `--no-verify-jwt`. The cron's bearer is META_PUBLISH_SECRET,
+// not a Supabase JWT, so Supabase's gateway must not pre-validate it:
+//   npx supabase functions deploy meta-publish --project-ref <ref> --no-verify-jwt
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const META_PUBLISH_SECRET = Deno.env.get('META_PUBLISH_SECRET')!
@@ -46,7 +50,7 @@ Deno.serve(async (req) => {
     // Resolve media URLs (ordered).
     const { data: atts, error: attErr } = await supabase
       .from('huginn_attachments')
-      .select('id, url, type, mime_type')
+      .select('id, url, type')
       .in('id', post.media_attachment_ids)
     if (attErr) throw new Error(`attachments_lookup: ${attErr.message}`)
     const attIndex = new Map(atts!.map(a => [a.id, a]))
@@ -95,10 +99,18 @@ Deno.serve(async (req) => {
 
 // ---- platform helpers ----
 
+// huginn_attachments stores type as 'image' | 'file' | 'link' (no mime column).
+// useAttachments.uploadFile writes 'image' for image MIME, 'file' for everything else
+// — so videos arrive as type='file'. Detect video by URL extension as a fallback.
+const VIDEO_RE = /\.(mp4|mov|webm|m4v|3gp)(\?|$)/i
+function isVideoMedia(m: { url: string; type: string }): boolean {
+  return m.type === 'video' || VIDEO_RE.test(m.url)
+}
+
 async function publishFb({ pageId, token, media, message }: {
-  pageId: string, token: string, media: Array<{ url: string, type: string, mime_type?: string }>, message: string,
+  pageId: string, token: string, media: Array<{ url: string, type: string }>, message: string,
 }): Promise<string> {
-  const isVideo = media.length === 1 && (media[0].type === 'video' || media[0].mime_type?.startsWith('video/'))
+  const isVideo = media.length === 1 && isVideoMedia(media[0])
   if (isVideo) {
     const form = new FormData()
     form.set('file_url', media[0].url); form.set('description', message); form.set('access_token', token)
@@ -136,10 +148,10 @@ async function publishFb({ pageId, token, media, message }: {
 }
 
 async function publishIg({ igUser, token, media, caption, firstComment }: {
-  igUser: string, token: string, media: Array<{ url: string, type: string, mime_type?: string }>,
+  igUser: string, token: string, media: Array<{ url: string, type: string }>,
   caption: string, firstComment: string | null,
 }): Promise<string> {
-  const isVideo = media.length === 1 && (media[0].type === 'video' || media[0].mime_type?.startsWith('video/'))
+  const isVideo = media.length === 1 && isVideoMedia(media[0])
   let creationId: string
 
   if (isVideo) {
