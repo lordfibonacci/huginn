@@ -598,6 +598,7 @@
         "scheduled": "\ud83d\udcc5 Scheduled {{when}} \u00b7 {{platforms}}"
       },
       "disconnect": "Disconnect",
+      "disconnectConfirm": "Disconnect this Meta account? Any scheduled posts on this board will be marked as failed.",
       "facebook": "Facebook",
       "failed": "Publish failed",
       "fbOverridePh": "Facebook caption (optional)",

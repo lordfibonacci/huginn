@@ -23,7 +23,7 @@ function buildMetaAuthUrl(projectId: string, csrfToken: string): string {
 
 export function MetaBoardSettings({ projectId }: { projectId: string }) {
   const { t } = useTranslation()
-  const { account, loading } = useSocialAccount(projectId)
+  const { account, loading, disconnect } = useSocialAccount(projectId)
 
   const onConnect = useCallback(() => {
     const csrf = crypto.randomUUID()
@@ -53,6 +53,25 @@ export function MetaBoardSettings({ projectId }: { projectId: string }) {
     <div className="text-xs space-y-1 py-2">
       <div><span className="text-huginn-text-secondary">{t('runes.meta-social.page')}:</span> <span className="text-huginn-text-primary">{account.fb_page_name}</span></div>
       <div><span className="text-huginn-text-secondary">{t('runes.meta-social.instagram')}:</span> <span className="text-huginn-text-primary">{account.ig_username ?? t('runes.meta-social.igNotLinked')}</span></div>
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onConnect}
+          className="px-2.5 py-1 text-xs rounded-md bg-huginn-card border border-huginn-border text-huginn-text-primary hover:bg-huginn-hover"
+        >
+          {t('runes.meta-social.reconnect')}
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            if (!confirm(t('runes.meta-social.disconnectConfirm'))) return
+            await disconnect()
+          }}
+          className="px-2.5 py-1 text-xs rounded-md bg-huginn-danger/20 text-huginn-danger hover:bg-huginn-danger/30"
+        >
+          {t('runes.meta-social.disconnect')}
+        </button>
+      </div>
     </div>
   )
 }
