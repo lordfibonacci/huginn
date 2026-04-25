@@ -35,6 +35,8 @@ function saveListSort(listId: string, key: ListSortKey) {
 import { CalendarView } from '../features/projects/components/CalendarView'
 import { BoardFilterBar, applyBoardFilters, DEFAULT_FILTERS } from '../features/projects/components/BoardFilterBar'
 import type { BoardFilters } from '../features/projects/components/BoardFilterBar'
+import { useEnabledRunes } from '../runes/useEnabledRunes'
+import { MetaBoardButton } from '../runes/meta-social/MetaBoardButton'
 import { getBackground } from '../shared/lib/boardBackgrounds'
 import { InboxPanel, INBOX_DROPPABLE_ID } from '../features/inbox/components/InboxPanel'
 import { useInbox } from '../features/inbox/hooks/useInbox'
@@ -256,6 +258,15 @@ export function ProjectDetailPage() {
   const [showMembers, setShowMembers] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
+
+  // Runes — enabled set for this board, plus which rune (if any) currently
+  // owns the main viewport via its boardView surface.
+  const { enabled: enabledRunes } = useEnabledRunes(id)
+  const metaRune = enabledRunes.find(r => r.id === 'meta-social')
+  const [activeRuneView, setActiveRuneView] = useState<string | null>(null)
+  const ActiveRuneView = activeRuneView
+    ? enabledRunes.find(r => r.id === activeRuneView)?.surfaces.boardView ?? null
+    : null
 
   // Deep-link: ?card=<taskId> (e.g. from the ⌘K palette) opens the popup.
   // Wait for the tasks fetch to settle so we don't prematurely give up on a
@@ -764,22 +775,30 @@ export function ProjectDetailPage() {
         {/* View switcher */}
         <div className="flex bg-huginn-card rounded-md p-0.5">
           <button
-            onClick={() => setView('board')}
+            onClick={() => { setView('board'); setActiveRuneView(null) }}
             className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors ${
-              view === 'board' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+              view === 'board' && !activeRuneView ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             {t('board.view.cards')}
           </button>
           <button
-            onClick={() => setView('calendar')}
+            onClick={() => { setView('calendar'); setActiveRuneView(null) }}
             className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors ${
-              view === 'calendar' ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
+              view === 'calendar' && !activeRuneView ? 'bg-huginn-accent text-white' : 'text-huginn-text-secondary hover:text-white'
             }`}
           >
             {t('board.view.calendar')}
           </button>
         </div>
+
+        {/* Rune-provided view buttons (gated on rune being enabled) */}
+        {metaRune && (
+          <MetaBoardButton
+            active={activeRuneView === 'meta-social'}
+            onClick={() => setActiveRuneView(cur => (cur === 'meta-social' ? null : 'meta-social'))}
+          />
+        )}
 
         <BoardFilterBar
           filters={filters}
@@ -794,9 +813,13 @@ export function ProjectDetailPage() {
         />
       </header>
 
-      {/* Board or Calendar — with board background */}
+      {/* Board, Calendar, or active rune view — with board background.
+          Rune view (when set) takes precedence over the core cards/calendar
+          toggle so the user can flip back by clicking the active rune button. */}
       <div className="flex-1 flex flex-col min-h-0" style={{ background: getBackground(project.background ?? 'default').style }}>
-      {view === 'board' ? (
+      {ActiveRuneView ? (
+        <ActiveRuneView projectId={id!} />
+      ) : view === 'board' ? (
         <BoardView
           lists={localLists}
           tasks={filteredTasks}

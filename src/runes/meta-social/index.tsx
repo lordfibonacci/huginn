@@ -2,6 +2,7 @@ import type { RuneDefinition } from '../types'
 import { MetaIcon } from './MetaIcon'
 import { MetaBoardSettings } from './MetaBoardSettings'
 import { MetaPublishSection } from './MetaPublishSection'
+import { MetaCalendarView } from './MetaCalendarView'
 
 export const metaSocialRune: RuneDefinition = {
   id: 'meta-social',
@@ -11,5 +12,6 @@ export const metaSocialRune: RuneDefinition = {
   surfaces: {
     boardSettings: MetaBoardSettings,
     cardBackSection: MetaPublishSection,
+    boardView: MetaCalendarView,
   },
 }

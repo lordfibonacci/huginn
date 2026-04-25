@@ -585,6 +585,7 @@
   "runes": {
     "adminOnly": "Only admins can enable or disable runes.",
     "meta-social": {
+      "calendar": "Social calendar",
       "caption": "Caption",
       "composerTitle": "Publish",
       "connect": "Connect Meta",
