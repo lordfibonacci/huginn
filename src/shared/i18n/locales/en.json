@@ -6,7 +6,8 @@
     "edit": "Edit",
     "close": "Close",
     "loading": "Loading…",
-    "avatar": "avatar"
+    "avatar": "avatar",
+    "back": "Back"
   },
   "account": {
     "menu": {
@@ -593,7 +594,9 @@
       "name": "Meta Social Planner",
       "notAPost": "This card isn't a post yet.",
       "notConnected": "No Meta account connected.",
+      "oauthError": "Couldn't connect to Meta.",
       "page": "Page",
+      "pickPage": "Which Facebook Page should Huginn manage?",
       "reconnect": "Reconnect",
       "tagline": "Schedule and auto-publish posts to Facebook & Instagram.",
       "turnIntoPost": "Turn into post"

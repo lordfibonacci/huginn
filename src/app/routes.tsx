@@ -12,6 +12,7 @@ import { TodayPage } from '../pages/TodayPage'
 import { CalendarPage } from '../pages/CalendarPage'
 import { AuthCallbackPage } from '../pages/AuthCallbackPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
+import MetaCallbackPage from '../pages/MetaCallbackPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -71,6 +72,7 @@ export function AppRouter() {
           }
         />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/auth/meta-callback" element={<MetaCallbackPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           element={
