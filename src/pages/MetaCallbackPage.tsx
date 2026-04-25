@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../shared/lib/supabase'
@@ -14,11 +14,18 @@ export default function MetaCallbackPage() {
   const [phase, setPhase] = useState<Phase>('verifying')
   const [pages, setPages] = useState<PageOpt[]>([])
   const [projectId, setProjectId] = useState<string>('')
-  const [code, setCode] = useState<string>('')
+  const [userAccessToken, setUserAccessToken] = useState<string>('')
   const [error, setError] = useState<string>('')
+  // OAuth codes are single-use; React 18 StrictMode fires this effect twice
+  // in dev, which would double-exchange the code (Meta sometimes allows it,
+  // sometimes doesn't — either way it's wrong).
+  const startedRef = useRef(false)
 
   useEffect(() => {
+    if (startedRef.current) return
+    startedRef.current = true
     void (async () => {
+      try {
       const codeParam = params.get('code')
       const stateParam = params.get('state')
       const errorParam = params.get('error_description') || params.get('error')
@@ -30,37 +37,65 @@ export default function MetaCallbackPage() {
       const expectedCsrf = sessionStorage.getItem('huginn.meta.oauth.csrf')
       if (!expectedCsrf || expectedCsrf !== parsed.csrf) { setError('csrf_mismatch'); setPhase('error'); return }
 
-      setCode(codeParam)
       setProjectId(parsed.project_id)
 
+      const redirectUri = import.meta.env.VITE_META_OAUTH_REDIRECT_URI as string
       const { data, error: fnErr } = await supabase.functions.invoke('meta-oauth-complete', {
-        body: { code: codeParam, project_id: parsed.project_id },
+        body: { code: codeParam, redirect_uri: redirectUri, project_id: parsed.project_id },
       })
-      if (fnErr || !data) { setError(fnErr?.message ?? 'invoke_failed'); setPhase('error'); return }
-      if ((data as { error?: string }).error) { setError((data as { message?: string }).message ?? 'unknown_error'); setPhase('error'); return }
-      if ((data as { step: string }).step === 'select_page') {
-        setPages((data as { pages: PageOpt[] }).pages)
+      if (fnErr) {
+        const ctx = (fnErr as { context?: Response }).context
+        const bodyText = ctx ? await ctx.clone().text().catch(() => '') : ''
+        setError(bodyText || fnErr.message); setPhase('error'); return
+      }
+      if (!data) { setError('invoke_failed'); setPhase('error'); return }
+      if ((data as { error?: string }).error) {
+        setError((data as { message?: string }).message ?? 'unknown_error')
+        setPhase('error'); return
+      }
+      const result = data as { step: string; pages?: PageOpt[]; user_access_token?: string }
+      if (result.step === 'select_page') {
+        setPages(result.pages ?? [])
+        setUserAccessToken(result.user_access_token ?? '')
         setPhase('picking')
       } else {
         sessionStorage.removeItem('huginn.meta.oauth.csrf')
         setPhase('done')
         setTimeout(() => navigate(`/projects/${parsed.project_id}`), 800)
       }
+      } catch (e) {
+        console.error('[MetaCallback] verify threw', e)
+        setError(e instanceof Error ? e.message : String(e))
+        setPhase('error')
+      }
     })()
   }, [params, navigate])
 
   async function choosePage(pageId: string) {
     setPhase('saving')
-    const { data, error: fnErr } = await supabase.functions.invoke('meta-oauth-complete', {
-      body: { code, project_id: projectId, selected_fb_page_id: pageId },
-    })
-    if (fnErr || (data as { error?: string })?.error) {
-      setError((data as { message?: string })?.message ?? fnErr?.message ?? 'save_failed')
-      setPhase('error'); return
+    try {
+      console.log('[MetaCallback] choosePage', { pageId, projectId, hasToken: !!userAccessToken })
+      const { data, error: fnErr } = await supabase.functions.invoke('meta-oauth-complete', {
+        body: { user_access_token: userAccessToken, project_id: projectId, selected_fb_page_id: pageId },
+      })
+      console.log('[MetaCallback] choosePage result', { data, fnErr })
+      if (fnErr) {
+        const ctx = (fnErr as { context?: Response }).context
+        const bodyText = ctx ? await ctx.clone().text().catch(() => '') : ''
+        setError(bodyText || fnErr.message); setPhase('error'); return
+      }
+      if ((data as { error?: string })?.error) {
+        setError((data as { message?: string })?.message ?? 'save_failed')
+        setPhase('error'); return
+      }
+      sessionStorage.removeItem('huginn.meta.oauth.csrf')
+      setPhase('done')
+      setTimeout(() => navigate(`/projects/${projectId}`), 800)
+    } catch (e) {
+      console.error('[MetaCallback] choosePage threw', e)
+      setError(e instanceof Error ? e.message : String(e))
+      setPhase('error')
     }
-    sessionStorage.removeItem('huginn.meta.oauth.csrf')
-    setPhase('done')
-    setTimeout(() => navigate(`/projects/${projectId}`), 800)
   }
 
   if (phase === 'error') {
