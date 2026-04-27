@@ -3,6 +3,16 @@ import { supabase } from '../../../shared/lib/supabase'
 import { useAuth } from '../../../shared/hooks/useAuth'
 import type { Mention, CardView, Profile, Project, Task } from '../../../shared/lib/types'
 
+// Module-level bus so useMarkCardViewed can hand the new viewed_at directly
+// to any mounted mentions hooks. Realtime would eventually echo the same
+// upsert, but the round-trip is unreliable enough that the bell badge often
+// stayed lit until manual refresh.
+type CardViewedListener = (taskId: string, viewedAt: string) => void
+const cardViewedListeners = new Set<CardViewedListener>()
+function emitCardViewed(taskId: string, viewedAt: string) {
+  for (const cb of cardViewedListeners) cb(taskId, viewedAt)
+}
+
 // Per-board map of unread mention counts keyed by task_id. Used to render the
 // unread dot on each TaskCard.
 //
@@ -63,6 +73,19 @@ export function useUnreadMentionsByTask(projectId: string): Record<string, numbe
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [projectId, userId, fetchData])
+
+  // Local bus: instant update when this device opens a card.
+  useEffect(() => {
+    const handler: CardViewedListener = (taskId, viewedAt) => {
+      setViews(prev => {
+        const existing = prev[taskId]
+        if (existing && existing >= viewedAt) return prev
+        return { ...prev, [taskId]: viewedAt }
+      })
+    }
+    cardViewedListeners.add(handler)
+    return () => { cardViewedListeners.delete(handler) }
+  }, [])
 
   return useMemo(() => {
     const counts: Record<string, number> = {}
@@ -186,6 +209,19 @@ export function useGlobalMentions(): { count: number; rows: MentionRow[]; loadin
     return () => { supabase.removeChannel(channel) }
   }, [userId, fetchAll])
 
+  // Local bus: instant update when this device opens a card.
+  useEffect(() => {
+    const handler: CardViewedListener = (taskId, viewedAt) => {
+      setViews(prev => {
+        const existing = prev[taskId]
+        if (existing && existing >= viewedAt) return prev
+        return { ...prev, [taskId]: viewedAt }
+      })
+    }
+    cardViewedListeners.add(handler)
+    return () => { cardViewedListeners.delete(handler) }
+  }, [])
+
   const { rows, count } = useMemo(() => {
     const result: MentionRow[] = []
     for (const m of mentions) {
@@ -213,10 +249,12 @@ export function useMarkCardViewed(taskId: string | null | undefined) {
   const { user } = useAuth()
   useEffect(() => {
     if (!taskId || !user?.id) return
+    const viewedAt = new Date().toISOString()
+    emitCardViewed(taskId, viewedAt)
     supabase
       .from('huginn_card_views')
       .upsert(
-        { task_id: taskId, user_id: user.id, viewed_at: new Date().toISOString() },
+        { task_id: taskId, user_id: user.id, viewed_at: viewedAt },
         { onConflict: 'task_id,user_id' },
       )
       .then(({ error }) => {

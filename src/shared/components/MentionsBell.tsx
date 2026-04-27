@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useGlobalMentions } from '../../features/projects/hooks/useMentions'
@@ -9,24 +10,56 @@ import { timeAgo } from '../lib/dateUtils'
 // Bell button + dropdown for unread @-mentions across all boards. Click a row
 // to deep-link to the mentioned card via `?card=<id>`. Mark-as-read happens
 // automatically when CardPopup mounts.
+//
+// The dropdown is portaled to document.body — GlobalTopBar uses
+// `backdrop-blur-sm` which creates a stacking context that would otherwise
+// trap an absolutely-positioned panel behind the board cards.
 export function MentionsBell() {
   const { t } = useTranslation()
   const { count, rows } = useGlobalMentions()
   const [open, setOpen] = useState(false)
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null)
+
+  useEffect(() => {
+    if (!open) {
+      setAnchor(null)
+      return
+    }
+    function recompute() {
+      const btn = buttonRef.current
+      if (!btn) return
+      const rect = btn.getBoundingClientRect()
+      setAnchor({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    recompute()
+    window.addEventListener('resize', recompute)
+    window.addEventListener('scroll', recompute, true)
+    return () => {
+      window.removeEventListener('resize', recompute)
+      window.removeEventListener('scroll', recompute, true)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     function onDown(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (buttonRef.current?.contains(target) || panelRef.current?.contains(target)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
   return (
-    <div className="relative" ref={wrapperRef}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen(o => !o)}
         className="relative flex items-center justify-center w-7 h-7 rounded-full text-huginn-text-muted hover:text-white hover:bg-huginn-hover transition-colors"
         title={t('mentions.bell.title', { count })}
@@ -42,8 +75,12 @@ export function MentionsBell() {
         )}
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-[420px] overflow-y-auto bg-huginn-card border border-huginn-border rounded-xl shadow-2xl py-1 z-50">
+      {open && anchor && createPortal(
+        <div
+          ref={panelRef}
+          className="fixed z-[80] w-80 max-h-[420px] overflow-y-auto bg-huginn-card border border-huginn-border rounded-xl shadow-2xl py-1"
+          style={{ top: anchor.top, right: anchor.right }}
+        >
           <div className="px-3 py-2 border-b border-huginn-border/60 text-[10px] uppercase tracking-wider font-bold text-huginn-text-muted">
             {t('mentions.bell.heading')}
           </div>
@@ -82,8 +119,9 @@ export function MentionsBell() {
               </div>
             </Link>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   )
 }
