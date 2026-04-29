@@ -216,6 +216,7 @@
   },
   "common": {
     "avatar": "notendamynd",
+    "back": "Til baka",
     "cancel": "Hætta við",
     "close": "Loka",
     "delete": "Eyða",
@@ -619,6 +620,79 @@
     "orderedList": "Tölusettur listi",
     "placeholder": "Skrifaðu eitthvað...",
     "strike": "Yfirstrikað"
+  },
+  "runes": {
+    "adminOnly": "Aðeins stjórnendur geta kveikt eða slökkt á rúnum.",
+    "meta-social": {
+      "calendar": "Samfélagsdagatal",
+      "caption": "Myndatexti",
+      "composerTitle": "Birta",
+      "connect": "Tengja Meta",
+      "connectFirst": "Tengdu Meta reikning í stillingum töflu til að byrja að skipuleggja færslur.",
+      "detail": {
+        "failedNoMsg": "⚠ Birting mistókst",
+        "failedWithMsg": "⚠ Birting mistókst: {{msg}}",
+        "published": "✅ Birt {{when}}",
+        "publishing": "⏳ Birti…",
+        "scheduled": "📅 Áætlað {{when}} · {{platforms}}"
+      },
+      "disconnect": "Aftengja",
+      "disconnectConfirm": "Aftengja þennan Meta reikning? Allar áætlaðar færslur á þessari töflu verða merktar sem misteknar.",
+      "facebook": "Facebook",
+      "failed": "Birting mistókst",
+      "fbOverridePh": "Facebook myndatexti (valfrjálst)",
+      "firstCommentPh": "Fyrsta ummæli á Instagram (valfrjálst)",
+      "hideOverrides": "Fela sérstillingar",
+      "igNotLinked": "Enginn Instagram Business reikningur tengdur",
+      "igOverridePh": "Instagram myndatexti (valfrjálst)",
+      "instagram": "Instagram",
+      "media": "Myndefni",
+      "mediaPickerEmpty": "Bættu fyrst við mynd eða myndbandi við þetta spjald.",
+      "name": "Meta birtingaáætlun",
+      "notAPost": "Þetta spjald er ekki færsla ennþá.",
+      "notConnected": "Enginn Meta reikningur tengdur.",
+      "oauthError": "Gat ekki tengst Meta.",
+      "openOnFb": "Opna á Facebook ↗",
+      "openOnIg": "Opna á Instagram ↗",
+      "page": "Síða",
+      "pickPage": "Hvaða Facebook síðu á Huginn að stjórna?",
+      "postedAt": "Birt {{when}}",
+      "publishNow": "Birta núna",
+      "reconnect": "Endurtengja",
+      "retry": "Reyna aftur",
+      "schedule": "Tímasetja",
+      "scheduledAt": "Tímasetning",
+      "showOverrides": "Sýna sérstillingar fyrir hvern miðil",
+      "status": {
+        "draft": "Uppkast",
+        "failed": "Mistókst",
+        "published": "Birt",
+        "publishing": "Í birtingu",
+        "scheduled": "Áætlað"
+      },
+      "tagline": "Áætlaðu og birtu færslur sjálfkrafa á Facebook og Instagram.",
+      "timeAgo": {
+        "days_one": "fyrir {{count}}d",
+        "days_other": "fyrir {{count}}d",
+        "hours_one": "fyrir {{count}}klst",
+        "hours_other": "fyrir {{count}}klst",
+        "justNow": "rétt í þessu",
+        "minutes_one": "fyrir {{count}}mín",
+        "minutes_other": "fyrir {{count}}mín"
+      },
+      "turnIntoPost": "Breyta í færslu",
+      "unschedule": "Taka af áætlun",
+      "validation": {
+        "igCarouselMax10": "Instagram flettur mega aðeins innihalda 10 myndir.",
+        "igImageTooLarge": "Instagram myndir verða að vera undir 8 MB.",
+        "igVideoTooLarge": "Instagram myndbönd verða að vera undir 100 MB.",
+        "mixedMediaNotSupported": "Færslur geta verið annaðhvort myndir (allt að 10) EÐA eitt myndband — ekki blanda.",
+        "multiVideoNotSupported": "Aðeins eitt myndband á færslu er stutt í v1.",
+        "noMedia": "Hengdu að minnsta kosti eina mynd eða myndband við þetta spjald og veldu það."
+      }
+    },
+    "sectionHint": "Valfrjálsar viðbætur sem gefa þessari töflu nýja eiginleika. Hver tafla getur virkjað sínar eigin.",
+    "sectionTitle": "Rúnir"
   },
   "settings": {
     "account": {

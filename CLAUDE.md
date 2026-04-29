@@ -172,8 +172,9 @@ Brand: raven mark + `huginn` wordmark. `Lockup` / `Mark` / `Wordmark` components
 ## Key Patterns
 
 - **Hooks with Realtime.** Every data hook fetches on mount AND subscribes to Supabase Realtime. Channel names use `crypto.randomUUID()` to avoid collisions between hook instances.
-- **Beware the RLS filter trap.** Postgres realtime evaluates a filter like `project_id=eq.X` against the event's NEW row, so rows that LEAVE the filter (task moved to another board or to inbox → `project_id` becomes null/other) never emit on the source board. When a table's filtered column can change, subscribe unfiltered and scope in the fetch instead. `useProjectTasks` now does this so every viewer of the source board sees tasks leave; `useInbox` and `useTaskCounts` too. `removeTaskLocal` stays as an optimistic drop ahead of the realtime echo.
+- **Realtime: filtered for delivery, unfiltered for leavers.** Two truths in tension. (1) Server-filtered `postgres_changes` (e.g. `project_id=eq.X`) is the only RELIABLE delivery path — fully unfiltered subscriptions drop INSERTs from other users intermittently (Árni adds a card → Heimir doesn't see it until refresh). (2) But filtered subscriptions evaluate against the event's NEW row, so rows that LEAVE the filter (task moved to another board → `project_id` changes) never emit on the source board. Resolution: use BOTH on the same channel — a filtered `event:'*'` binding for the in-project events that must arrive, plus an unfiltered `UPDATE` binding as a safety net for leavers. `useProjectTasks` does this. `removeTaskLocal` is the local mover's optimistic drop. `useInbox` / `useTaskCounts` stay fully unfiltered because their fetches aren't scoped to a single project_id (inbox is `project_id IS NULL`, counts span all projects).
 - **Profile freshness across users.** `huginn_profiles` is in the realtime publication; `useProfile` watches the signed-in user's row, and `useBoardMembers` / `useTaskMembers` listen for UPDATEs on members' profile rows so teammate avatar/name/locale changes propagate without refresh.
+- **Module-level bus for own-write echoes.** When a hook writes a row that another hook needs to derive UI state from on the same device, don't rely on the realtime round-trip — it's intermittently slow or dropped (tab-focus changes, bad networks) and used to leave the bell badge stale until refresh. `useMentions.ts` exposes a module-scoped `cardViewedListeners: Set<...>`; `useMarkCardViewed` emits synchronously alongside its `huginn_card_views` upsert, and `useGlobalMentions` / `useUnreadMentionsByTask` merge into local `views` state on subscription. Realtime stays in place as cross-device sync.
 - **Optimistic updates with rollback.** Mutations update local state first; on error revert to previous state.
 - **ModalShell.** Centered modal on desktop, bottom drawer on mobile. Used by Project/Account settings + Move dialog.
 - **Shared DndContext.** `ProjectDetailPage` owns the DndContext so the inbox sidebar and board can drag cards to each other. BoardView lists are per-list `SortableContext`s using `verticalListSortingStrategy`. Never unmount the active sortable item mid-drag (causes dnd-kit to lose track).
@@ -208,3 +209,88 @@ Fully shipped. Owner / admin / member roles (viewer removed). Pending-invite flo
 - Favicon / branded icons are regenerated via `npm run brand`; source PNGs live outside the repo at `../Graffík/`.
 - Feature work uses the superpowers `brainstorming` skill: brainstorm → write spec to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` → implement. Existing specs live alongside as reference.
 - Top-level `ErrorBoundary` (`src/shared/components/ErrorBoundary.tsx`) wraps the router — render exceptions show the error panel instead of a blank screen. Useful for diagnosing live bugs from screenshots.
+
+
+## End-of-session rituals
+
+When I say "end of session", "end session", "wrap up", "I'm done for now", or similar, treat it as a session-closing trigger and execute one of the procedures below. If unclear which applies, ask me before acting. The goal: leave things clean so I can `/clear` the conversation with no loose ends.
+
+### Stable checkpoint (build green, no half-done edits, ready to /clear)
+
+1. Run `npm run build`. Report any errors before proceeding. Only continue once build passes.
+
+2. Update CLAUDE.md sections that map to what changed this session. This is a reference doc, not a progress log — there is no "What's built" list to append to. Touch only the sections that were actually affected:
+   - New route added → update the Routes section
+   - New table / RLS change / storage bucket / realtime addition → update the Supabase section (or equivalent)
+   - New edge function → update the Edge Functions section
+   - New env var → update the env-var list under Commands or Tech Stack
+   - New convention discovered from a bug fix → update Conventions / Key Patterns / relevant section
+   - Design system change → update Design System
+   - New deploy quirk → update Deployment
+
+   Skip any section that was not affected. Match the project's existing tone, formatting, and heading style.
+
+3. Do NOT add a "Recent changes" log or a `docs/progress/` folder. History lives in git; CLAUDE.md stays a reference snapshot of current state.
+
+4. Report back with:
+   - Which CLAUDE.md sections you edited (section name + nature of change, not full diff)
+   - Any new env var or secret the deploy target needs before the next deploy
+   - Any uncommitted files the session left behind
+
+Do not commit. I want to review before pushing.
+
+### Mid-work handoff (bug unresolved, blocked, or stopping mid-flight — NOT at a checkpoint)
+
+Write a resume note at `docs/session/YYYY-MM-DD-<short-topic>.md`. Create the `docs/session/` folder if it does not exist, and add `docs/session/` to `.gitignore` if it is not already there. Use absolute paths throughout - the next session may have a different working directory.
+
+Structure:
+
+```
+# YYYY-MM-DD Resume: <topic>
+
+## In-flight
+What feature or bug is being worked on, what it is for, why it matters.
+
+## What was done this session
+Concrete changes with file:line references (absolute paths). Include migrations drafted even if not applied. Be specific.
+
+## Running state
+- Background processes: shell IDs + what they are + how to kill - or "none"
+- Dev servers / ports: url + port - or "none"
+- Open worktrees / branches beyond main - or "none"
+
+## What's blocking / unknown
+What stopped progress. Paste exact error messages verbatim. For design questions, state the options considered.
+
+## Next 2-3 actions on resume
+Numbered, concrete steps. Not "figure out the bug" — rather "1. Retry X; 2. read the error; 3. match against guesses below."
+
+## Paths already tried (do NOT redo)
+What was attempted that did not work.
+
+## Files touched but not finished
+Files with pending edits (absolute paths).
+
+## Context the next session needs
+Deploy state (migrations applied, edge functions deployed), env vars set in the deploy target, any uncommitted or unpushed local state.
+
+## Pick up here
+One sentence: the single most likely first action for a fresh agent on resume.
+```
+
+After writing the file, report back with:
+- Path to the resume note
+- Any uncommitted or unpushed state that would confuse the next session
+- Any background processes still running that the next session should know about
+
+Do not commit. Do not revert anything.
+
+### Session-break decision guide
+
+| Break length | What to do |
+|---|---|
+| < 1 hour | Leave the conversation open. 1h cache TTL covers it. |
+| Overnight, at a checkpoint | Run the stable-checkpoint procedure, then `/clear` |
+| Overnight, mid-work | Run the mid-work handoff procedure, then `/clear` |
+| Weekend or longer | Always mid-work handoff + `/clear`, never leave open |
+| Switching to genuinely unrelated work | `/clear`, not `/compact` |

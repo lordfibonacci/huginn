@@ -6,7 +6,8 @@
     "edit": "Edit",
     "close": "Close",
     "loading": "Loading…",
-    "avatar": "avatar"
+    "avatar": "avatar",
+    "back": "Back"
   },
   "account": {
     "menu": {
@@ -580,6 +581,79 @@
   "activity": {
     "attached": "attached {{name}}",
     "attachedFallback": "a file"
+  },
+  "runes": {
+    "adminOnly": "Only admins can enable or disable runes.",
+    "meta-social": {
+      "calendar": "Social calendar",
+      "caption": "Caption",
+      "composerTitle": "Publish",
+      "connect": "Connect Meta",
+      "connectFirst": "Connect a Meta account in board settings to start planning posts.",
+      "detail": {
+        "failedNoMsg": "\u26a0 Publish failed",
+        "failedWithMsg": "\u26a0 Publish failed: {{msg}}",
+        "published": "\u2705 Published {{when}}",
+        "publishing": "\u23f3 Publishing\u2026",
+        "scheduled": "\ud83d\udcc5 Scheduled {{when}} \u00b7 {{platforms}}"
+      },
+      "disconnect": "Disconnect",
+      "disconnectConfirm": "Disconnect this Meta account? Any scheduled posts on this board will be marked as failed.",
+      "facebook": "Facebook",
+      "failed": "Publish failed",
+      "fbOverridePh": "Facebook caption (optional)",
+      "firstCommentPh": "Instagram first comment (optional)",
+      "hideOverrides": "Hide overrides",
+      "igNotLinked": "No Instagram Business account linked",
+      "igOverridePh": "Instagram caption (optional)",
+      "instagram": "Instagram",
+      "media": "Media",
+      "mediaPickerEmpty": "Add an image or video attachment to this card first.",
+      "name": "Meta Social Planner",
+      "notAPost": "This card isn't a post yet.",
+      "notConnected": "No Meta account connected.",
+      "oauthError": "Couldn't connect to Meta.",
+      "openOnFb": "Open on Facebook \u2197",
+      "openOnIg": "Open on Instagram \u2197",
+      "page": "Page",
+      "pickPage": "Which Facebook Page should Huginn manage?",
+      "postedAt": "Posted {{when}}",
+      "publishNow": "Publish now",
+      "reconnect": "Reconnect",
+      "retry": "Retry",
+      "schedule": "Schedule",
+      "scheduledAt": "Scheduled time",
+      "showOverrides": "Show per-platform overrides",
+      "status": {
+        "draft": "Draft",
+        "failed": "Failed",
+        "published": "Published",
+        "publishing": "Publishing",
+        "scheduled": "Scheduled"
+      },
+      "tagline": "Schedule and auto-publish posts to Facebook & Instagram.",
+      "timeAgo": {
+        "days_one": "{{count}}d ago",
+        "days_other": "{{count}}d ago",
+        "hours_one": "{{count}}h ago",
+        "hours_other": "{{count}}h ago",
+        "justNow": "just now",
+        "minutes_one": "{{count}}m ago",
+        "minutes_other": "{{count}}m ago"
+      },
+      "turnIntoPost": "Turn into post",
+      "unschedule": "Unschedule",
+      "validation": {
+        "igCarouselMax10": "Instagram carousels are limited to 10 images.",
+        "igImageTooLarge": "Instagram images must be under 8 MB.",
+        "igVideoTooLarge": "Instagram videos must be under 100 MB.",
+        "mixedMediaNotSupported": "Posts can be all images (up to 10) OR one video \u2014 not a mix.",
+        "multiVideoNotSupported": "Only one video per post is supported in v1.",
+        "noMedia": "Attach at least one image or video to this card and select it."
+      }
+    },
+    "sectionHint": "Optional modules that add new powers to this board. Each board can enable its own set.",
+    "sectionTitle": "Runes"
   },
   "settings": {
     "project": {

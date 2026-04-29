@@ -25,15 +25,27 @@ export function useProjectTasks(projectId: string) {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
 
-  // Subscribe unfiltered so we also catch tasks LEAVING this project (moved
-  // to another board or to inbox). A `project_id=eq.X` filter would miss
-  // those UPDATEs because the event payload's NEW.project_id is no longer X.
-  // Fetch is still scoped by project, so the refetched list is correct.
+  // Two bindings on one channel:
+  //   1. Server-filtered `project_id=eq.X` for INSERT/UPDATE/DELETE within
+  //      this board. This is the RELIABLE path — Supabase Realtime routes
+  //      filtered postgres_changes much more consistently than unfiltered
+  //      ones. INSERTs from teammates were being silently dropped under the
+  //      old single unfiltered binding ("Árni adds a card, doesn't appear
+  //      until I refresh") even though RLS allowed it.
+  //   2. Unfiltered UPDATE for the leaving case — when a task's `project_id`
+  //      changes (moved to another board or to inbox), the filtered binding
+  //      above misses it because postgres_changes evaluates the filter
+  //      against the NEW row. The local mover still drops via
+  //      `removeTaskLocal`; this binding is the safety net for OTHER viewers
+  //      of the source board.
   useEffect(() => {
     const channelName = `huginn_tasks_${projectId}_${crypto.randomUUID()}`
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'huginn_tasks', filter: `project_id=eq.${projectId}` }, () => {
+        fetchTasks()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'huginn_tasks' }, () => {
         fetchTasks()
       })
       .subscribe()

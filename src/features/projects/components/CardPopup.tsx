@@ -26,6 +26,7 @@ import { useTaskMembers } from '../hooks/useTaskMembers'
 import { supabase } from '../../../shared/lib/supabase'
 import { timeAgo } from '../../../shared/lib/dateUtils'
 import { syncDescriptionMentions } from '../lib/mentions'
+import { useEnabledRunes } from '../../../runes/useEnabledRunes'
 
 interface CardPopupProps {
   task: Task
@@ -76,6 +77,7 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
   const { attachments, uploadFile, deleteAttachment, setCover, coverImage } = useAttachments(task.id)
   const { members: boardMembers } = useBoardMembers(projectId)
   const { memberIds: assignedIds, profiles: assignedProfiles, assignMember, unassignMember, isAssigned } = useTaskMembers(task.id)
+  const { enabled: enabledRunes } = useEnabledRunes(task.project_id ?? undefined)
   const taskLabels = projectLabels.filter(l => labelIds.includes(l.id))
 
   // Active board members → MentionItem list for the @-picker (description and
@@ -413,6 +415,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               />
             </div>
 
+            {/* Rune card-detail badges (e.g. Meta Social Planner schedule/published line) */}
+            {enabledRunes.map(rune => {
+              const Detail = rune.surfaces.cardDetailBadges
+              return Detail ? <Detail key={rune.id} task={task} /> : null
+            })}
+
             {/* Quick actions */}
             <div className="flex items-center gap-2 flex-wrap">
               {!isInboxCard && (
@@ -617,6 +625,12 @@ export function CardPopup({ task, projectId, lists, onUpdate, onDelete, onClose,
               />
               </div>
             )}
+
+            {/* Rune card-back sections (e.g. Meta Social Planner publish card) */}
+            {enabledRunes.map(rune => {
+              const Section = rune.surfaces.cardBackSection
+              return Section ? <Section key={rune.id} task={task} /> : null
+            })}
 
             {/* Attachments */}
             {(attachments.length > 0 || pasting) && (
