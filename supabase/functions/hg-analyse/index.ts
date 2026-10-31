@@ -21,7 +21,7 @@ import {
   applyAnalysis,
   buildUserMessage,
   clipText,
-  isPathInProject,
+  isItemFilePath,
   mergeIntoItem,
   selectTextFiles,
   type MessageFile,
@@ -110,8 +110,9 @@ async function claim(db: SupabaseClient, itemId: string): Promise<boolean> {
 
 // Files in upload order. Text files are downloaded and clipped, the rest go
 // in by name and size only. Returns the names that were sent with text too.
-// A path outside the item's project folder is never downloaded (the service
-// user may see other projects' files), it goes in by name and size only.
+// A path that is not exactly this item's own file path is never downloaded
+// (the service user may see other projects' files), it goes in by name and
+// size only.
 async function readFiles(
   db: SupabaseClient,
   item: Pick<Item, 'id' | 'project_id'>,
@@ -133,8 +134,8 @@ async function readFiles(
       files.push({ name: row.name, size: row.size })
       continue
     }
-    if (!isPathInProject(row.storage_path, item.project_id)) {
-      console.warn(`hg-analyse ${item.id}: ${row.name} has a path outside project ${item.project_id}, not read`)
+    if (!isItemFilePath(row.storage_path, item.project_id, item.id)) {
+      console.warn(`hg-analyse ${item.id}: ${row.name} has an unexpected storage path, not read`)
       files.push({ name: row.name, size: row.size })
       continue
     }

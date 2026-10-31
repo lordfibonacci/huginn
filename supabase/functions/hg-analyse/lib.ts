@@ -79,16 +79,22 @@ export function selectTextFiles<T extends FileRow>(
   return { send, listOnly }
 }
 
+const SAFE_FILE_SEGMENT = /^[A-Za-z0-9._-]+$/
+
 // The function reads files as the Claude service user, who may be in several
-// projects. A file row is only trusted to point inside its own project's
-// folder: <project_id>/ followed by plain segments, no empty, . or ..
-// segments, no leading slash and no backslash. The uuid compares ignoring case.
-export function isPathInProject(storagePath: string, projectId: string): boolean {
-  if (projectId === '' || storagePath.includes('\\')) return false
+// projects. A file row is only trusted when its path has the exact shape both
+// writers build (src/vinnubord/lib/api.ts uploadFile, cli/lib/write.mjs):
+// <project_id>/<item_id>/<uuid>_<safe name>, the name holding only
+// [A-Za-z0-9._-]. Anything else, percent encoding, ?, #, backslash, space,
+// extra or missing segments or another item's folder, is refused. The two
+// uuids compare ignoring case.
+export function isItemFilePath(storagePath: string, projectId: string, itemId: string): boolean {
   const segments = storagePath.split('/')
-  if (segments.length < 2) return false
-  if (segments[0].toLowerCase() !== projectId.toLowerCase()) return false
-  return segments.every((seg) => seg !== '' && seg !== '.' && seg !== '..')
+  if (segments.length !== 3) return false
+  const [project, item, name] = segments
+  if (projectId === '' || project.toLowerCase() !== projectId.toLowerCase()) return false
+  if (itemId === '' || item.toLowerCase() !== itemId.toLowerCase()) return false
+  return SAFE_FILE_SEGMENT.test(name) && name !== '.' && name !== '..'
 }
 
 // maxBytes counts UTF-8 bytes. The cut steps back over continuation bytes so

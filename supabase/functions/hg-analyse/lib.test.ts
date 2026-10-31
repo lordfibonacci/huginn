@@ -9,7 +9,7 @@ import {
   applyAnalysis,
   buildUserMessage,
   clipText,
-  isPathInProject,
+  isItemFilePath,
   mergeIntoItem,
   selectTextFiles,
 } from './lib'
@@ -428,34 +428,63 @@ describe('mergeIntoItem', () => {
   })
 })
 
-describe('isPathInProject', () => {
+describe('isItemFilePath', () => {
   const project = '6ea33ea7-0072-4e4b-a625-156ebf487399'
-  const other = '0b1c2d3e-4f50-4617-8899-aabbccddeeff'
+  const item = '9f8e7d6c-5b4a-4321-8fed-cba987654321'
+  const otherProject = '0b1c2d3e-4f50-4617-8899-aabbccddeeff'
+  const otherItem = '11111111-2222-4333-8444-555555555555'
+  const name = '3c9a1f2e-7b6d-4e5f-9a0b-1c2d3e4f5a6b_Lysing_v2.md'
+  const path = (n: string, p = project, i = item) => `${p}/${i}/${n}`
 
-  it('passes a path inside the project folder', () => {
-    expect(isPathInProject(`${project}/item/lysing.md`, project)).toBe(true)
-    expect(isPathInProject(`${project.toUpperCase()}/item/lysing.md`, project)).toBe(true)
+  it('passes the shape both writers build', () => {
+    expect(isItemFilePath(path(name), project, item)).toBe(true)
   })
 
-  it('R26: fails a path in another project', () => {
-    expect(isPathInProject(`${other}/item/lysing.md`, project)).toBe(false)
+  it('passes upper case uuids in the path', () => {
+    expect(isItemFilePath(path(name, project.toUpperCase(), item.toUpperCase()), project, item)).toBe(true)
   })
 
-  it('fails a path that climbs out with .. or uses . segments', () => {
-    expect(isPathInProject(`${project}/../${other}/x`, project)).toBe(false)
-    expect(isPathInProject(`${project}/./x`, project)).toBe(false)
+  it('R26: fails another project', () => {
+    expect(isItemFilePath(path(name, otherProject), project, item)).toBe(false)
+  })
+
+  it('fails another item in the same project', () => {
+    expect(isItemFilePath(path(name, project, otherItem), project, item)).toBe(false)
+  })
+
+  it('R27: fails percent encoded traversal in any segment', () => {
+    expect(isItemFilePath(path('%2e%2e'), project, item)).toBe(false)
+    expect(isItemFilePath(path('a%2e%2e%2fb.md'), project, item)).toBe(false)
+    expect(isItemFilePath(`%2e%2e/${item}/${name}`, project, item)).toBe(false)
+    expect(isItemFilePath(`${project}/%2e%2e/${name}`, project, item)).toBe(false)
+  })
+
+  it('fails . and .. as the name', () => {
+    expect(isItemFilePath(path('..'), project, item)).toBe(false)
+    expect(isItemFilePath(path('.'), project, item)).toBe(false)
+  })
+
+  it('fails ?, #, backslash and space in the name', () => {
+    expect(isItemFilePath(path('a.md?x=1'), project, item)).toBe(false)
+    expect(isItemFilePath(path('a.md#x'), project, item)).toBe(false)
+    expect(isItemFilePath(path('a\\..\\b.md'), project, item)).toBe(false)
+    expect(isItemFilePath(path('a b.md'), project, item)).toBe(false)
+  })
+
+  it('fails 2 and 4 segments, and empty segments', () => {
+    expect(isItemFilePath(`${project}/${name}`, project, item)).toBe(false)
+    expect(isItemFilePath(`${project}/${item}/x/${name}`, project, item)).toBe(false)
+    expect(isItemFilePath(`${project}/${item}/`, project, item)).toBe(false)
+    expect(isItemFilePath(`/${project}/${item}`, project, item)).toBe(false)
   })
 
   it('fails when the project id is only a prefix of a longer first segment', () => {
-    expect(isPathInProject(`${project}x/item/a.md`, project)).toBe(false)
+    expect(isItemFilePath(`${project}x/${item}/${name}`, project, item)).toBe(false)
   })
 
-  it('fails empty segments, a leading slash, backslashes and a bare project id', () => {
-    expect(isPathInProject(`${project}//a.md`, project)).toBe(false)
-    expect(isPathInProject(`/${project}/a.md`, project)).toBe(false)
-    expect(isPathInProject(`${project}/a\\..\\b.md`, project)).toBe(false)
-    expect(isPathInProject(`${project}/`, project)).toBe(false)
-    expect(isPathInProject(project, project)).toBe(false)
-    expect(isPathInProject(`${project}/a.md`, '')).toBe(false)
+  it('fails an empty project or item id', () => {
+    expect(isItemFilePath(`/${item}/${name}`, '', item)).toBe(false)
+    expect(isItemFilePath(`${project}//${name}`, project, '')).toBe(false)
   })
 })
+
