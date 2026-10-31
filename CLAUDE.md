@@ -42,7 +42,7 @@ npm run preview   # Preview production build
 npm run lint      # ESLint, currently broken (v9 expects eslint.config.js). Use build and test instead.
 npm run brand     # Regenerate PWA icons and brand PNGs from ../Graffík source
 npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
-npm run seed:metta # Seed the live project metta from cli/seed/metta-2026-10-31.json (skips existing titles)
+npm run seed:metta # One time only, already run 2026-10-31. Refuses a real run once metta has items (--again overrides); --dry-run still works
 node cli/huginn.mjs <command> # The huginn CLI (login, pull, sync, item, plan ...), see cli/README.md
 ```
 

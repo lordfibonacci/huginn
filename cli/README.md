@@ -25,6 +25,8 @@ Plain Node ESM, Node 20 eða nýrra. Eina dependency er `@supabase/supabase-js` 
 
 Tólið geymir innskráningu í `~/.huginn/session.json` svo flestar keyrslur sleppa lykilorðinu. Óhætt er að eyða þeirri skrá, þá skráir tólið sig inn aftur.
 
+Mappan `~/.huginn/` geymir lifandi lykilorð (`credentials.json`) og innskráningartóka (`session.json`). Tólið skrifar þær með `mode 0o600`, en það gerir ekkert á Windows, svo á sameiginlegri tölvu þarf að læsa möppunni handvirkt (Eiginleikar, Öryggi: aðeins þinn notandi).
+
 Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/Claude Code/Huginn/huginn/cli/huginn.mjs" <skipun>`.
 
 ## Skipanir

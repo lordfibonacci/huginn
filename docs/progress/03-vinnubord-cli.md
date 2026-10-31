@@ -59,18 +59,18 @@ Tólið afritar þær reglur vefsins sem það þarf sem `.mjs` (staðaheiti, `i
 
 Hópar í fastri röð, tómir sleppa: Nýtt, Bíður ákvörðunar (bíður án manns), Bíður Claude, Bíður Árna, Bíður Heimis (þjónustunotandi fyrst, svo eftir skammstöfun), Tilbúið til byggingar, Í byggingu, Í bið. Ein lína á verk, nýjast fyrst: `[tónn] titill, staða, hver, ISO tími #id8`, og undir henni opin handtök og ósvaraðar spurningar. Stýritákn úr gagnagrunninum eru hreinsuð, svo titill getur ekki búið til fyrirsögn. Lokuð verk og hætt við eru aldrei á listanum.
 
-`pull --brief` telur verk á borðinu sem bíða hvers þátttakanda eftir reglu vefsins (`waitsFor`): verkið bíður hans eða hann á opið handtak á því. Sama röð og STATUS.md.
+`pull --brief` telur verk á borðinu sem bíða hvers þátttakanda eftir reglu vefsins (`waitsFor`): verkið bíður hans eða hann á opið handtak á því. Sama röð og STATUS.md. STATUS.md flokkar aðeins eftir `waiting_on`, svo tölurnar geta verið ólíkar; ein lína undir titli STATUS.md segir það (`STATUS_NOTE` í `format.mjs`).
 
 ### Skill og hook í metta2_new
 
 - `.claude/skills/huginn/SKILL.md`: hvað Huginn er, keyra alltaf úr `metta2_new` (cd þangað fyrst), lotustart, nýtt verk sótt og greint, plan skrifað, að haka við handtak og svara spurningu, lotulok sem skyldulisti (plön, skrár með `--repo-path` ef þær eru ekki þegar á verkinu, handtök með SQL í payload, úrskurðir, Hvar erum við og næsta skref, `sync`, `bundle push`, `git add docs/huginn`), reglur.
-- `.claude/settings.json`: SessionStart hook sem keyrir `pull --brief` með `2>/dev/null || true`, svo lotan fellur aldrei ef tólið vantar, netið er niðri eða node finnst ekki (prófað). Timeout 20 s.
+- `.claude/settings.json`: SessionStart hook sem keyrir `pull --brief` með `2>/dev/null || echo "Huginn: náði ekki sambandi, keyrðu huginn whoami"`. Takist það prentar hookið aðeins stöðulínuna. Mistakist það af hvaða ástæðu sem er (tólið vantar, netið er niðri, innskráning bregst, node finnst ekki) prentar það þá einu línu og hættir samt með exit 0, svo lotan fellur aldrei (prófað). Villur tólsins á stderr eru faldar. Timeout 10 s.
 - `.huginn-project` (`slug=metta`), `docs/huginn/.gitkeep`.
 - `CLAUDE.md`: Pending kaflinn vísar í Huginn, lotuloka ritúölin kalla á `/huginn` lotulok í stað þess að skrifa Pending línur.
 
 ### Fyrsta fylling metta
 
-- `cli/seed/seed.mjs`, `cli/seed/seedlib.mjs` (hrein föll, prófuð), `cli/seed/metta-2026-10-31.json`, keyrt með `npm run seed:metta`. Skrifar gegnum sömu föll og `item create`, innskráð sem Claude.
+- `cli/seed/seed.mjs`, `cli/seed/seedlib.mjs` (hrein föll, prófuð), `cli/seed/metta-2026-10-31.json`, keyrt einu sinni 2026-10-31 með `npm run seed:metta`. Skrifar gegnum sömu föll og `item create`, innskráð sem Claude. Ekki til að endurtaka: alvöru keyrsla neitar nú ef verkefnið á þegar verk önnur en "Prófun: " verk (`seedRefusal`), því verk sem fær nýtt nafn á vefnum yrði stofnað aftur með plönum, úrskurðum og handtökum. `--again` fer framhjá vörninni, `--dry-run` virkar áfram.
 - 73 verk: mockup v7 hafði 50 (49 haldið, eitt fellt út sem þegar byggt) og 24 bættust við úr Pending í metta2_new og minnisskrám. Staða: bíður Heimis 15, bíður Árna 14, í bið 40, tilbúið 3, í byggingu 1. Með þeim 14 plön, 17 úrskurðir (R1 til R17 úr doc 141 á Plan A Efnaskrár) og 14 opin handtök. `pull --brief` eftir fyllingu: `Huginn: 0 bíða Claude, 16 bíða Árna, 18 bíða Heimis`.
 - Allar 28 einingar mockupsins vörpuðust á lifandi módúla. Þrjú verk eru án módúls (Pakki 1, Vaktaplan v1.5, Samfélagsmiðlar).
 - Endurtekning: verki með sama titil (trimmaðan) í verkefninu, hvaða stöðu sem það hefur, er sleppt. Önnur keyrsla: `Stofnuð: 0, sleppt: 73, mistókst: 0`. Verk sem stofnaðist en plan, úrskurður eða handtak þess mistókst er líka sleppt í endurkeyrslu, svo það er klárað með höndum með auðkenninu sem keyrslan prentaði.
@@ -103,13 +103,14 @@ Keyrt í verki 6, 2026-10-31:
 
 - `npm run test`: `Test Files 26 passed (26)`, `Tests 360 passed (360)` (vefur og `cli/**/*.test.mjs`).
 - `npm run build`: grænt (`built in 1.38s`).
+- Eftir lokayfirferð: `Tests 364 passed (364)` í 26 skrám, build grænt (`built in 1.28s`).
 
 Lifandi prófanir á metta, innskráð sem Claude:
 
 - `login`, `whoami`, `pull`, `pull --json` (orðið password kemur aldrei fyrir), villuleiðir (ekkert verkefni, rangt lykilorð, óþekkt skipun, ógilt auðkenni).
-- Allar skrifskipanir á fjórum "Prófun: " verkum (verk 2). Saga í `hg_events` öll skráð á C, lokunarvörn neitar og `--force` lokar. Prófunarverkin sett í `dropped`, engu eytt.
+- Allar skrifskipanir nema `bundle push` á fjórum "Prófun: " verkum (verk 2). `bundle push` keyrt lifandi einu sinni 2026-10-31 (lokayfirferð) með fyrsta búntinu fyrir metta (83 línur): `context_bundle` og `context_bundle_at` staðfest með `pull --json`. Saga í `hg_events` öll skráð á C, lokunarvörn neitar og `--force` lokar. Prófunarverkin sett í `dropped`, engu eytt.
 - `sync` í prufumöppu (verk 3), svo í metta2_new (verk 5): fyrsta keyrsla 74 færslur, sú næsta 0 skrifaðar. Í verki 6: 2 skrifaðar (item.md Smápakka og STATUS.md), næsta 0.
-- Hook skipunin keyrð eins og Claude Code keyrir hana: með tólinu, án tólsins, án `.huginn-project`, án node og án nets. Exit 0 í öll skiptin.
+- Hook skipunin keyrð eins og Claude Code keyrir hana: með tólinu, án tólsins, án `.huginn-project`, án node og án nets. Exit 0 í öll skiptin. Eftir lokayfirferð (bilunarlína, timeout 10 s): með tólinu prentast `Huginn: 0 bíða Claude, 16 bíða Árna, 18 bíða Heimis`; slóð á tól sem er ekki til, PATH án node, keyrsla utan repoins og ónáanleg Supabase slóð (falsað heimasvæði, `fetch failed`) prenta allar `Huginn: náði ekki sambandi, keyrðu huginn whoami`. Exit 0 í öll skiptin.
 - Skörun spjalda á lifandi borði (metnar stærðir spjalda og pakka): eitt par í verki 5 og eitt í verki 6 eftir að skráamerki stækkuðu tíu spjöld, bæði lagfærð. Nú 0 skaranir hjá 73 spjöldum og 5 pökkum. Aðeins `pos_x` og `pos_y` breytt.
 
 Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pull --brief` og spegilinn.
@@ -118,7 +119,7 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
 
 ### Hjá Heimi
 
-1. **Ýta báðum repoum.** Huginn: greinin `vinnubord-3` til sameiningar í main. metta2_new: main er 4 commitum á undan origin úr þessu plani: `752db5a6`, `d756a659`, `9a1ac72f`, `8d594011`.
+1. **Ýta báðum repoum.** Huginn: greinin `vinnubord-3` til sameiningar í main. metta2_new: main er 5 commitum á undan origin úr þessu plani: `752db5a6`, `d756a659`, `9a1ac72f`, `8d594011`, `e7dc8f12`.
 2. **Hook og skill í `D:\Claude Code\metta2`.** Flestar metta2 lotur byrja í þeirri möppu, þar sem hook og skill metta2_new hlaðast ekki. Auto mode flokkarinn hafnaði breytingunni (sjálfsbreyting), svo þú ákveður. Bæta við undir `"hooks"` í `D:\Claude Code\metta2\.claude\settings.json`, við hlið PreToolUse og PostToolUse:
 
    ```json
@@ -127,7 +128,7 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
        "hooks": [
          {
            "type": "command",
-           "command": "cd \"D:/Claude Code/metta2/metta2_new\" && node \"D:/Claude Code/Huginn/huginn/cli/huginn.mjs\" pull --brief 2>/dev/null || true",
+           "command": "cd \"D:/Claude Code/metta2/metta2_new\" && node \"D:/Claude Code/Huginn/huginn/cli/huginn.mjs\" pull --brief 2>/dev/null || echo \"Huginn: náði ekki sambandi, keyrðu huginn whoami\"",
            "timeout": 10
          }
        ]
@@ -144,10 +145,7 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
    ---
 
    Lestu `D:/Claude Code/metta2/metta2_new/.claude/skills/huginn/SKILL.md` og fylgdu því. Það er eina útgáfan.
-   ```
-
-   Í leiðinni: lækka timeout í `metta2_new/.claude/settings.json` úr 20 í 10 s.
-3. **Níu atriði úr fyllingunni til að staðfesta:**
+   ```3. **Níu atriði úr fyllingunni til að staðfesta:**
    1. e1: deploy á parse-sds og askur-chat frá main er opið handtak "ef það er ekki þegar gert" (askur v92 er eldra en B2 commit 222b5e36).
    2. r1 og i1: askur-chat redeploy handtökin gætu þegar verið leyst með v92, haka við ef svo er.
    3. h2: titli breytt úr "sex smokes" í "Gemini-yfirferð og opin smokes" eftir doc 105.
