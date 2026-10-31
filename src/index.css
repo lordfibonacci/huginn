@@ -49,7 +49,7 @@
   100% { transform: translate3d(0, 0, 0) scale(1); opacity: var(--lp-op, 0.35); }
 }
 
-/* Hero lockup entrance — raven drops, settles with spring */
+/* Hero lockup entrance: raven drops, settles with spring */
 @keyframes lp-mark-in {
   0%   { transform: translateY(-40px) rotate(-8deg) scale(0.85); opacity: 0; filter: blur(6px); }
   60%  { transform: translateY(6px) rotate(2deg) scale(1.02); opacity: 1; filter: blur(0); }
@@ -67,7 +67,7 @@
   100% { transform: translateY(0) rotateX(0); opacity: 1; filter: blur(0); }
 }
 
-/* Fade + rise — generic reveal */
+/* Fade + rise: generic reveal */
 @keyframes lp-rise {
   0%   { transform: translateY(24px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
@@ -117,7 +117,7 @@
   100% { transform: translate3d(110vw, 2vh, 0) rotate(-2deg) scale(0.95); opacity: 0; }
 }
 
-/* Scroll-reveal base state — applies until data-reveal="in" flips */
+/* Scroll reveal base state, applies until data-reveal="in" flips */
 [data-reveal="out"] {
   opacity: 0;
   transform: translateY(32px);
