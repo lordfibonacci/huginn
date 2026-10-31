@@ -238,7 +238,71 @@
       "whereAreWe": "Hvar erum við"
     },
     "settings": {
-      "comingSoon": "Stillingar koma í plani 2."
+      "add": "Bæta við",
+      "back": "Aftur á borðið",
+      "colors": {
+        "coral": "Kóral",
+        "gold": "Gull",
+        "lilac": "Lilla",
+        "stone": "Grjót",
+        "teal": "Grænblár"
+      },
+      "delete": "Eyða",
+      "loadError": "Gat ekki sótt stillingarnar.",
+      "modules": {
+        "color": "Litur",
+        "deleteConfirm": "Eyða módulnum {{name}}?",
+        "empty": "Engir módular í þessum pakka.",
+        "ghost": "Draugur (á teikniborðinu, ekki smíðaður)",
+        "hint": "Spjöldin í pakkadálkunum. Röðin gildir innan hvers pakka.",
+        "name": "Nafn",
+        "newTitle": "Nýr módull",
+        "noPackage": "Enginn pakki",
+        "package": "Pakki",
+        "slug": "Slóðarheiti",
+        "slugHint": "Litlir stafir, skipanalínutólið notar það",
+        "statusLine": "Stöðulína",
+        "title": "Módular"
+      },
+      "moveDown": "Færa {{name}} niður",
+      "moveUp": "Færa {{name}} upp",
+      "packages": {
+        "coordError": "x og y þurfa að vera heilar tölur.",
+        "empty": "Engir pakkar ennþá.",
+        "hint": "Dálkarnir á borðinu, í þessari röð. x og y staðsetja dálkinn á borðinu.",
+        "name": "Nafn",
+        "nameError": "Pakkinn þarf nafn.",
+        "newTitle": "Nýr pakki",
+        "title": "Pakkar",
+        "x": "x",
+        "y": "y"
+      },
+      "participants": {
+        "addHint": "Viðkomandi þarf að eiga Huginn aðgang fyrir.",
+        "email": "Netfang",
+        "hint": "Allir á listanum sjá og skrifa allt í verkefninu.",
+        "name": "Nafn",
+        "newTitle": "Bæta við þátttakanda",
+        "removeConfirm": "Fjarlægja {{name}} úr verkefninu?",
+        "service": "Þjónustunotandi",
+        "short": "Stutt nafn",
+        "title": "Þátttakendur",
+        "you": "Þú"
+      },
+      "project": {
+        "bundle": "Samhengi (context bundle)",
+        "bundleHint": "Bakgrunnur sem hver ný lota og skyndigreining les fyrst.",
+        "name": "Nafn",
+        "never": "Aldrei uppfært",
+        "repoHint": "Mappa kóðans, skipanalínutólið notar hana.",
+        "repoPath": "Repo slóð",
+        "title": "Verkefni",
+        "updated": "Síðast uppfært {{when}}"
+      },
+      "remove": "Fjarlægja",
+      "save": "Vista",
+      "saved": "Vistað",
+      "title": "Stillingar verkefnis"
     },
     "toast": {
       "newItem": "{{short}} sendi nýtt verk: {{title}}"

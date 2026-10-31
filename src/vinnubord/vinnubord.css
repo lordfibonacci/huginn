@@ -366,6 +366,33 @@
   --hg-drop-border: var(--hg-line);
   --hg-drop-on: var(--hg-lilac);
 
+  /* ---------- Project settings page ---------- */
+  --hg-set-w: 920px;
+  --hg-set-pad: 24px;
+  --hg-set-pad-phone: 16px;
+  --hg-set-gap: 20px;
+  --hg-set-top-h: 64px;
+  --hg-set-title-size: 19px;
+  --hg-set-h-size: 16px;
+  --hg-set-hint-size: 13px;
+  --hg-set-sec-pad: 20px;
+  --hg-set-sec-pad-phone: 14px;
+  --hg-set-sec-bg: var(--hg-surface);
+  --hg-set-row-bg: rgba(255, 255, 255, 0.03);
+  --hg-set-row-pad: 12px;
+  --hg-set-row-gap: 10px;
+  --hg-set-list-gap: 10px;
+  --hg-set-group-gap: 18px;
+  --hg-set-group-size: 12.5px;
+  --hg-set-coord-w: 96px;
+  --hg-set-field-min-w: 160px;
+  --hg-set-bundle-h: 220px;
+  --hg-set-swatch-dot: 18px;
+  --hg-set-swatch-ring: 2px;
+  --hg-set-av-size: 36px;
+  --hg-set-av-font: 13px;
+  --hg-set-badge-size: 11.5px;
+
   /* ---------- Motion ----------
      Panels and transitions ease out, card entry springs past its target. */
   --hg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1190,15 +1217,129 @@
   .hg-new-foot .hg-btn { flex: 1; }
 }
 
+/* ---------- Project settings page ----------
+   One scrolling column of sections. Rows wrap their fields, so the same
+   markup works from 390 px up. */
+.hg-set {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--hg-board); color: var(--hg-ink);
+  font-family: var(--hg-font); font-size: var(--hg-pn-text-size); line-height: 1.5;
+}
+.hg-set-top {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--hg-top-gap); min-height: var(--hg-set-top-h);
+  padding: 0 var(--hg-set-pad); background: var(--hg-top-bg); border-bottom: 1px solid var(--hg-top-border);
+}
+.hg-set-back {
+  display: inline-flex; align-items: center; gap: var(--hg-ddb-gap); min-height: var(--hg-touch); padding: var(--hg-btn-pad);
+  border-radius: var(--hg-radius-field); border: 1px solid var(--hg-line); color: var(--hg-ink); font-weight: 700; text-decoration: none;
+  flex: none;
+}
+.hg-set-back:hover, .hg-set-back:focus-visible { background: var(--hg-control-hover); outline: none; }
+.hg-set-back svg, .hg-set-icon svg {
+  width: var(--hg-icon); height: var(--hg-icon); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hg-set-title { margin: 0; min-width: 0; font-size: var(--hg-set-title-size); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+.hg-set-title span { display: block; font-size: var(--hg-set-hint-size); font-weight: 600; color: var(--hg-ink-3); letter-spacing: 0; }
+.hg-set-main {
+  width: min(var(--hg-set-w), 100%); margin: 0 auto; padding: var(--hg-set-pad); display: flex; flex-direction: column; gap: var(--hg-set-gap);
+}
+.hg-set-sec {
+  padding: var(--hg-set-sec-pad); border-radius: var(--hg-radius-panel); background: var(--hg-set-sec-bg); border: 1px solid var(--hg-line);
+  display: flex; flex-direction: column; gap: var(--hg-set-list-gap);
+}
+.hg-set-sec h2 { margin: 0; font-size: var(--hg-set-h-size); font-weight: 800; letter-spacing: -0.01em; }
+.hg-set-sec h3 { margin: var(--hg-set-group-gap) 0 0; font-size: var(--hg-set-group-size); font-weight: 800; color: var(--hg-ink-2); }
+.hg-set-hint { margin: 0; font-size: var(--hg-set-hint-size); color: var(--hg-ink-3); }
+.hg-set-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--hg-set-list-gap); }
+.hg-set-row {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--hg-set-row-gap); padding: var(--hg-set-row-pad);
+  border-radius: var(--hg-radius-card); background: var(--hg-set-row-bg); border: 1px solid var(--hg-line);
+}
+.hg-set-row-new { border-style: dashed; }
+.hg-set-row-title { flex-basis: 100%; margin: 0; font-size: var(--hg-set-hint-size); font-weight: 800; color: var(--hg-ink-2); }
+.hg-set-field { display: flex; flex-direction: column; gap: var(--hg-new-field-gap); flex: 1 1 var(--hg-set-field-min-w); min-width: 0; }
+.hg-set-field-wide { flex-basis: 100%; }
+.hg-set-field-coord { flex: 0 1 var(--hg-set-coord-w); min-width: var(--hg-set-coord-w); }
+.hg-set-field > span { font-size: var(--hg-pn-small-size); color: var(--hg-ink-2); font-weight: 700; }
+.hg-set-field small { font-weight: 500; color: var(--hg-ink-3); }
+.hg-set-field input, .hg-set-field textarea, .hg-set-field select {
+  font: inherit; font-size: var(--hg-fs-field); color: var(--hg-ink); background: var(--hg-field-bg); border: 1px solid var(--hg-line);
+  border-radius: var(--hg-radius-field); min-height: var(--hg-touch); padding: var(--hg-new-input-pad); width: 100%;
+}
+.hg-set-field textarea { padding: var(--hg-field-pad); resize: vertical; line-height: 1.45; min-height: var(--hg-set-bundle-h); }
+.hg-set-field select option { background: var(--hg-surface); }
+.hg-set-field input:focus, .hg-set-field textarea:focus, .hg-set-field select:focus { outline: none; border-color: var(--hg-pill-hover); }
+.hg-set-field :disabled { opacity: 0.6; }
+/* 16 px on phones keeps iOS from zooming into a focused field. */
+@media (min-width: 768px) {
+  .hg-set-field input, .hg-set-field textarea, .hg-set-field select { font-size: var(--hg-fs-field-wide); }
+}
+.hg-set .hg-check { flex: 1 1 var(--hg-set-field-min-w); padding: 0; align-items: center; color: var(--hg-ink-2); }
+.hg-set-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--hg-set-row-gap); margin-left: auto; }
+.hg-set-actions .hg-pn-error, .hg-set-note { margin: 0; flex-basis: 100%; text-align: right; }
+.hg-set-note { font-size: var(--hg-pn-small-size); color: var(--hg-ok); }
+.hg-set-meta { margin: 0; font-size: var(--hg-pn-small-size); color: var(--hg-ink-3); }
+.hg-btn-danger { color: var(--hg-error); }
+
+/* Move up and down within a list */
+.hg-set-order { display: flex; gap: var(--hg-control-gap); flex: none; }
+.hg-set-icon {
+  width: var(--hg-touch); height: var(--hg-touch); display: grid; place-items: center; flex: none; border-radius: var(--hg-radius-field);
+  border: 1px solid var(--hg-line); background: transparent; color: var(--hg-ink-2); cursor: pointer;
+}
+.hg-set-icon:hover, .hg-set-icon:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
+.hg-set-icon:disabled { opacity: var(--hg-btn-disabled); cursor: default; background: transparent; }
+
+/* Module color, one of the five board tones */
+.hg-set-colors { display: flex; flex-wrap: wrap; gap: var(--hg-control-gap); }
+.hg-swatch {
+  width: var(--hg-touch); height: var(--hg-touch); display: grid; place-items: center; border-radius: var(--hg-radius-field);
+  border: 1px solid transparent; background: transparent; cursor: pointer;
+}
+.hg-swatch i {
+  width: var(--hg-set-swatch-dot); height: var(--hg-set-swatch-dot); border-radius: 50%; background: var(--hg-c);
+  box-shadow: 0 0 var(--hg-pill-glow) color-mix(in oklab, var(--hg-c) 60%, transparent);
+}
+.hg-swatch:hover, .hg-swatch:focus-visible { background: var(--hg-control-hover); outline: none; }
+.hg-swatch.hg-on {
+  border-color: var(--hg-c); box-shadow: inset 0 0 0 var(--hg-set-swatch-ring) color-mix(in oklab, var(--hg-c) 35%, transparent);
+}
+
+/* Participants */
+.hg-set-person { align-items: center; }
+.hg-set-av {
+  width: var(--hg-set-av-size); height: var(--hg-set-av-size); border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: var(--hg-surface-2); border: 1px solid var(--hg-line); font-size: var(--hg-set-av-font); font-weight: 800;
+}
+.hg-set-av.hg-set-av-service { background: var(--hg-av-service-bg); color: var(--hg-av-service-ink); border-color: transparent; }
+.hg-set-who { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-pn-meta-gap); }
+.hg-set-who b { overflow-wrap: anywhere; }
+.hg-set-badge {
+  font-size: var(--hg-set-badge-size); font-weight: 700; padding: var(--hg-card-chip-pad); border-radius: var(--hg-radius-chip);
+  background: var(--hg-chip-bg); color: var(--hg-ink-2);
+}
+
+/* Phone: the back link keeps only its arrow, actions take the full row. */
+@media (max-width: 767px) {
+  .hg-set-top { padding: 0 var(--hg-set-pad-phone); }
+  .hg-set-main { padding: var(--hg-set-pad-phone); }
+  .hg-set-sec { padding: var(--hg-set-sec-pad-phone); }
+  .hg-set-back { width: var(--hg-touch); padding: 0; justify-content: center; }
+  .hg-set-back span { display: none; }
+  .hg-set-actions { margin-left: 0; width: 100%; }
+  .hg-set-actions .hg-btn { flex: 1; }
+  .hg-set-actions .hg-pn-error, .hg-set-note { text-align: left; }
+}
+
 /* Reduced motion: no animation and no transition anywhere on the board,
    its bars, panels and sheets (the aurora stands still, cards appear in
    place, dots stop beating) and the aurora is switched off. The wire canvas leaves out sparks and the draw
    up on its own (Wires.tsx), the card spring snaps (Board.tsx). */
 @media (prefers-reduced-motion: reduce) {
-  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice),
-  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *,
-  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *::before,
-  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *::after {
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice, .hg-set),
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice, .hg-set) *,
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice, .hg-set) *::before,
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice, .hg-set) *::after {
     animation: none !important; transition: none !important;
   }
   .hg-aurora { display: none; }

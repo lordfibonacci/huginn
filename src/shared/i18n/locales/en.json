@@ -95,7 +95,71 @@
       "title": "You are not a participant in any project"
     },
     "settings": {
-      "comingSoon": "Settings arrive in plan 2."
+      "title": "Project settings",
+      "back": "Back to the board",
+      "loadError": "Could not load the settings.",
+      "save": "Save",
+      "saved": "Saved",
+      "add": "Add",
+      "delete": "Delete",
+      "remove": "Remove",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "project": {
+        "title": "Project",
+        "name": "Name",
+        "repoPath": "Repo path",
+        "repoHint": "Folder of the project code, used by the command line tool.",
+        "bundle": "Context bundle",
+        "bundleHint": "Background that every new session and quick analysis reads first.",
+        "updated": "Last updated {{when}}",
+        "never": "Never updated"
+      },
+      "packages": {
+        "title": "Packages",
+        "hint": "Columns on the board, in this order. x and y place the column on the board.",
+        "name": "Name",
+        "x": "x",
+        "y": "y",
+        "newTitle": "New package",
+        "empty": "No packages yet.",
+        "coordError": "x and y must be whole numbers.",
+        "nameError": "The package needs a name."
+      },
+      "modules": {
+        "title": "Modules",
+        "hint": "Cards in the package columns. The order applies within each package.",
+        "name": "Name",
+        "slug": "Slug",
+        "slugHint": "Lowercase, used by the command line tool",
+        "package": "Package",
+        "noPackage": "No package",
+        "statusLine": "Status line",
+        "color": "Color",
+        "ghost": "Ghost (planned, not built)",
+        "newTitle": "New module",
+        "empty": "No modules in this package.",
+        "deleteConfirm": "Delete the module {{name}}?"
+      },
+      "colors": {
+        "coral": "Coral",
+        "gold": "Gold",
+        "lilac": "Lilac",
+        "stone": "Stone",
+        "teal": "Teal"
+      },
+      "participants": {
+        "title": "Participants",
+        "hint": "Everyone on the list sees and writes everything in the project.",
+        "you": "You",
+        "service": "Service user",
+        "email": "Email",
+        "short": "Short",
+        "name": "Name",
+        "newTitle": "Add participant",
+        "addHint": "The person must already have a Huginn account.",
+        "removeConfirm": "Remove {{name}} from the project?"
+      }
     },
     "viewerError": "Could not load your projects.",
     "card": {

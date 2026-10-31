@@ -8,7 +8,7 @@ import { Shell } from '../vinnubord/components/Shell'
 import { Loader } from '../vinnubord/components/Loader'
 import { HomePage } from '../vinnubord/pages/HomePage'
 import { BoardPage } from '../vinnubord/pages/BoardPage'
-import { SettingsStubPage } from '../vinnubord/pages/SettingsStubPage'
+import { ProjectSettingsPage } from '../vinnubord/pages/ProjectSettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -63,7 +63,7 @@ export function AppRouter() {
             }
           >
             <Route path="p/:slug" element={<BoardPage />} />
-            <Route path="p/:slug/stillingar" element={<SettingsStubPage />} />
+            <Route path="p/:slug/stillingar" element={<ProjectSettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
