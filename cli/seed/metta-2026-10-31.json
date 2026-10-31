@@ -1,0 +1,1151 @@
+{
+  "project": "metta",
+  "as_of": "2026-10-31",
+  "note": "Fyrsta fylling Huginn. Opin verk úr mockup v7 samræmd við CLAUDE.md Pending (30af1c33), docs/progress og minni. Staða og waiting_on eru vistuð gildi; staðsetning reiknast með placeItem við keyrslu.",
+  "items": [
+    {
+      "mockup_id": "y1",
+      "module": "yfirlit",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Yfirlit v2: tvö smokes og orðalagið \"einkunn\"",
+      "summary": "plan B komið út 22. október, sex af átta smokes stóðust",
+      "body": "Plan A og B eru í loftinu. Sex af átta smokes stóðust í keyrslu Claude 22. október. Tvö eru opin í skjali 117: deild án hitamælinga reiknast úr þremur hlutum (þarf innskráningu viðskiptavinar, ekki super admin) og vikuskipti á mánudagsmorgni. Orðalagsatriðið \"einkunn\" í is.json (dashboard.v2.score.formula og incidentsNone) bíður þíns úrskurðar, og skjal 116 á orðalagsatriði úr plani A.",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "docs/progress/117-yfirlit-v2-plan-b.md"
+    },
+    {
+      "mockup_id": "g1",
+      "module": "gatlistar",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Kennsla Gátlistar og Hitamælingar: þrjú atriði eftir",
+      "summary": "SMS-texti, kiosk varakort, Askur embed",
+      "body": "Fix round Árna (40 atriði) er úti og smokuð 28. október, 151 klippa á metta.is/hjalp. Klippur Árna v29 (kennsla-2026-10-30.zip) komu inn 31. október. Eftir: SMS-textinn frá 29.10, varakort á kiosk, \"Myndband: id\" línur og Askur embed.",
+      "tags": [
+        "kennsla"
+      ],
+      "source_ref": "docs/progress/128-kennsla-fix-round.md"
+    },
+    {
+      "mockup_id": "k1",
+      "module": "kiosk",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Kiosk læsiskjár v4: prófun á tæki",
+      "summary": "leiðarvísir 1 bíður, PIN frá þér",
+      "body": "Leiðarvísir docs/plans/kiosk-lockscreen-v4-smoke-arni-1.md er tilbúinn. Árni þarf PIN frá þér áður en hann keyrir hann á iPad. Fasi 2 (Skrá) er ekki á dagskrá á næstunni.",
+      "tags": [
+        "smokes",
+        "Árni leiðarvísir"
+      ],
+      "source_ref": "docs/progress/109-kiosk-lockscreen-v4.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Senda Árna PIN-númerin fyrir leiðarvísi kiosk-lockscreen-v4-smoke-arni-1"
+        }
+      ]
+    },
+    {
+      "mockup_id": "k2",
+      "module": "kiosk",
+      "status": "parked",
+      "title": "Kiosk: síur sem haldast per tæki eða notanda",
+      "summary": "hugmynd 30. október, plan seinna",
+      "body": "Á Askur vinna bara sumir á barnum og eiga ekki að sjá gátlistaatriði úr öðrum svæðum. Ákveða þarf hvort síur haldast per tæki, per notanda eða bæði.",
+      "tags": [
+        "hugmynd",
+        "Askur"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 9"
+    },
+    {
+      "mockup_id": "k3",
+      "module": "kiosk",
+      "status": "ready",
+      "title": "Kiosk: staðinn fáni eftir að lobby-lota deyr",
+      "summary": "lítil villa, lausn tillögð",
+      "body": "Þegar lobby-lota deyr án útgöngu skoppar næsta stjórnandainnskráning á sömu spjaldtölvu einu sinni. Lausnartillaga og vafrapróf eru í skjalinu.",
+      "tags": [
+        "villa"
+      ],
+      "source_ref": "docs/progress/109-kiosk-lockscreen-v4.md"
+    },
+    {
+      "mockup_id": "k4",
+      "module": "kiosk",
+      "status": "parked",
+      "title": "Kiosk: innskráning með RF-korti",
+      "summary": "lagt til hliðar 17. júlí",
+      "body": "Tappa starfsmannakorti á BLE-lesara (idChamp RS3x) við iPad. Vélbúnaðarpróf þarf að takast fyrst.",
+      "tags": [
+        "vélbúnaður"
+      ],
+      "source_ref": "docs/plans/kiosk-card-login.md"
+    },
+    {
+      "mockup_id": "h1",
+      "module": "hitamaelingar",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Hitamælingar: leiðarvísar 7 til 12 hjá Árna",
+      "summary": "fimm leiðarvísar ókeyrðir",
+      "body": "Eftir smoke 2 til 6, umferð C og viðvaranir eru leiðarvísar 7, 8, 9, 11 og 12 skrifaðir fyrir Árna en ókeyrðir. Skýrslurnar (sneiðar 6 og 7) eru í loftinu síðan 6. október; frestuð smoke-atriði þeirra eru í skjölum 97 til 108.",
+      "tags": [
+        "Árni leiðarvísir"
+      ],
+      "source_ref": "docs/progress/101 til 108"
+    },
+    {
+      "mockup_id": "h2",
+      "module": "hitamaelingar",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Viðvaranir: Gemini-yfirferð og opin smokes",
+      "summary": "eftir tiltektarumferð 8. október",
+      "body": "Viðvaranir endurhannaðar og þrifnar. Gemini-yfirferð á íslensku strengjum umferðarinnar bíður þín (tafla í skjali 105, þar með \"fá {names}\" fyrir einn viðtakanda). Pending-listinn í CLAUDE.md taldi sex smokes fyrir þig, en skjal 105 telur nú eitt opið: vikuskýrsla Lostætis ber saman \"notified\" talningu við SQL. Hinum var lokað eða þau færð í skjöl 107 og 108.",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "docs/progress/105-hitamaelingar-vidvaranir-cleanup.md"
+    },
+    {
+      "mockup_id": "h3",
+      "module": "hitamaelingar",
+      "status": "ready",
+      "title": "Askur: kælirennur, tveir TS201 í UG65",
+      "summary": "skráning í gátt bíður, Jan fær viðvaranir",
+      "body": "Kælirenna 1 og 2 eru í grunninum síðan 31. október, skráning í UG65 bíður þess að engin Playwright-plön keyri samhliða. Þegar þær senda: slökkva á handmælingunum tveimur. Næturlínan lætur vita á hverri nóttu þar til skynjaraáætlanir koma. Skjal 129 sagði líka að kveikja aftur á tölvupósti og SMS til Jan á uppsetningardegi og keyra smoke eftir að notendur væru til; staðfesta að það hafi verið gert.",
+      "tags": [
+        "Askur",
+        "vélbúnaður"
+      ],
+      "source_ref": "docs/progress/129-askur-pizzeria-setup.md"
+    },
+    {
+      "mockup_id": "h4",
+      "module": "hitamaelingar",
+      "status": "parked",
+      "title": "Skynjaraáætlanir: tímagluggar fyrir skráningu",
+      "summary": "hugmynd 30. október, plan fyrst á Fable",
+      "body": "Ein kælirenna hjá Askur er ekki í gangi allan sólarhringinn. Skynjarar þurfa áætlun, mögulega fleiri glugga: virka daga 8 til 16, helgar 12 til 22, rauðir dagar slökkt.",
+      "tags": [
+        "hugmynd",
+        "Askur"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 8"
+    },
+    {
+      "mockup_id": "a1",
+      "module": "atvik",
+      "status": "parked",
+      "title": "Kennsla Atvik: nafnlaus eftirfylgni",
+      "summary": "T4 frestað, þarf kvittunarlykil",
+      "body": "Allt annað úr kennsluumferð Atvika er komið, með fundartengingu (skjal 133). T4, eftirfylgni nafnlausra tilkynninga, bíður hönnunar á kvittunarlykli.",
+      "tags": [
+        "kennsla"
+      ],
+      "source_ref": "docs/progress/132-kennsla-atvik.md"
+    },
+    {
+      "mockup_id": "v1",
+      "module": "verkferlar",
+      "status": "parked",
+      "title": "Verkferlar: útlitsumferð",
+      "summary": "pakki frá Árna, eftir sýningu",
+      "body": "Árni vill gefa þetta út eftir sýninguna, það ógildir Verkferla klippurnar. Minnispunktar og prototype eru í möppu verksins, ekki greint í plan.",
+      "tags": [
+        "pakki Árna",
+        "eftir sýningu"
+      ],
+      "source_ref": "docs/plans/2026-10-31-arni-packages-triage.md"
+    },
+    {
+      "mockup_id": "e1",
+      "module": "efnaskra",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Efnaskrá A og B: endurhönnun",
+      "summary": "A, B1 og B2 sameinuð 31. október, handtök eftir",
+      "body": "Efnaskrá A (útlit og flæði: tveir flipar, öryggiskort sem skúffa, A4 kort, Eftirlitsskýrsla, neyðarnúmer), B1 (RV vörulisti merktur, Bæta við efni í tveimur flipum með gátlista RV, forstilltur birgir Rekstrarvörur) og B2 (útskipti öryggisblaða úr vörulista sem fylgja tengdum efnum, afrit frá systurstarfsstöð, bjölluatriði) voru byggð á grein efnaskra og sameinuð í main 31. október. Migrations 00401 til 00405. Eftir standa handtökin hér að neðan: SQL úr kafla Handover í skjali 141, útgáfur parse-sds og askur-chat frá main, og tvær spurningar til RV í gegnum Árna. Breytingar á kennsluklippum eru í docs/plans/2026-10-31-efnaskra-kennsla-breytingar-arni.md (sjá klippuverkið). Frestuð smáatriði eru í skjölum 141, 143 og 144, og liðir 2 og 3 í lokayfirferð skjals 145 (ljósir litir í super admin vörulista, dialogar með max-h) fara í eftirfylgni Efnaskrár.",
+      "tags": [
+        "pakki Árna",
+        "fyrir sýningu"
+      ],
+      "source_ref": "docs/progress/141-efnaskra-a.md",
+      "plans": [
+        {
+          "name": "Plan A",
+          "path": "docs/plans/2026-10-31-efnaskra-a.md",
+          "status": "done",
+          "rulings": [
+            {
+              "code": "R1",
+              "body": "`useReceiptCoverage` is deleted and replaced by `useChemicalReceiptMatrix` (spec A6 explains why the old hook cannot serve; the A1 sentence predates it).",
+              "cost": "none, nothing else used it."
+            },
+            {
+              "code": "R2",
+              "body": "`ChemicalsPage` hosts the edit form, upload dialog, copy dialog and delete confirm from the start (moved from the detail page, not rewritten), because the kebab is unusable without them.",
+              "cost": "an earlier move."
+            },
+            {
+              "code": "R3",
+              "body": "Print entries render only when an `onPrint` prop is given; the print function is wired into page, kebab, drawer and checklist drawer in the print task, so no dead button exists between tasks.",
+              "cost": "one prop."
+            },
+            {
+              "code": "R4",
+              "body": "The settings tests live in `emergency.test.ts`; the hook is I/O.",
+              "cost": "no test on the upsert payload."
+            },
+            {
+              "code": "R5",
+              "body": "`chipCounts` returns counts per role; the gaps and unread chips show only when the switch is on.",
+              "cost": "chip visibility tweak."
+            },
+            {
+              "code": "R6",
+              "body": "The old `chemicals.list.filters` search string seeds the query once, then the key is removed.",
+              "cost": "a few lines."
+            },
+            {
+              "code": "R7",
+              "body": "Viewers see no receipt figure on cards or list, only the SDS status.",
+              "cost": "viewer sees less."
+            },
+            {
+              "code": "R8",
+              "body": "The kebab item \"Opna öryggisblað (SDS)\" goes through the same path as the viewer button (draft receipt, then modal), never a bare URL.",
+              "cost": "reuse effort."
+            },
+            {
+              "code": "R9",
+              "body": "Keep an extra realtime subscription on `chemicals` in the matrix hook, so a new or deleted chemical updates KPIs and chips.",
+              "cost": "one channel."
+            },
+            {
+              "code": "R10",
+              "body": "List column header \"Staðfestur lestur\" (masculine, matching the KPI) instead of the spec's \"Staðfest lestur\".",
+              "cost": "one string."
+            },
+            {
+              "code": "R11",
+              "body": "Viewers see no gate note even with the switch on (it instructs an action they cannot take).",
+              "cost": "one condition."
+            },
+            {
+              "code": "R12",
+              "body": "The drawer rows \"Heiti á öryggisblaði\" and \"Vörunúmer birgis\" wait for part B (the columns arrive in 00402).",
+              "cost": "none."
+            },
+            {
+              "code": "R13",
+              "body": "The read-only Staðfestingar section shows for managers and demo viewers (separate prop from `canManage`, which gates write buttons).",
+              "cost": "one prop."
+            },
+            {
+              "code": "R14",
+              "body": "The use and cleaning procedure links are restored in the drawer (the form still writes them; dropping the display would be a silent regression).",
+              "cost": "two buttons to remove."
+            },
+            {
+              "code": "R15",
+              "body": "The printed card shows CLP classes beside the \"Hættumerki og hlífðarbúnaður\" heading, not in the footer (the shared `DocFooter` does not wrap and 15 documents use it).",
+              "cost": "move one line."
+            },
+            {
+              "code": "R16",
+              "body": "Clamps are 300 (first aid) and 360 (safety notes) instead of 320 and 420: the all-caps worst case spilled a page.",
+              "cost": "slightly shorter printed texts."
+            },
+            {
+              "code": "R17",
+              "body": "The demo viewer gets the Eftirlitsskýrsla button (generating a PDF writes nothing; spec A10 gives it the manager layout).",
+              "cost": "one condition."
+            }
+          ]
+        },
+        {
+          "name": "Plan B1",
+          "path": "docs/plans/2026-10-31-efnaskra-b.md",
+          "status": "done"
+        },
+        {
+          "name": "Plan B2",
+          "path": "docs/plans/2026-10-31-efnaskra-b.md",
+          "status": "done"
+        }
+      ],
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Keyra SQL úr kafla Handover í skjali 141: mjúkeyðir óvirku línunni CONVOCare K í Norðurljós Veitingum, Höfuðstöðvum, í SQL ritlinum. Síðasta select á að skila 0.",
+          "payload": "begin;\nupdate chemicals set deleted_at = now()\n where id = 'c0da0aec-e2cf-4139-9b44-c23b36d3dbae' and is_active = false and deleted_at is null;\nselect count(*) from chemicals where is_active = false and deleted_at is null;\ncommit;\n"
+        },
+        {
+          "owner": "H",
+          "body": "Gefa út parse-sds og askur-chat frá main eftir sameiningu B1 og B2 (skjöl 143 og 144, kaflinn Deploys after merge), ef það er ekki þegar gert. KB búntið var endurgert á main í 222b5e36."
+        },
+        {
+          "owner": "Á",
+          "body": "Spyrja RV: vörunúmerin 1768989161 og 1768989189 sitja hvort á tveimur öryggisblöðum, og blaðið fyrir Tork Mild Foam Soap er frá 2013 (SCA heitir nú Essity), er til nýrra blað? (skjal 143, kaflinn Seed)"
+        }
+      ]
+    },
+    {
+      "mockup_id": "e2",
+      "module": "efnaskra",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Kennsla Efnaskrá: fimmtán klippur til endurgerðar",
+      "summary": "auk tveggja smáatriða",
+      "body": "Árni endurgerir allar fimmtán klippur fyrir R13. Hvað breyttist í A, B1 og B2 og ráð um upptöku er í docs/plans/2026-10-31-efnaskra-kennsla-breytingar-arni.md. Smáatriði eftir: gömul mjúkeydd efna-id á gátlistaatriðum, og \"Hlaða niður\" á kiosk fer út úr Mettu. Grunnstilling require_read_receipts var lagfærð með 00401.",
+      "tags": [
+        "kennsla"
+      ],
+      "source_ref": "docs/progress/136-kennsla-efnaskra.md"
+    },
+    {
+      "mockup_id": "s1",
+      "module": "stefnur-og-thjalfun",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Stefnur: mál-setningar og efnisspurningar",
+      "summary": "skjöl 121 og 123, fyrir Árna",
+      "body": "Árni fer yfir tillögðu póstsetningarnar (skjal 121, For Árni) og efnisspurningarnar um efnissafn v10 (skjal 123, For Árni). Þú núllar department_ids eftir tvo pilot-morgna hjá Norðurljósum. Forskoðunarskrifta fyrir áhorfanda er frestuð (skjal 121, Deferred).",
+      "tags": [
+        "efni"
+      ],
+      "source_ref": "docs/progress/123-stefnur-round-f.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Setja department_ids = null eftir tvo pilot-morgna hjá Norðurljósum"
+        }
+      ]
+    },
+    {
+      "mockup_id": "s2",
+      "module": "stefnur-og-thjalfun",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Kennsla Stefnur: 00395b og demo-reset",
+      "summary": "tvö handtök hjá þér",
+      "body": "Umferðin er úti og smokuð 30. október. Þú keyrir 00395b handvirkt og setur demo-reset aftur upp.",
+      "tags": [
+        "kennsla",
+        "redeploy"
+      ],
+      "source_ref": "docs/progress/138-kennsla-stefnur.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Keyra 00395b handvirkt"
+        },
+        {
+          "owner": "H",
+          "body": "Gefa demo-reset út aftur"
+        }
+      ]
+    },
+    {
+      "mockup_id": "vh1",
+      "module": "vidhald",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Viðhald: hönnunarumferð, tækjalisti v2",
+      "summary": "sameinað og í loftinu 31. október, iPad-athugun Árna eftir",
+      "body": "Árni sendi minnispunkta 30. október og prototype metta-vidhald-taekjalisti-v2.html 31. október. Umferðin var byggð á grein vidhald-round og sameinuð í main 31. október (skjal 142), askur-chat v92, athugað á metta.is: listi flokkaður eftir svæðum, ein lína á tæki undir 1024, óútfyllt svið falin, saga takmörkuð við þrjú. Eftir: tíu iPad-athuganir Árna í Viðhald kaflanum í docs/plans/2026-11-01-ipad-smoke-arni.md, og eftirfylgni úr skjali 142: sama iOS villa við að opna PDF í generateChecklistAnalyticsPdf og usePartnerDocuments, \"Sjá allar (n)\" getur sýnt færri raðir því Saga hefur ekkert tímabil fyrir allan tímann, ónotaði lykillinn maintenance.meta.warrantyEnding, og 9 af 10 röðum í fyrstu sýn á 810x1080.",
+      "tags": [
+        "pakki Árna",
+        "fyrir sýningu"
+      ],
+      "source_ref": "docs/progress/142-vidhald-honnunarumferd.md",
+      "plans": [
+        {
+          "name": "Viðhald hönnunarumferð",
+          "path": "docs/superpowers/plans/2026-10-31-vidhald-honnunarumferd.md",
+          "status": "done"
+        }
+      ],
+      "actions": [
+        {
+          "owner": "Á",
+          "body": "Keyra Viðhald kaflann í docs/plans/2026-11-01-ipad-smoke-arni.md á iPad"
+        }
+      ]
+    },
+    {
+      "mockup_id": "vh2",
+      "module": "vidhald",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Viðhald: prófunarleiðarvísir 4 hjá Árna",
+      "summary": "skrifaður 27. október, aldrei keyrður",
+      "body": "Umferð 2 lagaði 22 PASS, 2 PARTIAL, 3 FAIL úr keyrslu Árna 3. og 5. október. Leiðarvísir 4 kemur í stað 3 og bíður keyrslu.",
+      "tags": [
+        "Árni leiðarvísir"
+      ],
+      "source_ref": "docs/plans/vidhald-smoke-test-arni-4.md"
+    },
+    {
+      "mockup_id": "r1",
+      "module": "ahaettumat",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Kennsla Áhættumat: frágangur umferðar eitt",
+      "summary": "redeploy, F6 ákvörðun, tvö smokes",
+      "body": "Umferð eitt er úti 30. október, smokes 5 af 5, prófunarskref fyrir Árna keyrð 15 af 15 31. október (svör Árna í möppu verksins). Hjá þér: redeploy demo-reset og askur-chat, F6 ákvörðun um realtime á áhættutöflum, tvö smokes eftir. askur-chat var gefið út sem v92 31. október (skjal 142), athuga hvort það dekkar þetta. Umferð tvö (afrit, prent, litur, greiningar, M15 og M18 til M38) ekki byrjuð.",
+      "tags": [
+        "kennsla",
+        "redeploy"
+      ],
+      "source_ref": "docs/progress/139-kennsla-ahaettumat-round-one.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Gefa demo-reset og askur-chat út aftur (skjal 139)"
+        },
+        {
+          "owner": "H",
+          "body": "F6: ákveða hvort realtime fer á áhættutöflurnar"
+        }
+      ]
+    },
+    {
+      "mockup_id": "i1",
+      "module": "innri-uttekt",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Kennsla Innri úttekt: klippur, redeploy, S11",
+      "summary": "úti 30. október, 11 af 11 smokuð",
+      "body": "Eftir: klippur Árna, redeploy á askur-chat og demo-reset hjá þér (askur-chat v92 31. október kann að dekka það), S11 kiosk-vafrapróf.",
+      "tags": [
+        "kennsla",
+        "redeploy"
+      ],
+      "source_ref": "docs/progress/137-kennsla-innri-uttekt.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Gefa askur-chat og demo-reset út aftur (skjal 137)"
+        }
+      ]
+    },
+    {
+      "mockup_id": "o1",
+      "module": "oryggisfundir",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Öryggisfundir: efnisákvarðanir úr útflutningi Árna",
+      "summary": "EN titlar, Vaktaplan, umræðuefni 36 og 45",
+      "body": "v8 er í loftinu. Árni á eftir að úrskurða um efnissafnið: enskir titlar, Vaktaplan-umtal, umræðuefni 36 og 45. Áminningarpóstar eru enn bara vistaðir, ekki sendir.",
+      "tags": [
+        "efni"
+      ],
+      "source_ref": "docs/progress/69-safety-meetings-v8-simplification.md"
+    },
+    {
+      "mockup_id": "m1",
+      "module": "merkimidar",
+      "status": "parked",
+      "title": "Merkimiðar umferð 2: prentari læstur hjá Jolt",
+      "summary": "eftir sýningu, vélbúnaðarhlið lokað",
+      "body": "Prentarinn á skrifstofunni er Jolt-tæki læst við þeirra kerfi, svo ZD411 vélbúnaðarprófið (skjal 53) er enn ókeyrt. Umferð 2 bíður þess. Minnispunktar, prototype v3 og prentstöðvarfrumgerð Árna eru í möppu verksins.",
+      "tags": [
+        "pakki Árna",
+        "eftir sýningu",
+        "vélbúnaður"
+      ],
+      "source_ref": "docs/plans/2026-10-31-arni-packages-triage.md"
+    },
+    {
+      "mockup_id": "ab1",
+      "module": "abendingar",
+      "status": "parked",
+      "title": "Ábendingar: nýr módull",
+      "summary": "pakki frá Árna, eftir sýningu",
+      "body": "Árni segir þetta ekki fyrir sýninguna. Kemur í stað Ytri skýrslur stubbsins og þarf skema, opinbera edge function fyrir innsendingar, tölvupóst og PDF skilti. Spekkið og prototype v5 eru í möppu verksins, ekki greint.",
+      "tags": [
+        "pakki Árna",
+        "eftir sýningu"
+      ],
+      "source_ref": "docs/plans/2026-10-31-arni-packages-triage.md"
+    },
+    {
+      "mockup_id": "p1",
+      "module": "spjaldtolvur-og-simar",
+      "status": "building",
+      "title": "iPad og símar: viðbragðsumferð",
+      "summary": "kjarni og Viðhald sameinuð, sími í byggingu",
+      "body": "Þrjár rætur úr úttekt okkar og iPad-úttekt Árna: ekkert spjaldtölvuband, Safari undir 16.4 kann ekki color-mix, módullitatexti undir 4.5:1. Kjarninn (band 768 til 1279, Safari 16.4 gólf með vinalegri síðu, --mc-ink) var byggður og sameinaður í main 31. október eftir hreina Fable-yfirferð (skjal 145); Yfirlit fékk tvo dálka á 1024 til 1279 eftir þinni ákvörðun. Viðhaldsumferðin er komin (skjal 142). Síma- og snertiumferðin er í byggingu á grein phone-touch. Árni á 13 iPad-skref í kaflanum Kjarnaumferðin í docs/plans/2026-11-01-ipad-smoke-arni.md. Opin hönnunaratriði í skjali 145: Viðhald Saga á 768 til 1023 og gerð Atvika í Greiningum á 768. Hluti B (spec kafli 5) er eftir.",
+      "tags": [
+        "pakki Árna",
+        "fyrir sýningu"
+      ],
+      "source_ref": "docs/progress/145-ipad-responsive-pass.md",
+      "plans": [
+        {
+          "name": "Kjarni",
+          "path": "docs/superpowers/plans/2026-10-31-ipad-responsive-core.md",
+          "status": "done"
+        },
+        {
+          "name": "Viðhald",
+          "path": "docs/superpowers/plans/2026-10-31-vidhald-honnunarumferd.md",
+          "status": "done"
+        },
+        {
+          "name": "Sími og snerting",
+          "path": "docs/superpowers/plans/2026-10-31-phone-touch-polish.md",
+          "status": "building"
+        }
+      ],
+      "actions": [
+        {
+          "owner": "Á",
+          "body": "Keyra kaflann Kjarnaumferðin (13 skref) í docs/plans/2026-11-01-ipad-smoke-arni.md á iPad"
+        }
+      ]
+    },
+    {
+      "mockup_id": "p2",
+      "module": "spjaldtolvur-og-simar",
+      "status": "parked",
+      "title": "Titringur á símum og spjaldtölvum",
+      "summary": "hugmynd 31. október",
+      "body": "iOS Safari styður ekki navigator.vibrate, svo iPhone og iPad þurfa hjáleið eða native umbúðir. Android Chrome virkar. Plan fyrst.",
+      "tags": [
+        "hugmynd"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 12"
+    },
+    {
+      "mockup_id": "p3",
+      "module": "spjaldtolvur-og-simar",
+      "status": "ready",
+      "title": "Fjarlægja \"v2\" úr titli og flýtilyklatölur",
+      "summary": "lítið, ekki byrjað",
+      "body": "Taka \"v2\" úr titlinum uppi til vinstri. Fjarlægja tölurnar aftan við módulnöfn í valmyndinni og flýtilyklana sjálfa.",
+      "tags": [
+        "lítið"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 7"
+    },
+    {
+      "mockup_id": "l1",
+      "module": "innskraning-og-oryggi",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Tímabundið lykilorð: smokes 2, 6 og 7",
+      "summary": "úti 29. október, boðsföll eytt",
+      "body": "Smokes 1, 3, 4, 5 og 8 stóðust. Eftir: 2 (söluaðilanotandi, þarf annan söluaðila en RV), 6 (endurstilling í pósti), 7 (kiosk). Eyða get_partner_members_pre00390 handvirkt.",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "docs/progress/134-temp-password-first-login.md",
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Eyða get_partner_members_pre00390 handvirkt (skjal 134)"
+        }
+      ]
+    },
+    {
+      "mockup_id": "l2",
+      "module": "innskraning-og-oryggi",
+      "status": "parked",
+      "title": "Öryggisfrágangur fyrir útgáfu",
+      "summary": "2FA, demo-lykilorð, afrit og PITR",
+      "body": "Notendahlið: 2FA, demo-lykilorð, afrit og PITR, lekin lykilorð, API-nýskráning, annar eigandi. Kóðahlið: leyndarmál á hverja gátt í chirpstack-uplink, kennitölu-hula (skjal 42).",
+      "tags": [
+        "öryggi"
+      ],
+      "source_ref": "docs/operations/pre-launch-security-checklist.md"
+    },
+    {
+      "mockup_id": "d1",
+      "module": "honnunarkerfi",
+      "status": "parked",
+      "title": "Hönnunarkerfi v2: 103 skrár af brúarklösum",
+      "summary": "4.9e, síðan brúin fer",
+      "body": "Færa 103 skrár af brúarklösum og eyða brúnni. Badge í Tag, defaultValue i18n-lyklar, fjórir Vakta-gluggar enn á shadcn.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/13-design-system-v2.md"
+    },
+    {
+      "mockup_id": "d2",
+      "module": "honnunarkerfi",
+      "status": "parked",
+      "title": "Lýsingar á einu tungumáli: innbyggð þýðing",
+      "summary": "hugmynd 30. október, með Árna",
+      "body": "Titlar eru IS og EN en lýsingin bara ein, hér og líklega víðar. Hugmynd: innbyggður AI-þýðandi. Hvernig hann virkar og hvort kúnninn borgar er opið.",
+      "tags": [
+        "hugmynd"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 11"
+    },
+    {
+      "mockup_id": "db1",
+      "module": "gagnagrunnur-og-afkost",
+      "status": "parked",
+      "title": "Gagnagrunnur: hraðagreining eftir sýningu",
+      "summary": "compute hækkað í Small, RLS umferð skuld",
+      "body": "Statement timeouts 31. október á get_staff_evidence, get_sensor_board_v2, handmælingum, efnasafni og get_my_terms_status. 95% umferðar var Playwright smokes; compute hækkað úr micro í Small 31. október. Rótin í skemanu: 534 auth_rls_initplan viðvaranir (auth.uid() per röð), 88 multiple_permissive_policies, 271 óvísaðir foreign keys. Röðin eftir sýningu: (1) vélræn migration umferð sem vefur auth.uid() í subselect og sameinar reglur, mæld fyrir og eftir; (2) vísar á FK sem fyrirspurnir nota; (3) tíðni get_staff_evidence og þögul hrörnun við timeout. Spekk á Fable, bygging á Opus. Aldrei tvær Playwright smoke keyrslur samtímis á framleiðslu.",
+      "tags": [
+        "eftir sýningu",
+        "afköst"
+      ],
+      "source_ref": "minni: project_db_performance_round"
+    },
+    {
+      "mockup_id": "db2",
+      "module": "gagnagrunnur-og-afkost",
+      "status": "parked",
+      "title": "Demo reset: realtime dettur út í nokkrar sekúndur",
+      "summary": "fyrir alla tenanta, lagfæring tillögð",
+      "body": "PoolingReplicationError við hverja endurstillingu, RLS-kostnaður á 2400 seed-raðir per áskrifanda. Flipar treysta ekki lengur á realtime. Lagfæring: SQL seed RPC per módul eða ódýrari RLS-hjálparar.",
+      "tags": [
+        "villa",
+        "afköst"
+      ],
+      "source_ref": "docs/progress/126-demo-reset-refetch-storm.md"
+    },
+    {
+      "mockup_id": "db3",
+      "module": "gagnagrunnur-og-afkost",
+      "status": "parked",
+      "title": "JS búnt: skipta upp 2 MB aðalbúnti",
+      "summary": "578 KB gz, React.lazy á þungar síður",
+      "body": "Route-based React.lazy og manualChunks fyrir vendor-hópa.",
+      "tags": [
+        "tækniskuld",
+        "afköst"
+      ],
+      "source_ref": "docs/progress/40-claude-md-slimdown.md"
+    },
+    {
+      "mockup_id": "in1",
+      "module": "innleiding",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Innleiðingarlisti: endurhönnun, brief hjá Árna",
+      "summary": "skrifað 6. október, ekkert ákveðið",
+      "body": "Brainstorm-brief fyrir Árna og þig. RV efnasafn (S5) er sér hugmyndavinna seinna.",
+      "tags": [
+        "hugmyndavinna"
+      ],
+      "source_ref": "docs/plans/2026-10-06-innleidingarlisti-brainstorm-brief.md"
+    },
+    {
+      "mockup_id": "in2",
+      "module": "innleiding",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Innleiðing v2: throttle og HEIC spurningar",
+      "summary": "tvær ákvarðanir hjá þér",
+      "body": "Sameiginlegt 30 á klukkustund þak (upphleðsla, eyðing, sending) eða sér upphleðslulykill. Á HEIC að fara úr accept-listanum.",
+      "tags": [
+        "ákvörðun"
+      ],
+      "source_ref": "docs/progress/110-onboarding-questionnaire-v2.md"
+    },
+    {
+      "mockup_id": "em1",
+      "module": "tolvupostur",
+      "status": "parked",
+      "title": "Tölvupóstur v1.5",
+      "summary": "bounce, afskráning, dagleg samantekt",
+      "body": "Bounce-neytandi, afskráning per flokk, dagleg samantekt, skyldubundinn HACCP-flokkur, alerts-undirlén, support-mode þöggun.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/20-email-system-resend.md"
+    },
+    {
+      "mockup_id": "sm1",
+      "module": "profanir-og-smokes",
+      "status": "parked",
+      "title": "504 frestuð smoke-atriði í 111 skjölum",
+      "summary": "stærst: Hitamælingar 150, RV 82",
+      "body": "Hver prógress-skrá heldur sinn lista neðst, talningin er í kaflanum Deferred smoke tests í CLAUDE.md metta2_new. Hitamælingar og handmælingar 150, RV 82, Platform og UI 54, Viðhald 40, Kiosk og Matvælavakt 31, Innri úttekt 22, sölutól eiganda 22, Stefnur, verkferlar og fundir 20, Gátlistar 18, Áhættumat 14.",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "CLAUDE.md, Deferred smoke tests"
+    },
+    {
+      "mockup_id": "sm2",
+      "module": "profanir-og-smokes",
+      "status": "parked",
+      "title": "Battle-test: 32 atriði opin",
+      "summary": "16 meðal, 10 lág, 6 nit",
+      "body": "Næst: M2 eigandi starfsstöðvaval, M3 flipa-lykill lekur milli starfsstöðva.",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "docs/qa/2026-04-28-battle-test.md"
+    },
+    {
+      "mockup_id": "rv1",
+      "module": "rv-samstarf",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "RV kennsla: iPad-athugun Árna, A2 og M2/M3",
+      "summary": "úti 31. október, 17 klippur lifandi",
+      "body": "Kennsla fyrir RV er í loftinu síðan 31. október á metta.is/partner/training: sölufólk sér 14 klippur, stjórnendur 17, smokes stóðust (skjal 140). Árni athugar á iPad og Mac Safari (S1 og A1 sem RV stjórnandi) og lagar klippur eftir yfirferðarskjalinu docs/plans/rv-kennsla-yfirferd-arni-2026-10-31.md; afgangslistinn hans er docs/plans/rv-kennsla-afgangur-arni-2026-11.md. Þú ákveður A2 (hvaða dagar flytjast á desemberuppgjörið) og M2/M3 (í hvaða pakka Stefnur og þjálfun eru): klippa eða kóði. Prufusöluaðili ehf. er virkur sem prófunargögn, svo uppgjörskeyrslan 25. skrifar tóm drög fyrir hann þar til hann er gerður óvirkur. Söluþjálfun RV er þriðjudaginn 3. nóvember.",
+      "tags": [
+        "fyrir sýningu",
+        "kennsla"
+      ],
+      "source_ref": "docs/progress/140-rv-kennsla.md",
+      "plans": [
+        {
+          "name": "RV kennsla",
+          "path": "docs/plans/2026-10-31-rv-kennsla.md",
+          "status": "done"
+        }
+      ],
+      "actions": [
+        {
+          "owner": "H",
+          "body": "Ákveða A2 og M2/M3 í yfirferðarskjalinu: breytist klippan eða vefurinn"
+        }
+      ]
+    },
+    {
+      "mockup_id": "rv2",
+      "module": "rv-samstarf",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "RV: samningur, starfsmannaaðgangar, undirritandi",
+      "summary": "aðgangar í bið til 21. nóvember",
+      "body": "Sölufulltrúaaðgangar í bið þar til RV staðfestir samningsdrögin. Starfsmannalisti Árna bíður þess. Undirritandi RV enn tómur (Part 8, skjal 76). RV byrjar að selja 7. nóvember. Í skjali 76 bíður líka íslensk textayfirferð á efni 00257 og 00258 hjá þér.",
+      "tags": [
+        "samningur"
+      ],
+      "source_ref": "docs/progress/75-rv-arni-followups.md"
+    },
+    {
+      "mockup_id": "rv3",
+      "module": "rv-samstarf",
+      "status": "parked",
+      "title": "RV uppgjör: fyrsta alvöru 25. desember",
+      "summary": "drög sept til nóv eru æfingar, eyða",
+      "body": "Drögin fyrir september, október og nóvember eru þurrkeyrslur og á að eyða, aldrei gefa út.",
+      "tags": [
+        "uppgjör"
+      ],
+      "source_ref": "docs/progress/77-rv-d2-settlement.md"
+    },
+    {
+      "mockup_id": "sh1",
+      "module": "storeldhusid-5-6-nov",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Sýningarskjár: nýtt HTML frá Árna sunnudag",
+      "summary": "portrait 55 tommur, v1 notar \"frávik\"",
+      "body": "Básinn fékk 55 tommu portrait skjá við hlið 50 tommu snertiskjás. Árni sendir nýtt HTML 1. nóvember með nýjum stærðum, það fer inn með drop-in aðferðinni (skjal 127), ekki v1. v1 notar \"frávik\" fjórum sinnum (Atvik regla), segja Árna. Snúningur er stilltur í skjástillingum Windows, ekki í vafranum.",
+      "tags": [
+        "fyrir sýningu",
+        "pakki Árna"
+      ],
+      "source_ref": "minni: project_show_screen_sync_plan"
+    },
+    {
+      "mockup_id": "sh2",
+      "module": "storeldhusid-5-6-nov",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Sandkassi Pottþétt: skref 6 og 7",
+      "summary": "takkatíming, vafrasmokes, cron-athugun 28.10",
+      "body": "Sandkassinn er úti síðan 27. október. Eftir: takkatíming (endurstilling tekur 7.5 til 9 sekúndur), vafrasmokes í skjali 125, og cron-athugunin frá 28. október.",
+      "tags": [
+        "fyrir sýningu",
+        "smokes"
+      ],
+      "source_ref": "docs/progress/125-storeldhus-sandbox-demo.md"
+    },
+    {
+      "mockup_id": "sh3",
+      "module": "storeldhusid-5-6-nov",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "/tv uppfærist ekki hjá Árna",
+      "summary": "virkar hjá þér, ekki hjá honum",
+      "body": "Sýningarskjárinn les frá metta.is og uppfærist þegar þú skiptir um flipa, en ekki hjá Árna. Rannsaka.",
+      "tags": [
+        "fyrir sýningu",
+        "villa"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 6"
+    },
+    {
+      "mockup_id": "la1",
+      "module": "landing-metta-is",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Landing v9: stílúrskurðir fyrir Árna",
+      "summary": "umferðir 2 og 3, auk dönsku síðunnar",
+      "body": "Stílatriði víkja frá prototype (ljómar burt, hvít-korta kontrast, mynda 4/3). Árni staðfestir í skjali 122 smoke 11 og skjali 124 smoke 7 (ljómar og hero grid burt, #0E7490 á hvíta kortinu, hero samsetning, léttari síma-yfirlögn, bráðabirgða og-mynd). Danska síðan er enn umferð 1, Task 6 bíður þíns.",
+      "tags": [
+        "efni"
+      ],
+      "source_ref": "docs/progress/122-landing-v9-round-2.md"
+    },
+    {
+      "mockup_id": "la2",
+      "module": "landing-metta-is",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Lénaflutningur: smokes 3 og 6, Lostæti iPad",
+      "summary": "innskráning, SMS, iPad endurbeining",
+      "body": "Smoke 3 innskráning og 6 SMS, tvær tiltektarraðir, Lostæti iPad endurbent (leiðarvísir fyrir Árna). Danska .dk síðan: sex smokes fyrir þig (skjal 120).",
+      "tags": [
+        "smokes"
+      ],
+      "source_ref": "docs/progress/119-domain-move-metta-is.md"
+    },
+    {
+      "mockup_id": "t1",
+      "module": "tilbod-og-verdskra",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "Tilboð: skilmálatexti og undirskrift",
+      "summary": "skilmálar hjá þér, PNG hjá Árna",
+      "body": "Skilmálatextinn (v2026-08-21.2) er enn Claude-drög og bíður þinnar samþykktar. Árni á eftir að samþykkja opinberu undirskriftarmyndina (skjal 67). Lagt til hliðar í skjali 67: .qd-totals tnum ein lína.",
+      "tags": [
+        "efni",
+        "ákvörðun"
+      ],
+      "source_ref": "docs/plans/tilbod-skilmalar.md"
+    },
+    {
+      "mockup_id": "t2",
+      "module": "tilbod-og-verdskra",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Verðlíkan v4: fimm ákvarðanir teknar án þín",
+      "summary": "þak 60%, innleiðing per stað, afslættir",
+      "body": "Þak 60% með gjald undanskilið, orðalag innleiðingar per starfsstöð, afsláttarstefna viðbóta, skilgreining starfsmannafjölda, engin sjálfvirk þrepabreyting. Þú staðfestir eða snýrð við.",
+      "tags": [
+        "ákvörðun"
+      ],
+      "source_ref": "docs/progress/66-pricing-model-v4.md"
+    },
+    {
+      "mockup_id": "ow1",
+      "module": "eigendabakendi",
+      "status": "parked",
+      "title": "Eigendabakendi: stuðningssýn og atburðaskrá",
+      "summary": "fasi C og D, ekki byrjað",
+      "body": "\"Skoða sem stuðningsfulltrúi\" með appelsínugulum borða, og /owner/audit-log með síum og víðari SELECT fyrir super admin.",
+      "tags": [
+        "plan"
+      ],
+      "source_ref": "docs/progress/06-owner-backend.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "hitamaelingar",
+      "status": "parked",
+      "title": "Hitamælingar: önnur offline-viðvörun getur opnast á bak við staðfesta",
+      "summary": "var til fyrir, ekki náanlegt í dag",
+      "body": "Önnur offline-viðvörun getur opnast á bak við staðfesta, því OPEN-yfirferðin og vísirinn úr 00188 athuga bara stöðuna open. Var til fyrir og er ekki náanlegt í dag.",
+      "tags": [
+        "villa"
+      ],
+      "source_ref": "docs/progress/101-hitamaelingar-smoke-2-6-fixes.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "hitamaelingar",
+      "status": "parked",
+      "title": "Hitamælingar Stillingar: óvistaðar breytingar týnast þegjandi",
+      "summary": "við deildaskipti eða leiðsögn í hliðarvalmynd",
+      "body": "Óvistaðar breytingar í Stillingum hverfa án viðvörunar þegar skipt er um deild eða farið annað í hliðarvalmyndinni. Flipaskipti og skúffa spyrja, endurhleðsla og lokun fá spurningu vafrans síðan Task 7 í plani B.",
+      "tags": [
+        "villa"
+      ],
+      "source_ref": "docs/progress/102-hitamaelingar-smoke-2-6-features.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "hitamaelingar",
+      "status": "parked",
+      "title": "Handmælingar: smáatriði eftir",
+      "summary": "trúnaðaratvik, graf, item_text_en",
+      "body": "Ekki hindrandi: mæling á trúnaðaratviki vistar incident_id=null; valfrjálst varagraf í SensorTiles undir tveimur punktum; item_text_en féll út í 00197.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/49-manual-temperature-measurements.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "hitamaelingar",
+      "status": "parked",
+      "title": "LoRa: fcnt-afritun fyrir fleiri gáttir",
+      "summary": "hannað, ekki byggt",
+      "body": "Afritunarvörn á fcnt fyrir RF-redundancy með fleiri gáttum. Hannað, ekki byggt; byggist þegar fyrsti viðskiptavinur þarf.",
+      "tags": [
+        "vélbúnaður"
+      ],
+      "source_ref": "docs/progress/12b-temperature-hardware-activation.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "vidhald",
+      "status": "parked",
+      "title": "Viðhald næsta umferð: stuttur SMS-tengill og þjónustuskýrslur RV",
+      "summary": "liður 12 frá Árna 7. október",
+      "body": "Næsta Viðhaldsumferð Árna: fyrst stuttur SMS-tengill, svo þjónustuskýrslur RV. Hönnunarumferðin (skjal 142) er komin.",
+      "tags": [
+        "pakki Árna"
+      ],
+      "source_ref": "docs/progress/103-hitamaelingar-arni-answers-round.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "rv-samstarf",
+      "status": "waiting",
+      "waiting_on": "Á",
+      "title": "RV smoke: leiðarvísir 6 hjá Árna",
+      "summary": "sameiginleg keyrsla 30. september",
+      "body": "Sameiginlega RV keyrslan var 30. september (ledger rv_backend/rv-smoke-z-ledger-2026-09-30.md). Leiðarvísir 6 heldur hluta Árna.",
+      "tags": [
+        "Árni leiðarvísir",
+        "smokes"
+      ],
+      "source_ref": "docs/plans/rv-smoke-test-arni-6.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "rv-samstarf",
+      "status": "parked",
+      "title": "RV bakendi: biðröðin tóm, næsta röð valin á Fable",
+      "summary": "raðir 4, 5 og 6 komnar",
+      "body": "Raðir 4, 5 og 6 í RV biðröðinni eru komnar (skjöl 87, 88, 89; röð 6 ýtt 2. október með 00274). Biðröðin er tóm, næsta röð er valin í Fable lotu.",
+      "tags": [
+        "plan"
+      ],
+      "source_ref": "D:/Claude Code/metta2/rv_backend/rv-backend-handover-2026-09-29.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "innskraning-og-oryggi",
+      "status": "parked",
+      "title": "audit_log: INSERT regla leyfir falsaðar raðir",
+      "summary": "hvaða innskráður notandi sem er",
+      "body": "INSERT reglan á audit_log leyfir hvaða innskráða notanda sem er að skrifa raðir á sjálfan sig með hvaða aðgerð sem er, svo falsaðar raðir líta út eins og alvöru.",
+      "tags": [
+        "öryggi",
+        "villa"
+      ],
+      "source_ref": "docs/progress/79-rv-smoke-fixes.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "innri-uttekt",
+      "status": "parked",
+      "title": "Innri úttekt v6: flokkar í uppsetningu og na_allowed",
+      "summary": "ekki hindrandi",
+      "body": "Engin flokka CRUD í uppsetningarskúffunni. Gildi na_allowed eru ágiskuð úr spekki, ekki staðfest í framleiðslu.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/68-internal-audit-v6-redesign.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "gatlistar",
+      "status": "parked",
+      "title": "Gátlistar: frídagar 2029 og tómir vikudagar",
+      "summary": "ekki hindrandi",
+      "body": "Setja public_holidays fyrir 2029 inn fyrir mitt ár 2028. Vistun á ódaglegu atriði getur geymt weekdays: [] (vélin hunsar það).",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/02h-checklists-weekday-holidays.md"
+    },
+    {
+      "mockup_id": null,
+      "module": null,
+      "status": "parked",
+      "title": "Pakki 1: eftirfylgni og leifar úr fasa 7",
+      "summary": "níu atriði, ekki hindrandi",
+      "body": "Útkomuskráning í dispatch, offline sem sjálfvirkt atvik rangmerkt, RLS gat á nafnlausum og trúnaðarmyndum, gömul verkferlaafrit, 4 prófunarskynjarar, bucket gerð privat, blindur blettur í Sögu, dauðir useChecklistRuns útflutningar, 23505 gleypt.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/45-package1-prelaunch-fixes.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "gagnagrunnur-og-afkost",
+      "status": "parked",
+      "title": "Migration drift: 00146/00147, 00153 og 00163 fyrir næsta db push",
+      "summary": "þrjár samræmingar og tvær ákvarðanir",
+      "body": "Samræma fyrir næsta db push: 00146/00147 (Áhættumat, skjal 34b/34c), 00153 (Stefnur og áætlanir, skjal 14c), 00163 með migration repair (hitamælingar og prófílar, skjal 38). Ákvarðanir sem fylgja: aðgangur demo_viewer (enginn í dag, skjal 38) og hvort HACCP í GÁMES merkjabreytingar haldast (skjal 34b). Draga og raða forstillingum í Áhættumati er frestað.",
+      "tags": [
+        "tækniskuld",
+        "ákvörðun"
+      ],
+      "source_ref": "docs/progress/38-temperature-profile-role-gating.md, 14c-plans-policies-numbered-changes.md, 34b-risk-assessment-feedback-brief.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "spjaldtolvur-og-simar",
+      "status": "parked",
+      "title": "Spjaldtölvuumferð: kortafyrirsagnir á MovementLog og ProceduresTable",
+      "summary": "smáatriði úr skjali 32",
+      "body": "Hækka kortafyrirsögn í stöfluðum kortum á MovementLog og ProceduresTable. Jöfnun merkja og gilda í stöfluðum kortum var kláruð 31. október (skjal 145).",
+      "tags": [
+        "lítið"
+      ],
+      "source_ref": "docs/progress/32-responsive-overhaul.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "kiosk",
+      "status": "parked",
+      "title": "Kiosk v1: Operations-aðgangar fyrir tvær deildir og kiosk_visible",
+      "summary": "úthlutun og ein ákvörðun",
+      "body": "Útbúa Operations-aðganga fyrir tvær deildir sem eftir eru. Ákveða sjálfgefið kiosk_visible fyrir company_admin (backfill og breyting á invite-user?).",
+      "tags": [
+        "ákvörðun"
+      ],
+      "source_ref": "docs/progress/29-kiosk-pin-auth.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "kiosk",
+      "status": "parked",
+      "title": "Matvælavakt: myndir í eldri innköllunum og MAST afbrigði",
+      "summary": "um 57 af 220 án mynda",
+      "body": "Bæta myndum við um 57 af 220 eldri innköllunarröðum. Sjaldgæft MAST afbrigði þar sem strong vefur gildið les merki og gildi öfugt.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/46-kiosk-lockscreen-matvaelavakt.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "verkferlar",
+      "status": "parked",
+      "title": "Verkferlar: þreföld realtime mögnun og demo-gögn",
+      "summary": "tækniskuld úr skjali 11e",
+      "body": "Laga þrefalda realtime mögnun, loka 00070 demo seed og hreinsa demo-gögn.",
+      "tags": [
+        "tækniskuld"
+      ],
+      "source_ref": "docs/progress/11e-procedures-improvements-pass.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "atvik",
+      "status": "parked",
+      "title": "Atvik: tíu af ellefu gap-atriðum opin",
+      "summary": "heimildir á CAPA, RCA og greiningum að hluta",
+      "body": "Tíu af ellefu atriðum úr gap-greiningunni eru opin. Heimildastýring starfsmanna á CAPA, RCA og greiningaflipum er að hluta útfærð og þarf staðfestingu.",
+      "tags": [
+        "plan"
+      ],
+      "source_ref": "docs/plans/incidents-gap-analysis.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "eigendabakendi",
+      "status": "parked",
+      "title": "Sérsnið fasar 4 og 5: stillingaritill og sérkóði per fyrirtæki",
+      "summary": "hannað, ekki byggt",
+      "body": "Ritill fyrir companies.settings og useCompanySettings; src/custom/<slug> hleðsla og /app/c/* tenging. Byggist þegar fyrsti viðskiptavinur biður um.",
+      "tags": [
+        "plan"
+      ],
+      "source_ref": "docs/progress/16-customization-architecture.md"
+    },
+    {
+      "mockup_id": null,
+      "module": null,
+      "status": "parked",
+      "title": "Vaktaplan v1.5: dvalandi verkefnalisti",
+      "summary": "Vaktaplan lagt niður 20. ágúst",
+      "body": "Vaktaplan var tekið úr öllum pökkum 20. ágúst, kóði og gögn haldast. Listinn liggur í dvala: 24 klst áminning, QR/GPS stimplun, SMS, iCal, launaútflutningur, spá um launakostnað.",
+      "tags": [
+        "dvali"
+      ],
+      "source_ref": "docs/progress/22-shift-planning-v1-finish.md"
+    },
+    {
+      "mockup_id": null,
+      "module": null,
+      "status": "parked",
+      "title": "Samfélagsmiðlar: rásir og efnisáætlun",
+      "summary": "ekki byrjað",
+      "body": "Setja upp rásir og efnisáætlun fyrir næstu vikur.",
+      "tags": [
+        "hugmynd"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 13"
+    },
+    {
+      "mockup_id": null,
+      "module": "landing-metta-is",
+      "status": "parked",
+      "title": "Kynningarsíða og myndbönd fyrir áhugasama",
+      "summary": "ekki byrjað",
+      "body": "Vefurinn segir lítið, svo þetta á að fara dýpra og sýna Mettu almennilega. Létt síða þar sem myndböndin bera efnið. Sama leið og Claude-gerðu myndbönd Árna, en meira sala og minna þjónusta. ElevenLabs talsetning og lágvær tónlist.",
+      "tags": [
+        "hugmynd"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 14"
+    },
+    {
+      "mockup_id": null,
+      "module": "tilbod-og-verdskra",
+      "status": "parked",
+      "title": "Smápakki: Gátlistar og Hitamælingar á 11 til 15 þúsund",
+      "summary": "ekki auglýstur, fyrir sölufólk RV",
+      "body": "Rætt við Árna. Ekki auglýstur; sölufulltrúar RV geta boðið hann til að loka sölu. Þarf ákvörðun um verð, réttindi og hvernig sölufólk býður hann. Þú vilt pakkainnihald á EINUM stað: planið á að gera SQL módúla- og þrepakortið að eina upprunanum sem modules.ts og askur entitlements.mjs lesa, og skoða custom_modules í stað nýs þreps. Verð eru þegar á einum stað (pricing_* töflur); fastar afritanir eru í public/decks/v49.html og public/hjalp/rv/ klippum.",
+      "tags": [
+        "hugmynd",
+        "ákvörðun"
+      ],
+      "source_ref": "minni: project_todo_pre_storeldhusid, liður 15"
+    },
+    {
+      "mockup_id": null,
+      "module": "landing-metta-is",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Landing: opið fyrir útgáfu",
+      "summary": "persónuvernd, fótur, FAQ fullyrðingar, og-mynd",
+      "body": "Spec kafli 8, fyrir þig og Árna: persónuverndarstefna og tengill á hana (formið safnar nafni, netfangi og síma); fótur með kennitölu, heimilisfangi og netfangi; EN hnappurinn er falinn þar til enska umferðin kemur; fullyrðingar í FAQ að staðfesta (EN12830, hýsing innan EES, GDPR, Stofnun atvinnuveganna 1. janúar 2027); endanleg og-mynd 1200x630 frá hönnunarteyminu. Smokes fyrir þig á raunverulegum iPhone, iPad og Mac Safari eru í sama skjali.",
+      "tags": [
+        "efni",
+        "ákvörðun"
+      ],
+      "source_ref": "docs/progress/124-landing-v9-round-3.md"
+    },
+    {
+      "mockup_id": null,
+      "module": "storeldhusid-5-6-nov",
+      "status": "waiting",
+      "waiting_on": "H",
+      "title": "Stóreldhúsið: básæfing með tveimur skjám",
+      "summary": "fyrir 5. nóvember",
+      "body": "Opið eftir skjásamstillingu (skjal 127): básæfing með tveimur skjám fyrir 5. nóvember, lifandi smoke með tveimur gluggum á metta.is, og yfirferð þín og Árna á fullyrðingum í tilvitnunum Árna. Óskipulagt: skynjaraplan fyrir salinn og hreinsun prófunargagna í söluaðilabakenda fyrir 7. nóvember. Básleiðbeiningar: docs/operations/storeldhus-booth-laptop.md.",
+      "tags": [
+        "fyrir sýningu"
+      ],
+      "source_ref": "minni: project_show_screen_sync_plan"
+    }
+  ]
+}

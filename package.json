@@ -14,7 +14,8 @@
     "brand": "node scripts/build-brand-assets.mjs",
     "translate": "node scripts/translate-is.mjs",
     "test": "vitest run",
-    "smoke:hg": "node scripts/hg-smoke.mjs"
+    "smoke:hg": "node scripts/hg-smoke.mjs",
+    "seed:metta": "node cli/seed/seed.mjs --project metta --file cli/seed/metta-2026-10-31.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
