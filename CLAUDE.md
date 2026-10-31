@@ -8,7 +8,7 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Pla
 
 ## Current state
 
-Plan 1 (grunnur, foundation) is built and verified (`npm run smoke:hg` prints `ok 4/4` against the live DB, 36 vitest tests): the `hg_` schema, an API layer, realtime board data hook, pure status, filter, upload and continuation logic with tests, the app shell, routes and the participant gate. The board page is a placeholder that shows the status counters.
+Plan 1 (grunnur, foundation) is built and verified (`npm run smoke:hg` prints `ok 6/6` against the live DB, 36 vitest tests): the `hg_` schema, an API layer, realtime board data hook, pure status, filter, upload and continuation logic with tests, the app shell, routes and the participant gate. The board page is a placeholder that shows the status counters.
 
 Not built yet, do not describe them as existing:
 - Plan 2: the whiteboard itself (packages, modules, item cards, threads, side panel, filters, touch), project settings.
@@ -101,10 +101,13 @@ Files live in `supabase/migrations/` (see the README there). Applied with the Su
 - `0001_hg_schema` : applied.
 - `0002_hg_rls_hardening` : applied by Heimir in the SQL editor on 2026-10-31 (the MCP connector declines DROP statements). Not listed in `supabase_migrations.schema_migrations`.
 - `0003_hg_triggers_storage` : applied through MCP. Adds updated_at touch on items and plans, the `hg_events` log written by security definer triggers, answering the last open question moves the item to waiting with `waiting_on` = service user, `closed_at` set on entering done/dropped and cleared on reopen, author stamping from `auth.uid()` (created_by, asked_by, uploaded_by, user_id, updated_by, answered_by, done_by), and the private bucket `hg-files` (50 MB limit) with storage policies `hg_files_storage_select/insert/delete` through `hg_can_access_path(name)`. There is no storage UPDATE policy, so uploads must use `upsert: false`.
+- `0004_hg_trigger_fixes` : applied through MCP. Answering the last question no longer moves done, dropped or parked items; a `waiting_on` change logs `item.status` (data adds `waiting_on_from`); answer and done stamps cannot be forged and are stamped on insert too (new trigger `hg_actions_stamp_ins_trg`); a pos only update keeps `updated_at` and `updated_by`; an insert keeps a supplied `closed_at`; `hg_service_user` is no longer executable by `authenticated`.
 
 ### Auth
 
 Email and password through Supabase Auth, email confirmation on. Password reset goes `/auth/callback?type=recovery` then `/reset-password`. Participants are Heimir, Árni and a Claude service user (`claude@huginn.pro`, auth id `6ea33ea7-0072-4e4b-a625-156ebf487399`, participant of metta with short `C`, `is_service = true`; password in `.env` as `HG_SMOKE_PASSWORD`). A sandbox user `sandbox@huginn.pro` (participant of no project, credentials `HG_SANDBOX_*` in `.env`) exists for testing the no-access path. Access to a project is decided by `hg_participants` only.
+
+Plan 4's edge function must sign in as the Claude service user (preferred, so RLS applies) or set `updated_by` on every write, because `hg_stamp_author` keeps a supplied `updated_by` only when `auth.uid()` is null.
 
 ### Env vars (`.env`)
 
