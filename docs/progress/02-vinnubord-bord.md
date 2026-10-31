@@ -1,7 +1,7 @@
 # 02 Vinnuborð: borðið (plan 2)
 
 Dagsetning: 2026-10-31
-Grein: `vinnubord-2` (ekki pushuð, Heimir pushar)
+Grein: `vinnubord-2`, sameinuð í main
 Plan: `docs/superpowers/plans/2026-10-31-vinnubord-2-bord.md`
 Spekk: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`
 
@@ -25,6 +25,8 @@ Keyrt í verki 8, 2026-10-31:
 - `npm run build`: grænt (`built in 1.26s`).
 - `npm run test`: `Test Files 20 passed (20)`, `Tests 212 passed (212)`.
 - `npm run smoke:hg`: `ok 6/6`.
+
+Lokayfirferð (Fable) á allri greininni: tilbúið með lagfæringum, ekkert alvarlegt. Lagfæringarnar fóru inn í fjórum commitum og voru yfirfarnar aftur (hreint): lesmerki stimpluð með klukku þjónsins (`0006_hg_reads_clock_and_guards`, keyrð af Heimi), stutt nafn athugað í `hg_add_participant`, módúll verður að eiga pakka, `srcset` bannað í Markdown, misheppnuð vistun staðsetningar skilar spjaldinu og sýnir villu, vistun skoluð við `pagehide`, spjald stekkur ekki við lyftingu á snertiskjá. Eftir það: `Tests 217 passed (217)`, build grænt, `npm run smoke:hg` `ok 6/6`.
 
 ## Handpróf
 
@@ -97,12 +99,12 @@ Tilkynning neðst þegar annar sendir inn nýtt verk í rauntíma, með neistahr
 
 Allt minniháttar, ekkert bilar. Skipt eftir svæðum:
 
-- **Snerting og dráttur:** `setView` á hverja hreyfingu endurteiknar borðið (nota ref ef iPad hökktir). Þriðji fingur og blönduð mús og snerting eru ekki fullmeðhöndluð. Hjóladelta er ekki samræmd milli vafra. Ef lyft spjald er rofið án pinch getur fingurinn farið að færa borðið. Dráttur sem er sleppt rétt áður en realtime svarar getur sprottið aftur. Vistun staðsetningar (300 ms bið) tapast ef flipa er lokað strax.
-- **Þræðir og hreyfing:** canvas teiknar hvern ramma að eilífu, jafnvel þegar ekkert hreyfist. Fjaðrir spjalda keyra í Wires lykkjunni. Neistar safnast fyrir á verkum án þráðar. Innkomuhrinan getur gleypst ef endurhleðsla lendir inni í fyrstu tímasetningunni.
+- **Snerting og dráttur:** `setView` á hverja hreyfingu endurteiknar borðið (nota ref ef iPad hökktir). Þriðji fingur og blönduð mús og snerting eru ekki fullmeðhöndluð. Hjóladelta er ekki samræmd milli vafra. Ef lyft spjald er rofið án pinch getur fingurinn farið að færa borðið. Dráttur sem er sleppt rétt áður en realtime svarar getur sprottið aftur.
+- **Þræðir og hreyfing:** canvas hvílir þegar ekkert hreyfist, en teiknar hvern ramma meðan einhver þráður bíður einhvers (neistar). Mæla á iPad fyrst; ef hökktir, teikna kyrru þræðina á sér canvas. Fjaðrir spjalda keyra í Wires lykkjunni. Neistar safnast fyrir á verkum án þráðar. Innkomuhrinan getur gleypst ef endurhleðsla lendir inni í fyrstu tímasetningunni.
 - **Spjald og aðgengi:** drög í athugasemd tapast þegar spjaldi er lokað. Engin fókusgildra í nýju verki blaðinu. Flipar án örvalykla. Fókus fer ekki inn í spjaldið né aftur á spjaldið. `useOptimisticToggle` getur setið fast ef realtime atburður tapast.
-- **Útlit:** `backdrop-filter` á hverju módúlspjaldi (athuga á síma). Tilkynning getur hulið sleðann á síma. Nokkrar stærðir (`NEW_CARD_SIZE.w`, radíus) enn tvítekin sem tölur. Veik fókusrönd á módúlspjaldi. Módúlar án pakka (`package_id` null) sjást ekki á borðinu.
-- **Gögn og stillingar:** `hg_add_participant` athugar ekki lengd eða einkvæmni á `short` á þjóninum (þyrfti 0006). Fjarlægður þátttakandi skilur eftir verk sem bíða hans. Samtímis breytingar á stillingum: síðasta skrif vinnur, og `setPositions` er ekki atómískt (jafnar sig). `moduleTone` tekur fyrsta verk í röð og getur flökt með realtime röð. `srcset` á myndum í Markdown er ekki bannað (bæta í `FORBID_ATTR`). `useFilter` les tóman lykil áður en notandi er hlaðinn.
+- **Útlit:** `backdrop-filter` á hverju módúlspjaldi (athuga á síma). Tilkynning getur hulið sleðann á síma. Nokkrar stærðir (`NEW_CARD_SIZE.w`, radíus) enn tvítekin sem tölur. Veik fókusrönd á módúlspjaldi.
+- **Gögn og stillingar:** realtime DELETE berst ekki öðrum borðum (sjá CLAUDE.md), eyddur módúll situr þar til næsta breyting kemur. Fjarlægður þátttakandi skilur eftir verk sem bíða hans. Samtímis breytingar á stillingum: síðasta skrif vinnur, og `setPositions` er ekki atómískt (jafnar sig). `moduleTone` tekur fyrsta verk í röð og getur flökt með realtime röð. `useFilter` les tóman lykil áður en notandi er hlaðinn.
 
 ## Næst
 
-Plan 3 (skipanalínutól og `/huginn` skill) og plan 4 (skyndigreining), eftir að Heimir hefur farið yfir plan 2 og pushað.
+Plan 3 (skipanalínutól og `/huginn` skill) og plan 4 (skyndigreining).
