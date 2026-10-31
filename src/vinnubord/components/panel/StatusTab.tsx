@@ -71,13 +71,13 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
           {item.next_step && (
             <div className="hg-code hg-code-text">
               <pre>{item.next_step}</pre>
-              <CopyButton text={item.next_step} what={t('vinnubord.panel.nextStep')} />
+              <CopyButton text={item.next_step} what={t('vinnubord.panel.copyOf.nextStep')} />
             </div>
           )}
           {item.next_prompt && (
             <div className="hg-code">
               <pre>{item.next_prompt}</pre>
-              <CopyButton text={item.next_prompt} what={t('vinnubord.panel.nextPrompt')} />
+              <CopyButton text={item.next_prompt} what={t('vinnubord.panel.copyOf.nextPrompt')} />
             </div>
           )}
         </section>
@@ -92,7 +92,7 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
           <h3>{t('vinnubord.panel.source')}</h3>
           <div className="hg-path">
             <code>{item.source_ref}</code>
-            <CopyButton text={item.source_ref} what={t('vinnubord.panel.source')} />
+            <CopyButton text={item.source_ref} what={t('vinnubord.panel.copyOf.source')} />
           </div>
         </section>
       )}

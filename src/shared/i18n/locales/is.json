@@ -80,6 +80,7 @@
       },
       "fit": "Sýna allt",
       "loadError": "Ekki tókst að sækja verkefnið.",
+      "moveError": "Ekki tókst að vista nýjan stað spjaldsins. Það er komið aftur á sinn stað.",
       "noneOpen": "Ekkert opið",
       "open": "{{count}} opið",
       "refreshError": "Ekki tókst að uppfæra borðið. Hér er síðasta staða sem náðist.",
@@ -172,6 +173,14 @@
       "copied": "Afritað",
       "copy": "Afrita",
       "copyFailed": "Gat ekki afritað",
+      "copyOf": {
+        "nextPrompt": "prompt",
+        "nextStep": "næsta skref",
+        "payload": "blokk",
+        "planPath": "slóð plans",
+        "repoPath": "slóð í repoinu",
+        "source": "heimild"
+      },
       "copyWhat": "Afrita {{what}}",
       "cost": "Kostar ef rangt: {{cost}}",
       "files": {
@@ -180,8 +189,7 @@
         "empty": "Engin skjöl ennþá.",
         "loading": "Sæki skjal",
         "open": "Opna {{name}}",
-        "openLink": "Smelltu til að opna {{name}}",
-        "repoPath": "slóð í repoinu"
+        "openLink": "Smelltu til að opna {{name}}"
       },
       "history": {
         "empty": "Ekkert hefur gerst ennþá."
@@ -198,12 +206,9 @@
         "noneOpen": "Ekkert opið.",
         "open": "Opin verk"
       },
-      "nextPrompt": "Prompt",
       "nextStep": "Næsta skref",
       "noModule": "Enginn módull",
       "noSummary": "Claude hefur ekki skrifað samantekt ennþá.",
-      "payload": "blokk",
-      "planPath": "slóð plans",
       "plans": "Plön",
       "questions": {
         "answerBy": "{{name}} svaraði {{when}}",
@@ -244,12 +249,13 @@
         "coral": "Kóral",
         "gold": "Gull",
         "lilac": "Lilla",
-        "stone": "Grjót",
+        "stone": "Steingrátt",
         "teal": "Grænblár"
       },
       "delete": "Eyða",
       "loadError": "Gat ekki sótt stillingarnar.",
       "modules": {
+        "choosePackage": "Veldu pakka",
         "color": "Litur",
         "deleteConfirm": "Eyða módulnum {{name}}?",
         "empty": "Engir módular í þessum pakka.",

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAsyncAction } from '../../hooks/useAsyncAction'
 import { deleteModule, setPositions, upsertModule } from '../../lib/api'
-import { nextPosition, reorder, slugify, validateModuleName, validateSlug } from '../../lib/settings'
+import { nextPosition, reorder, slugify, validateModuleName, validateModulePackage, validateSlug } from '../../lib/settings'
 import type { Module, Package } from '../../lib/types'
 import { Actions, ColorPicker, Field, OrderButtons } from './parts'
 
@@ -11,7 +11,8 @@ type Props = { projectId: string; packages: Package[]; modules: Module[]; onChan
 type Group = { id: string | null; name: string; modules: Module[] }
 
 // Modules grouped under their package in board order, then the ones without
-// a package. The order buttons move a module within its group.
+// a package (older rows: the board does not draw them, so saving one asks for
+// a package). The order buttons move a module within its group.
 export function ModulesEditor({ projectId, packages, modules, onChange }: Props) {
   const { t } = useTranslation()
   const order = useAsyncAction()
@@ -90,9 +91,9 @@ function sameDraft(a: Draft, b: Draft): boolean {
   return (Object.keys(a) as (keyof Draft)[]).every((k) => a[k] === b[k])
 }
 
-// Name and slug checks, null when the draft can be saved.
-function invalidReason(d: Draft, modules: Module[], selfId?: string): string | null {
-  return validateModuleName(d.name) ?? validateSlug(d.slug, modules, selfId)
+// Name, slug and package checks, null when the draft can be saved.
+function invalidReason(d: Draft, modules: Module[], packages: Package[], selfId?: string): string | null {
+  return validateModuleName(d.name) ?? validateSlug(d.slug, modules, selfId) ?? validateModulePackage(d.packageId, packages)
 }
 
 // Position in the target package: unchanged when the package stays, last when it moves.
@@ -116,6 +117,7 @@ function ModuleFields({
   onName?: (name: string) => void
 }) {
   const { t } = useTranslation()
+  const knownPackage = packages.some((p) => p.id === draft.packageId)
   return (
     <>
       <Field label={t('vinnubord.settings.modules.name')}>
@@ -136,13 +138,22 @@ function ModuleFields({
         />
       </Field>
       <Field label={t('vinnubord.settings.modules.package')}>
-        <select value={draft.packageId} onChange={(e) => setDraft({ ...draft, packageId: e.target.value })} disabled={busy}>
+        <select
+          value={knownPackage ? draft.packageId : ''}
+          onChange={(e) => setDraft({ ...draft, packageId: e.target.value })}
+          disabled={busy}
+        >
+          {/* A module needs a package in v1: the board draws modules only in package columns. */}
+          {!knownPackage && (
+            <option value="" disabled>
+              {t('vinnubord.settings.modules.choosePackage')}
+            </option>
+          )}
           {packages.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
             </option>
           ))}
-          <option value="">{t('vinnubord.settings.modules.noPackage')}</option>
         </select>
       </Field>
       <Field className="hg-set-field-wide" label={t('vinnubord.settings.modules.statusLine')}>
@@ -191,7 +202,7 @@ function ModuleRow({
   const dirty = !sameDraft(draft, initial)
 
   async function save() {
-    const reason = invalidReason(draft, modules, module.id)
+    const reason = invalidReason(draft, modules, packages, module.id)
     setInvalid(reason)
     if (reason) return
     const ok = await run(async () => {
@@ -262,7 +273,7 @@ function NewModule({
   }
 
   async function add() {
-    const reason = invalidReason(draft, modules)
+    const reason = invalidReason(draft, modules, packages)
     setInvalid(reason)
     if (reason) return
     const ok = await run(async () => {

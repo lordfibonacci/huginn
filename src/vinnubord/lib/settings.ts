@@ -32,6 +32,13 @@ export function validateModuleName(name: string): string | null {
   return name.trim() === '' ? 'Módullinn þarf nafn.' : null
 }
 
+// The board draws modules only inside a package column, so a module without
+// one would vanish with its wires. In v1 every module belongs to a package.
+export function validateModulePackage(packageId: string, packages: { id: string }[]): string | null {
+  if (packages.length === 0) return 'Módull þarf pakka. Búðu fyrst til pakka hér fyrir ofan.'
+  return packages.some((p) => p.id === packageId) ? null : 'Veldu pakka fyrir módulinn.'
+}
+
 export function validateShort(short: string, participants: { id: string; short: string }[], selfId?: string): string | null {
   const s = short.trim()
   if (s === '') return 'Stutt nafn vantar.'

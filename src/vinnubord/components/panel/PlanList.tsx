@@ -27,7 +27,7 @@ export function PlanList({ plans, rulings }: Props) {
             {plan.path && (
               <div className="hg-path">
                 <code>{plan.path}</code>
-                <CopyButton text={plan.path} what={t('vinnubord.panel.planPath')} />
+                <CopyButton text={plan.path} what={t('vinnubord.panel.copyOf.planPath')} />
               </div>
             )}
             {own.length > 0 && (

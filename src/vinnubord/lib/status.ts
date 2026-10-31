@@ -116,12 +116,7 @@ export const BUCKET_TONE: Record<keyof Counts, Tone> = {
   parked: 'stone',
 }
 
-export function countsFor(
-  items: Item[],
-  actions: Action[],
-  viewerId: string,
-  _participants: Participant[],
-): Counts {
+export function countsFor(items: Item[], actions: Action[], viewerId: string): Counts {
   const c: Counts = { new: 0, mine: 0, others: 0, build: 0, parked: 0 }
   for (const item of items) {
     const bucket = countBucket(item, actions, viewerId)

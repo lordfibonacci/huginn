@@ -11,6 +11,7 @@ import {
   reorder,
   slugify,
   validateModuleName,
+  validateModulePackage,
   validateShort,
   validateSlug,
 } from './settings'
@@ -53,6 +54,18 @@ describe('validateModuleName', () => {
   it('needs a name', () => {
     expect(validateModuleName('  ')).toMatch(/nafn/i)
     expect(validateModuleName('Kiosk')).toBeNull()
+  })
+})
+
+describe('validateModulePackage', () => {
+  const packages = [{ id: 'p1' }, { id: 'p2' }]
+  it('a module needs one of the project packages', () => {
+    expect(validateModulePackage('p2', packages)).toBeNull()
+    expect(validateModulePackage('', packages)).toMatch(/pakka/i)
+    expect(validateModulePackage('gone', packages)).toMatch(/pakka/i)
+  })
+  it('says to add a package first when the project has none', () => {
+    expect(validateModulePackage('', [])).toMatch(/fyrst/i)
   })
 })
 

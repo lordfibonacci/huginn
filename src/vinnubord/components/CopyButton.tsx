@@ -27,7 +27,8 @@ export function useCopy() {
 
 type Props = {
   text: string
-  // What is copied, for the screen reader label ("Afrita slóð").
+  // What is copied, lower case, for the screen reader label ("Afrita næsta
+  // skref"). Pass a vinnubord.panel.copyOf key, not a heading.
   what?: string
 }
 

@@ -86,7 +86,8 @@
       "zoomOut": "Zoom out",
       "fit": "Show everything",
       "zoomLevel": "Zoom level",
-      "refreshError": "Could not refresh the board. Showing the last loaded state."
+      "refreshError": "Could not refresh the board. Showing the last loaded state.",
+      "moveError": "Could not save where the item card was moved. It is back in its place."
     },
     "loading": "Loading",
     "noAccess": {
@@ -139,7 +140,8 @@
         "ghost": "Ghost (planned, not built)",
         "newTitle": "New module",
         "empty": "No modules in this package.",
-        "deleteConfirm": "Delete the module {{name}}?"
+        "deleteConfirm": "Delete the module {{name}}?",
+        "choosePackage": "Choose a package"
       },
       "colors": {
         "coral": "Coral",
@@ -191,16 +193,13 @@
       "module": "Module",
       "body": "Description",
       "plans": "Plans",
-      "planPath": "Plan path",
       "rulings_one": "{{count}} ruling",
       "rulings_other": "{{count}} rulings",
       "cost": "Cost if wrong: {{cost}}",
       "reverse": "Reverse",
       "actions": "Actions",
       "actionDone": "Done: {{body}}",
-      "payload": "Block",
       "nextStep": "Next step",
-      "nextPrompt": "Prompt",
       "resume": "Continue",
       "resumeHint": "Copies a context prompt for a new chat.",
       "copy": "Copy",
@@ -216,7 +215,6 @@
       "files": {
         "empty": "No files yet.",
         "by": "{{name}}, {{when}}",
-        "repoPath": "In the repo",
         "back": "Back to files",
         "loading": "Loading file",
         "open": "Open {{name}}",
@@ -248,6 +246,14 @@
         "dropped": "Dropped, last 90 days",
         "comments": "Comments",
         "noComments": "No comments yet."
+      },
+      "copyOf": {
+        "payload": "block",
+        "repoPath": "repo path",
+        "planPath": "plan path",
+        "nextStep": "next step",
+        "nextPrompt": "prompt",
+        "source": "source"
       }
     },
     "history": {

@@ -51,6 +51,17 @@ describe('renderMarkdown', () => {
     expect(srcs).toEqual(['https://x.example/a.png'])
   })
 
+  it('strips srcset, so an image cannot load over anything but its https src', () => {
+    const el = dom(
+      renderMarkdown(
+        '<img src="https://x.example/a.png" srcset="http://evil.example/b.png 2x"> <picture><source srcset="http://evil.example/c.png"><img src="https://x.example/d.png"></picture>',
+      ),
+    )
+    expect(el.querySelector('[srcset]')).toBeNull()
+    const srcs = [...el.querySelectorAll('img')].map((i) => i.getAttribute('src'))
+    expect(srcs).toEqual(['https://x.example/a.png', 'https://x.example/d.png'])
+  })
+
   it('leaves the shared DOMPurify instance untouched', () => {
     renderMarkdown('[b](https://huginn.pro)')
     const out = DOMPurify.sanitize('<a href="https://huginn.pro">b</a><p style="color:red">x</p>')

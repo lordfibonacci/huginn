@@ -105,7 +105,7 @@ describe('countsFor', () => {
       item({ id: 'i5', status: 'parked' }),
       item({ id: 'i6', status: 'done' }),
     ]
-    const c = countsFor(items, [action({ item_id: 'i1' })], ME, participants)
+    const c = countsFor(items, [action({ item_id: 'i1' })], ME)
     expect(c).toEqual({ new: 1, mine: 1, others: 1, build: 1, parked: 1 })
   })
 })

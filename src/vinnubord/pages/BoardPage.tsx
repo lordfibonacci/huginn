@@ -50,7 +50,7 @@ export function BoardPage() {
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
   const counts = useMemo(
-    () => (loaded ? countsFor(data.items, data.actions, viewerId, data.participants) : null),
+    () => (loaded ? countsFor(data.items, data.actions, viewerId) : null),
     [loaded, data, viewerId],
   )
   const tags = useMemo(() => (loaded ? tagCounts(data.items, filterApi.filter.tags) : []), [loaded, data, filterApi.filter.tags])

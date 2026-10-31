@@ -45,7 +45,7 @@ function ActionRow({ action, owner }: { action: Action; owner: Participant | nul
       {action.payload && (
         <div className="hg-code">
           <pre>{action.payload}</pre>
-          <CopyButton text={action.payload} what={t('vinnubord.panel.payload')} />
+          <CopyButton text={action.payload} what={t('vinnubord.panel.copyOf.payload')} />
         </div>
       )}
       {error && (

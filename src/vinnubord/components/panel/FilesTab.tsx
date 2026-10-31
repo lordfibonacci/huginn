@@ -127,7 +127,7 @@ export function FilesTab({ files, participants }: Props) {
               {f.repo_path && (
                 <div className="hg-path">
                   <code>{f.repo_path}</code>
-                  <CopyButton text={f.repo_path} what={t('vinnubord.panel.files.repoPath')} />
+                  <CopyButton text={f.repo_path} what={t('vinnubord.panel.copyOf.repoPath')} />
                 </div>
               )}
             </li>

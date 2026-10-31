@@ -3,12 +3,13 @@ import createDOMPurify, { type Config, type DOMPurify } from 'dompurify'
 
 // Markdown from item bodies and uploaded files is untrusted. It may not
 // restyle the app (no style elements or attributes), plant a form that posts
-// elsewhere, or load images over anything but https. Links open in a new tab
-// without access to this window.
+// elsewhere, or load images over anything but https (srcset is stripped, it
+// would bypass the src check). Links open in a new tab without access to this
+// window.
 
 const CONFIG: Config = {
   FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'option'],
-  FORBID_ATTR: ['style', 'action', 'formaction'],
+  FORBID_ATTR: ['style', 'action', 'formaction', 'srcset'],
 }
 
 // A dedicated instance, so the hook below never reaches other DOMPurify users.
