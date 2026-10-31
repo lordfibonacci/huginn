@@ -17,7 +17,7 @@ export function ResetPasswordPage() {
 
   useEffect(() => {
     if (!done) return
-    const t = setTimeout(() => navigate('/projects', { replace: true }), 1200)
+    const t = setTimeout(() => navigate('/', { replace: true }), 1200)
     return () => clearTimeout(t)
   }, [done, navigate])
 

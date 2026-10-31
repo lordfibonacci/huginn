@@ -39,7 +39,7 @@ export function AuthCallbackPage() {
       if (event === 'SIGNED_IN' && session) {
         setState({
           kind: 'success',
-          redirectTo: '/projects',
+          redirectTo: '/',
           message: flowType === 'recovery' ? t('auth.callback.recoveryVerified') : t('auth.callback.emailConfirmed'),
         })
       }
@@ -50,7 +50,7 @@ export function AuthCallbackPage() {
       if (flowType === 'recovery') {
         setState({ kind: 'success', redirectTo: '/reset-password', message: t('auth.callback.recoveryVerified') })
       } else {
-        setState({ kind: 'success', redirectTo: '/projects', message: t('auth.callback.emailConfirmed') })
+        setState({ kind: 'success', redirectTo: '/', message: t('auth.callback.emailConfirmed') })
       }
     })
 

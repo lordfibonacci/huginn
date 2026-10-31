@@ -26,17 +26,6 @@ export function useAuth() {
     if (error) throw error
   }
 
-  async function signUp(email: string, password: string): Promise<{ needsEmailConfirmation: boolean }> {
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectTo },
-    })
-    if (error) throw error
-    return { needsEmailConfirmation: !data.session }
-  }
-
   async function resendConfirmation(email: string) {
     const redirectTo = `${window.location.origin}/auth/callback`
     const { error } = await supabase.auth.resend({
@@ -58,5 +47,5 @@ export function useAuth() {
     if (error) throw error
   }
 
-  return { user, loading, signIn, signUp, resendConfirmation, requestPasswordReset, signOut }
+  return { user, loading, signIn, resendConfirmation, requestPasswordReset, signOut }
 }

@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Huginn',
         short_name: 'Huginn',
-        description: 'Persónulegt annað heila — hugsanir, listar og teymisverkefni.',
+        description: 'Vinnuborð Mettu',
         display: 'standalone',
         background_color: '#1d2125',
         theme_color: '#1d2125',
