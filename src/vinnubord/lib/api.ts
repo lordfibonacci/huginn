@@ -23,6 +23,8 @@ import type {
 export const FILES_BUCKET = 'hg-files'
 const SIGNED_URL_SECONDS = 3600
 const CLOSED_HISTORY_DAYS = 90
+// Most recent events kept in BoardData, below the PostgREST 1000 row cap.
+const EVENTS_LIMIT = 500
 
 type DbError = { message: string } | null
 
@@ -80,7 +82,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     byProject('hg_actions').order('created_at'),
     byProject('hg_rulings').order('created_at'),
     byProject('hg_comments').order('created_at'),
-    byProject('hg_events').order('created_at'),
+    // Newest first so the row cap drops old events, reversed below.
+    byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
     byProject('hg_reads'),
   ])
 
@@ -115,7 +118,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     actions: (actions.data ?? []) as Action[],
     rulings: (rulings.data ?? []) as Ruling[],
     comments: (comments.data ?? []) as Comment[],
-    events: (events.data ?? []) as Event[],
+    events: ((events.data ?? []) as Event[]).reverse(),
     reads: (reads.data ?? []) as Read[],
   }
 }
