@@ -79,6 +79,18 @@ export function selectTextFiles<T extends FileRow>(
   return { send, listOnly }
 }
 
+// The function reads files as the Claude service user, who may be in several
+// projects. A file row is only trusted to point inside its own project's
+// folder: <project_id>/ followed by plain segments, no empty, . or ..
+// segments, no leading slash and no backslash. The uuid compares ignoring case.
+export function isPathInProject(storagePath: string, projectId: string): boolean {
+  if (projectId === '' || storagePath.includes('\\')) return false
+  const segments = storagePath.split('/')
+  if (segments.length < 2) return false
+  if (segments[0].toLowerCase() !== projectId.toLowerCase()) return false
+  return segments.every((seg) => seg !== '' && seg !== '.' && seg !== '..')
+}
+
 // maxBytes counts UTF-8 bytes. The cut steps back over continuation bytes so
 // it never lands inside a multi byte character. The marker comes on top.
 export function clipText(text: string, maxBytes: number = MAX_TEXT_BYTES): string {
@@ -220,11 +232,12 @@ export const analysisTool = {
   },
 } satisfies ToolShape
 
-// Summary, body and question text: a dash becomes a comma, with no space
-// left in front of it.
+// Summary, body and question text: a dash becomes a comma, with no space or
+// tab left in front of it. Newlines are kept, so a dash bullet on its own line
+// never joins the line above.
 function clean(value: unknown): string {
   if (typeof value !== 'string') return ''
-  return value.replace(/[–—]/g, ',').replace(/\s+,/g, ',').trim()
+  return value.replace(/[–—]/g, ',').replace(/[ \t]+,/g, ',').trim()
 }
 
 // Tags: a dash becomes a space, never a comma, because the CLI splits tags on

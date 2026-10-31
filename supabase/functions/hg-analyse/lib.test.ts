@@ -9,6 +9,7 @@ import {
   applyAnalysis,
   buildUserMessage,
   clipText,
+  isPathInProject,
   mergeIntoItem,
   selectTextFiles,
 } from './lib'
@@ -327,6 +328,12 @@ describe('applyAnalysis', () => {
     expect(r.questions[0].body).toBe('Já, eða nei?')
   })
 
+  it('keeps the newline in front of a dash bullet on its own line', () => {
+    const r = applyAnalysis({ ...base, body: 'Fyrsta lína\n— liður', summary: 'A \t— B' }, modules)
+    expect(r.body).toBe('Fyrsta lína\n, liður')
+    expect(r.summary).toBe('A, B')
+  })
+
   it('turns a dash in a tag into a space, never a comma, because the CLI splits tags on commas', () => {
     const r = applyAnalysis({ ...base, tags: ['x—y', 'a – b', 'z'] }, modules)
     expect(r.tags).toEqual(['x y', 'a b', 'z'])
@@ -418,5 +425,37 @@ describe('mergeIntoItem', () => {
   it('puts author tags first and dedupes ignoring case', () => {
     const r = mergeIntoItem({ ...item, tags: ['Hönnun', 'brýnt'] }, matched)
     expect(r.tags).toEqual(['Hönnun', 'brýnt', 'greiðslur'])
+  })
+})
+
+describe('isPathInProject', () => {
+  const project = '6ea33ea7-0072-4e4b-a625-156ebf487399'
+  const other = '0b1c2d3e-4f50-4617-8899-aabbccddeeff'
+
+  it('passes a path inside the project folder', () => {
+    expect(isPathInProject(`${project}/item/lysing.md`, project)).toBe(true)
+    expect(isPathInProject(`${project.toUpperCase()}/item/lysing.md`, project)).toBe(true)
+  })
+
+  it('R26: fails a path in another project', () => {
+    expect(isPathInProject(`${other}/item/lysing.md`, project)).toBe(false)
+  })
+
+  it('fails a path that climbs out with .. or uses . segments', () => {
+    expect(isPathInProject(`${project}/../${other}/x`, project)).toBe(false)
+    expect(isPathInProject(`${project}/./x`, project)).toBe(false)
+  })
+
+  it('fails when the project id is only a prefix of a longer first segment', () => {
+    expect(isPathInProject(`${project}x/item/a.md`, project)).toBe(false)
+  })
+
+  it('fails empty segments, a leading slash, backslashes and a bare project id', () => {
+    expect(isPathInProject(`${project}//a.md`, project)).toBe(false)
+    expect(isPathInProject(`/${project}/a.md`, project)).toBe(false)
+    expect(isPathInProject(`${project}/a\\..\\b.md`, project)).toBe(false)
+    expect(isPathInProject(`${project}/`, project)).toBe(false)
+    expect(isPathInProject(project, project)).toBe(false)
+    expect(isPathInProject(`${project}/a.md`, '')).toBe(false)
   })
 })

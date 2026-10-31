@@ -21,6 +21,7 @@ import {
   applyAnalysis,
   buildUserMessage,
   clipText,
+  isPathInProject,
   mergeIntoItem,
   selectTextFiles,
   type MessageFile,
@@ -109,11 +110,16 @@ async function claim(db: SupabaseClient, itemId: string): Promise<boolean> {
 
 // Files in upload order. Text files are downloaded and clipped, the rest go
 // in by name and size only. Returns the names that were sent with text too.
-async function readFiles(db: SupabaseClient, itemId: string): Promise<{ files: MessageFile[]; sent: string[] }> {
+// A path outside the item's project folder is never downloaded (the service
+// user may see other projects' files), it goes in by name and size only.
+async function readFiles(
+  db: SupabaseClient,
+  item: Pick<Item, 'id' | 'project_id'>,
+): Promise<{ files: MessageFile[]; sent: string[] }> {
   const { data, error } = await db
     .from('hg_files')
     .select('name, size, mime, storage_path')
-    .eq('item_id', itemId)
+    .eq('item_id', item.id)
     .order('created_at')
   if (error) throw new Error(`Gat ekki lesið skrárnar: ${error.message}`)
   const rows = (data ?? []) as FileRecord[]
@@ -124,6 +130,11 @@ async function readFiles(db: SupabaseClient, itemId: string): Promise<{ files: M
   const sent: string[] = []
   for (const row of rows) {
     if (!toSend.has(row)) {
+      files.push({ name: row.name, size: row.size })
+      continue
+    }
+    if (!isPathInProject(row.storage_path, item.project_id)) {
+      console.warn(`hg-analyse ${item.id}: ${row.name} has a path outside project ${item.project_id}, not read`)
       files.push({ name: row.name, size: row.size })
       continue
     }
@@ -183,7 +194,7 @@ async function logAnalysis(db: SupabaseClient, itemId: string, kind: string, dat
 
 // Runs with the lock held. Throws on any failure, the caller logs it.
 async function runAnalysis({ db, serviceUserId }: Session, item: Item): Promise<void> {
-  const { files, sent } = await readFiles(db, item.id)
+  const { files, sent } = await readFiles(db, item)
   const { bundle, modules, participants } = await readProject(db, item.project_id)
 
   const heimir = participants.find((p) => sameShort(p.short, 'H'))
@@ -252,7 +263,13 @@ async function reportFailure(db: SupabaseClient, itemId: string, err: unknown): 
   } catch (logErr) {
     console.error(`hg-analyse could not log the failure of ${itemId}: ${messageOf(logErr)}`)
   }
-  const { error: unlockError } = await db.from('hg_items').update({ analyse_lock_until: null }).eq('id', itemId)
+  // Only an item still new is touched. One that left new keeps its lock
+  // until it expires, which is harmless there.
+  const { error: unlockError } = await db
+    .from('hg_items')
+    .update({ analyse_lock_until: null })
+    .eq('id', itemId)
+    .eq('status', 'new')
   if (unlockError) console.error(`hg-analyse could not release the lock on ${itemId}: ${unlockError.message}`)
 }
 
