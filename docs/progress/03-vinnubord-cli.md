@@ -145,7 +145,9 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
    ---
 
    Lestu `D:/Claude Code/metta2/metta2_new/.claude/skills/huginn/SKILL.md` og fylgdu því. Það er eina útgáfan.
-   ```3. **Níu atriði úr fyllingunni til að staðfesta:**
+   ```
+
+3. **Níu atriði úr fyllingunni til að staðfesta:**
    1. e1: deploy á parse-sds og askur-chat frá main er opið handtak "ef það er ekki þegar gert" (askur v92 er eldra en B2 commit 222b5e36).
    2. r1 og i1: askur-chat redeploy handtökin gætu þegar verið leyst með v92, haka við ef svo er.
    3. h2: titli breytt úr "sex smokes" í "Gemini-yfirferð og opin smokes" eftir doc 105.
