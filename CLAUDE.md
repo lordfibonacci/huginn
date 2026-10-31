@@ -170,7 +170,7 @@ When I say "end of session", "end session", "wrap up", "I'm done for now", or si
 
    Skip any section that was not affected. Match the project's existing tone, formatting, and heading style.
 
-3. Do NOT add a "Recent changes" log or a `docs/progress/` folder. History lives in git; CLAUDE.md stays a reference snapshot of current state.
+3. Do NOT add a "Recent changes" log to CLAUDE.md. History lives in git; CLAUDE.md stays a reference snapshot of current state. Per plan handovers in `docs/progress/NN-<plan>.md` are allowed (see Conventions), session logs are not.
 
 4. Report back with:
    - Which CLAUDE.md sections you edited (section name + nature of change, not full diff)
