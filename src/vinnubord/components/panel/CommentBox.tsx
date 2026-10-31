@@ -16,8 +16,10 @@ export function CommentBox({ onSend }: Props) {
 
   const send = async () => {
     if (!body || busy) return
-    const ok = await run(() => onSend(body))
-    if (ok) setDraft('')
+    const sent = body
+    const ok = await run(() => onSend(sent))
+    // Clear only what was sent: text typed while it was on the way stays.
+    if (ok) setDraft((d) => (d.trim() === sent ? '' : d))
   }
 
   const onSubmit = (e: FormEvent) => {

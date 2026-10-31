@@ -90,8 +90,10 @@ function AnswerBox({ questionId }: { questionId: string }) {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!answer || busy) return
-    const ok = await run(() => answerQuestion(questionId, answer))
-    if (ok) setDraft('')
+    const sent = answer
+    const ok = await run(() => answerQuestion(questionId, sent))
+    // Clear only what was sent: text typed while it was on the way stays.
+    if (ok) setDraft((d) => (d.trim() === sent ? '' : d))
   }
 
   return (

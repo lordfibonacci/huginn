@@ -155,7 +155,8 @@
         "repoPath": "In the repo",
         "back": "Back to files",
         "loading": "Loading file",
-        "open": "Open {{name}}"
+        "open": "Open {{name}}",
+        "openLink": "Tap to open {{name}}"
       },
       "questions": {
         "empty": "No questions.",

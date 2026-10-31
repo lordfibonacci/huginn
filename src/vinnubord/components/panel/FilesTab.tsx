@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
 import { fileText, fileUrl } from '../../lib/api'
@@ -21,6 +21,10 @@ export function FilesTab({ files, participants }: Props) {
   const { t } = useTranslation()
   const [reader, setReader] = useState<Reader | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Signed urls of files whose new tab was blocked, shown as a link to tap.
+  const [links, setLinks] = useState<Record<string, string>>({})
+  // Files being opened right now: a double tap opens one tab, not two.
+  const opening = useRef(new Set<string>())
 
   const open = async (file: FileRow) => {
     setError(null)
@@ -37,8 +41,11 @@ export function FilesTab({ files, participants }: Props) {
       }
       return
     }
+    if (opening.current.has(file.id)) return
+    opening.current.add(file.id)
     // Open the tab inside the tap so it is not blocked as a popup, then point
-    // it at the signed url once it arrives.
+    // it at the signed url once it arrives. If the browser blocked it anyway,
+    // the board stays and the file gets a link to tap.
     const tab = window.open('', '_blank')
     try {
       const url = await fileUrl(file.storage_path)
@@ -46,12 +53,14 @@ export function FilesTab({ files, participants }: Props) {
         tab.opener = null
         tab.location.href = url
       } else {
-        window.location.assign(url)
+        setLinks((l) => ({ ...l, [file.id]: url }))
       }
     } catch (e) {
       console.error(e)
       tab?.close()
       setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      opening.current.delete(file.id)
     }
   }
 
@@ -110,6 +119,11 @@ export function FilesTab({ files, participants }: Props) {
                   when: f.created_at ? formatStamp(f.created_at) : '',
                 })}
               </p>
+              {links[f.id] && (
+                <a className="hg-file-link" href={links[f.id]} target="_blank" rel="noopener noreferrer">
+                  {t('vinnubord.panel.files.openLink', { name: f.name })}
+                </a>
+              )}
               {f.repo_path && (
                 <div className="hg-path">
                   <code>{f.repo_path}</code>

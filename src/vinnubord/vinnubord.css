@@ -485,6 +485,10 @@
 .hg-file-open:hover .hg-file-name, .hg-file-open:focus-visible .hg-file-name { text-decoration: underline; }
 .hg-file-open:focus-visible { outline: none; }
 .hg-file-name { min-width: 0; overflow-wrap: anywhere; }
+.hg-file-link {
+  display: flex; align-items: center; min-height: var(--hg-touch); color: var(--hg-link); font-weight: 700;
+  text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere;
+}
 .hg-reader-name { margin: 12px 0; font-size: 15px; font-weight: 800; color: var(--hg-ink); overflow-wrap: anywhere; }
 .hg-reader-text {
   margin: 0; font-family: var(--hg-code-font); font-size: var(--hg-code-size); white-space: pre-wrap; overflow-wrap: anywhere;

@@ -21,7 +21,8 @@ const TABS: Tab[] = ['status', 'files', 'questions', 'history']
 
 // The panel of one item. Everything shown is derived from data on each
 // render; the tab, drafts and scroll position are local state, so the parent
-// keys this component by item id and a realtime refetch keeps them.
+// keys this component by item id and a realtime refetch keeps them. All tab
+// bodies stay mounted, so switching tabs keeps them too.
 export function ItemPanel({ data, item, viewerId }: Props) {
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('status')
@@ -82,7 +83,7 @@ export function ItemPanel({ data, item, viewerId }: Props) {
             role="tab"
             id={`hg-tab-${k}`}
             aria-selected={tab === k}
-            aria-controls="hg-pn-body"
+            aria-controls={`hg-tabpanel-${k}`}
             className={`hg-pn-tab${tab === k ? ' hg-pn-tab-on' : ''}`}
             onClick={() => choose(k)}
           >
@@ -90,13 +91,21 @@ export function ItemPanel({ data, item, viewerId }: Props) {
           </button>
         ))}
       </div>
-      <div ref={bodyRef} className="hg-pn-body" id="hg-pn-body" role="tabpanel" aria-labelledby={`hg-tab-${tab}`}>
-        {tab === 'status' && <StatusTab data={data} item={item} module={module} tone={tone} label={label} />}
-        {tab === 'files' && <FilesTab files={files} participants={data.participants} />}
-        {tab === 'questions' && <QuestionsTab questions={questions} participants={data.participants} />}
-        {tab === 'history' && (
+      {/* Every tab stays mounted and inactive ones are hidden, so drafts, an
+          open file and a touched status control survive switching tabs. */}
+      <div ref={bodyRef} className="hg-pn-body">
+        <div role="tabpanel" id="hg-tabpanel-status" aria-labelledby="hg-tab-status" hidden={tab !== 'status'}>
+          <StatusTab data={data} item={item} module={module} tone={tone} label={label} />
+        </div>
+        <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
+          <FilesTab files={files} participants={data.participants} />
+        </div>
+        <div role="tabpanel" id="hg-tabpanel-questions" aria-labelledby="hg-tab-questions" hidden={tab !== 'questions'}>
+          <QuestionsTab questions={questions} participants={data.participants} />
+        </div>
+        <div role="tabpanel" id="hg-tabpanel-history" aria-labelledby="hg-tab-history" hidden={tab !== 'history'}>
           <HistoryTab itemId={item.id} events={data.events} comments={data.comments} participants={data.participants} />
-        )}
+        </div>
       </div>
       <CommentBox onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })} />
     </div>
