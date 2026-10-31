@@ -1,50 +1,50 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useViewer } from '../hooks/useViewer'
 import { useBoardData } from '../hooks/useBoardData'
-import { countsFor, type Counts } from '../lib/status'
+import { emptyFilter } from '../lib/filters'
+import { Board } from '../components/Board'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
 import { NoAccessPage } from './NoAccessPage'
 
-const COUNT_KEYS: (keyof Counts)[] = ['new', 'mine', 'others', 'build', 'parked']
-
-// Plan 1: project name and counters only. The board itself comes in plan 2.
+// The whiteboard of one project, full height. The top bar (Task 5) and the
+// side panel (Task 4) are not here yet: selection is kept but shows nothing.
 export function BoardPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const { user, projects, loading: viewerLoading, error: viewerError, reload: reloadViewer } = useViewer()
   const project = projects.find((p) => p.slug === slug) ?? null
   const { data, loading: boardLoading, error, reload } = useBoardData(project?.id ?? null)
-
-  const counts = useMemo(() => {
-    if (!data || !user) return null
-    return countsFor(data.items, data.actions, user.id, data.participants)
-  }, [data, user])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const filter = useMemo(() => emptyFilter(), [])
 
   if (viewerLoading) return <Loader />
   if (viewerError) return <LoadError centered message={t('vinnubord.viewerError')} onRetry={reloadViewer} />
   if (!user || !project) return <NoAccessPage />
 
-  return (
-    <div className="flex h-full flex-col overflow-auto p-4 sm:p-6">
-      <h1 className="text-xl font-semibold text-huginn-text-primary">{project.name}</h1>
-
-      {error ? (
+  if (error) {
+    return (
+      <div className="flex h-full flex-col p-4 sm:p-6">
         <LoadError message={t('vinnubord.board.loadError')} onRetry={() => void reload()} />
-      ) : boardLoading || !counts ? (
-        <Loader />
-      ) : (
-        <ul className="mt-6 flex flex-wrap gap-3">
-          {COUNT_KEYS.map((key) => (
-            <li key={key} className="min-w-[7rem] rounded-xl border border-huginn-border bg-huginn-card px-4 py-3">
-              <div className="text-2xl font-semibold tabular-nums text-huginn-text-primary">{counts[key]}</div>
-              <div className="text-xs text-huginn-text-secondary">{t(`vinnubord.board.counts.${key}`)}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      </div>
+    )
+  }
+  if (boardLoading || !data || data.project.id !== project.id) return <Loader />
+
+  return (
+    <Board
+      key={project.id}
+      data={data}
+      viewerId={user.id}
+      filter={filter}
+      selectedId={selectedId}
+      onSelect={setSelectedId}
+      onOpenModule={noop}
+    />
   )
 }
+
+// Module panel arrives in Task 4.
+function noop() {}

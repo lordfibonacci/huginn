@@ -17,6 +17,7 @@
   --hg-coral: #ff8f6b;
   --hg-teal: #5fe0bd;
   --hg-stone: #6f7a8a;
+  --hg-spark: #ffffff;
 
   --hg-radius-card: 20px;
   --hg-radius-panel: 24px;
@@ -30,12 +31,36 @@
   --hg-module-gap: 8px;
   --hg-module-indent: 8px;
 
+  /* Board surface */
+  --hg-grid-dot: rgba(255, 255, 255, 0.075);
+  --hg-grid-size: 30px;
+  --hg-touch: 44px;
+  --hg-control-bg: rgba(22, 30, 43, 0.85);
+  --hg-control-hover: rgba(255, 255, 255, 0.06);
+  --hg-radius-control: 12px;
+  --hg-radius-control-inner: 9px;
+  --hg-dim-card: 0.1;
+  --hg-dim-module: 0.3;
+
+  /* Item cards */
+  --hg-card-w: 250px;
+  --hg-card-pad: 15px 17px 14px;
+  --hg-card-bg: linear-gradient(180deg, rgba(29, 40, 56, 0.92), rgba(22, 30, 43, 0.92));
+  --hg-card-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --hg-card-lift-shadow: 0 40px 80px -30px color-mix(in oklab, var(--hg-c) 60%, rgba(0, 0, 0, 0.9));
+  --hg-card-parked-opacity: 0.6;
+  --hg-chip-bg: rgba(255, 255, 255, 0.05);
+  --hg-radius-chip: 8px;
+  --hg-bar-track: rgba(255, 255, 255, 0.07);
+  --hg-ring-size: 16px;
+
   /* Panels and transitions ease out, card entry springs past its target. */
   --hg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --hg-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --hg-dur-fast: 0.15s;
   --hg-dur-panel: 0.45s;
   --hg-dur-pop: 0.7s;
+  --hg-dur-beat: 2s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -91,3 +116,88 @@
 .hg-mod-ghost { background: transparent; border-style: dashed; border-color: var(--hg-line); }
 .hg-mod-ghost .hg-mod-name { color: var(--hg-ink-2); }
 .hg-mod-ghost::before { opacity: 0.35; box-shadow: none; }
+.hg-mod.hg-mod-dim { opacity: var(--hg-dim-module); }
+
+/* Board: the pan and zoom surface, the world layer inside it, the wire canvas. */
+.hg-board-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--hg-board); font-family: var(--hg-font); }
+.hg-board {
+  position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none;
+  background-image: radial-gradient(circle, var(--hg-grid-dot) 1px, transparent 1.3px);
+  background-size: var(--hg-grid-size) var(--hg-grid-size);
+}
+.hg-board.hg-board-panning { cursor: grabbing; }
+.hg-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.hg-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* Zoom controls */
+.hg-zoom {
+  position: absolute; right: 16px; bottom: 16px; z-index: 20; display: flex; align-items: center; gap: 2px; padding: 4px;
+  border-radius: var(--hg-radius-control); background: var(--hg-control-bg); border: 1px solid var(--hg-line);
+  backdrop-filter: blur(10px);
+}
+.hg-zoom button {
+  width: var(--hg-touch); height: var(--hg-touch); border-radius: var(--hg-radius-control-inner); border: none;
+  background: transparent; color: var(--hg-ink-2); cursor: pointer; display: grid; place-items: center;
+  transition: background var(--hg-dur-fast) var(--hg-ease), color var(--hg-dur-fast) var(--hg-ease);
+}
+.hg-zoom button:hover, .hg-zoom button:focus-visible { background: var(--hg-control-hover); color: var(--hg-ink); outline: none; }
+.hg-zoom svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; fill: none; }
+.hg-zoom-val { min-width: 46px; text-align: center; font-size: 12.5px; color: var(--hg-ink-2); font-weight: 600; }
+
+/* Item cards. left and top are written by Board's spring loop, not React. */
+.hg-card {
+  position: absolute; width: var(--hg-card-w); padding: var(--hg-card-pad); border-radius: var(--hg-radius-card);
+  color: var(--hg-ink); cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; z-index: 3;
+  background: var(--hg-card-bg); border: 1px solid var(--hg-line); backdrop-filter: blur(8px); box-shadow: var(--hg-card-shadow);
+  opacity: 0; transform: scale(0.8);
+  transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-dur-fast) var(--hg-ease);
+}
+.hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) forwards; }
+.hg-card.hg-card-parked { border-style: dashed; }
+.hg-card.hg-card-parked.hg-in { animation-name: hg-pop-parked; }
+@keyframes hg-pop { to { opacity: 1; transform: none; } }
+@keyframes hg-pop-parked { to { opacity: var(--hg-card-parked-opacity); transform: none; } }
+.hg-card:focus-visible { outline: 2px solid var(--hg-c); outline-offset: 3px; }
+.hg-card.hg-card-lift {
+  cursor: grabbing; z-index: 6; box-shadow: var(--hg-card-lift-shadow);
+  border-color: color-mix(in oklab, var(--hg-c) 60%, var(--hg-line));
+}
+.hg-card.hg-card-open {
+  border-color: var(--hg-c);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--hg-c) 25%, transparent), var(--hg-card-shadow);
+}
+.hg-card.hg-card-dim { opacity: var(--hg-dim-card) !important; pointer-events: none; }
+.hg-card-st { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--hg-ink-2); margin-bottom: 8px; line-height: 1.3; }
+.hg-card-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hg-c); box-shadow: 0 0 12px var(--hg-c); flex: none; }
+.hg-card-pulse .hg-card-dot { animation: hg-beat var(--hg-dur-beat) ease-out infinite; }
+@keyframes hg-beat {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--hg-c) 60%, transparent); }
+  70% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--hg-c) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--hg-c) 0%, transparent); }
+}
+.hg-card-title { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.3; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+.hg-card-by { margin-top: 8px; font-size: 12px; color: var(--hg-ink-3); display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+.hg-av {
+  width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  font-size: 9px; font-weight: 800; background: var(--hg-surface-2); color: var(--hg-ink-2);
+}
+.hg-card-chips { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+.hg-card-chips span { font-size: 11px; padding: 3px 8px; border-radius: var(--hg-radius-chip); background: var(--hg-chip-bg); color: var(--hg-ink-2); }
+.hg-card-plans { display: flex; gap: 5px; margin-top: 11px; }
+.hg-card-plans i { height: 5px; flex: 1; border-radius: 3px; background: var(--hg-bar-track); overflow: hidden; position: relative; }
+.hg-card-plans i::after {
+  content: ''; position: absolute; inset: 0; background: var(--hg-c); box-shadow: 0 0 10px var(--hg-c);
+  transform-origin: left; transform: scaleX(var(--hg-p, 0));
+}
+.hg-card-plan-label { display: block; margin-top: 6px; font-size: 11.5px; color: var(--hg-ink-3); }
+.hg-card-ring {
+  position: absolute; top: -7px; right: -7px; width: var(--hg-ring-size); height: var(--hg-ring-size); border-radius: 50%;
+  background: var(--hg-c); border: 3px solid var(--hg-board); box-shadow: 0 0 14px var(--hg-c);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hg-card { opacity: 1; transform: none; }
+  .hg-card.hg-card-parked { opacity: var(--hg-card-parked-opacity); }
+  .hg-card.hg-in { animation: none; }
+  .hg-card-pulse .hg-card-dot { animation: none; }
+}

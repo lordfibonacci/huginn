@@ -36,3 +36,18 @@ export function formatDueDate(dateString: string): { text: string; urgent: boole
   const formatter = new Intl.DateTimeFormat(activeLocale(), { day: 'numeric', month: 'short' })
   return { text: i18n.t('dates.dueOn', { date: formatter.format(due) }), urgent: false }
 }
+
+// Short stamp for "last moved": "í dag 10:15" today, "30. október" earlier
+// this year, "30. október 2025" in another year.
+export function formatStamp(dateString: string, now: Date = new Date()): string {
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return ''
+  const locale = activeLocale()
+  if (d.toDateString() === now.toDateString()) {
+    const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
+    return `${i18n.t('dates.today')} ${time}`
+  }
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
+  if (d.getFullYear() !== now.getFullYear()) opts.year = 'numeric'
+  return new Intl.DateTimeFormat(locale, opts).format(d)
+}

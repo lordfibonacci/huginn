@@ -66,7 +66,8 @@
     "dueTomorrow": "due tomorrow",
     "dueInDays_one": "due in {{count}}d",
     "dueInDays_other": "due in {{count}}d",
-    "dueOn": "due {{date}}"
+    "dueOn": "due {{date}}",
+    "today": "today"
   },
   "vinnubord": {
     "board": {
@@ -80,7 +81,11 @@
       "loadError": "Could not load the project.",
       "noneOpen": "Nothing open",
       "open": "{{count}} open",
-      "retry": "Try again"
+      "retry": "Try again",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Show everything",
+      "zoomLevel": "Zoom level"
     },
     "loading": "Loading",
     "noAccess": {
@@ -91,6 +96,15 @@
     "settings": {
       "comingSoon": "Settings arrive in plan 2."
     },
-    "viewerError": "Could not load your projects."
+    "viewerError": "Could not load your projects.",
+    "card": {
+      "actions_one": "{{count}} open action",
+      "actions_other": "{{count}} open actions",
+      "files_one": "{{count}} file",
+      "files_other": "{{count}} files",
+      "planOf": "Plan {{current}} of {{total}}",
+      "unread": "New for you",
+      "movedBy": "Last moved by {{name}}"
+    }
   }
 }

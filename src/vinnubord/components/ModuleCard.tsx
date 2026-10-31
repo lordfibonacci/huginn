@@ -8,12 +8,13 @@ type Props = {
   tone: Tone
   hot?: boolean
   ghost?: boolean
+  dim?: boolean
   onClick: () => void
 }
 
-export function ModuleCard({ module, openCount, tone, hot = false, ghost = false, onClick }: Props) {
+export function ModuleCard({ module, openCount, tone, hot = false, ghost = false, dim = false, onClick }: Props) {
   const { t } = useTranslation()
-  const cls = ['hg-mod', `hg-tone-${tone}`, hot ? 'hg-mod-hot' : '', ghost ? 'hg-mod-ghost' : '']
+  const cls = ['hg-mod', `hg-tone-${tone}`, hot ? 'hg-mod-hot' : '', ghost ? 'hg-mod-ghost' : '', dim ? 'hg-mod-dim' : '']
     .filter(Boolean)
     .join(' ')
   return (

@@ -66,7 +66,8 @@
     "dueTomorrow": "skil á morgun",
     "justNow": "rétt í þessu",
     "overdue_one": "{{count}}d fram yfir",
-    "overdue_other": "{{count}}d fram yfir"
+    "overdue_other": "{{count}}d fram yfir",
+    "today": "í dag"
   },
   "vinnubord": {
     "board": {
@@ -77,10 +78,23 @@
         "others": "Bíða annarra",
         "parked": "Í bið"
       },
+      "fit": "Sýna allt",
       "loadError": "Ekki tókst að sækja verkefnið.",
       "noneOpen": "Ekkert opið",
       "open": "{{count}} opið",
-      "retry": "Reyna aftur"
+      "retry": "Reyna aftur",
+      "zoomIn": "Stækka",
+      "zoomLevel": "Aðdráttur",
+      "zoomOut": "Minnka"
+    },
+    "card": {
+      "actions_one": "{{count}} opið handtak",
+      "actions_other": "{{count}} opin handtök",
+      "files_one": "{{count}} skjal",
+      "files_other": "{{count}} skjöl",
+      "movedBy": "Síðast hreyft af {{name}}",
+      "planOf": "Plan {{current}} af {{total}}",
+      "unread": "Nýtt hjá þér"
     },
     "loading": "Hleður",
     "noAccess": {

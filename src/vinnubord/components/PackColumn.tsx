@@ -9,10 +9,12 @@ type Props = {
   viewerId: string
   participants: Participant[]
   hotModuleIds?: Set<string>
+  // Modules faded by an active filter because none of their items match.
+  dimModuleIds?: Set<string>
   onOpenModule: (moduleId: string) => void
 }
 
-export function PackColumn({ pkg, modules, items, viewerId, participants, hotModuleIds, onOpenModule }: Props) {
+export function PackColumn({ pkg, modules, items, viewerId, participants, hotModuleIds, dimModuleIds, onOpenModule }: Props) {
   return (
     <section className="hg-pack" data-pack={pkg.id} style={{ left: pkg.pos_x, top: pkg.pos_y }}>
       <h2 className="hg-pack-title">{pkg.name}</h2>
@@ -25,6 +27,7 @@ export function PackColumn({ pkg, modules, items, viewerId, participants, hotMod
           tone={moduleTone(m.id, items, viewerId, participants)}
           hot={hotModuleIds?.has(m.id) ?? false}
           ghost={m.is_ghost}
+          dim={dimModuleIds?.has(m.id) ?? false}
           onClick={() => onOpenModule(m.id)}
         />
       ))}
