@@ -119,33 +119,8 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
 
 ### Hjá Heimi
 
-1. **Ýta báðum repoum.** Huginn: greinin `vinnubord-3` til sameiningar í main. metta2_new: main er 5 commitum á undan origin úr þessu plani: `752db5a6`, `d756a659`, `9a1ac72f`, `8d594011`, `e7dc8f12`.
-2. **Hook og skill í `D:\Claude Code\metta2`.** Flestar metta2 lotur byrja í þeirri möppu, þar sem hook og skill metta2_new hlaðast ekki. Auto mode flokkarinn hafnaði breytingunni (sjálfsbreyting), svo þú ákveður. Bæta við undir `"hooks"` í `D:\Claude Code\metta2\.claude\settings.json`, við hlið PreToolUse og PostToolUse:
-
-   ```json
-   "SessionStart": [
-     {
-       "hooks": [
-         {
-           "type": "command",
-           "command": "cd \"D:/Claude Code/metta2/metta2_new\" && node \"D:/Claude Code/Huginn/huginn/cli/huginn.mjs\" pull --brief 2>/dev/null || echo \"Huginn: náði ekki sambandi, keyrðu huginn whoami\"",
-           "timeout": 10
-         }
-       ]
-     }
-   ]
-   ```
-
-   Og `D:\Claude Code\metta2\.claude\skills\huginn\SKILL.md` sem vísar á eina eintakið:
-
-   ```markdown
-   ---
-   name: huginn
-   description: Vinnuborð Mettu í Huginn (huginn.pro, verkefni metta). Notaðu þegar Heimir skrifar /huginn, í upphafi lotu, í lotulokum og alltaf þegar verk, skjöl frá Árna, spurningar, handtök, plön eða úrskurðir koma upp.
-   ---
-
-   Lestu `D:/Claude Code/metta2/metta2_new/.claude/skills/huginn/SKILL.md` og fylgdu því. Það er eina útgáfan.
-   ```
+1. **Ýta báðum repoum:** gert 2026-10-31 (Huginn `1c6db6a`, metta2_new `e7dc8f12`).
+2. **Hook og skill í `D:\Claude Code\metta2`:** gert 2026-10-31. Rótarmappan (utan repos) hefur sama SessionStart hook í `.claude/settings.json` (cd í metta2_new fyrst) og `.claude/skills/huginn/SKILL.md` sem vísar á eina eintakið í metta2_new.
 
 3. **Atriði úr fyllingunni til að staðfesta** eru handtök á Heimi í Huginn (byrja á "Staðfesta úr fyllingu:"), á viðkomandi verkum. Hakaðu við hvert eftir yfirferð. Spjöld við þétta módúla lenda langt niðri í dálki (allt að y 4573), dragðu þau til á vefnum.
 4. **Plans B1 og B2** á Efnaskrá fengu úrskurði sína úr skjölum 143 (R1 til R14) og 144 (R14 til R25) 2026-10-31.
