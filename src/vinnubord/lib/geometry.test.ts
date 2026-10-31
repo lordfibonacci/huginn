@@ -37,6 +37,32 @@ describe('zoomAt', () => {
     expect(zoomAt({ x: 0, y: 0, z: 1 }, 0.01, 0, 0).z).toBe(0.2)
   })
 
+  it('never zooms in when zooming out from a view already below the floor', () => {
+    const view: View = { x: 40, y: 90, z: 0.1 }
+    const [wx, wy] = screenToWorld(view, 500, 400)
+    const next = zoomAt(view, 0.8, 500, 400)
+    expect(next.z).toBe(0.1)
+    const [ax, ay] = screenToWorld(next, 500, 400)
+    expect(ax).toBeCloseTo(wx)
+    expect(ay).toBeCloseTo(wy)
+  })
+
+  it('zooms in gradually from below the floor instead of snapping to it', () => {
+    expect(zoomAt({ x: 0, y: 0, z: 0.1 }, 1.25, 0, 0).z).toBeCloseTo(0.125)
+    expect(zoomAt({ x: 0, y: 0, z: 0.1 }, 10, 0, 0).z).toBe(1)
+  })
+
+  it('never zooms out when zooming in from a view already above the cap', () => {
+    expect(zoomAt({ x: 0, y: 0, z: 3 }, 1.25, 0, 0).z).toBe(3)
+    expect(zoomAt({ x: 0, y: 0, z: 3 }, 0.8, 0, 0).z).toBeCloseTo(2.4)
+  })
+
+  it('a fitted view of a huge board stays put on zoom out', () => {
+    const fitted = fitAll([{ x: 0, y: 0, w: 20000, h: 100 }], { w: 1200, h: 800 }, { top: 90, sides: 40, bottom: 60 })
+    expect(fitted.z).toBeLessThan(0.2)
+    expect(zoomAt(fitted, 0.8, 600, 400).z).toBe(fitted.z)
+  })
+
   it('honours custom limits', () => {
     expect(zoomAt({ x: 0, y: 0, z: 1 }, 10, 0, 0, 0.5, 1.5).z).toBe(1.5)
     expect(zoomAt({ x: 0, y: 0, z: 1 }, 0.1, 0, 0, 0.5, 1.5).z).toBe(0.5)
@@ -156,5 +182,10 @@ describe('pinchView', () => {
   it('clamps zoom like zoomAt', () => {
     const next = pinchView({ x: 0, y: 0, z: 2 }, { cx: 0, cy: 0, d: 10 }, { cx: 0, cy: 0, d: 100 })
     expect(next.z).toBe(2.5)
+  })
+
+  it('never zooms in when pinching out from a view below the floor', () => {
+    const next = pinchView({ x: 0, y: 0, z: 0.1 }, { cx: 0, cy: 0, d: 100 }, { cx: 0, cy: 0, d: 50 })
+    expect(next.z).toBe(0.1)
   })
 })

@@ -15,6 +15,12 @@ export const FIT_MAX_ZOOM = 1.6
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
+// Clamp a new zoom to [min, max], but a view already outside that range (a
+// fitAll of a huge board can land below min) is never pushed further out and
+// never snaps: zooming out below the floor keeps z, zooming in moves freely.
+const clampZoom = (current: number, next: number, min: number, max: number) =>
+  clamp(next, Math.min(min, current), Math.max(max, current))
+
 export function screenToWorld(view: View, sx: number, sy: number): [number, number] {
   return [(sx - view.x) / view.z, (sy - view.y) / view.z]
 }
@@ -28,13 +34,14 @@ export function zoomAt(
   min = MIN_ZOOM,
   max = MAX_ZOOM,
 ): View {
-  const z = clamp(view.z * factor, min, max)
+  const z = clampZoom(view.z, view.z * factor, min, max)
   const f = z / view.z
   return { x: cx - (cx - view.x) * f, y: cy - (cy - view.y) * f, z }
 }
 
 // The view that shows every rect centred inside the viewport less padding.
 // Capped at FIT_MAX_ZOOM, not floored, so everything fits even below MIN_ZOOM.
+// zoomAt and pinchView then keep such a view instead of snapping to MIN_ZOOM.
 export function fitAll(
   rects: Rect[],
   viewport: { w: number; h: number },
@@ -106,7 +113,7 @@ export function pinchView(
   max = MAX_ZOOM,
 ): View {
   const factor = prev.d > 0 ? next.d / prev.d : 1
-  const z = clamp(view.z * factor, min, max)
+  const z = clampZoom(view.z, view.z * factor, min, max)
   const [wx, wy] = screenToWorld(view, prev.cx, prev.cy)
   return { x: next.cx - wx * z, y: next.cy - wy * z, z }
 }
