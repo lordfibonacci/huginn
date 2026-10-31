@@ -11,6 +11,9 @@ export const STATUS_NAMES = {
   dropped: 'Hætt við',
 }
 
+// Plan status names, shared by the write commands and the mirror.
+export const PLAN_NAMES = { todo: 'Á eftir', building: 'Í byggingu', done: 'Lokið' }
+
 export function isOnBoard(item) {
   return item.status !== 'done' && item.status !== 'dropped'
 }

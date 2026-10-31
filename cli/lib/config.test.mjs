@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { loadCredentials, parseArgs, redact, resolveProject } from './config.mjs'
+import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } from './config.mjs'
 
 let root
 
@@ -55,6 +55,30 @@ describe('resolveProject', () => {
     mkdirSync(repo, { recursive: true })
     writeFileSync(join(repo, '.huginn-project'), 'nafn=metta\n')
     expect(() => resolveProject(repo, [])).toThrow('slug=')
+  })
+})
+
+describe('defaultMirrorDir', () => {
+  it('is docs/huginn in the folder that holds .huginn-project', () => {
+    const repo = join(root, 'mirror-repo')
+    const deep = join(repo, 'src')
+    mkdirSync(deep, { recursive: true })
+    writeFileSync(join(repo, '.huginn-project'), 'slug=metta\n')
+    expect(defaultMirrorDir(deep, undefined)).toBe(join(repo, 'docs', 'huginn'))
+    expect(defaultMirrorDir(deep, 'metta')).toBe(join(repo, 'docs', 'huginn'))
+  })
+
+  it('is docs/huginn in cwd with --project and no .huginn-project', () => {
+    const lone = join(root, 'mirror-lone')
+    mkdirSync(lone, { recursive: true })
+    expect(defaultMirrorDir(lone, 'metta')).toBe(join(lone, 'docs', 'huginn'))
+  })
+
+  it('refuses a --project that names another project than the file', () => {
+    const repo = join(root, 'mirror-other')
+    mkdirSync(repo, { recursive: true })
+    writeFileSync(join(repo, '.huginn-project'), 'slug=metta\n')
+    expect(() => defaultMirrorDir(repo, 'annad')).toThrow('Gefðu --out')
   })
 })
 

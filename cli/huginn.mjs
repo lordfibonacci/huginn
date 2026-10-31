@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 // huginn: command line tool for the Huginn whiteboard. See cli/README.md.
 import { getClient, getMe, getProject, getUser, loadBoard } from './lib/client.mjs'
+import { resolve } from 'node:path'
 import { WRITE_GROUPS, runWrite, writeUsage } from './lib/commands.mjs'
-import { loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
+import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
 import { filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
+import { mirrorTargets, planMirror } from './lib/mirror.mjs'
+import { downloadFile } from './lib/ops.mjs'
+import { executeMirror, readExisting } from './lib/sync.mjs'
+import { parseCommand } from './lib/write.mjs'
 
 const USAGE = `Notkun: huginn <skipun> [rofar]
 
@@ -11,6 +16,8 @@ Skipanir:
   login                 Prófar innskráningu úr ~/.huginn/credentials.json
   whoami                Sýnir notanda og þátttakanda í verkefninu
   pull [--since ISO]    Sækir borðið og prentar stöðuna
+  sync [--out docs/huginn] [--dry-run]
+                        Speglar opin verk og skrár þeirra í docs/huginn og skrifar STATUS.md
 
 Skrifskipanir (<id> er heilt uuid eða minnst 8 fyrstu stafir þess, t.d. #1a2b3c4d úr pull):
 ${writeUsage()}
@@ -76,7 +83,45 @@ async function pull(argv, flags) {
   out(flags.json ? data : statusMarkdown(data, data.participants), flags)
 }
 
-const COMMANDS = { login, whoami, pull }
+const SYNC_USAGE = 'Notkun: huginn sync [--out docs/huginn] [--dry-run]'
+
+function syncText(dir, result, dryRun) {
+  const lines = [dryRun ? `Spegill í ${dir}, prufukeyrsla, ekkert skrifað.` : `Spegill í ${dir}.`]
+  const list = (heading, paths) => {
+    lines.push(`${heading}: ${paths.length}`, ...paths.map((p) => `  ${p}`))
+  }
+  list(dryRun ? 'Yrði skrifað' : 'Skrifað', result.written)
+  list('Óbreytt', result.skipped)
+  list(dryRun ? 'Bendiskrár sem yrðu skrifaðar' : 'Bendiskrár', result.pointers)
+  return lines.join('\n')
+}
+
+// Mirror of the board into the repo (rulings R6, R7, R8, R18). Writes only
+// what changed and never deletes anything.
+async function sync(argv, globalFlags) {
+  const { positional, flags } = parseCommand(argv, { out: 'value', 'dry-run': 'bool' }, 'sync')
+  if (positional.length !== 1) throw new Error(SYNC_USAGE)
+  if (flags.out !== undefined && !flags.out.trim()) throw new Error('--out vantar gildi.')
+  const { slug } = resolveProject(process.cwd(), argv)
+  const outDir = flags.out !== undefined ? resolve(process.cwd(), flags.out) : defaultMirrorDir(process.cwd(), flags.project)
+  const dryRun = flags['dry-run'] === true
+
+  const client = await getClient()
+  const project = await getProject(client, slug)
+  const data = await loadBoard(client, project.id)
+  const now = Date.now()
+  const targets = mirrorTargets(data, now)
+  const plan = planMirror(data, readExisting(outDir, targets), { now })
+  const result = await executeMirror(outDir, plan, { download: (path) => downloadFile(client, path), dryRun })
+
+  if (globalFlags.json) {
+    out({ ok: true, out: outDir, dry_run: dryRun, ...result }, globalFlags)
+    return
+  }
+  out(syncText(outDir, result, dryRun), globalFlags)
+}
+
+const COMMANDS = { login, whoami, pull, sync }
 
 async function write(argv) {
   const { positional } = parseArgs(argv)

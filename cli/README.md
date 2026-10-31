@@ -36,6 +36,9 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `huginn pull` | Sækir borðið og prentar stöðuna sem markdown |
 | `huginn pull --json` | Allt borðið sem JSON (sama lögun og `BoardData` í vefnum) |
 | `huginn pull --since <ISO>` | Aðeins verk sem breyttust frá þeim tíma, með því sem þeim fylgir |
+| `huginn sync` | Speglar verkin í `docs/huginn/` og skrifar `docs/huginn/STATUS.md` (sjá Spegill) |
+| `huginn sync --dry-run` | Sýnir hvað yrði skrifað, skrifar ekkert |
+| `huginn sync --out <mappa>` | Speglar í aðra möppu |
 
 ### Skrifskipanir
 
@@ -77,6 +80,19 @@ Villur eru ein lína á íslensku á stderr og exit kóði 1. Lykilorðið birti
 
 `pull` raðar opnum verkum í hópa í fastri röð: Nýtt, Bíður ákvörðunar, Bíður Claude, Bíður <þátttakanda>, Tilbúið til byggingar, Í byggingu, Í bið. Tómir hópar sleppa. Innan hóps nýjast fyrst. Undir hverju verki koma opin handtök og ósvaraðar spurningar. Dagsetningar eru ISO, svo sama gögn gefa sama texta.
 
+## Spegill
+
+`huginn sync` skrifar afrit af borðinu í repoið svo git eigi lesanlegt afrit og söguna. Sjálfgefin mappa er `docs/huginn` í möppunni sem geymir `.huginn-project`, eða í núverandi möppu ef `--project` er gefið og engin `.huginn-project` finnst. Ef `--project` nefnir annað verkefni en `.huginn-project` þarf `--out`.
+
+- **Hvaða verk.** Öll opin verk á borðinu og verk með stöðuna Lokið sem lokuðust síðustu 30 daga. Verk sem hætt var við speglast ekki.
+- **Mappa á verk.** `docs/huginn/<slug>/`, þar sem slug er titillinn í lágstöfum með íslenskum stöfum vörpuðum (á í a, þ í th, æ í ae, ö í o og svo framvegis), öðrum táknum breytt í `-`, að hámarki 60 stafir, og síðast fyrstu 6 stafir auðkennisins. Ef titill breytist verður til ný mappa og sú gamla stendur.
+- **item.md.** Titill, staða, hver bíður, módúll, merki, dagsetningar, Hvar erum við, lýsing, næsta skref, prompt fyrir næsta skref, plön með úrskurðum, handtök, spurningar og svör og skráalisti. Spurningar og úrskurðir eru inni í item.md, ekki í sér skrám. Sama gögn gefa sömu skrá bæti fyrir bæti.
+- **Skrár.** Skrá undir 10 MB er afrituð í möppu verksins, hvaða tegund sem hún er. 10 MB og stærri fær `<nafn>.pointer.json` með name, size, mime, storage_path og sha256 og býr áfram í Storage. Skrá sem hefur `repo_path` er þegar í repoinu og er bara talin upp í item.md. Ef tvær skrár verksins heita það sama (óháð stórum stöfum, eða `item.md`) fær sú seinni `-<6 fyrstu stafir auðkennis>` á undan endingunni. Nöfn eru hreinsuð: engin skástrik, engin Windows bönnuð tákn eða tækjanöfn, enginn punktur fremst.
+- **Bara breytingar.** item.md og STATUS.md eru bornar saman með sha256, afrit með stærð (skrár í Storage breytast aldrei) og bendiskrá með storage_path. Það sem er eins er ekki snert, svo git sér enga breytingu.
+- **Öruggt.** Hver skrá er skrifuð í bráðabirgðaskrá og svo endurnefnd, svo hálfskrifuð skrá verður aldrei til. Tólið eyðir aldrei neinu og skrifar aldrei utan möppunnar.
+
+Úttakið telur upp þrjá lista: skrifað, óbreytt og bendiskrár. Með `--json`: `{ ok, out, dry_run, written, skipped, pointers }`.
+
 ## Próf
 
-`npm run test` keyrir líka `cli/**/*.test.mjs`. `cli/lib/parity.test.mjs` passar að afrit tólsins haldist eins og vefurinn: föll úr `src/vinnubord/lib/status.ts`, upload reglur úr `upload.ts`, `placeNewCard` úr `placement.ts` og stærðir úr `--hg-*` tókunum í `vinnubord.css`. Hrein föll skrifskipana eru prófuð í `cli/lib/write.test.mjs`, gagnagrunnsköllin eru í `cli/lib/ops.mjs`.
+`npm run test` keyrir líka `cli/**/*.test.mjs`. `cli/lib/parity.test.mjs` passar að afrit tólsins haldist eins og vefurinn: föll úr `src/vinnubord/lib/status.ts`, upload reglur úr `upload.ts`, `placeNewCard` úr `placement.ts` og stærðir úr `--hg-*` tókunum í `vinnubord.css`. Hrein föll skrifskipana eru prófuð í `cli/lib/write.test.mjs`, gagnagrunnsköllin eru í `cli/lib/ops.mjs`. Spegillinn er hrein föll í `cli/lib/mirror.mjs` og skráavinnsla í `cli/lib/sync.mjs`, bæði prófuð í `cli/lib/mirror.test.mjs` (líka skrif í bráðabirgðamöppu og að seinni keyrsla skrifi ekkert).

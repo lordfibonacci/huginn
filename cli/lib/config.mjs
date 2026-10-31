@@ -10,7 +10,7 @@ const CREDENTIAL_FIELDS = ['url', 'anonKey', 'email', 'password']
 // value unless that word is itself a flag. The write commands parse their own
 // flags strictly (parseCommand in write.mjs); this list only keeps main from
 // reading a positional after --force or --dropped as a flag value.
-const BOOLEAN_FLAGS = new Set(['json', 'debug', 'help', 'force', 'dropped'])
+const BOOLEAN_FLAGS = new Set(['json', 'debug', 'help', 'force', 'dropped', 'dry-run'])
 
 export function huginnDir(home = homedir()) {
   return join(home, '.huginn')
@@ -72,6 +72,18 @@ function readSlug(file) {
   throw new Error(`${file} vantar línuna slug=<verkefni>.`)
 }
 
+// The nearest .huginn-project in cwd or a parent: { dir, slug }, or null.
+export function findProjectFile(cwd) {
+  let dir = cwd
+  for (;;) {
+    const file = join(dir, PROJECT_FILE)
+    if (existsSync(file)) return { dir, slug: readSlug(file) }
+    const parent = dirname(dir)
+    if (parent === dir) return null
+    dir = parent
+  }
+}
+
 // Order: --project, then .huginn-project in cwd or the nearest parent.
 export function resolveProject(cwd, argv) {
   const { flags } = parseArgs(argv)
@@ -79,15 +91,23 @@ export function resolveProject(cwd, argv) {
     if (typeof flags.project !== 'string' || !flags.project.trim()) throw new Error('--project vantar gildi.')
     return { slug: flags.project.trim() }
   }
-  let dir = cwd
-  for (;;) {
-    const file = join(dir, PROJECT_FILE)
-    if (existsSync(file)) return { slug: readSlug(file) }
-    const parent = dirname(dir)
-    if (parent === dir) break
-    dir = parent
-  }
+  const found = findProjectFile(cwd)
+  if (found) return { slug: found.slug }
   throw new Error(NO_PROJECT)
+}
+
+// Default folder for huginn sync (ruling R8): docs/huginn in the folder that
+// holds .huginn-project, or in cwd when --project is given and there is none.
+// A --project that names another project than .huginn-project needs --out,
+// so one project's mirror never lands in another project's repo.
+export function defaultMirrorDir(cwd, projectFlag) {
+  const found = findProjectFile(cwd)
+  if (!found) return join(cwd, 'docs', 'huginn')
+  const wanted = typeof projectFlag === 'string' ? projectFlag.trim() : undefined
+  if (wanted && wanted !== found.slug) {
+    throw new Error(`--project ${wanted} passar ekki við .huginn-project (${found.slug}) í ${found.dir}. Gefðu --out.`)
+  }
+  return join(found.dir, 'docs', 'huginn')
 }
 
 function maskString(text, secrets) {

@@ -22,7 +22,7 @@ import {
   updateItem,
   uploadFile,
 } from './ops.mjs'
-import { STATUS_NAMES } from './status.mjs'
+import { PLAN_NAMES, STATUS_NAMES } from './status.mjs'
 import {
   CREATE_STATUSES,
   PLAN_STATUSES,
@@ -39,8 +39,6 @@ import {
 
 // The write commands. Each returns { json, text }: json is { ok, id } (plus a
 // few extras), text is one Icelandic line. huginn.mjs prints one of them.
-
-const PLAN_NAMES = { todo: 'Á eftir', building: 'Í byggingu', done: 'Lokið' }
 
 async function context(flags) {
   const { slug } = resolveProject(process.cwd(), flags.project !== undefined ? ['--project', flags.project] : [])
