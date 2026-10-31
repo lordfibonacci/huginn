@@ -143,18 +143,22 @@ export function itemsToMirror(data, now) {
   )
 }
 
-// Uploads store a file at <project id>/<item id>/<uuid>_<name>. A row whose
-// storage_path is outside that folder (or has empty, . or .. segments) is never
-// downloaded: a participant could otherwise point a row at another project's
-// object, and a user in both projects would copy it into this repo.
+// The last segment uploads produce: a uuid, an underscore, then
+// storageSafeName(name), which only keeps A-Z, a-z, 0-9, dot, underscore and
+// dash (src/vinnubord/lib/upload.ts and its copy in write.mjs).
+const STORAGE_TAIL = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_[A-Za-z0-9._-]+$/
+
+// Uploads store a file at <project id>/<item id>/<uuid>_<safe name>. A row
+// whose storage_path is anything else is never downloaded: a participant
+// could otherwise point a row at another project's object, and a user in both
+// projects would copy it into this repo. The tail must be exactly one segment
+// matching STORAGE_TAIL, so %, ?, #, / and \ (which the Storage HTTP layer
+// could decode or reinterpret) never get through.
 export function storagePathOk(file, projectId, itemId) {
   const path = String(file.storage_path ?? '')
   const prefix = `${projectId}/${itemId}/`
   if (!projectId || !itemId || !path.startsWith(prefix)) return false
-  return path
-    .slice(prefix.length)
-    .split('/')
-    .every((part) => part !== '' && part !== '.' && part !== '..' && !part.includes('\\'))
+  return STORAGE_TAIL.test(path.slice(prefix.length))
 }
 
 export const BAD_STORAGE_PATH = 'Storage slóð skrárinnar er ekki í möppu verkefnisins og verksins, skráin var ekki sótt.'

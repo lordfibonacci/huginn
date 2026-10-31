@@ -16,6 +16,7 @@ import {
   storagePathOk,
 } from './mirror.mjs'
 import { executeMirror, listFolders, readExisting, resolveInside, syncReport } from './sync.mjs'
+import { storageSafeName } from './write.mjs'
 
 const NOW = Date.parse('2026-10-31T12:00:00Z')
 const MB = 1024 * 1024
@@ -50,6 +51,16 @@ function item(id, extra = {}) {
   }
 }
 
+// A stable uuid per file id, so fixture paths look like real uploads.
+function uuidFor(id) {
+  const h = createHash('md5').update(String(id)).digest('hex')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`
+}
+
+function sp(itemId, id, name, project = 'pr') {
+  return `${project}/${itemId}/${uuidFor(id)}_${storageSafeName(name)}`
+}
+
 function file(id, itemId, name, size, extra = {}) {
   return {
     id,
@@ -57,7 +68,7 @@ function file(id, itemId, name, size, extra = {}) {
     project_id: 'pr',
     item_id: itemId,
     name,
-    storage_path: `pr/${itemId}/${id}_${name}`,
+    storage_path: sp(itemId, id, name),
     size,
     mime: null,
     repo_path: null,
@@ -305,6 +316,39 @@ describe('planMirror', () => {
     }
   })
 
+  it('accepts only the exact upload shape after the project and item prefix', () => {
+    const P = 'd4c3b2a1-1111-4222-8333-444455556666'
+    const I = 'a1b2c3d4-0000-4000-8000-000000000001'
+    const U = '0f1e2d3c-4b5a-4968-8778-695a4b3c2d1e'
+    const ok = (tail) => storagePathOk({ storage_path: `${P}/${I}/${tail}` }, P, I)
+    expect(ok(`${U}_Efnaskra_throun_v2.pdf`)).toBe(true)
+    expect(ok(`${U}_${storageSafeName('Efnaskrá þróun (lokaútgáfa).pdf')}`)).toBe(true)
+    for (const tail of [
+      '%2e%2e',
+      `${U}_%2e%2e`,
+      `${U}_a%2fb`,
+      `${U}_x?y`,
+      `${U}_x#y`,
+      `${U}_a/${U}_b`,
+      `${U}/${U}_b`,
+      `${U}_a\\b`,
+      `${U}_`,
+      `${U}_a b`,
+      `${U}_á.pdf`,
+      `${U}_x\n`,
+      'x.pdf',
+      '..',
+      '',
+      `../${U}_x`,
+      `${U.slice(0, -1)}_x`,
+    ]) {
+      expect(ok(tail), tail).toBe(false)
+    }
+    // The prefix must be this project and this item.
+    expect(storagePathOk({ storage_path: `${P}/${U}/${U}_x` }, P, I)).toBe(false)
+    expect(storagePathOk({ storage_path: `${U}/${I}/${U}_x` }, P, I)).toBe(false)
+  })
+
   it('never downloads a file whose storage_path is outside the project and item folder', () => {
     const it = item('i1')
     const data = board([it], {
@@ -312,14 +356,12 @@ describe('planMirror', () => {
         file('f1', 'i1', 'annad.pdf', 10, { storage_path: 'other-project/i1/f1_annad.pdf' }),
         file('f2', 'i1', 'annad-verk.pdf', 10, { storage_path: 'pr/other-item/f2_x.pdf' }),
         file('f3', 'i1', 'upp.pdf', 10, { storage_path: 'pr/i1/../../other-project/x/f3.pdf' }),
-        file('f4', 'i1', 'gott.pdf', 10, { storage_path: 'pr/i1/f4_gott.pdf' }),
+        file('f4', 'i1', 'gott.pdf', 10),
         file('f5', 'i1', 'stort.mp4', 12 * MB, { storage_path: 'pr2/i1/f5.mp4' }),
       ],
     })
-    expect(storagePathOk({ storage_path: 'pr/i1/x' }, 'pr', 'i1')).toBe(true)
-    expect(storagePathOk({ storage_path: 'pr/i1//x' }, 'pr', 'i1')).toBe(false)
-    expect(storagePathOk({ storage_path: 'pr/i1/./x' }, 'pr', 'i1')).toBe(false)
-    expect(storagePathOk({ storage_path: 'pr/i10/x' }, 'pr', 'i1')).toBe(false)
+    expect(storagePathOk({ storage_path: sp('i1', 'x', 'x.pdf') }, 'pr', 'i1')).toBe(true)
+    expect(storagePathOk({ storage_path: sp('i10', 'x', 'x.pdf') }, 'pr', 'i1')).toBe(false)
     const plan = planMirror(data, new Map(), { now: NOW })
     expect(plan.map((e) => [e.path.split('/').pop(), e.action])).toEqual([
       ['item.md', 'write'],
@@ -451,8 +493,8 @@ describe('pointerJson', () => {
 describe('sync on disk', () => {
   let out
   const BYTES = {
-    'pr/a1b2c3d4-0000-4000-8000-000000000001/f1000000-0001_drog.md': Buffer.from('x'.repeat(120)),
-    'pr/a1b2c3d4-0000-4000-8000-000000000001/f2000000-0002_upptaka.mp4': Buffer.from('big video'),
+    [sp(ITEM_ID, 'f1000000-0001', 'drog.md')]: Buffer.from('x'.repeat(120)),
+    [sp(ITEM_ID, 'f2000000-0002', 'upptaka.mp4')]: Buffer.from('big video'),
   }
   let downloads
   const download = async (path) => {
@@ -491,7 +533,7 @@ describe('sync on disk', () => {
       name: 'upptaka.mp4',
       size: 12 * MB,
       mime: 'video/mp4',
-      storage_path: 'pr/a1b2c3d4-0000-4000-8000-000000000001/f2000000-0002_upptaka.mp4',
+      storage_path: sp(ITEM_ID, 'f2000000-0002', 'upptaka.mp4'),
       sha256: sha(Buffer.from('big video')),
     })
     expect(readFileSync(join(out, 'STATUS.md'), 'utf8')).toContain('# Staða: Metta')
@@ -541,7 +583,7 @@ describe('sync on disk', () => {
   it('keeps going when one download fails, writes later files and STATUS.md, and reports exit code 1', async () => {
     const data = fullBoard()
     data.files.push(file('f4000000-0004', ITEM_ID, 'seinni.txt', 5, { created_at: '2026-10-09T00:00:00Z' }))
-    const later = 'pr/' + ITEM_ID + '/f4000000-0004_seinni.txt'
+    const later = sp(ITEM_ID, 'f4000000-0004', 'seinni.txt')
     const flaky = async (path) => {
       downloads.push(path)
       if (path.endsWith('_drog.md')) throw new Error('HTTP 500')
