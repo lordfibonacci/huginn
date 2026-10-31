@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useViewer } from '../hooks/useViewer'
 import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
+import { useNewItemToast } from '../hooks/useNewItemToast'
 import { packageCounts, tagCounts } from '../lib/filters'
 import { countsFor } from '../lib/status'
 import type { Item } from '../lib/types'
@@ -12,6 +13,7 @@ import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
 import { NewItemSheet } from '../components/NewItemSheet'
 import { PanelShell } from '../components/PanelShell'
+import { Toast } from '../components/Toast'
 import { TopBar } from '../components/TopBar'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
@@ -31,6 +33,7 @@ export function BoardPage() {
   const [newOpen, setNewOpen] = useState(false)
   const filterApi = useFilter(project?.id ?? '')
   const boardRef = useRef<BoardHandle | null>(null)
+  const newItemToast = useNewItemToast(data, user?.id ?? '')
 
   // An item and a module never share the panel: choosing one clears the other,
   // null (empty board, Esc, sheet dragged shut) clears both.
@@ -136,6 +139,7 @@ export function BoardPage() {
           />
         ) : null}
       </PanelShell>
+      <Toast toast={newItemToast.toast} onOpen={select} onDone={newItemToast.dismiss} />
       <NewItemSheet open={newOpen} data={data} tags={tags} place={place} onClose={closeNew} onCreated={onCreated} />
       {error && (
         <div className="hg-notice" role="status">

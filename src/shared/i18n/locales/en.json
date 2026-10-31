@@ -261,6 +261,9 @@
       "openItem": "Open the item",
       "createdWithErrors_one": "The item was created. {{count}} file did not go in, see above.",
       "createdWithErrors_other": "The item was created. {{count}} files did not go in, see above."
+    },
+    "toast": {
+      "newItem": "{{short}} sent a new item: {{title}}"
     }
   }
 }

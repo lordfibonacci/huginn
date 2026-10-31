@@ -103,6 +103,27 @@ export function bezierPoint(
   return [a * e.x1 + b * c[0] + d * c[2] + f * e.x2, a * e.y1 + b * c[1] + d * c[3] + f * e.y2]
 }
 
+// The part of the cubic from t to its end (de Casteljau split), as endpoints
+// and control points that draw just that part. The entry draw up uses it to
+// grow each wire out of its module towards the card.
+export function bezierTail(
+  e: WireEnds,
+  c: [number, number, number, number],
+  t: number,
+): { e: WireEnds; c: [number, number, number, number] } {
+  if (t <= 0) return { e, c }
+  const lerp = (a: number, b: number) => a + (b - a) * t
+  const p12x = lerp(c[0], c[2])
+  const p12y = lerp(c[1], c[3])
+  const p23x = lerp(c[2], e.x2)
+  const p23y = lerp(c[3], e.y2)
+  const [sx, sy] = bezierPoint(e, c, t)
+  return {
+    e: { x1: sx, y1: sy, x2: e.x2, y2: e.y2, dir: e.dir },
+    c: [lerp(p12x, p23x), lerp(p12y, p23y), p23x, p23y],
+  }
+}
+
 // Two finger gesture step: zoom by the change in finger distance and keep the
 // world point that was under the old centre under the new centre (pan follows).
 export function pinchView(

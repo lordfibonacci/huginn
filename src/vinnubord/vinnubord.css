@@ -73,6 +73,8 @@
   --hg-control-pad: 4px;
   --hg-blur-card: blur(8px);
   --hg-blur-control: blur(10px);
+  /* Height of the bottom control row (zoom), so what floats above it clears it. */
+  --hg-control-stack: calc(2 * var(--hg-control-inset) + var(--hg-touch) + 2 * var(--hg-control-pad) + 2px);
   --hg-zoom-icon: 14px;
   --hg-zoom-val-w: 46px;
   --hg-zoom-val-size: 12.5px;
@@ -84,7 +86,8 @@
   --hg-card-pad: 15px 17px 14px;
   --hg-card-bg: linear-gradient(180deg, rgba(29, 40, 56, 0.92), rgba(22, 30, 43, 0.92));
   --hg-card-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --hg-card-lift-shadow: 0 40px 80px -30px color-mix(in oklab, var(--hg-c) 60%, rgba(0, 0, 0, 0.9));
+  /* Geometry only: the color mixes the card's own --hg-c, which :root does not have. */
+  --hg-card-lift-shadow: 0 40px 80px -30px;
   --hg-card-parked-opacity: 0.6;
   --hg-card-focus-ring: 2px;
   --hg-card-focus-offset: 3px;
@@ -121,8 +124,41 @@
   --hg-beat-ring: 10px;
   --hg-ease-beat: ease-out;
 
-  /* Non blocking notice over the board */
+  /* Non blocking notice and the new item toast over the board */
   --hg-notice-size: 13px;
+  --hg-toast-z: 35;
+  --hg-toast-w: 440px;
+  --hg-toast-pad: 0 18px 0 16px;
+  --hg-toast-gap: 10px;
+  --hg-toast-size: 13.5px;
+  --hg-toast-dot: 9px;
+  --hg-toast-glow: 12px;
+
+  /* ---------- Aurora: three blurred blobs drifting behind the grid ---------- */
+  --hg-aurora-opacity: 0.55;
+  --hg-aurora-blur: blur(70px);
+  --hg-aurora-overscan: -20%;
+  --hg-aurora-1: #1f6b5a;
+  --hg-aurora-2: #3a2f7a;
+  --hg-aurora-3: #1d4e6e;
+  --hg-aurora-1-w: 60vw;
+  --hg-aurora-1-h: 40vh;
+  --hg-aurora-1-x: -5%;
+  --hg-aurora-1-y: 10%;
+  --hg-aurora-2-w: 50vw;
+  --hg-aurora-2-h: 45vh;
+  --hg-aurora-2-x: 35%;
+  --hg-aurora-2-y: 40%;
+  --hg-aurora-3-w: 40vw;
+  --hg-aurora-3-h: 35vh;
+  --hg-aurora-3-x: 10%;
+  --hg-aurora-3-y: 60%;
+  --hg-aurora-1-to: translate(18vw, 12vh) scale(1.15);
+  --hg-aurora-2-to: translate(-14vw, -16vh) scale(0.9);
+  --hg-aurora-3-to: translate(22vw, -8vh) scale(1.2);
+  --hg-aurora-1-dur: 38s;
+  --hg-aurora-2-dur: 46s;
+  --hg-aurora-3-dur: 52s;
 
   /* ---------- Side panel and bottom sheet ---------- */
   --hg-panel-w: 460px;
@@ -402,6 +438,34 @@
 
 /* ---------- Board: the pan and zoom surface, the world layer, the wire canvas ---------- */
 .hg-board-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--hg-board); font-family: var(--hg-font); }
+
+/* Aurora, painted under the board (it comes first in the wrap). Each blob is
+   blurred on its own layer and only its transform animates, so the drift
+   never re-blurs. */
+.hg-aurora { position: absolute; inset: var(--hg-aurora-overscan); pointer-events: none; opacity: var(--hg-aurora-opacity); }
+.hg-aurora i {
+  position: absolute; border-radius: 50%; mix-blend-mode: screen; filter: var(--hg-aurora-blur); will-change: transform;
+  animation: var(--hg-aurora-dur) ease-in-out infinite alternate;
+}
+.hg-aurora i:nth-child(1) {
+  --hg-aurora-dur: var(--hg-aurora-1-dur); animation-name: hg-drift-1;
+  width: var(--hg-aurora-1-w); height: var(--hg-aurora-1-h); left: var(--hg-aurora-1-x); top: var(--hg-aurora-1-y);
+  background: radial-gradient(closest-side, var(--hg-aurora-1), transparent);
+}
+.hg-aurora i:nth-child(2) {
+  --hg-aurora-dur: var(--hg-aurora-2-dur); animation-name: hg-drift-2;
+  width: var(--hg-aurora-2-w); height: var(--hg-aurora-2-h); left: var(--hg-aurora-2-x); top: var(--hg-aurora-2-y);
+  background: radial-gradient(closest-side, var(--hg-aurora-2), transparent);
+}
+.hg-aurora i:nth-child(3) {
+  --hg-aurora-dur: var(--hg-aurora-3-dur); animation-name: hg-drift-3;
+  width: var(--hg-aurora-3-w); height: var(--hg-aurora-3-h); left: var(--hg-aurora-3-x); top: var(--hg-aurora-3-y);
+  background: radial-gradient(closest-side, var(--hg-aurora-3), transparent);
+}
+@keyframes hg-drift-1 { to { transform: var(--hg-aurora-1-to); } }
+@keyframes hg-drift-2 { to { transform: var(--hg-aurora-2-to); } }
+@keyframes hg-drift-3 { to { transform: var(--hg-aurora-3-to); } }
+
 .hg-board {
   position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none;
   background-image: radial-gradient(circle, var(--hg-grid-dot) 1px, transparent 1.3px);
@@ -449,7 +513,8 @@
 .hg-card.hg-card-parked { border-style: dashed; opacity: var(--hg-card-parked-opacity); }
 .hg-card:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
 .hg-card.hg-card-lift {
-  cursor: grabbing; z-index: var(--hg-card-lift-z); box-shadow: var(--hg-card-lift-shadow);
+  cursor: grabbing; z-index: var(--hg-card-lift-z);
+  box-shadow: var(--hg-card-lift-shadow) color-mix(in oklab, var(--hg-c) 60%, rgba(0, 0, 0, 0.9));
   border-color: color-mix(in oklab, var(--hg-c) 60%, var(--hg-line));
 }
 .hg-card.hg-card-open {
@@ -505,9 +570,12 @@
   border: var(--hg-ring-border) solid var(--hg-board); box-shadow: 0 0 var(--hg-ring-glow) var(--hg-c);
 }
 
-/* Non blocking notice, for example a failed refresh while the board stays. */
+/* Non blocking notice, for example a failed refresh while the board stays.
+   Bottom left, never wider than half the board so it cannot reach the zoom
+   controls; on phones it sits above the control row instead. */
 .hg-notice {
   position: absolute; left: var(--hg-control-inset); bottom: var(--hg-control-inset); z-index: var(--hg-control-z);
+  max-width: calc(50% - var(--hg-control-inset));
   display: flex; align-items: center; gap: var(--hg-card-row-gap);
   padding: var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-inset);
   border-radius: var(--hg-radius-control); background: var(--hg-control-bg); border: 1px solid var(--hg-coral);
@@ -518,6 +586,30 @@
   background: var(--hg-control-hover); color: var(--hg-ink); font: inherit; font-weight: 700; cursor: pointer;
 }
 .hg-notice button:hover, .hg-notice button:focus-visible { background: var(--hg-surface-2); outline: none; }
+@media (max-width: 767px) {
+  .hg-notice { bottom: var(--hg-control-stack); right: var(--hg-control-inset); max-width: none; }
+}
+
+/* New item toast: centred above the control row, a tap opens the item. */
+.hg-toast-wrap {
+  position: absolute; left: var(--hg-control-inset); right: var(--hg-control-inset); bottom: var(--hg-control-stack);
+  z-index: var(--hg-toast-z); display: flex; justify-content: center; pointer-events: none;
+}
+.hg-toast {
+  --hg-c: var(--hg-gold);
+  pointer-events: auto; display: flex; align-items: center; gap: var(--hg-toast-gap); min-width: 0; max-width: var(--hg-toast-w);
+  min-height: var(--hg-touch); padding: var(--hg-toast-pad); border-radius: var(--hg-radius-control); cursor: pointer;
+  background: var(--hg-menu-bg); border: 1px solid color-mix(in oklab, var(--hg-c) 45%, var(--hg-line));
+  box-shadow: var(--hg-menu-shadow); backdrop-filter: var(--hg-blur-control); -webkit-backdrop-filter: var(--hg-blur-control);
+  color: var(--hg-ink); font-family: var(--hg-font); font-size: var(--hg-toast-size); font-weight: 600; text-align: left;
+  animation: hg-rise var(--hg-dur-panel) var(--hg-spring);
+}
+.hg-toast:hover, .hg-toast:focus-visible { background: var(--hg-surface-2); outline: none; }
+.hg-toast-dot {
+  width: var(--hg-toast-dot); height: var(--hg-toast-dot); border-radius: 50%; flex: none; background: var(--hg-c);
+  box-shadow: 0 0 var(--hg-toast-glow) var(--hg-c);
+}
+.hg-toast-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- Side panel (from 768 px) and bottom sheet (below) ---------- */
 .hg-panel {
@@ -1086,8 +1178,15 @@
   .hg-new-foot .hg-btn { flex: 1; }
 }
 
+/* Reduced motion: no animation and no transition anywhere on the board,
+   its bars, panels and sheets (the aurora stands still, cards appear in
+   place, dots stop beating). The wire canvas leaves out sparks and the draw
+   up on its own (Wires.tsx), the card spring snaps (Board.tsx). */
 @media (prefers-reduced-motion: reduce) {
-  .hg-live i, .hg-sheet-backdrop, .hg-new-sheet { animation: none; }
-  .hg-card.hg-in { animation: none; }
-  .hg-card-pulse .hg-card-dot { animation: none; }
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice),
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *,
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *::before,
+  :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *::after {
+    animation: none !important; transition: none !important;
+  }
 }

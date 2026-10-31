@@ -6,6 +6,7 @@ import {
   wireEndpoints,
   bezierControl,
   bezierPoint,
+  bezierTail,
   pinchView,
   type View,
   type Rect,
@@ -157,6 +158,31 @@ describe('bezier', () => {
     const [mx, my] = bezierPoint(e, c, 0.5)
     expect(mx).toBeCloseTo(200)
     expect(my).toBeCloseTo(50)
+  })
+
+  it('bezierTail is the part of the curve from t to the end', () => {
+    const c = bezierControl(e, 1)
+    expect(bezierTail(e, c, 0)).toEqual({ e, c })
+    const t = 0.3
+    const tail = bezierTail(e, c, t)
+    const [sx, sy] = bezierPoint(e, c, t)
+    expect(tail.e.x1).toBeCloseTo(sx)
+    expect(tail.e.y1).toBeCloseTo(sy)
+    expect(tail.e.x2).toBe(400)
+    expect(tail.e.y2).toBe(100)
+    for (const s of [0.25, 0.5, 0.9]) {
+      const [ax, ay] = bezierPoint(tail.e, tail.c, s)
+      const [bx, by] = bezierPoint(e, c, t + s * (1 - t))
+      expect(ax).toBeCloseTo(bx)
+      expect(ay).toBeCloseTo(by)
+    }
+  })
+
+  it('bezierTail at 1 shrinks to the end point', () => {
+    const c = bezierControl(e, 1)
+    const tail = bezierTail(e, c, 1)
+    expect(bezierPoint(tail.e, tail.c, 0.5)[0]).toBeCloseTo(400)
+    expect(bezierPoint(tail.e, tail.c, 0.5)[1]).toBeCloseTo(100)
   })
 })
 

@@ -240,6 +240,9 @@
     "settings": {
       "comingSoon": "Stillingar koma í plani 2."
     },
+    "toast": {
+      "newItem": "{{short}} sendi nýtt verk: {{title}}"
+    },
     "top": {
       "clear": "Hreinsa",
       "connecting": "Tengist",

@@ -7,10 +7,12 @@ import { isActive, matches, type Filter } from '../lib/filters'
 import { screenToWorld, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
+import { parseDuration } from '../lib/motion'
 import { isUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, wireMode } from '../lib/status'
 import type { BoardData, Item, Plan } from '../lib/types'
+import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
 import { PackColumn } from './PackColumn'
 import { Wires, type WireItem, type WiresHandle } from './Wires'
@@ -47,6 +49,9 @@ const ENTRY_STEP_MS = 45
 const ENTRY_BURST = 8
 const DROP_BURST = 4
 const NO_DESELECT = '[data-card], [data-module], [data-panel]'
+// The phone layout breakpoint (top bar in two rows, bottom sheet). Crossing it
+// changes the board size a lot, so the board fits again.
+const PHONE_QUERY = '(max-width: 767px)'
 // Size assumed for a card that is not drawn yet (its width is --hg-card-w).
 const NEW_CARD_SIZE = { w: 250, h: 120 }
 
@@ -57,6 +62,11 @@ function place(el: HTMLElement, s: Spring) {
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+// The card entry pop length from its token, 0 under reduced motion.
+function popMs(): number {
+  return parseDuration(getComputedStyle(document.documentElement).getPropertyValue('--hg-dur-pop'))
 }
 
 export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule, ref }: Props) {
@@ -178,9 +188,12 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   }, [onBoard])
 
   // One frame of every moving spring, called by Wires before it reads rects.
+  // Returns whether any card moved, so Wires can rest when none did.
   const stepFrame = useCallback(() => {
+    let moved = false
     for (const [id, s] of springs.current) {
       if (s.x === s.tx && s.y === s.ty && s.vx === 0 && s.vy === 0) continue
+      moved = true
       if (reduced.current) {
         Object.assign(s, { x: s.tx, y: s.ty, vx: 0, vy: 0 })
       } else {
@@ -190,6 +203,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
       const el = els.current.get(id)
       if (el) place(el, s)
     }
+    return moved
   }, [])
 
   // ---------- drag ----------
@@ -282,17 +296,31 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     return delays.current
   }, [onBoard])
 
+  // Every card that arrives sends a spark burst along its wire when it pops
+  // in: the whole first load one after another, and later each new item, also
+  // the one a new item toast announces. The first load also draws the wires
+  // up, once. Wires stays awake while cards pop, their rects change then.
   const burstDone = useRef(new Set<string>())
+  const drewUp = useRef(false)
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
+    let lastDelay = -1
     for (const item of onBoard) {
       if (burstDone.current.has(item.id)) continue
       burstDone.current.add(item.id)
       const delay = enterDelays.get(item.id) ?? 0
+      lastDelay = Math.max(lastDelay, delay)
       timers.push(setTimeout(() => wiresRef.current?.burst(item.id, ENTRY_BURST), delay))
     }
+    if (lastDelay >= 0) wiresRef.current?.wake(lastDelay + popMs())
     return () => timers.forEach(clearTimeout)
   }, [onBoard, enterDelays])
+  // Before paint, so the first frame Wires draws is already the draw up.
+  useLayoutEffect(() => {
+    if (drewUp.current || onBoard.length === 0) return
+    drewUp.current = true
+    wiresRef.current?.drawUp()
+  }, [onBoard])
 
   // ---------- fit ----------
   const fitAll = useCallback(() => {
@@ -316,6 +344,22 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     fitAll()
     fitted.current = true
   })
+
+  // Fit again when the window crosses the phone breakpoint: the top bar
+  // changes height and the board is a different shape.
+  useEffect(() => {
+    const mq = window.matchMedia(PHONE_QUERY)
+    let raf = 0
+    const refit = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(fitAll)
+    }
+    mq.addEventListener('change', refit)
+    return () => {
+      mq.removeEventListener('change', refit)
+      cancelAnimationFrame(raf)
+    }
+  }, [fitAll])
 
   // ---------- new card placement ----------
   useImperativeHandle(
@@ -362,6 +406,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
 
   return (
     <div className="hg-board-wrap">
+      <Aurora />
       <div
         ref={boardRef}
         className={`hg-board${vp.isPanning ? ' hg-board-panning' : ''}`}
