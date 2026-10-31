@@ -858,6 +858,7 @@
     },
     "settings": {
       "comingSoon": "Stillingar koma í plani 2."
-    }
+    },
+    "viewerError": "Gat ekki sótt verkefnin þín."
   }
 }

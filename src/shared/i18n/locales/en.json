@@ -849,6 +849,7 @@
     },
     "settings": {
       "comingSoon": "Settings arrive in plan 2."
-    }
+    },
+    "viewerError": "Could not load your projects."
   }
 }

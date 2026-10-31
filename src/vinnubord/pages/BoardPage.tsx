@@ -5,6 +5,7 @@ import { useViewer } from '../hooks/useViewer'
 import { useBoardData } from '../hooks/useBoardData'
 import { countsFor, type Counts } from '../lib/status'
 import { Loader } from '../components/Loader'
+import { LoadError } from '../components/LoadError'
 import { NoAccessPage } from './NoAccessPage'
 
 const COUNT_KEYS: (keyof Counts)[] = ['new', 'mine', 'others', 'build', 'parked']
@@ -13,7 +14,7 @@ const COUNT_KEYS: (keyof Counts)[] = ['new', 'mine', 'others', 'build', 'parked'
 export function BoardPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
-  const { user, projects, loading: viewerLoading } = useViewer()
+  const { user, projects, loading: viewerLoading, error: viewerError, reload: reloadViewer } = useViewer()
   const project = projects.find((p) => p.slug === slug) ?? null
   const { data, loading: boardLoading, error, reload } = useBoardData(project?.id ?? null)
 
@@ -23,6 +24,7 @@ export function BoardPage() {
   }, [data, user])
 
   if (viewerLoading) return <Loader />
+  if (viewerError) return <LoadError centered message={t('vinnubord.viewerError')} onRetry={reloadViewer} />
   if (!user || !project) return <NoAccessPage />
 
   return (
@@ -30,16 +32,7 @@ export function BoardPage() {
       <h1 className="text-xl font-semibold text-huginn-text-primary">{project.name}</h1>
 
       {error ? (
-        <div className="mt-6 space-y-3">
-          <p className="text-sm text-huginn-danger">{t('vinnubord.board.loadError')}</p>
-          <button
-            type="button"
-            onClick={() => void reload()}
-            className="rounded-lg border border-huginn-border px-3 py-1.5 text-sm text-huginn-text-primary transition-colors hover:bg-huginn-hover"
-          >
-            {t('vinnubord.board.retry')}
-          </button>
-        </div>
+        <LoadError message={t('vinnubord.board.loadError')} onRetry={() => void reload()} />
       ) : boardLoading || !counts ? (
         <Loader />
       ) : (
