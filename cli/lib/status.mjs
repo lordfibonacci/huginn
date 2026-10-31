@@ -18,6 +18,13 @@ export function isOnBoard(item) {
   return item.status !== 'done' && item.status !== 'dropped'
 }
 
+// Whether an item waits for a user: waiting_on is that user, or the user owns
+// an open action on it. Callers filter to items on the board.
+export function waitsFor(item, actions, userId) {
+  if (item.waiting_on === userId) return true
+  return actions.some((a) => a.item_id === item.id && a.owner === userId && a.done_at === null)
+}
+
 function isServiceUser(userId, participants) {
   if (!userId) return false
   return participants.some((p) => p.user_id === userId && p.is_service)

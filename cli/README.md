@@ -36,6 +36,7 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `huginn pull` | Sækir borðið og prentar stöðuna sem markdown |
 | `huginn pull --json` | Allt borðið sem JSON (sama lögun og `BoardData` í vefnum) |
 | `huginn pull --since <ISO>` | Aðeins verk sem breyttust frá þeim tíma, með því sem þeim fylgir |
+| `huginn pull --brief` | Ein lína, t.d. `Huginn: 2 bíða Claude, 1 bíða Árna, 0 bíða Heimis`. Telur opin verk sem bíða hvers þátttakanda eftir sömu reglu og vefurinn (`waitsFor`: verkið bíður hans eða hann á opið handtak á því). Með `--json` listi af `{ short, display_name, count }`. Fer ekki saman við `--since` |
 | `huginn sync` | Speglar verkin í `docs/huginn/` og skrifar `docs/huginn/STATUS.md` (sjá Spegill) |
 | `huginn sync --dry-run` | Sýnir hvað yrði skrifað, skrifar ekkert |
 | `huginn sync --out <mappa>` | Speglar í aðra möppu |

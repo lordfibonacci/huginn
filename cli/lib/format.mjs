@@ -1,4 +1,4 @@
-import { STATUS_NAMES, isOnBoard, toneOf } from './status.mjs'
+import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
 
 // Readable output of the CLI. Everything here is deterministic: the same data
 // gives the same string byte for byte (ISO dates, stable sorts, no "today").
@@ -98,6 +98,33 @@ function waitingOrder(userIds, participants) {
   return [...userIds].sort(
     (a, b) => rank(a) - rank(b) || short(a).localeCompare(short(b), 'is') || (a < b ? -1 : a > b ? 1 : 0),
   )
+}
+
+// pull --brief (ruling R26): how many open items wait for each participant,
+// by the web's waitsFor rule, in the order statusMarkdown lists the
+// "Bíður <X>" groups. Every participant is listed, zero included.
+export function briefCounts(data, participants) {
+  const open = (data.items ?? []).filter(isOnBoard)
+  const actions = data.actions ?? []
+  const ids = waitingOrder(participants.map((p) => p.user_id), participants)
+  return ids.map((userId) => {
+    const p = participants.find((x) => x.user_id === userId)
+    return {
+      short: p.short,
+      display_name: p.display_name,
+      count: open.filter((item) => waitsFor(item, actions, userId)).length,
+    }
+  })
+}
+
+// The one line the session start hook prints, e.g.
+// "Huginn: 2 bíða Claude, 1 bíða Árna, 0 bíða Heimis".
+export function briefLine(counts) {
+  if (!counts.length) return 'Huginn: enginn þátttakandi.'
+  const parts = counts.map(({ short, display_name, count }) =>
+    GENITIVE[short] ? `${count} bíða ${GENITIVE[short]}` : `${count} bíða: ${oneLine(display_name)}`,
+  )
+  return `Huginn: ${parts.join(', ')}`
 }
 
 // Groups in fixed order (ruling R2), empty groups left out.

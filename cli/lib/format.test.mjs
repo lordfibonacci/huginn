@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { filterSince, itemLine, oneLine, statusMarkdown, whoamiText } from './format.mjs'
+import { briefCounts, briefLine, filterSince, itemLine, oneLine, statusMarkdown, whoamiText } from './format.mjs'
 
 const C = { id: 'p-c', user_id: 'u-c', short: 'C', display_name: 'Claude', is_service: true, project_id: 'pr' }
 const H = { id: 'p-h', user_id: 'u-h', short: 'H', display_name: 'Heimir', is_service: false, project_id: 'pr' }
@@ -203,5 +203,49 @@ describe('filterSince', () => {
     expect(out.actions.map((a) => a.id)).toEqual(['a1', 'a2'])
     expect(out.questions.map((q) => q.id)).toEqual(['q1', 'q2'])
     expect(out.participants).toBe(data.participants)
+  })
+})
+
+describe('briefCounts and briefLine', () => {
+  it('counts per participant by waitsFor: on board and waiting_on, or an open owned action', () => {
+    // i02 waits on C and H owns its open action a1; a2 for Á is done. i09 is done
+    // and i10 dropped, so their waiting_on and actions do not count.
+    const extra = [
+      { id: 'a3', item_id: 'i09', owner: 'u-a', body: 'Lokað verk', done_at: null, created_at: '2026-10-31T09:00:00+00:00' },
+      { id: 'a4', item_id: 'i03', owner: 'u-h', body: 'Sama verk tvisvar', done_at: null, created_at: '2026-10-31T09:00:00+00:00' },
+    ]
+    const closedWaiting = item('i13', 'done', { waiting_on: 'u-a', closed_at: '2026-10-30T10:00:00+00:00' })
+    const d = board([...items, closedWaiting], { actions: [...actions, ...extra], questions })
+    expect(briefCounts(d, participants)).toEqual([
+      { short: 'C', display_name: 'Claude', count: 3 },
+      { short: 'Á', display_name: 'Árni', count: 1 },
+      { short: 'H', display_name: 'Heimir', count: 2 },
+      { short: 'X', display_name: 'Xena', count: 1 },
+    ])
+  })
+
+  it('lists every participant, zero included, in the statusMarkdown order', () => {
+    const counts = briefCounts(board([], {}), [...participants].reverse())
+    expect(counts.map((c) => [c.short, c.count])).toEqual([
+      ['C', 0],
+      ['Á', 0],
+      ['H', 0],
+      ['X', 0],
+    ])
+  })
+
+  it('briefLine is one deterministic line with genitive names and a fallback', () => {
+    const counts = [
+      { short: 'C', display_name: 'Claude', count: 3 },
+      { short: 'Á', display_name: 'Árni', count: 1 },
+      { short: 'H', display_name: 'Heimir', count: 0 },
+      { short: 'X', display_name: 'Xena' + String.fromCharCode(10) + 'Ný lína' + String.fromCharCode(27), count: 2 },
+    ]
+    expect(briefLine(counts)).toBe('Huginn: 3 bíða Claude, 1 bíða Árna, 0 bíða Heimis, 2 bíða: Xena Ný lína')
+    expect(briefLine(counts)).toBe(briefLine(counts))
+  })
+
+  it('briefLine on a project without participants', () => {
+    expect(briefLine([])).toBe('Huginn: enginn þátttakandi.')
   })
 })

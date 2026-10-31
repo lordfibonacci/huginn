@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import * as web from '../../src/vinnubord/lib/status.ts'
 import * as webWindow from '../../src/vinnubord/lib/boardWindow.ts'
 import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './client.mjs'
-import { STATUS_NAMES, isOnBoard, toneOf } from './status.mjs'
+import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
 import { readFileSync } from 'node:fs'
 import * as webUpload from '../../src/vinnubord/lib/upload.ts'
 import * as webPlacement from '../../src/vinnubord/lib/placement.ts'
@@ -44,6 +44,27 @@ describe('status parity with the web', () => {
       for (const waiting_on of WAITING_ON) {
         const item = { id: 'i', status, waiting_on }
         expect(toneOf(item, participants), `${status} ${waiting_on}`).toBe(web.itemTone(item, '', participants))
+      }
+    }
+  })
+
+  it('waitsFor agrees for every waiting_on, viewer and action state', () => {
+    const ACTIONS = [
+      [],
+      [{ id: 'a', item_id: 'i', owner: 'u-h', done_at: null }],
+      [{ id: 'a', item_id: 'i', owner: 'u-h', done_at: '2026-10-31T00:00:00Z' }],
+      [{ id: 'a', item_id: 'other', owner: 'u-h', done_at: null }],
+      [{ id: 'a', item_id: 'i', owner: 'u-c', done_at: null }],
+    ]
+    for (const status of STATUSES) {
+      for (const waiting_on of WAITING_ON) {
+        for (const actions of ACTIONS) {
+          for (const viewer of ['u-c', 'u-h', 'u-unknown']) {
+            const item = { id: 'i', status, waiting_on }
+            const label = `${status} ${waiting_on} ${viewer} ${JSON.stringify(actions)}`
+            expect(waitsFor(item, actions, viewer), label).toBe(web.waitsFor(item, actions, viewer))
+          }
+        }
       }
     }
   })

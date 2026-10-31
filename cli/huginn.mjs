@@ -4,7 +4,7 @@ import { getClient, getMe, getProject, getUser, loadBoard } from './lib/client.m
 import { resolve } from 'node:path'
 import { WRITE_GROUPS, runWrite, writeUsage } from './lib/commands.mjs'
 import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
-import { filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
+import { briefCounts, briefLine, filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
 import { mirrorTargets, planMirror } from './lib/mirror.mjs'
 import { downloadFile } from './lib/ops.mjs'
 import { executeMirror, listFolders, readExisting, syncReport } from './lib/sync.mjs'
@@ -16,6 +16,7 @@ Skipanir:
   login                 Prófar innskráningu úr ~/.huginn/credentials.json
   whoami                Sýnir notanda og þátttakanda í verkefninu
   pull [--since ISO]    Sækir borðið og prentar stöðuna
+  pull --brief          Ein lína: hve mörg opin verk bíða hvers þátttakanda
   sync [--out docs/huginn] [--dry-run]
                         Speglar opin verk og skrár þeirra í docs/huginn og skrifar STATUS.md
 
@@ -76,9 +77,16 @@ async function pull(argv, flags) {
   if (flags.since !== undefined && (typeof flags.since !== 'string' || Number.isNaN(Date.parse(flags.since)))) {
     throw new Error('--since þarf ISO dagsetningu, t.d. 2026-10-31T00:00:00Z.')
   }
+  if (flags.brief !== undefined && flags.brief !== true) throw new Error('--brief tekur ekkert gildi.')
+  if (flags.brief && flags.since !== undefined) throw new Error('--brief og --since fara ekki saman.')
   const client = await getClient()
   const project = await getProject(client, slug)
   let data = await loadBoard(client, project.id)
+  if (flags.brief) {
+    const counts = briefCounts(data, data.participants)
+    out(flags.json ? counts : briefLine(counts), flags)
+    return
+  }
   if (flags.since) data = filterSince(data, flags.since)
   out(flags.json ? data : statusMarkdown(data, data.participants), flags)
 }
