@@ -6,8 +6,18 @@ import { STATUS_NAMES, isOnBoard, toneOf } from './status.mjs'
 // Genitive names for the "Bíður <X>" headings, keyed by participant short.
 const GENITIVE = { C: 'Claude', H: 'Heimis', Á: 'Árna' }
 
-function oneLine(text) {
-  return String(text ?? '').replace(/\s+/g, ' ').trim()
+// C0 controls, DEL and C1 controls (ESC, BEL, the CSI byte 0x9b and friends).
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g
+
+// Every database string printed outside --json goes through this: whitespace
+// collapsed to single spaces, then control characters removed, so text cannot
+// break lines, inject markdown headings or send terminal escapes.
+export function oneLine(text) {
+  return String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(CONTROL_CHARS, '')
+    .replace(/ {2,}/g, ' ')
+    .trim()
 }
 
 function iso(stamp) {
@@ -26,7 +36,8 @@ function byId(a, b) {
 }
 
 function shortOf(userId, participants) {
-  return participants.find((p) => p.user_id === userId)?.short ?? '?'
+  const short = participants.find((p) => p.user_id === userId)?.short
+  return short ? oneLine(short) : '?'
 }
 
 // "[tone] titill, staða, hver, hvenær". Who is the participant a waiting item
@@ -35,7 +46,8 @@ export function itemLine(item, participants) {
   const who = item.status === 'waiting' && item.waiting_on
     ? `bíður ${shortOf(item.waiting_on, participants)}`
     : `frá ${shortOf(item.created_by, participants)}`
-  return `[${toneOf(item, participants)}] ${oneLine(item.title)}, ${STATUS_NAMES[item.status] ?? item.status}, ${who}, ${iso(item.updated_at)}`
+  const status = STATUS_NAMES[item.status] ?? oneLine(item.status)
+  return `[${toneOf(item, participants)}] ${oneLine(item.title)}, ${status}, ${who}, ${oneLine(iso(item.updated_at))}`
 }
 
 function subLines(item, data, participants) {
@@ -57,8 +69,18 @@ function subLines(item, data, participants) {
 
 function waitingHeading(userId, participants) {
   const p = participants.find((x) => x.user_id === userId)
-  if (!p) return `Bíður: ${userId}`
-  return GENITIVE[p.short] ? `Bíður ${GENITIVE[p.short]}` : `Bíður: ${p.display_name}`
+  if (!p) return `Bíður: ${oneLine(userId)}`
+  return GENITIVE[p.short] ? `Bíður ${GENITIVE[p.short]}` : `Bíður: ${oneLine(p.display_name)}`
+}
+
+// Text for huginn whoami. Every value comes from the database or auth.
+export function whoamiText(user, project, me) {
+  const kind = me.is_service ? ', þjónustunotandi' : ''
+  return [
+    oneLine(user.email),
+    `Verkefni: ${oneLine(project.name)} (${oneLine(project.slug)})`,
+    `Þátttakandi: ${oneLine(me.display_name)} (${oneLine(me.short)})${kind}`,
+  ].join('\n')
 }
 
 // Service user first, then by short in Icelandic order, unknown users last.

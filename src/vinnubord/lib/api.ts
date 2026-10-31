@@ -1,5 +1,6 @@
 import { supabase } from '../../shared/lib/supabase'
 import { validateUpload } from './upload'
+import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './boardWindow'
 import {
   moduleDeleteBlock,
   participantErrorMessage,
@@ -29,9 +30,6 @@ import type {
 
 export const FILES_BUCKET = 'hg-files'
 const SIGNED_URL_SECONDS = 3600
-const CLOSED_HISTORY_DAYS = 90
-// Most recent events kept in BoardData, below the PostgREST 1000 row cap.
-const EVENTS_LIMIT = 500
 
 type DbError = { message: string } | null
 

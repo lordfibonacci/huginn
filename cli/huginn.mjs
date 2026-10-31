@@ -2,7 +2,7 @@
 // huginn: command line tool for the Huginn whiteboard. See cli/README.md.
 import { getClient, getMe, getProject, getUser, loadBoard } from './lib/client.mjs'
 import { loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
-import { filterSince, statusMarkdown } from './lib/format.mjs'
+import { filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
 
 const USAGE = `Notkun: huginn <skipun> [rofar]
 
@@ -36,7 +36,7 @@ function out(value, flags) {
 async function login(argv, flags) {
   const client = await getClient({ fresh: true })
   const user = await getUser(client)
-  out(flags.json ? { ok: true, email: user.email, user_id: user.id } : `Innskráð(ur) sem ${user.email}.`, flags)
+  out(flags.json ? { ok: true, email: user.email, user_id: user.id } : `Innskráð(ur) sem ${oneLine(user.email)}.`, flags)
 }
 
 async function whoami(argv, flags) {
@@ -57,13 +57,7 @@ async function whoami(argv, flags) {
     )
     return
   }
-  const kind = me.is_service ? ', þjónustunotandi' : ''
-  out(
-    [`${user.email}`, `Verkefni: ${project.name} (${project.slug})`, `Þátttakandi: ${me.display_name} (${me.short})${kind}`].join(
-      '\n',
-    ),
-    flags,
-  )
+  out(whoamiText(user, project, me), flags)
 }
 
 async function pull(argv, flags) {
@@ -98,9 +92,12 @@ try {
 } catch (error) {
   const secrets = knownSecrets()
   const message = error instanceof Error ? error.message : String(error)
-  process.stderr.write(`Villa: ${redact(message, secrets).replace(/\s*\n\s*/g, ' ')}\n`)
+  // Messages can carry database or Supabase text, so they get the same cleaning.
+  process.stderr.write(`Villa: ${oneLine(redact(message, secrets))}\n`)
   if (parseArgs(argv).flags.debug && error instanceof Error && error.stack) {
-    process.stderr.write(`${redact(error.stack, secrets)}\n`)
+    // Keep the stack's line breaks, drop every other control character.
+    const stack = redact(error.stack, secrets).replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, '')
+    process.stderr.write(`${stack}\n`)
   }
   process.exitCode = 1
 }

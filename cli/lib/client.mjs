@@ -7,9 +7,9 @@ import { huginnDir, loadCredentials } from './config.mjs'
 // with the anon key, so RLS decides what the tool sees. The session is cached
 // in ~/.huginn/session.json so most runs skip the password sign in.
 
-// Same window as loadBoard in src/vinnubord/lib/api.ts.
-const CLOSED_HISTORY_DAYS = 90
-const EVENTS_LIMIT = 500
+// Copies of src/vinnubord/lib/boardWindow.ts (ruling R3), checked by parity.test.mjs.
+export const CLOSED_HISTORY_DAYS = 90
+export const EVENTS_LIMIT = 500
 // A cached token this close to expiry is refreshed before use.
 const EXPIRY_MARGIN_SECONDS = 60
 

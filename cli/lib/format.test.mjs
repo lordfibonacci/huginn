@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { filterSince, itemLine, statusMarkdown } from './format.mjs'
+import { filterSince, itemLine, oneLine, statusMarkdown, whoamiText } from './format.mjs'
 
 const C = { id: 'p-c', user_id: 'u-c', short: 'C', display_name: 'Claude', is_service: true, project_id: 'pr' }
 const H = { id: 'p-h', user_id: 'u-h', short: 'H', display_name: 'Heimir', is_service: false, project_id: 'pr' }
@@ -145,6 +145,49 @@ describe('statusMarkdown', () => {
   it('leaves out done and dropped items and says so on an empty board', () => {
     const closed = board([items[8], items[9]])
     expect(statusMarkdown(closed, participants)).toBe('# Staða: Metta\n\nEkkert opið verk.\n')
+  })
+})
+
+describe('control characters from the database', () => {
+  const NASTY = 'Ill\x1b[31m\n## fake\x9b\x07\x7f\u0085end'
+  const CONTROL = /[\u0000-\u001f\u007f-\u009f]/
+
+  it('oneLine strips C0, DEL and C1 and keeps one line', () => {
+    expect(oneLine(NASTY)).toBe('Ill[31m ## fakeend')
+    expect(oneLine('a \x1b b')).toBe('a b')
+  })
+
+  it('a title and a display_name render as clean single lines', () => {
+    const evil = { id: 'p-e', user_id: 'u-e', short: 'E\x1b', display_name: `Eve${NASTY}`, is_service: false }
+    const ps = [...participants, evil]
+    const nasty = item('n1', 'waiting', { title: `Verk${NASTY}`, waiting_on: 'u-e' })
+    const md = statusMarkdown(board([nasty], { participants: ps }), ps)
+    expect(md).toBe(
+      [
+        '# Staða: Metta',
+        '',
+        '## Bíður: EveIll[31m ## fakeend',
+        '- [lilac] VerkIll[31m ## fakeend, Bíður, bíður E, 2026-10-30T10:00:00.000Z',
+        '',
+      ].join('\n'),
+    )
+    for (const line of md.split('\n')) expect(line).not.toMatch(CONTROL)
+    expect(md.split('\n').filter((l) => l.startsWith('#'))).toHaveLength(2)
+  })
+
+  it('whoamiText cleans every database string', () => {
+    const text = whoamiText(
+      { email: `c@h.is${NASTY}` },
+      { slug: `metta${NASTY}`, name: `Metta${NASTY}` },
+      { display_name: `Claude${NASTY}`, short: 'C\x9b', is_service: true },
+    )
+    const lines = text.split('\n')
+    expect(lines).toEqual([
+      'c@h.isIll[31m ## fakeend',
+      'Verkefni: MettaIll[31m ## fakeend (mettaIll[31m ## fakeend)',
+      'Þátttakandi: ClaudeIll[31m ## fakeend (C), þjónustunotandi',
+    ])
+    for (const line of lines) expect(line).not.toMatch(CONTROL)
   })
 })
 
