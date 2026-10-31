@@ -8,14 +8,16 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Pla
 
 ## Current state
 
-Plan 1 (grunnur, foundation) is built and verified (`npm run smoke:hg` prints `ok 6/6` against the live DB, 36 vitest tests): the `hg_` schema, an API layer, realtime board data hook, pure status, filter, upload and continuation logic with tests, the app shell, routes and the participant gate. The board page is a placeholder that shows the status counters.
+Plans 1 and 2 are built and verified (`npm run smoke:hg` prints `ok 6/6` against the live DB, 212 vitest tests, `npm run build` green).
+
+- Plan 1 (grunnur): the `hg_` schema, API layer, realtime board data hook, pure status, filter, upload and continuation logic, the app shell, routes and the participant gate.
+- Plan 2 (bord): the whiteboard. Pack columns and module cards, item cards with spring drag and wires with sparks on a canvas, pan and zoom with touch (pinch, two finger pan, 350 ms long press to drag), side panel and bottom sheet for items and modules (status, files, questions, history, comments, copy buttons, Markdown reader), top bar with counter pills, filters, search and a viewer menu, new item sheet with file upload, aurora and entry motion, new item toast, project settings. The live project metta is seeded with 5 packages and 28 modules.
 
 Not built yet, do not describe them as existing:
-- Plan 2: the whiteboard itself (packages, modules, item cards, threads, side panel, filters, touch), project settings.
 - Plan 3: the command line tool and the `/huginn` skill for Claude Code, session close and the repo mirror (`docs/huginn/`).
 - Plan 4: quick analysis (edge function calling the Claude API on new items).
 
-Open items from plan 1 are listed in `docs/progress/01-vinnubord-grunnur.md`.
+Open items are listed in `docs/progress/01-vinnubord-grunnur.md` and `docs/progress/02-vinnubord-bord.md`.
 
 ## Tech Stack
 
@@ -24,9 +26,9 @@ Open items from plan 1 are listed in `docs/progress/01-vinnubord-grunnur.md`.
 - **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
 - **Routing:** React Router v7
 - **i18n:** `react-i18next`
-- **Tests:** vitest, `src/**/*.test.ts` only (pure logic in `src/vinnubord/lib/`)
+- **Tests:** vitest, `src/**/*.test.ts` only (pure logic in `src/vinnubord/lib/`). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
 - **PWA:** `vite-plugin-pwa` auto update service worker, manifest description "Vinnuborð Mettu"
-- **Kept for plan 2:** `marked` and `dompurify` (markdown reader), not imported yet
+- **Markdown:** `marked` and `dompurify` render Markdown in the panel reader. Loaded lazily (`Markdown.tsx` is a lazy chunk), so the board bundle does not carry them. No other UI libraries, icons are inline SVG.
 - **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs`
 
 ## Commands
@@ -47,9 +49,16 @@ npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
 src/
 ├── app/            # App.tsx, routes.tsx (ProtectedRoute, PublicRoute)
 ├── vinnubord/      # everything new lives here, nothing imports old feature code
-│   ├── lib/        # types.ts, api.ts, status.ts, filters.ts, upload.ts, continuation.ts (+ *.test.ts)
-│   ├── hooks/      # useViewer (memberships), useBoardData (board load + realtime)
-│   ├── components/ # Shell, Loader, LoadError
+│   ├── vinnubord.css  # all board styles; tokens on :root at the top (see Design System)
+│   ├── lib/        # pure logic + *.test.ts: types, api (Supabase calls), status (buckets, wire mode, names), filters, upload,
+│   │               #   continuation, geometry (view, zoom, fit, bezier), gesture, spring, layout, placement, reads (unread),
+│   │               #   panel, sheet, history, clipboard, markdown, newItem, toast, motion, realtime, settings
+│   ├── hooks/      # useViewer (memberships), useBoardData (load + realtime + live flag), useViewport (pan, zoom, pinch),
+│   │               #   useCardDrag, useFilter, useNewItemToast, useAsyncAction, useOptimisticToggle
+│   ├── components/ # Shell, Loader, LoadError, TopBar, FilterMenu, Board, Wires, Aurora, PackColumn, ModuleCard, ItemCard,
+│   │               #   PanelShell, ItemPanel, ModulePanel, NewItemSheet, Toast, CopyButton, Markdown, MarkdownView
+│   │   ├── panel/      # StatusTab, PlanList, RulingList, ActionList, FilesTab and the other tabs of the item panel
+│   │   └── settings/   # ProjectFields, PackagesEditor, ModulesEditor, ParticipantsEditor, parts
 │   └── pages/      # HomePage, BoardPage, ProjectSettingsPage, NoAccessPage
 ├── pages/          # LoginPage, AuthCallbackPage, ResetPasswordPage
 ├── shared/
@@ -62,7 +71,7 @@ supabase/migrations/  # numbered SQL migrations for hg_ objects
 scripts/              # build-brand-assets, translate-is, import-trello-to-huginn (legacy)
 ```
 
-Some kept shared files (Avatar, ModalShell, useIsMobile, useLanguagePreference, dateUtils) are not imported right now. They stay for plan 2.
+Some kept shared files (Avatar, ModalShell, useLanguagePreference) are not imported right now. Check before deleting.
 
 ## Routes
 
@@ -129,7 +138,9 @@ Two UI languages: Icelandic (default) and English, through `src/shared/i18n/`.
 
 ## Design System
 
-Tokens live in `src/index.css` under `@theme`: purple accent `#6c5ce7` on neutral grey (`huginn-base #1d2125`, `huginn-surface #282e33`, `huginn-card #22272b`, `huginn-border #3d474f`, text `#e8e8f0` / `#888888` / `#555555`). The whiteboard look from the spec (blue grey board, gold, lilac, coral, teal and stone status colors, one font family) arrives in plan 2. Keep colors, spacing and motion in tokens in one place, Heimir will restyle a lot.
+Two token layers. `src/index.css` holds the app chrome under `@theme` (Tailwind): purple accent `#6c5ce7` on neutral grey (`huginn-base`, `huginn-surface`, `huginn-card`, `huginn-border`), used by login and shared components.
+
+The whiteboard has its own look (blue grey board, gold, lilac, coral, teal and stone status colors, Manrope with system fallbacks, loaded from a Google Fonts link in `index.html`). Every value lives as a custom property on `:root` at the top of `src/vinnubord/vinnubord.css`, `--hg-*`, grouped by section comments: Base (font, board, ink, line, surface, the five status tones, radii, `--hg-touch` 44 px target, field font size), Pack columns, Module cards, Board surface and zoom controls, Item cards, Notice and toast, Aurora, Side panel and bottom sheet, Panel content, Buttons and fields, Copy, code and path blocks, Status tab, files, questions and history, Module rows and comment box, Markdown reader, Top bar and filter menus, New item sheet, Project settings page, Motion (`--hg-ease`, `--hg-spring`, `--hg-dur-*`, zeroed under `prefers-reduced-motion`). Rules below the token block read only tokens; the few literals left are 1 px hairlines, breakpoints and stroke widths. Keep it that way, Heimir will restyle by editing tokens. Tone classes `.hg-tone-gold|lilac|coral|teal|stone` set `--hg-c` for cards, dots and pills.
 
 Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Icons in `public/icons/` and `public/brand/`.
 
@@ -137,6 +148,9 @@ Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Ico
 
 - **Realtime board data.** `useBoardData` loads the whole board through `lib/api.ts` and subscribes to hg_ tables filtered on `project_id`. Channel names use `crypto.randomUUID()` to avoid collisions between hook instances.
 - **Pure logic is tested.** Anything that decides status, counters, filters, upload rules or the continuation prompt lives in `src/vinnubord/lib/` without React or Supabase, with a vitest file next to it. Test files import from `vitest` explicitly because `tsc -b` compiles `src`.
+- **Gesture contract.** `useViewport` owns pan, wheel zoom and pinch on the board element and exposes a `gestureRef` (pinching state). `useCardDrag` is bound on the world layer and runs first: mouse lifts a card on press and drags past 3 px; touch lifts after a 350 ms long press, and a touch that moves more than 10 px before that gives up and the viewport pans instead. Two touches always pinch, also with a finger on a card, and a pinch cancels a lifted drag and returns the card to its start. `useCardDrag` never calls `stopPropagation`, and card elements are `div role="button"` (not `<button>`) because the viewport ignores pointers on buttons. Drag only writes `pos_x` and `pos_y`, springs run in the Wires animation frame so wires read card rects after they moved.
+- **Panel survives refetch.** `BoardPage` keys `ItemPanel` by item id, so tab, scroll and drafts live across realtime refetches and reset when another item opens. `markRead` runs on open and whenever the open item's `updated_at` changes. Optimistic toggles (`useOptimisticToggle`) follow the live value when realtime brings it.
+- **Counter pills filter by count bucket.** `countBucket(item, actions, viewerId)` in `status.ts` decides which pill an item counts in (new, mine, others, build, parked), `countsFor` uses it, and `BUCKET_TONE` maps a bucket to the tone the filter matches, so a pill number and its filter always agree. Card color still comes from `itemTone`.
 - **Status is stored, not computed.** Claude moves status. Dragging only arranges the board.
 - **ErrorBoundary** wraps the router, render errors show a panel instead of a blank screen.
 
