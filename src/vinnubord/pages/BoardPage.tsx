@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useViewer } from '../hooks/useViewer'
@@ -55,6 +55,14 @@ export function BoardPage() {
     () => (loaded ? packageCounts(data.packages, data.modules, data.items) : []),
     [loaded, data],
   )
+
+  // A package deleted while it is in the filter would keep the board dim with
+  // nothing in the Pakki menu to switch off, so unknown ids are dropped.
+  const { keepPackages } = filterApi
+  const packageList = loaded ? data.packages : null
+  useEffect(() => {
+    if (packageList) keepPackages(new Set(packageList.map((p) => p.id)))
+  }, [packageList, keepPackages])
 
   const place = useCallback((moduleId: string | null) => boardRef.current?.placeNew(moduleId) ?? null, [])
   const closeNew = useCallback(() => setNewOpen(false), [])

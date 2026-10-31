@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../shared/lib/supabase'
 import { loadBoard } from '../lib/api'
+import { channelStep } from '../lib/realtime'
 import type { BoardData } from '../lib/types'
 
 // Tables in the supabase_realtime publication. hg_projects and hg_participants
@@ -77,10 +78,14 @@ export function useBoardData(projectId: string | null | undefined) {
       )
     }
     let active = true
+    let lost = false
     channel.subscribe((status) => {
       if (!active) return
-      if (status === 'SUBSCRIBED') setLive(true)
-      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setLive(false)
+      const step = channelStep(lost, status)
+      lost = step.lost
+      if (step.live !== null) setLive(step.live)
+      // Back after a gap: fetch what changed while the channel was down.
+      if (step.reload) scheduleReload()
     })
 
     return () => {

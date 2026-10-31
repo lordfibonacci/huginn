@@ -145,17 +145,33 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
     if (uploadSummary(results).allOk) onCreated(item)
   }
 
-  function onDrop(e: DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    setOver(false)
-    addFiles(e.dataTransfer.files)
-  }
-
   const summary = uploadSummary(files)
   const locked = busy || created !== null
 
+  // Files can be dropped anywhere on the sheet or its backdrop. Without this a
+  // drop that misses the strip makes the browser open the file in the tab and
+  // the half written item is lost. Text dragged between fields is left alone.
+  const isFileDrag = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files')
+  function onDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(e)) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = locked ? 'none' : 'copy'
+    if (!locked) setOver(true)
+  }
+  function onDragLeave(e: DragEvent<HTMLDivElement>) {
+    // Moving onto a child also fires a leave; only leaving the sheet counts.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+    setOver(false)
+  }
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(e)) return
+    e.preventDefault()
+    setOver(false)
+    if (!locked) addFiles(e.dataTransfer.files)
+  }
+
   return (
-    <div className="hg-sheet-wrap" data-panel="">
+    <div className="hg-sheet-wrap" data-panel="" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
       <div
         className="hg-sheet-backdrop"
         aria-hidden="true"
@@ -235,12 +251,6 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
             {!locked && (
               <div
                 className={`hg-drop${over ? ' hg-on' : ''}`}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setOver(true)
-                }}
-                onDragLeave={() => setOver(false)}
-                onDrop={onDrop}
               >
                 <span>{t('vinnubord.newItem.drop')}</span>
                 <button type="button" className="hg-btn" onClick={() => fileInput.current?.click()}>

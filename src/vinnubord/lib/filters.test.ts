@@ -5,6 +5,7 @@ import {
   isActive,
   matches,
   packageCounts,
+  prunePackages,
   parseFilter,
   serializeFilter,
   tagCounts,
@@ -161,5 +162,20 @@ describe('packageCounts', () => {
       { key: 'a', label: 'A', count: 2 },
       { key: 'b', label: 'B', count: 0 },
     ])
+  })
+})
+
+describe('prunePackages', () => {
+  it('drops package ids that are not on the board any more', () => {
+    const f = toggleFilter(toggleFilter(emptyFilter(), 'packages', 'gone'), 'packages', 'pk1')
+    const out = prunePackages(f, new Set(['pk1', 'pk2']))
+    expect([...out.packages]).toEqual(['pk1'])
+    expect(f.packages.has('gone')).toBe(true)
+  })
+  it('returns the same filter when nothing is unknown, so React state does not churn', () => {
+    const f = toggleFilter(emptyFilter(), 'packages', 'pk1')
+    expect(prunePackages(f, new Set(['pk1']))).toBe(f)
+    const empty = emptyFilter()
+    expect(prunePackages(empty, new Set())).toBe(empty)
   })
 })

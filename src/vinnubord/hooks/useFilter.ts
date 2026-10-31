@@ -4,6 +4,7 @@ import {
   filterStorageKey,
   isActive,
   parseFilter,
+  prunePackages,
   serializeFilter,
   toggleFilter,
   withQuery,
@@ -47,7 +48,12 @@ export function useFilter(projectId: string) {
   }, [state])
 
   const update = useCallback(
-    (fn: (f: Filter) => Filter) => setState((s) => (s.key === key ? { key, filter: fn(s.filter) } : s)),
+    (fn: (f: Filter) => Filter) =>
+      setState((s) => {
+        if (s.key !== key) return s
+        const filter = fn(s.filter)
+        return filter === s.filter ? s : { key, filter }
+      }),
     [key],
   )
   const toggleTone = useCallback((tone: Tone) => update((f) => toggleFilter(f, 'tones', tone)), [update])
@@ -55,9 +61,11 @@ export function useFilter(projectId: string) {
   const toggleTag = useCallback((tag: string) => update((f) => toggleFilter(f, 'tags', tag)), [update])
   const setQuery = useCallback((q: string) => update((f) => withQuery(f, q)), [update])
   const clear = useCallback(() => update(() => emptyFilter()), [update])
+  // Forget package ids that are not on the board (called when packages load).
+  const keepPackages = useCallback((known: Set<string>) => update((f) => prunePackages(f, known)), [update])
 
   const filter = current.filter
-  return { filter, toggleTone, togglePackage, toggleTag, setQuery, clear, active: isActive(filter) }
+  return { filter, toggleTone, togglePackage, toggleTag, setQuery, clear, keepPackages, active: isActive(filter) }
 }
 
 export type FilterApi = ReturnType<typeof useFilter>

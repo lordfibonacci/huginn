@@ -83,6 +83,14 @@ export function withQuery(f: Filter, q: string): Filter {
   return { ...f, q }
 }
 
+// The filter without package ids that are no longer on the board (a deleted
+// package would otherwise keep the board dim with nothing to switch off).
+// The same object when nothing changes.
+export function prunePackages(f: Filter, known: Set<string>): Filter {
+  if ([...f.packages].every((id) => known.has(id))) return f
+  return { ...f, packages: new Set([...f.packages].filter((id) => known.has(id))) }
+}
+
 // ---------- menu entries ----------
 
 export type FilterOption = { key: string; label: string; count: number }
