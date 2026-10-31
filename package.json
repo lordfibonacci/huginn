@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "brand": "node scripts/build-brand-assets.mjs",
     "translate": "node scripts/translate-is.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke:hg": "node scripts/hg-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
