@@ -33,8 +33,9 @@ export function validateSeed(data, ctx) {
       err('titil vantar')
       return
     }
-    if (seen.has(entry.title)) err('titill kemur oftar en einu sinni')
-    seen.add(entry.title)
+    const title = entry.title.trim()
+    if (seen.has(title)) err('titill kemur oftar en einu sinni')
+    seen.add(title)
     text('titli', entry.title)
     text('samantekt', entry.summary)
     text('lýsingu', entry.body)

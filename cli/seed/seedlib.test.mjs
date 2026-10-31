@@ -64,6 +64,10 @@ describe('validateSeed', () => {
     expect(errors.some((e) => e.includes('engin'))).toBe(true)
     expect(errors.some((e) => e.includes('skammstöfunina X'))).toBe(true)
   })
+  it('counts titles that differ only in outer spaces as duplicates, as the title is stored trimmed', () => {
+    const errors = validateSeed({ items: [base, { ...base, title: `  ${base.title} ` }] }, ctx)
+    expect(errors.filter((e) => e.includes('oftar en einu sinni'))).toHaveLength(1)
+  })
   it('allows waiting_on only on waiting and needs a building plan for building', () => {
     const errors = validateSeed(
       {

@@ -7,6 +7,9 @@
 // An entry whose exact title already exists in the project is skipped, so a
 // second run creates nothing. It never deletes; a failed entry is reported and
 // the run goes on.
+// An entry partly created (createItem worked, then a plan, ruling or action
+// insert failed) is skipped by a rerun too, because idempotence goes by title.
+// Finish it by hand with the CLI write commands, using the id the run printed.
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getClient, getProject, getUser, loadBoard } from '../lib/client.mjs'

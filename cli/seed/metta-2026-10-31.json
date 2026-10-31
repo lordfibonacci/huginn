@@ -1113,7 +1113,7 @@
       "status": "parked",
       "title": "Smápakki: Gátlistar og Hitamælingar á 11 til 15 þúsund",
       "summary": "ekki auglýstur, fyrir sölufólk RV",
-      "body": "Rætt við Árna. Ekki auglýstur; sölufulltrúar RV geta boðið hann til að loka sölu. Þarf ákvörðun um verð, réttindi og hvernig sölufólk býður hann. Þú vilt pakkainnihald á EINUM stað: planið á að gera SQL módúla- og þrepakortið að eina upprunanum sem modules.ts og askur entitlements.mjs lesa, og skoða custom_modules í stað nýs þreps. Verð eru þegar á einum stað (pricing_* töflur); fastar afritanir eru í public/decks/v49.html og public/hjalp/rv/ klippum.",
+      "body": "Rætt við Árna. Ekki auglýstur; sölufulltrúar RV geta boðið hann til að loka sölu. Þarf ákvörðun um verð, réttindi og hvernig sölufólk býður hann. Þú vilt pakkainnihald á einum stað: planið á að gera SQL módúla- og þrepakortið að eina upprunanum sem modules.ts og askur entitlements.mjs lesa, og skoða custom_modules í stað nýs þreps. Verð eru þegar á einum stað (pricing_* töflur); fastar afritanir eru í public/decks/v49.html og public/hjalp/rv/ klippum.",
       "tags": [
         "hugmynd",
         "ákvörðun"
