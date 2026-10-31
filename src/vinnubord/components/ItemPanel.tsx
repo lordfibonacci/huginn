@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
+import { needsReadMark } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
 import { CommentBox } from './panel/CommentBox'
@@ -28,10 +29,16 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const [tab, setTab] = useState<Tab>('status')
   const bodyRef = useRef<HTMLDivElement | null>(null)
 
-  // Ruling R14: read on open and whenever the item changes while open.
+  // Ruling R14: read on open and whenever someone else changes the item while
+  // it is open. The panel is keyed by item id, so the ref starts false per item.
+  const marked = useRef(false)
+  const { id: itemId, updated_at: updatedAt, updated_by: updatedBy, created_by: createdBy } = item
   useEffect(() => {
-    markRead(item.id).catch((e: unknown) => console.error(e))
-  }, [item.id, item.updated_at])
+    const opening = !marked.current
+    marked.current = true
+    if (!needsReadMark({ updated_by: updatedBy, created_by: createdBy }, viewerId, opening)) return
+    markRead(itemId).catch((e: unknown) => console.error(e))
+  }, [itemId, updatedAt, updatedBy, createdBy, viewerId])
 
   const choose = (next: Tab) => {
     setTab(next)

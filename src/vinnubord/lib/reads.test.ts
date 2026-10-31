@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isUnread } from './reads'
+import { isUnread, needsReadMark } from './reads'
 import type { Item, Read } from './types'
 
 const ME = 'u-me'
@@ -36,5 +36,17 @@ describe('isUnread', () => {
     expect(isUnread(item({ updated_by: ME }), [], ME)).toBe(false)
     expect(isUnread(item({ created_by: ME, updated_by: null }), [], ME)).toBe(false)
     expect(isUnread(item({ created_by: ME, updated_by: OTHER }), [], ME)).toBe(true)
+  })
+})
+
+describe('needsReadMark', () => {
+  it('always marks when the panel opens, even on an own move', () => {
+    expect(needsReadMark(item(), ME, true)).toBe(true)
+    expect(needsReadMark(item({ updated_by: ME }), ME, true)).toBe(true)
+  })
+  it('marks a change while open only when someone else made it', () => {
+    expect(needsReadMark(item({ updated_by: OTHER }), ME, false)).toBe(true)
+    expect(needsReadMark(item({ updated_by: ME }), ME, false)).toBe(false)
+    expect(needsReadMark(item({ created_by: ME, updated_by: null }), ME, false)).toBe(false)
   })
 })

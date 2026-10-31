@@ -7,12 +7,16 @@ import type { Gesture } from './useViewport'
 // Card drag and tap. Spread bind on the world layer (inside the board element
 // that carries useViewport's bind), so these handlers run before the board's.
 //
-// Mouse and pen: pointerdown on [data-card] lifts the card at once. Moving
-// more than 3 px drags it, letting go under that is a tap.
+// Mouse and pen: pointerdown on [data-card] takes the card at once (capture,
+// no board pan), but it shows as lifted only once the press moves more than
+// 3 px and drags it, so a plain click does not flash the lift shadow. Letting
+// go under that is a tap.
 // Touch: holding 350 ms lifts the card (haptic tick when the device has one),
-// then the finger drags it. Letting go before that, without moving past
-// CARD_PAN_SLOP, is a tap. A finger that moves past it first gives up the
-// long press, and useViewport pans the board with that same move.
+// then the finger drags it. The drag is measured from where the finger is at
+// the lift, so the small move allowed while waiting does not make the card
+// jump. Letting go before that, without moving past CARD_PAN_SLOP, is a tap. A
+// finger that moves past it first gives up the long press, and useViewport
+// pans the board with that same move.
 //
 // Contract with useViewport: touch events are never stopped, the long press
 // timer and every pointermove read gestureRef.current.pinching and give up
@@ -35,6 +39,9 @@ type Press = {
   el: HTMLElement
   sx: number
   sy: number
+  // Last pointer position seen for this press.
+  lx: number
+  ly: number
   ox: number
   oy: number
   x: number
@@ -115,6 +122,15 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     p.dragging = true
     const g = o.current.gestureRef.current
     if (g) g.dragPointer = p.pointerId
+    if (!p.touch) return
+    // Re-anchor to the finger and the card as they are now.
+    p.sx = p.lx
+    p.sy = p.ly
+    const pos = o.current.getPos(p.id)
+    if (pos) {
+      p.ox = p.x = pos.x
+      p.oy = p.y = pos.y
+    }
     setDraggingId(p.id)
   }, [])
 
@@ -147,6 +163,8 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         el,
         sx: e.clientX,
         sy: e.clientY,
+        lx: e.clientX,
+        ly: e.clientY,
         ox: pos.x,
         oy: pos.y,
         x: pos.x,
@@ -189,6 +207,8 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         cancel(p)
         return
       }
+      p.lx = e.clientX
+      p.ly = e.clientY
       const dx = e.clientX - p.sx
       const dy = e.clientY - p.sy
       const dist = Math.abs(dx) + Math.abs(dy)
@@ -198,8 +218,12 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         if (dist > CARD_PAN_SLOP) cancel(p)
         return
       }
-      if (!p.moved && dist <= PAN_THRESHOLD) return
-      p.moved = true
+      if (!p.moved) {
+        if (dist <= PAN_THRESHOLD) return
+        p.moved = true
+        // A mouse press shows as lifted from here, touch did at the lift.
+        if (!p.touch) setDraggingId(p.id)
+      }
       const z = o.current.view.z
       p.x = p.ox + dx / z
       p.y = p.oy + dy / z

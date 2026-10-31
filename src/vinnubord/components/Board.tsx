@@ -1,4 +1,15 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type MouseEvent, type ReactNode, type Ref } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+  type Ref,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag } from '../hooks/useCardDrag'
@@ -44,6 +55,8 @@ export type BoardHandle = { placeNew: (moduleId: string | null) => { x: number; 
 // means the save landed, anything else means someone else moved the card.
 type Pending = { x: number; y: number; baseX: number; baseY: number }
 type CardSpring = Spring & { pending: Pending | null }
+// A debounced position save that has not been sent yet.
+type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number }
 
 const SAVE_DEBOUNCE_MS = 300
 const ENTRY_START_MS = 150
@@ -209,7 +222,46 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   }, [])
 
   // ---------- drag ----------
-  const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const saveJobs = useRef(new Map<string, SaveJob>())
+  const [moveFailed, setMoveFailed] = useState(false)
+
+  // Sends one position. A failed save springs the card back to where the data
+  // has it and says so, unless a newer drop of the same card took its place.
+  const savePosition = useCallback((id: string, x: number, y: number) => {
+    updateItemPosition(id, x, y).catch((err: unknown) => {
+      console.error(err)
+      const s = springs.current.get(id)
+      const p = s?.pending
+      if (s && p && p.x === x && p.y === y) {
+        s.pending = null
+        const item = itemsById.current.get(id)
+        if (item && draggingRef.current !== id) {
+          s.tx = item.pos_x
+          s.ty = item.pos_y
+        }
+      }
+      setMoveFailed(true)
+    })
+  }, [])
+
+  // Saves still waiting out the debounce go now when the page is hidden or
+  // closed (pagehide) and when the board unmounts, so a quick drop is not lost.
+  const flushSaves = useCallback(() => {
+    const jobs = saveJobs.current
+    for (const [id, job] of jobs) {
+      clearTimeout(job.timer)
+      savePosition(id, job.x, job.y)
+    }
+    jobs.clear()
+  }, [savePosition])
+
+  useEffect(() => {
+    window.addEventListener('pagehide', flushSaves)
+    return () => {
+      window.removeEventListener('pagehide', flushSaves)
+      flushSaves()
+    }
+  }, [flushSaves])
 
   const getPos = useCallback((id: string) => {
     const s = springs.current.get(id)
@@ -238,18 +290,15 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
       baseY: s.pending?.baseY ?? item.pos_y,
     }
     wiresRef.current?.burst(id, DROP_BURST)
-    const timers = saveTimers.current
-    const old = timers.get(id)
-    if (old) clearTimeout(old)
-    timers.set(
-      id,
-      setTimeout(() => {
-        timers.delete(id)
-        // A failed save leaves the card where it was dropped.
-        updateItemPosition(id, rx, ry).catch((err: unknown) => console.error(err))
-      }, SAVE_DEBOUNCE_MS),
-    )
-  }, [])
+    const jobs = saveJobs.current
+    const old = jobs.get(id)
+    if (old) clearTimeout(old.timer)
+    const timer = setTimeout(() => {
+      jobs.delete(id)
+      savePosition(id, rx, ry)
+    }, SAVE_DEBOUNCE_MS)
+    jobs.set(id, { timer, x: rx, y: ry })
+  }, [savePosition])
 
   const onCancel = useCallback((id: string, x: number, y: number) => {
     const s = springs.current.get(id)
@@ -477,6 +526,14 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
           </svg>
         </button>
       </div>
+      {moveFailed && (
+        <div className="hg-notice" role="status">
+          <span>{t('vinnubord.board.moveError')}</span>
+          <button type="button" onClick={() => setMoveFailed(false)}>
+            {t('common.close')}
+          </button>
+        </div>
+      )}
       {children}
     </div>
   )
