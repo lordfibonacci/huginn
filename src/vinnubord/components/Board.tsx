@@ -5,7 +5,7 @@ import { useCardDrag } from '../hooks/useCardDrag'
 import { updateItemPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
 import type { Rect } from '../lib/geometry'
-import { packLayout } from '../lib/layout'
+import { boardOrder, packLayout } from '../lib/layout'
 import { isUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, wireMode } from '../lib/status'
@@ -59,7 +59,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   const { fit, view } = vp
 
   // ---------- derived board ----------
-  const onBoard = useMemo(() => data.items.filter(isOnBoard), [data.items])
+  const onBoard = useMemo(() => boardOrder(data.items.filter(isOnBoard)), [data.items])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
   const packageOfModule = useMemo(() => new Map(data.modules.map((m) => [m.id, m.package_id])), [data.modules])
   const plansByItem = useMemo(() => {

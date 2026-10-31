@@ -28,8 +28,32 @@ type Spark = { t: number; v: number; r: number }
 const MAX_DPR = 2
 const MAX_DT = 32
 const FRAME_MS = 16
-const ZOOM_SCALE_MIN = 0.5
-const ZOOM_SCALE_MAX = 1.4
+
+// Every wire and spark look in one place. The canvas cannot read CSS custom
+// properties cheaply each frame, so only the colors come from tokens (read
+// once); widths, blurs, alphas and spark rates live here. Sizes are in screen
+// px at zoom 1 and scale with clamp(view.z, zoomMin, zoomMax).
+const WIRE = {
+  zoomMin: 0.5,
+  zoomMax: 1.4,
+  glow: { width: 6, blur: 18, alpha: 0.26, shadowAlpha: 0.8 },
+  core: { width: 1.4, alpha: 0.8 },
+  parkedGlow: { width: 3, alpha: 0.1 },
+  parkedCore: { width: 1, alpha: 0.3, dash: 4, gap: 8 },
+  spark: {
+    maxActive: 3,
+    maxCalm: 1,
+    chanceActive: 0.03,
+    chanceCalm: 0.003,
+    speedMin: 0.004,
+    speedRange: 0.004,
+    radius: 1.6,
+    haloScale: 2.2,
+    haloAlpha: 0.18,
+    blur: 14,
+  },
+  burst: { speedMin: 0.006, speedRange: 0.012, radiusMin: 1.2, radiusRange: 1.8 },
+} as const
 const TONES: Tone[] = ['gold', 'lilac', 'coral', 'teal', 'stone']
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
@@ -76,7 +100,10 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
       burst(id: string, n: number) {
         if (reduced.current) return
         const list = sparks.current.get(id) ?? []
-        for (let i = 0; i < n; i++) list.push({ t: 0, v: 0.006 + Math.random() * 0.012, r: 1.2 + Math.random() * 1.8 })
+        const b = WIRE.burst
+        for (let i = 0; i < n; i++) {
+          list.push({ t: 0, v: b.speedMin + Math.random() * b.speedRange, r: b.radiusMin + Math.random() * b.radiusRange })
+        }
         sparks.current.set(id, list)
       },
     }),
@@ -133,7 +160,7 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
 
       ctx.clearRect(0, 0, w, h)
       const hostRect = host.getBoundingClientRect()
-      const zs = clamp(v.z, ZOOM_SCALE_MIN, ZOOM_SCALE_MAX)
+      const zs = clamp(v.z, WIRE.zoomMin, WIRE.zoomMax)
       const motion = !reduced.current
       ctx.lineCap = 'round'
 
@@ -151,15 +178,17 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
         ctx.moveTo(e.x1, e.y1)
         ctx.bezierCurveTo(c[0], c[1], c[2], c[3], e.x2, e.y2)
         // Glow, then the core line on the same path.
-        ctx.strokeStyle = rgba(rgb, parked ? 0.1 : 0.26)
-        ctx.lineWidth = (parked ? 3 : 6) * zs
-        ctx.shadowBlur = parked ? 0 : 18 * zs
-        ctx.shadowColor = rgba(rgb, 0.8)
+        const glow = parked ? WIRE.parkedGlow : WIRE.glow
+        const core = parked ? WIRE.parkedCore : WIRE.core
+        ctx.strokeStyle = rgba(rgb, glow.alpha)
+        ctx.lineWidth = glow.width * zs
+        ctx.shadowBlur = parked ? 0 : WIRE.glow.blur * zs
+        ctx.shadowColor = rgba(rgb, WIRE.glow.shadowAlpha)
         ctx.stroke()
         ctx.shadowBlur = 0
-        ctx.strokeStyle = rgba(rgb, parked ? 0.3 : 0.8)
-        ctx.lineWidth = (parked ? 1 : 1.4) * zs
-        if (parked) ctx.setLineDash([4 * zs, 8 * zs])
+        ctx.strokeStyle = rgba(rgb, core.alpha)
+        ctx.lineWidth = core.width * zs
+        if (parked) ctx.setLineDash([WIRE.parkedCore.dash * zs, WIRE.parkedCore.gap * zs])
         ctx.stroke()
         ctx.setLineDash([])
 
@@ -169,8 +198,9 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
           own = []
           sparks.current.set(it.id, own)
         }
-        if (own.length < (active ? 3 : 1) && Math.random() < (active ? 0.03 : 0.003)) {
-          own.push({ t: 0, v: 0.004 + Math.random() * 0.004, r: 1.6 })
+        const sp = WIRE.spark
+        if (own.length < (active ? sp.maxActive : sp.maxCalm) && Math.random() < (active ? sp.chanceActive : sp.chanceCalm)) {
+          own.push({ t: 0, v: sp.speedMin + Math.random() * sp.speedRange, r: sp.radius })
         }
         let keep = 0
         for (const p of own) {
@@ -179,13 +209,13 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
           own[keep++] = p
           const [x, y] = bezierPoint(e, c, p.t)
           ctx.beginPath()
-          ctx.arc(x, y, p.r * 2.2 * zs, 0, Math.PI * 2)
-          ctx.fillStyle = rgba(rgb, 0.18)
+          ctx.arc(x, y, p.r * sp.haloScale * zs, 0, Math.PI * 2)
+          ctx.fillStyle = rgba(rgb, sp.haloAlpha)
           ctx.fill()
           ctx.beginPath()
           ctx.arc(x, y, p.r * zs, 0, Math.PI * 2)
           ctx.fillStyle = colors.spark
-          ctx.shadowBlur = 14
+          ctx.shadowBlur = sp.blur
           ctx.shadowColor = rgb
           ctx.fill()
           ctx.shadowBlur = 0

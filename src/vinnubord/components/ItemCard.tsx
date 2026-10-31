@@ -1,4 +1,4 @@
-import { memo, useCallback, type CSSProperties, type KeyboardEvent } from 'react'
+import { memo, useCallback, useState, type AnimationEvent, type CSSProperties, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { planProgress } from '../lib/layout'
@@ -60,10 +60,17 @@ export const ItemCard = memo(function ItemCard({
     [id, onTap],
   )
 
+  // The entry pop runs once per mount. Dropping its class when it ends means
+  // a later DOM move (React reordering the list) cannot replay it.
+  const [entered, setEntered] = useState(false)
+  const onAnimationEnd = useCallback((e: AnimationEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && e.animationName === 'hg-pop') setEntered(true)
+  }, [])
+
   const progress = planProgress(plans)
   const cls = [
     'hg-card',
-    'hg-in',
+    entered ? '' : 'hg-in',
     `hg-tone-${tone}`,
     parked ? 'hg-card-parked' : '',
     pulse ? 'hg-card-pulse' : '',
@@ -87,6 +94,7 @@ export const ItemCard = memo(function ItemCard({
       aria-pressed={selected}
       aria-hidden={dim || undefined}
       onKeyDown={onKeyDown}
+      onAnimationEnd={onAnimationEnd}
     >
       {unread && <span className="hg-card-ring" role="img" aria-label={t('vinnubord.card.unread')} />}
       <div className="hg-card-st">

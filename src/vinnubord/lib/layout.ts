@@ -38,3 +38,15 @@ export function planProgress(plans: Plan[]): { bars: number[]; current: number; 
   const open = sorted.findIndex((p) => p.status !== 'done')
   return { bars: sorted.map((p) => PLAN_FILL[p.status]), current: open === -1 ? total : open + 1, total }
 }
+
+// Stable card order: created_at, then id. Items created in one statement share
+// created_at and the database returns them in any order, which would make
+// React move card nodes between loads.
+export function boardOrder(items: Item[]): Item[] {
+  return [...items].sort((a, b) => {
+    const ta = a.created_at ?? ''
+    const tb = b.created_at ?? ''
+    if (ta !== tb) return ta < tb ? -1 : 1
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+  })
+}

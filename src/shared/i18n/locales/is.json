@@ -82,6 +82,7 @@
       "loadError": "Ekki tókst að sækja verkefnið.",
       "noneOpen": "Ekkert opið",
       "open": "{{count}} opið",
+      "refreshError": "Ekki tókst að uppfæra borðið. Hér er síðasta staða sem náðist.",
       "retry": "Reyna aftur",
       "zoomIn": "Stækka",
       "zoomLevel": "Aðdráttur",

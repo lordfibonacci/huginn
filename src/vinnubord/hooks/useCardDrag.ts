@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { View } from '../lib/geometry'
+import { CARD_PAN_SLOP, PAN_THRESHOLD, pressOutcome } from '../lib/gesture'
 import type { Gesture } from './useViewport'
 
 // Card drag and tap. Spread bind on the world layer (inside the board element
@@ -9,16 +10,20 @@ import type { Gesture } from './useViewport'
 // Mouse and pen: pointerdown on [data-card] lifts the card at once. Moving
 // more than 3 px drags it, letting go under that is a tap.
 // Touch: holding 350 ms lifts the card (haptic tick when the device has one),
-// then the finger drags it. Letting go before that, without moving past a
-// small slop, is a tap. A finger that moves first does nothing here.
+// then the finger drags it. Letting go before that, without moving past
+// CARD_PAN_SLOP, is a tap. A finger that moves past it first gives up the
+// long press, and useViewport pans the board with that same move.
 //
-// Pinch contract with useViewport: touch events are never stopped, the long
-// press timer and every pointermove read gestureRef.current.pinching and give
-// up when it is set, and losing pointer capture to the board cancels a drag.
+// Contract with useViewport: touch events are never stopped, the long press
+// timer and every pointermove read gestureRef.current.pinching and give up
+// when it is set, losing pointer capture to the board cancels a drag, and
+// gestureRef.current.dragPointer names the pointer of an active drag so the
+// board never pans it. A press that saw a second finger never taps and never
+// lifts. Release and cancel are read on window in the capture phase, because a
+// pinch moves capture to the board and the finger's pointerup then never
+// passes through the world layer.
 // A cancelled drag puts the card back where it started.
 
-const MOUSE_THRESHOLD = 3
-const TOUCH_SLOP = 10
 const LONG_PRESS_MS = 350
 const HAPTIC_MS = 10
 const CARD = '[data-card]'
@@ -36,6 +41,10 @@ type Press = {
   y: number
   dragging: boolean
   moved: boolean
+  // A second finger was down at some point during this press.
+  sawPinch: boolean
+  // gestureRef.current.pinches at pointerdown.
+  pinchesAtDown: number
   timer: ReturnType<typeof setTimeout> | null
 }
 
@@ -55,8 +64,6 @@ type Handler = (e: ReactPointerEvent<HTMLElement>) => void
 export type CardDragBind = {
   onPointerDown: Handler
   onPointerMove: Handler
-  onPointerUp: Handler
-  onPointerCancel: Handler
   onLostPointerCapture: Handler
   onContextMenu: (e: ReactMouseEvent<HTMLElement>) => void
 }
@@ -74,7 +81,11 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     if (p.timer) clearTimeout(p.timer)
     p.timer = null
     if (press.current === p) press.current = null
-    if (p.dragging) setDraggingId(null)
+    if (p.dragging) {
+      setDraggingId(null)
+      const g = o.current.gestureRef.current
+      if (g && g.dragPointer === p.pointerId) g.dragPointer = null
+    }
   }, [])
 
   const cancel = useCallback(
@@ -102,12 +113,22 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
       // The pointer may already be gone.
     }
     p.dragging = true
+    const g = o.current.gestureRef.current
+    if (g) g.dragPointer = p.pointerId
     setDraggingId(p.id)
   }, [])
 
   const onPointerDown = useCallback<Handler>(
     (e) => {
-      if (press.current) return
+      const current = press.current
+      if (current && e.isPrimary && e.pointerId !== current.pointerId) {
+        // A new primary pointer starts a new gesture: the old press is stale.
+        cancel(current)
+      } else if (current) {
+        // Another finger while a card is pressed: this press is part of a pinch.
+        if (e.pointerType === 'touch') current.sawPinch = true
+        return
+      }
       if (e.pointerType === 'mouse' && e.button !== 0) return
       const el = (e.target as Element).closest<HTMLElement>(CARD)
       if (!el) return
@@ -132,6 +153,8 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         y: pos.y,
         dragging: false,
         moved: false,
+        sawPinch: false,
+        pinchesAtDown: o.current.gestureRef.current?.pinches ?? 0,
         timer: null,
       }
       press.current = p
@@ -142,7 +165,10 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
       p.timer = setTimeout(() => {
         p.timer = null
         if (press.current !== p) return
-        if (o.current.gestureRef.current?.pinching) {
+        // A pinch now or at any time during the press: no lift, even after
+        // the pinch ended and this finger is still down.
+        const g = o.current.gestureRef.current
+        if (p.sawPinch || g?.pinching || (g && g.pinches !== p.pinchesAtDown)) {
           cancel(p)
           return
         }
@@ -157,7 +183,9 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     (e) => {
       const p = press.current
       if (!p || e.pointerId !== p.pointerId) return
-      if (p.touch && o.current.gestureRef.current?.pinching) {
+      const g = o.current.gestureRef.current
+      if (p.touch && g && g.touchCount > 1) p.sawPinch = true
+      if (p.touch && g?.pinching) {
         cancel(p)
         return
       }
@@ -165,11 +193,12 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
       const dy = e.clientY - p.sy
       const dist = Math.abs(dx) + Math.abs(dy)
       if (!p.dragging) {
-        // Touch still waiting for the long press: moving first is not a drag or a tap.
-        if (dist > TOUCH_SLOP) cancel(p)
+        // Touch still waiting for the long press: moving first is a board pan
+        // (useViewport starts it on this same move), not a drag or a tap.
+        if (dist > CARD_PAN_SLOP) cancel(p)
         return
       }
-      if (!p.moved && dist <= MOUSE_THRESHOLD) return
+      if (!p.moved && dist <= PAN_THRESHOLD) return
       p.moved = true
       const z = o.current.view.z
       p.x = p.ox + dx / z
@@ -179,25 +208,30 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     [cancel],
   )
 
-  const onPointerUp = useCallback<Handler>(
-    (e) => {
+  // Release and cancel on window, capture phase: this runs before the board's
+  // React handlers, so the viewport has not dropped the pointer from its count.
+  useEffect(() => {
+    const onUp = (e: PointerEvent) => {
       const p = press.current
       if (!p || e.pointerId !== p.pointerId) return
-      const { dragging, moved, touch } = p
+      const g = o.current.gestureRef.current
+      if (g && (g.touchCount > 1 || g.pinches !== p.pinchesAtDown)) p.sawPinch = true
+      const outcome = pressOutcome(p)
       clear(p)
-      if (dragging && moved) o.current.onDrop(p.id, p.x, p.y)
-      else if (!touch || !dragging) o.current.onTap(p.id)
-    },
-    [clear],
-  )
-
-  const onPointerCancel = useCallback<Handler>(
-    (e) => {
+      if (outcome === 'drop') o.current.onDrop(p.id, p.x, p.y)
+      else if (outcome === 'tap') o.current.onTap(p.id)
+    }
+    const onCancel = (e: PointerEvent) => {
       const p = press.current
       if (p && e.pointerId === p.pointerId) cancel(p)
-    },
-    [cancel],
-  )
+    }
+    window.addEventListener('pointerup', onUp, true)
+    window.addEventListener('pointercancel', onCancel, true)
+    return () => {
+      window.removeEventListener('pointerup', onUp, true)
+      window.removeEventListener('pointercancel', onCancel, true)
+    }
+  }, [clear, cancel])
 
   // A pinch takes capture from the card: cancel. Capture moving off a child
   // (implicit touch capture) to the card itself is not a cancel.
@@ -226,6 +260,6 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
 
   return {
     draggingId,
-    bind: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture, onContextMenu },
+    bind: { onPointerDown, onPointerMove, onLostPointerCapture, onContextMenu },
   }
 }

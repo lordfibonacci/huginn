@@ -24,25 +24,38 @@ export function BoardPage() {
   if (viewerError) return <LoadError centered message={t('vinnubord.viewerError')} onRetry={reloadViewer} />
   if (!user || !project) return <NoAccessPage />
 
-  if (error) {
+  const loaded = data !== null && data.project.id === project.id
+  // The full error screen only when there is no board to show. A failed
+  // refresh keeps the loaded board and shows a small notice instead.
+  if (error && !loaded) {
     return (
       <div className="flex h-full flex-col p-4 sm:p-6">
         <LoadError message={t('vinnubord.board.loadError')} onRetry={() => void reload()} />
       </div>
     )
   }
-  if (boardLoading || !data || data.project.id !== project.id) return <Loader />
+  if (boardLoading || !loaded) return <Loader />
 
   return (
-    <Board
-      key={project.id}
-      data={data}
-      viewerId={user.id}
-      filter={filter}
-      selectedId={selectedId}
-      onSelect={setSelectedId}
-      onOpenModule={noop}
-    />
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <Board
+        key={project.id}
+        data={data}
+        viewerId={user.id}
+        filter={filter}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onOpenModule={noop}
+      />
+      {error && (
+        <div className="hg-notice" role="status">
+          <span>{t('vinnubord.board.refreshError')}</span>
+          <button type="button" onClick={() => void reload()}>
+            {t('vinnubord.board.retry')}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

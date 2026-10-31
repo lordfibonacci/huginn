@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
 import { fitAll, pinchView, zoomAt, type Rect, type View } from '../lib/geometry'
+import { panStep } from '../lib/gesture'
 
 // Pan and zoom for the board element in ref.
 //
@@ -21,8 +22,10 @@ import { fitAll, pinchView, zoomAt, type Rect, type View } from '../lib/geometry
 //   drag lives in useCardDrag. Anything else (empty board, pack columns,
 //   modules) pans with the primary button.
 // - Touch: every touch pointer is tracked, also those that start on a card.
-//   Only a finger that starts off cards pans on its own. When two fingers are
-//   down a pinch starts, even if one or both are on cards.
+//   A finger that starts off cards pans past PAN_THRESHOLD. A finger that
+//   starts on a card pans past CARD_PAN_SLOP (lib/gesture), unless that
+//   pointer is dragging the card (gestureRef.current.dragPointer). When two
+//   fingers are down a pinch starts, even if one or both are on cards.
 // - A pinch zooms around the finger centre and pans with it. When one finger
 //   lifts, the other pans if it started off cards, otherwise nothing moves.
 // - Pointer capture for a pan is taken only once the pointer has moved past a
@@ -42,6 +45,10 @@ import { fitAll, pinchView, zoomAt, type Rect, type View } from '../lib/geometry
 // Contract for useCardDrag (Task 3):
 // - Do not stopPropagation on touch pointerdown, pointermove, pointerup or
 //   pointercancel, the board must see every finger to start a pinch.
+// - Cancel the long press when the finger moves past CARD_PAN_SLOP: that same
+//   move starts a board pan here. Set gestureRef.current.dragPointer to the
+//   pointer id while a card drag is active and back to null when it ends; the
+//   board never pans that pointer.
 // - The board handler runs after the card handler (bubble order), so at the
 //   card's own pointerdown the second finger is not counted yet. Read
 //   `gestureRef.current.pinching` synchronously in the long press timer and in
@@ -51,7 +58,6 @@ import { fitAll, pinchView, zoomAt, type Rect, type View } from '../lib/geometry
 // - A pinch may take pointer capture from the card. Treat lostpointercapture
 //   on the card as a cancel.
 
-const PAN_THRESHOLD = 3
 const WHEEL_SPEED = 0.0016
 const BUTTON_STEP = 1.25
 const CLICK_SUPPRESS_MS = 500
@@ -62,7 +68,10 @@ const CARD = '[data-card]'
 type Pt = { x: number; y: number }
 type Tracked = { pt: Pt; touch: boolean; canPan: boolean }
 
-export type Gesture = { touchCount: number; pinching: boolean }
+// pinches counts pinch starts, so a press can tell whether one happened while
+// it was down. dragPointer is written by useCardDrag: the pointer that drags a
+// card, or null.
+export type Gesture = { touchCount: number; pinching: boolean; pinches: number; dragPointer: number | null }
 
 export type ViewportBind = {
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void
@@ -98,8 +107,8 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   // pans alone, whether the current gesture moved the view, and the click
   // suppression deadline.
   const pointers = useRef(new Map<number, Tracked>())
-  const pan = useRef<{ id: number; last: Pt; moved: boolean } | null>(null)
-  const gestureRef = useRef<Gesture>({ touchCount: 0, pinching: false })
+  const pan = useRef<{ id: number; last: Pt; moved: boolean; fromCard: boolean } | null>(null)
+  const gestureRef = useRef<Gesture>({ touchCount: 0, pinching: false, pinches: 0, dragPointer: null })
   const gestureMoved = useRef(false)
   const suppressClickUntil = useRef(0)
 
@@ -196,6 +205,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   }, [])
 
   const setPinching = useCallback((on: boolean) => {
+    if (on && !gestureRef.current.pinching) gestureRef.current.pinches++
     gestureRef.current.pinching = on
     setIsPinching(on)
   }, [])
@@ -224,7 +234,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       if (map.size === 1) {
         // A pinch lost a finger: the other one pans only if it started off cards.
         const [id, t] = map.entries().next().value as [number, Tracked]
-        pan.current = t.canPan ? { id, last: t.pt, moved: true } : null
+        pan.current = t.canPan ? { id, last: t.pt, moved: true, fromCard: false } : null
         if (!t.canPan) setIsPanning(false)
       } else if (map.size === 0) {
         if (gestureMoved.current) suppressClickUntil.current = performance.now() + CLICK_SUPPRESS_MS
@@ -252,7 +262,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       syncTouchCount()
 
       if (map.size === 1) {
-        pan.current = onCard ? null : { id: e.pointerId, last: pt, moved: false }
+        pan.current = { id: e.pointerId, last: pt, moved: false, fromCard: onCard }
       } else if (map.size === 2) {
         // Second finger: pinch. Capture both so the pinch survives leaving the element.
         pan.current = null
@@ -292,10 +302,13 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       tracked.pt = pt
       const p = pan.current
       if (!p || p.id !== e.pointerId) return
+      // A card being dragged by this finger is never a pan.
+      if (p.fromCard && gestureRef.current.dragPointer === e.pointerId) return
       if (!p.moved) {
         // p.last is still the down point here, so the first pan step includes
         // the distance travelled below the threshold.
-        if (Math.abs(pt.x - p.last.x) + Math.abs(pt.y - p.last.y) <= PAN_THRESHOLD) return
+        const dist = Math.abs(pt.x - p.last.x) + Math.abs(pt.y - p.last.y)
+        if (panStep({ fromCard: p.fromCard, dragging: false, dist }) !== 'start') return
         p.moved = true
         gestureMoved.current = true
         e.currentTarget.setPointerCapture(e.pointerId)

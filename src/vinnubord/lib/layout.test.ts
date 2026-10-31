@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { moduleOpenCount, moduleTone, packLayout, planProgress } from './layout'
+import { boardOrder, moduleOpenCount, moduleTone, packLayout, planProgress } from './layout'
 import type { Item, Module, Package, Participant, Plan } from './types'
 
 const pkg = (id: string, position: number): Package => ({
@@ -70,5 +70,26 @@ describe('planProgress', () => {
   })
   it('all done points at the last plan', () => {
     expect(planProgress([plan('a', 'done', 1), plan('b', 'done', 2)])).toEqual({ bars: [1, 1], current: 2, total: 2 })
+  })
+})
+
+describe('boardOrder', () => {
+  it('orders by created_at, ties by id, whatever order the rows came in', () => {
+    const t1 = '2026-10-31T14:00:00Z'
+    const t2 = '2026-10-31T15:00:00Z'
+    const rows = [
+      item('c', null, 'new', { created_at: t1 }),
+      item('z', null, 'new', { created_at: t2 }),
+      item('a', null, 'new', { created_at: t1 }),
+      item('b', null, 'new', { created_at: t1 }),
+    ]
+    const expected = ['a', 'b', 'c', 'z']
+    expect(boardOrder(rows).map((i) => i.id)).toEqual(expected)
+    expect(boardOrder([...rows].reverse()).map((i) => i.id)).toEqual(expected)
+  })
+  it('does not change the input array', () => {
+    const rows = [item('b', null, 'new'), item('a', null, 'new')]
+    boardOrder(rows)
+    expect(rows.map((i) => i.id)).toEqual(['b', 'a'])
   })
 })

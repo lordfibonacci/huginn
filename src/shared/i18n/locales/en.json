@@ -85,7 +85,8 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "fit": "Show everything",
-      "zoomLevel": "Zoom level"
+      "zoomLevel": "Zoom level",
+      "refreshError": "Could not refresh the board. Showing the last loaded state."
     },
     "loading": "Loading",
     "noAccess": {

@@ -41,6 +41,11 @@
   --hg-radius-control-inner: 9px;
   --hg-dim-card: 0.1;
   --hg-dim-module: 0.3;
+  --hg-control-inset: 16px;
+  --hg-control-gap: 2px;
+  --hg-control-pad: 4px;
+  --hg-blur-card: blur(8px);
+  --hg-blur-control: blur(10px);
 
   /* Item cards */
   --hg-card-w: 250px;
@@ -53,6 +58,23 @@
   --hg-radius-chip: 8px;
   --hg-bar-track: rgba(255, 255, 255, 0.07);
   --hg-ring-size: 16px;
+  --hg-ring-offset: -7px;
+  --hg-ring-border: 3px;
+  --hg-card-enter-scale: 0.8;
+  --hg-card-dot: 9px;
+  --hg-card-row-gap: 9px;
+  --hg-card-st-gap: 8px;
+  --hg-card-by-gap: 8px;
+  --hg-card-chips-gap: 10px;
+  --hg-card-plans-gap: 11px;
+  --hg-card-plan-label-gap: 6px;
+  --hg-card-chip-gap: 5px;
+  --hg-card-chip-pad: 3px 8px;
+  --hg-av-size: 20px;
+  --hg-bar-h: 5px;
+  --hg-radius-bar: 3px;
+  --hg-beat-ring: 10px;
+  --hg-ease-beat: ease-out;
 
   /* Panels and transitions ease out, card entry springs past its target. */
   --hg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -131,9 +153,10 @@
 
 /* Zoom controls */
 .hg-zoom {
-  position: absolute; right: 16px; bottom: 16px; z-index: 20; display: flex; align-items: center; gap: 2px; padding: 4px;
+  position: absolute; right: var(--hg-control-inset); bottom: var(--hg-control-inset); z-index: 20;
+  display: flex; align-items: center; gap: var(--hg-control-gap); padding: var(--hg-control-pad);
   border-radius: var(--hg-radius-control); background: var(--hg-control-bg); border: 1px solid var(--hg-line);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--hg-blur-control);
 }
 .hg-zoom button {
   width: var(--hg-touch); height: var(--hg-touch); border-radius: var(--hg-radius-control-inner); border: none;
@@ -144,19 +167,20 @@
 .hg-zoom svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; fill: none; }
 .hg-zoom-val { min-width: 46px; text-align: center; font-size: 12.5px; color: var(--hg-ink-2); font-weight: 600; }
 
-/* Item cards. left and top are written by Board's spring loop, not React. */
+/* Item cards. left and top are written by Board's spring loop, not React.
+   The entry animation only has a "from" frame and never changes name, so it
+   plays once per mount: parking or unparking later changes the resting
+   opacity through the transition, it does not replay the pop. */
 .hg-card {
   position: absolute; width: var(--hg-card-w); padding: var(--hg-card-pad); border-radius: var(--hg-radius-card);
   color: var(--hg-ink); cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; z-index: 3;
-  background: var(--hg-card-bg); border: 1px solid var(--hg-line); backdrop-filter: blur(8px); box-shadow: var(--hg-card-shadow);
-  opacity: 0; transform: scale(0.8);
-  transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-dur-fast) var(--hg-ease);
+  background: var(--hg-card-bg); border: 1px solid var(--hg-line); backdrop-filter: var(--hg-blur-card); box-shadow: var(--hg-card-shadow);
+  transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-dur-fast) var(--hg-ease),
+    opacity var(--hg-dur-fast) var(--hg-ease);
 }
-.hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) forwards; }
-.hg-card.hg-card-parked { border-style: dashed; }
-.hg-card.hg-card-parked.hg-in { animation-name: hg-pop-parked; }
-@keyframes hg-pop { to { opacity: 1; transform: none; } }
-@keyframes hg-pop-parked { to { opacity: var(--hg-card-parked-opacity); transform: none; } }
+.hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) backwards; }
+@keyframes hg-pop { from { opacity: 0; transform: scale(var(--hg-card-enter-scale)); } }
+.hg-card.hg-card-parked { border-style: dashed; opacity: var(--hg-card-parked-opacity); }
 .hg-card:focus-visible { outline: 2px solid var(--hg-c); outline-offset: 3px; }
 .hg-card.hg-card-lift {
   cursor: grabbing; z-index: 6; box-shadow: var(--hg-card-lift-shadow);
@@ -167,37 +191,65 @@
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--hg-c) 25%, transparent), var(--hg-card-shadow);
 }
 .hg-card.hg-card-dim { opacity: var(--hg-dim-card) !important; pointer-events: none; }
-.hg-card-st { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--hg-ink-2); margin-bottom: 8px; line-height: 1.3; }
-.hg-card-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hg-c); box-shadow: 0 0 12px var(--hg-c); flex: none; }
-.hg-card-pulse .hg-card-dot { animation: hg-beat var(--hg-dur-beat) ease-out infinite; }
+.hg-card-st {
+  display: flex; align-items: center; gap: var(--hg-card-row-gap); font-size: 12px; color: var(--hg-ink-2);
+  margin-bottom: var(--hg-card-st-gap); line-height: 1.3;
+}
+.hg-card-dot {
+  width: var(--hg-card-dot); height: var(--hg-card-dot); border-radius: 50%; background: var(--hg-c);
+  box-shadow: 0 0 12px var(--hg-c); flex: none;
+}
+.hg-card-pulse .hg-card-dot { animation: hg-beat var(--hg-dur-beat) var(--hg-ease-beat) infinite; }
 @keyframes hg-beat {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--hg-c) 60%, transparent); }
-  70% { box-shadow: 0 0 0 10px color-mix(in oklab, var(--hg-c) 0%, transparent); }
+  70% { box-shadow: 0 0 0 var(--hg-beat-ring) color-mix(in oklab, var(--hg-c) 0%, transparent); }
   100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--hg-c) 0%, transparent); }
 }
 .hg-card-title { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.3; letter-spacing: -0.015em; overflow-wrap: anywhere; }
-.hg-card-by { margin-top: 8px; font-size: 12px; color: var(--hg-ink-3); display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+.hg-card-by {
+  margin-top: var(--hg-card-st-gap); font-size: 12px; color: var(--hg-ink-3); display: flex; align-items: center;
+  gap: var(--hg-card-by-gap); line-height: 1.3;
+}
 .hg-av {
-  width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  width: var(--hg-av-size); height: var(--hg-av-size); border-radius: 50%; display: grid; place-items: center; flex: none;
   font-size: 9px; font-weight: 800; background: var(--hg-surface-2); color: var(--hg-ink-2);
 }
-.hg-card-chips { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
-.hg-card-chips span { font-size: 11px; padding: 3px 8px; border-radius: var(--hg-radius-chip); background: var(--hg-chip-bg); color: var(--hg-ink-2); }
-.hg-card-plans { display: flex; gap: 5px; margin-top: 11px; }
-.hg-card-plans i { height: 5px; flex: 1; border-radius: 3px; background: var(--hg-bar-track); overflow: hidden; position: relative; }
+.hg-card-chips { display: flex; gap: var(--hg-card-chip-gap); margin-top: var(--hg-card-chips-gap); flex-wrap: wrap; }
+.hg-card-chips span {
+  font-size: 11px; padding: var(--hg-card-chip-pad); border-radius: var(--hg-radius-chip); background: var(--hg-chip-bg);
+  color: var(--hg-ink-2);
+}
+.hg-card-plans { display: flex; gap: var(--hg-card-chip-gap); margin-top: var(--hg-card-plans-gap); }
+.hg-card-plans i {
+  height: var(--hg-bar-h); flex: 1; border-radius: var(--hg-radius-bar); background: var(--hg-bar-track);
+  overflow: hidden; position: relative;
+}
 .hg-card-plans i::after {
   content: ''; position: absolute; inset: 0; background: var(--hg-c); box-shadow: 0 0 10px var(--hg-c);
   transform-origin: left; transform: scaleX(var(--hg-p, 0));
 }
-.hg-card-plan-label { display: block; margin-top: 6px; font-size: 11.5px; color: var(--hg-ink-3); }
+.hg-card-plan-label { display: block; margin-top: var(--hg-card-plan-label-gap); font-size: 11.5px; color: var(--hg-ink-3); }
 .hg-card-ring {
-  position: absolute; top: -7px; right: -7px; width: var(--hg-ring-size); height: var(--hg-ring-size); border-radius: 50%;
-  background: var(--hg-c); border: 3px solid var(--hg-board); box-shadow: 0 0 14px var(--hg-c);
+  position: absolute; top: var(--hg-ring-offset); right: var(--hg-ring-offset); width: var(--hg-ring-size);
+  height: var(--hg-ring-size); border-radius: 50%; background: var(--hg-c);
+  border: var(--hg-ring-border) solid var(--hg-board); box-shadow: 0 0 14px var(--hg-c);
 }
 
+/* Non blocking notice, for example a failed refresh while the board stays. */
+.hg-notice {
+  position: absolute; left: var(--hg-control-inset); bottom: var(--hg-control-inset); z-index: 20;
+  display: flex; align-items: center; gap: var(--hg-card-row-gap);
+  padding: var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-inset);
+  border-radius: var(--hg-radius-control); background: var(--hg-control-bg); border: 1px solid var(--hg-coral);
+  backdrop-filter: var(--hg-blur-control); color: var(--hg-ink); font-family: var(--hg-font); font-size: 13px;
+}
+.hg-notice button {
+  min-height: var(--hg-touch); padding: 0 var(--hg-control-inset); border-radius: var(--hg-radius-control-inner); border: none;
+  background: var(--hg-control-hover); color: var(--hg-ink); font: inherit; font-weight: 700; cursor: pointer;
+}
+.hg-notice button:hover, .hg-notice button:focus-visible { background: var(--hg-surface-2); outline: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .hg-card { opacity: 1; transform: none; }
-  .hg-card.hg-card-parked { opacity: var(--hg-card-parked-opacity); }
   .hg-card.hg-in { animation: none; }
   .hg-card-pulse .hg-card-dot { animation: none; }
 }
