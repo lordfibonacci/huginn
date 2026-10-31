@@ -1,0 +1,28 @@
+import { isOnBoard, itemTone, type Tone } from './status'
+import type { Item, Module, Package, Participant } from './types'
+
+export type PackRow = { pkg: Package; modules: Module[] }
+
+export function packLayout(packages: Package[], modules: Module[]): PackRow[] {
+  return [...packages]
+    .sort((a, b) => a.position - b.position)
+    .map((pkg) => ({
+      pkg,
+      modules: modules.filter((m) => m.package_id === pkg.id).sort((a, b) => a.position - b.position),
+    }))
+}
+
+export function moduleOpenCount(moduleId: string, items: Item[]): number {
+  return items.filter((i) => i.module_id === moduleId && isOnBoard(i)).length
+}
+
+// Tone of the first open item that is not parked, otherwise stone.
+export function moduleTone(
+  moduleId: string,
+  items: Item[],
+  viewerId: string,
+  participants: Participant[],
+): Tone {
+  const first = items.find((i) => i.module_id === moduleId && isOnBoard(i) && i.status !== 'parked')
+  return first ? itemTone(first, viewerId, participants) : 'stone'
+}

@@ -78,6 +78,8 @@
         "parked": "On hold"
       },
       "loadError": "Could not load the project.",
+      "noneOpen": "Nothing open",
+      "open": "{{count}} open",
       "retry": "Try again"
     },
     "loading": "Loading",

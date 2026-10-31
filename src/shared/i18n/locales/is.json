@@ -78,6 +78,8 @@
         "parked": "Í bið"
       },
       "loadError": "Ekki tókst að sækja verkefnið.",
+      "noneOpen": "Ekkert opið",
+      "open": "{{count}} opið",
       "retry": "Reyna aftur"
     },
     "loading": "Hleður",

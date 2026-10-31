@@ -1,0 +1,57 @@
+import { describe, expect, it } from 'vitest'
+import { moduleOpenCount, moduleTone, packLayout } from './layout'
+import type { Item, Module, Package, Participant } from './types'
+
+const pkg = (id: string, position: number): Package => ({
+  id, created_at: null, project_id: 'p', name: id, position, pos_x: 0, pos_y: 0,
+})
+const mod = (id: string, package_id: string | null, position: number): Module => ({
+  id, created_at: null, project_id: 'p', package_id, slug: id, name: id,
+  status_line: null, color: '#fff', is_ghost: false, position,
+})
+const item = (id: string, module_id: string | null, status: Item['status'], extra: Partial<Item> = {}): Item => ({
+  id, created_at: null, project_id: 'p', module_id, title: id, summary: null, body: null,
+  status, waiting_on: null, tags: [], pos_x: 0, pos_y: 0, source_ref: null, next_step: null,
+  next_prompt: null, created_by: 'u1', updated_by: null, updated_at: '', closed_at: null, ...extra,
+})
+const people: Participant[] = [
+  { id: 'a', created_at: null, project_id: 'p', user_id: 'u1', display_name: 'Heimir', short: 'H', is_service: false },
+]
+
+describe('packLayout', () => {
+  it('sorts packages and their modules by position', () => {
+    const out = packLayout(
+      [pkg('b', 2), pkg('a', 1)],
+      [mod('m3', 'a', 3), mod('m1', 'a', 1), mod('m2', 'b', 1), mod('orphan', null, 0)],
+    )
+    expect(out.map((r) => r.pkg.id)).toEqual(['a', 'b'])
+    expect(out[0].modules.map((m) => m.id)).toEqual(['m1', 'm3'])
+    expect(out[1].modules.map((m) => m.id)).toEqual(['m2'])
+  })
+  it('keeps packages with no modules', () => {
+    expect(packLayout([pkg('a', 1)], [])[0].modules).toEqual([])
+  })
+})
+
+describe('moduleOpenCount', () => {
+  it('counts only items on the board for that module', () => {
+    const items = [
+      item('1', 'm', 'new'), item('2', 'm', 'parked'), item('3', 'm', 'done'),
+      item('4', 'm', 'dropped'), item('5', 'other', 'new'),
+    ]
+    expect(moduleOpenCount('m', items)).toBe(2)
+  })
+})
+
+describe('moduleTone', () => {
+  it('is stone with no items', () => {
+    expect(moduleTone('m', [], 'u1', people)).toBe('stone')
+  })
+  it('skips parked and closed items and uses the first remaining', () => {
+    const items = [item('1', 'm', 'parked'), item('2', 'm', 'done'), item('3', 'm', 'building')]
+    expect(moduleTone('m', items, 'u1', people)).toBe('teal')
+  })
+  it('is stone when only parked items remain', () => {
+    expect(moduleTone('m', [item('1', 'm', 'parked')], 'u1', people)).toBe('stone')
+  })
+})
