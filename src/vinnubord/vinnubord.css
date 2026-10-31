@@ -20,6 +20,15 @@
 
   --hg-radius-card: 20px;
   --hg-radius-panel: 24px;
+  --hg-radius-module: 18px;
+
+  /* Module cards */
+  --hg-module-bg: rgba(22, 30, 43, 0.72);
+  --hg-module-bg-hover: rgba(29, 40, 56, 0.85);
+  --hg-module-border: rgba(255, 255, 255, 0.04);
+  --hg-module-pad: 13px 16px 13px 20px;
+  --hg-module-gap: 8px;
+  --hg-module-indent: 8px;
 
   /* Panels and transitions ease out, card entry springs past its target. */
   --hg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -57,18 +66,20 @@
 .hg-tone-stone { --hg-c: var(--hg-stone); }
 
 .hg-mod {
-  position: relative; display: block; width: calc(100% - 8px); min-height: 44px; text-align: left;
-  font: inherit; color: var(--hg-ink); border-radius: 18px; padding: 13px 16px 13px 20px; margin: 0 0 8px 8px;
-  cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.04); background: rgba(22, 30, 43, 0.72);
+  position: relative; display: block; width: calc(100% - var(--hg-module-indent)); min-height: 44px; text-align: left;
+  font: inherit; color: var(--hg-ink); border-radius: var(--hg-radius-module); padding: var(--hg-module-pad);
+  margin: 0 0 var(--hg-module-gap) var(--hg-module-indent);
+  cursor: pointer; border: 1px solid var(--hg-module-border); background: var(--hg-module-bg);
   backdrop-filter: blur(8px);
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+  transition: background var(--hg-dur-fast) var(--hg-ease), border-color var(--hg-dur-fast) var(--hg-ease),
+    box-shadow var(--hg-dur-fast) var(--hg-ease);
 }
 .hg-mod::before {
   content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; border-radius: 2px;
   background: var(--hg-c); box-shadow: 0 0 12px var(--hg-c); opacity: 0.9;
 }
-.hg-mod:hover, .hg-mod:focus-visible { background: rgba(29, 40, 56, 0.85); border-color: var(--hg-line); outline: none; }
-.hg-mod-hot {
+.hg-mod:hover, .hg-mod:focus-visible { background: var(--hg-module-bg-hover); border-color: var(--hg-line); outline: none; }
+.hg-mod.hg-mod-hot {
   border-color: color-mix(in oklab, var(--hg-c) 45%, var(--hg-line));
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--hg-c) 20%, transparent),
     0 20px 50px -30px color-mix(in oklab, var(--hg-c) 70%, transparent);
