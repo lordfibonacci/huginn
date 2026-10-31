@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import { BOARD_SIZES as S, boardRects, estimateCardHeight, placeItem } from '../lib/write.mjs'
-import { describeEntry, hasDashPunctuation, itemInput, placeEntry, splitSeed, validateSeed } from './seedlib.mjs'
+import { describeEntry, hasDashPunctuation, itemInput, placeEntry, seedRefusal, splitSeed, validateSeed } from './seedlib.mjs'
 
 const participants = [
   { user_id: 'u-h', short: 'H' },
@@ -145,6 +145,27 @@ describe('splitSeed', () => {
   it('creates nothing on a second run', () => {
     const items = [{ title: 'A' }, { title: 'B' }]
     expect(splitSeed(items, ['A', 'B']).create).toEqual([])
+  })
+})
+
+describe('seedRefusal', () => {
+  it('lets a real run go on an empty project or one with only test items', () => {
+    expect(seedRefusal([])).toBeNull()
+    expect(seedRefusal(['Prófun: spurningar', 'Prófun: skrár'])).toBeNull()
+  })
+  it('refuses a real run once the project has other items, naming the date and --again', () => {
+    const msg = seedRefusal(['Prófun: skrár', 'Yfirlit v2', 'Efnaskrá A'], { asOf: '2026-10-31' })
+    expect(msg).toContain('Seed hefur þegar keyrt á þetta verkefni 2026-10-31: 2 verk eru til fyrir.')
+    expect(msg).toContain('--again')
+    expect(msg).toContain('Ekkert skrifað.')
+    expect(hasDashPunctuation(msg)).toBe(false)
+  })
+  it('counts a renamed seed item as a real item', () => {
+    expect(seedRefusal(['Nýtt nafn á vefnum'])).not.toBeNull()
+  })
+  it('never blocks a dry run, and --again overrides', () => {
+    expect(seedRefusal(['Yfirlit v2'], { dryRun: true })).toBeNull()
+    expect(seedRefusal(['Yfirlit v2'], { again: true })).toBeNull()
   })
 })
 

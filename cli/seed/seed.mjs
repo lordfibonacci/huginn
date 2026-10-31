@@ -4,9 +4,11 @@
 // Writes through the same functions as `huginn item create` (cli/lib/ops.mjs),
 // signed in as the CLI user, so RLS and the triggers apply. Positions come from
 // placeItem, one card at a time, each new card an obstacle for the next.
-// An entry whose exact title already exists in the project is skipped, so a
-// second run creates nothing. It never deletes; a failed entry is reported and
-// the run goes on.
+// One time: metta was seeded on 2026-10-31. A real run refuses when the project
+// already has items other than "Prófun: " test items (seedRefusal), because an
+// item renamed on the web would be created again. --again overrides that.
+// Within a run, an entry whose exact title already exists in the project is
+// skipped. It never deletes; a failed entry is reported and the run goes on.
 // An entry partly created (createItem worked, then a plan, ruling or action
 // insert failed) is skipped by a rerun too, because idempotence goes by title.
 // Finish it by hand with the CLI write commands, using the id the run printed.
@@ -16,18 +18,19 @@ import { getClient, getProject, getUser, loadBoard } from '../lib/client.mjs'
 import { shortId } from '../lib/format.mjs'
 import { addAction, addPlan, addRuling, createItem } from '../lib/ops.mjs'
 import { resolveShort } from '../lib/write.mjs'
-import { describeEntry, itemInput, placeEntry, splitSeed, validateSeed } from './seedlib.mjs'
+import { describeEntry, itemInput, placeEntry, seedRefusal, splitSeed, validateSeed } from './seedlib.mjs'
 
 function args(argv) {
-  const out = { dryRun: false }
+  const out = { dryRun: false, again: false }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--dry-run') out.dryRun = true
+    else if (a === '--again') out.again = true
     else if (a === '--project') out.project = argv[++i]
     else if (a === '--file') out.file = argv[++i]
     else throw new Error(`Óþekktur rofi: ${a}`)
   }
-  if (!out.project || !out.file) throw new Error('Notkun: seed.mjs --project <slug> --file <seed.json> [--dry-run]')
+  if (!out.project || !out.file) throw new Error('Notkun: seed.mjs --project <slug> --file <seed.json> [--dry-run] [--again]')
   return out
 }
 
@@ -53,7 +56,12 @@ async function main() {
     throw new Error(`Seed skráin stenst ekki (${errors.length} villur), ekkert skrifað.`)
   }
 
-  const { create, skip } = splitSeed(data.items, await allTitles(client, project.id))
+  const titles = await allTitles(client, project.id)
+  const asOf = data.as_of ?? opts.file.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null
+  const refusal = seedRefusal(titles, { dryRun: opts.dryRun, again: opts.again, asOf })
+  if (refusal) throw new Error(refusal)
+
+  const { create, skip } = splitSeed(data.items, titles)
   console.log(`${opts.dryRun ? 'Prufukeyrsla' : 'Keyrsla'}: ${data.items.length} verk í skránni, ${create.length} ný, ${skip.length} þegar til.\n`)
 
   const created = []

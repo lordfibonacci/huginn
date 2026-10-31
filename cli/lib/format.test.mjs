@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { briefCounts, briefLine, filterSince, itemLine, oneLine, statusMarkdown, whoamiText } from './format.mjs'
+import { STATUS_NOTE, briefCounts, briefLine, filterSince, itemLine, oneLine, statusMarkdown, whoamiText } from './format.mjs'
 
 const C = { id: 'p-c', user_id: 'u-c', short: 'C', display_name: 'Claude', is_service: true, project_id: 'pr' }
 const H = { id: 'p-h', user_id: 'u-h', short: 'H', display_name: 'Heimir', is_service: false, project_id: 'pr' }
@@ -111,6 +111,8 @@ describe('statusMarkdown', () => {
       [
         '# Staða: Metta',
         '',
+        'Flokkað eftir því hver á næsta leik (waiting_on). Upphafslína lotunnar telur líka verk þar sem viðkomandi á opið handtak, svo tölurnar þar geta verið hærri.',
+        '',
         '## Nýtt',
         '- [gold] Verk i01, Nýtt, frá H, 2026-10-28T08:00:00.000Z #i01',
         '',
@@ -170,6 +172,8 @@ describe('control characters from the database', () => {
     expect(md).toBe(
       [
         '# Staða: Metta',
+        '',
+        STATUS_NOTE,
         '',
         '## Bíður: EveIll[31m ## fakeend',
         '- [lilac] VerkIll[31m ## fakeend, Bíður, bíður E, 2026-10-30T10:00:00.000Z #n1',

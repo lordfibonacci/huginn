@@ -137,6 +137,27 @@ export function splitSeed(items, existingTitles) {
   return { create, skip }
 }
 
+// Titles of the CLI test items (plan 3 verk 2). They never count as a seed run.
+export const TEST_PREFIX = 'Prófun: '
+
+// Guard against a second real run. splitSeed keys on the exact title, so an
+// item renamed on the web would be created again as a duplicate, with its
+// plans, rulings and actions, and only Heimir can delete rows. A real run is
+// refused when the project already holds an item that is not a test item,
+// unless --again is passed. A dry run always goes ahead. Returns the Icelandic
+// refusal, or null when the run may go on. asOf: the seed file's date.
+export function seedRefusal(existingTitles, { dryRun = false, again = false, asOf = null } = {}) {
+  if (dryRun || again) return null
+  const real = existingTitles.filter((t) => !String(t).trim().startsWith(TEST_PREFIX.trim()))
+  if (!real.length) return null
+  const when = asOf ? ` ${asOf}` : ''
+  return (
+    `Seed hefur þegar keyrt á þetta verkefni${when}: ${real.length} verk eru til fyrir. ` +
+    'Endurkeyrsla myndi stofna aftur hvert verk sem hefur fengið nýtt nafn á vefnum, með plönum, úrskurðum og handtökum. ' +
+    'Ekkert skrifað. Skoðaðu með --dry-run, og keyrðu aðeins með --again ef það er ætlunin.'
+  )
+}
+
 // One block of the dry run: the item and everything that would be written.
 export function describeEntry(entry, pos) {
   const lines = []

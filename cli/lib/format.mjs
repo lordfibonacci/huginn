@@ -127,6 +127,12 @@ export function briefLine(counts) {
   return `Huginn: ${parts.join(', ')}`
 }
 
+// Under the STATUS.md title. The groups follow waiting_on only, while the
+// session start line (briefCounts) also counts an item for whoever owns an
+// open action on it, so the two numbers can differ.
+export const STATUS_NOTE =
+  'Flokkað eftir því hver á næsta leik (waiting_on). Upphafslína lotunnar telur líka verk þar sem viðkomandi á opið handtak, svo tölurnar þar geta verið hærri.'
+
 // Groups in fixed order (ruling R2), empty groups left out.
 export function statusMarkdown(data, participants) {
   const open = (data.items ?? []).filter(isOnBoard)
@@ -152,6 +158,7 @@ export function statusMarkdown(data, participants) {
     lines.push('Ekkert opið verk.', '')
     return lines.join('\n')
   }
+  lines.push(STATUS_NOTE, '')
   for (const { heading, items } of groups) {
     lines.push(`## ${heading}`)
     const sorted = [...items].sort((a, b) => stampValue(b.updated_at) - stampValue(a.updated_at) || byId(a, b))
