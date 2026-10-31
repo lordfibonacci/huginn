@@ -5,7 +5,7 @@
       "confirming": "Staðfesti aðganginn þinn",
       "emailConfirmed": "Netfang staðfest",
       "linkExpired": "Staðfestingartengill útrunninn eða þegar notaður. Reyndu að skrá þig inn aftur.",
-      "recoveryVerified": "Staðfest — veldu nýtt lykilorð",
+      "recoveryVerified": "Staðfest. Veldu nýtt lykilorð.",
       "takingYouIn": "Skrái þig inn…"
     },
     "errors": {
@@ -32,7 +32,7 @@
     },
     "reset": {
       "done": {
-        "body": "Förum í verkefnin þín…",
+        "body": "Förum aftur inn…",
         "title": "Lykilorð uppfært"
       },
       "expired": {

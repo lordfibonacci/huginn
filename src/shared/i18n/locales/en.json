@@ -33,7 +33,7 @@
       },
       "done": {
         "title": "Password updated",
-        "body": "Taking you to your projects…"
+        "body": "Taking you back in…"
       },
       "form": {
         "title": "Choose a new password",
@@ -46,7 +46,7 @@
     "callback": {
       "confirming": "Confirming your account",
       "emailConfirmed": "Email confirmed",
-      "recoveryVerified": "Verified — choose a new password",
+      "recoveryVerified": "Verified. Choose a new password.",
       "linkExpired": "Confirmation link expired or already used. Try signing in again.",
       "takingYouIn": "Taking you in…",
       "backToSignIn": "Back to sign in"
