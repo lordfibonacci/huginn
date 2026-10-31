@@ -8,7 +8,7 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Pla
 
 ## Current state
 
-Plans 1 to 3 are built and verified (360 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
+Plans 1 to 3 are built and verified (364 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
 
 - Plan 1 (grunnur): the `hg_` schema, API layer, realtime board data hook, pure status, filter, upload and continuation logic, the app shell, routes and the participant gate.
 - Plan 2 (bord): the whiteboard. Pack columns and module cards, item cards with spring drag and wires with sparks on a canvas, pan and zoom with touch (pinch, two finger pan, 350 ms long press to drag), side panel and bottom sheet for items and modules (status, files, questions, history, comments, copy buttons, Markdown reader), top bar with counter pills, filters, search and a viewer menu, new item sheet with file upload, aurora and entry motion, new item toast, project settings. The live project metta is seeded with 5 packages and 28 modules.
@@ -173,7 +173,7 @@ Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Ico
 
 - **Style:** no em dashes or hyphen dashes as punctuation anywhere: prose, UI copy, code comments, docs. Use commas, periods or colons. Icelandic UI, no all caps banners.
 - Commit messages: `feat:`, `fix:`, `style:`, `refactor:`, `simplify:`, `docs:`, `chore:`, `test:` prefixes, scope `(vinnubord)` for this rebuild. Include a `Co-Authored-By:` trailer for the Claude model that authored the commit.
-- Heimir alone pushes. Agents commit when asked, never push.
+- Claude pushes. Heimir never pushes himself (2026-10-31), so when work is merged and verified on main, push it after checking the repo is clean and not behind origin. Never leave a push as a todo for Heimir.
 - No mass process spawning on Heimir's PC.
 - `.env`, `.superpowers/`, `docs/session/`, `.playwright-mcp/`, `supabase/.temp/` are gitignored.
 - Feature work: brainstorm, spec in `docs/superpowers/specs/`, plan in `docs/superpowers/plans/`, build in an Opus session. Older specs and plans in those folders describe the removed Trello surface and are history only.
@@ -205,7 +205,7 @@ When I say "end of session", "end session", "wrap up", "I'm done for now", or si
    - Any new env var or secret the deploy target needs before the next deploy
    - Any uncommitted files the session left behind
 
-Do not commit. I want to review before pushing.
+Commit the CLAUDE.md update and push once the build is green.
 
 ### Mid-work handoff (bug unresolved, blocked, or stopping mid-flight — NOT at a checkpoint)
 
