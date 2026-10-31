@@ -121,7 +121,14 @@ export function BoardPage() {
         selectedId={selectedId}
         onSelect={select}
         onOpenModule={openModule}
-      />
+      >
+        <Toast
+          toast={newItemToast.toast}
+          panelOpen={selectedItem !== null || openModuleRow !== null}
+          onOpen={select}
+          onDone={newItemToast.dismiss}
+        />
+      </Board>
       <PanelShell
         open={selectedItem !== null || openModuleRow !== null}
         onClose={closePanel}
@@ -139,7 +146,6 @@ export function BoardPage() {
           />
         ) : null}
       </PanelShell>
-      <Toast toast={newItemToast.toast} onOpen={select} onDone={newItemToast.dismiss} />
       <NewItemSheet open={newOpen} data={data} tags={tags} place={place} onClose={closeNew} onCreated={onCreated} />
       {error && (
         <div className="hg-notice" role="status">

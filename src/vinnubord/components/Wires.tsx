@@ -235,7 +235,9 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
       if (motion) {
         const sp = WIRE.spark
         for (const it of list) {
-          if (it.mode === 'parked') {
+          // Parked or unwired (card or module not drawn): no sparks, so
+          // such an item never keeps the canvas awake.
+          if (it.mode === 'parked' || !lookup(it)) {
             sparks.current.delete(it.id)
             continue
           }

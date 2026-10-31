@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type MouseEvent, type Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type MouseEvent, type ReactNode, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag } from '../hooks/useCardDrag'
@@ -30,6 +30,8 @@ type Props = {
   selectedId: string | null
   onSelect: (id: string | null) => void
   onOpenModule: (moduleId: string) => void
+  // Drawn over the board inside its area (the new item toast).
+  children?: ReactNode
   ref?: Ref<BoardHandle>
 }
 
@@ -69,7 +71,7 @@ function popMs(): number {
   return parseDuration(getComputedStyle(document.documentElement).getPropertyValue('--hg-dur-pop'))
 }
 
-export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule, ref }: Props) {
+export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule, children, ref }: Props) {
   const { t } = useTranslation()
   const boardRef = useRef<HTMLDivElement | null>(null)
   const wiresRef = useRef<WiresHandle | null>(null)
@@ -475,6 +477,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
           </svg>
         </button>
       </div>
+      {children}
     </div>
   )
 }

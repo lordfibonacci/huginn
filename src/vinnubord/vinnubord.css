@@ -126,7 +126,8 @@
 
   /* Non blocking notice and the new item toast over the board */
   --hg-notice-size: 13px;
-  --hg-toast-z: 35;
+  /* Below the panel (30): the toast never covers the side panel or sheet. */
+  --hg-toast-z: 25;
   --hg-toast-w: 440px;
   --hg-toast-pad: 0 18px 0 16px;
   --hg-toast-gap: 10px;
@@ -136,7 +137,6 @@
 
   /* ---------- Aurora: three blurred blobs drifting behind the grid ---------- */
   --hg-aurora-opacity: 0.55;
-  --hg-aurora-blur: blur(70px);
   --hg-aurora-overscan: -20%;
   --hg-aurora-1: #1f6b5a;
   --hg-aurora-2: #3a2f7a;
@@ -439,12 +439,12 @@
 /* ---------- Board: the pan and zoom surface, the world layer, the wire canvas ---------- */
 .hg-board-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--hg-board); font-family: var(--hg-font); }
 
-/* Aurora, painted under the board (it comes first in the wrap). Each blob is
-   blurred on its own layer and only its transform animates, so the drift
-   never re-blurs. */
+/* Aurora, painted under the board (it comes first in the wrap). The blobs are
+   radial gradients that fade to transparent on their own, so no blur filter:
+   only their transform animates, which the compositor moves cheaply. */
 .hg-aurora { position: absolute; inset: var(--hg-aurora-overscan); pointer-events: none; opacity: var(--hg-aurora-opacity); }
 .hg-aurora i {
-  position: absolute; border-radius: 50%; mix-blend-mode: screen; filter: var(--hg-aurora-blur); will-change: transform;
+  position: absolute; border-radius: 50%; mix-blend-mode: screen; will-change: transform;
   animation: var(--hg-aurora-dur) ease-in-out infinite alternate;
 }
 .hg-aurora i:nth-child(1) {
@@ -590,10 +590,22 @@
   .hg-notice { bottom: var(--hg-control-stack); right: var(--hg-control-inset); max-width: none; }
 }
 
-/* New item toast: centred above the control row, a tap opens the item. */
+/* New item toast, inside the board area: centred above the control row, a
+   tap opens the item. With the panel open it moves out of the panel's way:
+   left of the side panel on wide screens, to the top of the board on phones
+   (the sheet rises from the bottom). Its z-index is below the panel's, so
+   even a full height sheet covers it rather than the other way round. */
 .hg-toast-wrap {
   position: absolute; left: var(--hg-control-inset); right: var(--hg-control-inset); bottom: var(--hg-control-stack);
   z-index: var(--hg-toast-z); display: flex; justify-content: center; pointer-events: none;
+}
+@media (min-width: 768px) {
+  .hg-toast-wrap.hg-toast-panel {
+    right: calc(min(var(--hg-panel-w), 100vw - 2 * var(--hg-panel-inset)) + var(--hg-panel-inset) + var(--hg-control-inset));
+  }
+}
+@media (max-width: 767px) {
+  .hg-toast-wrap.hg-toast-panel { top: var(--hg-control-inset); bottom: auto; }
 }
 .hg-toast {
   --hg-c: var(--hg-gold);
@@ -1180,7 +1192,7 @@
 
 /* Reduced motion: no animation and no transition anywhere on the board,
    its bars, panels and sheets (the aurora stands still, cards appear in
-   place, dots stop beating). The wire canvas leaves out sparks and the draw
+   place, dots stop beating) and the aurora is switched off. The wire canvas leaves out sparks and the draw
    up on its own (Wires.tsx), the card spring snaps (Board.tsx). */
 @media (prefers-reduced-motion: reduce) {
   :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice),
@@ -1189,4 +1201,5 @@
   :where(.hg-top, .hg-board-wrap, .hg-panel, .hg-sheet-wrap, .hg-toast-wrap, .hg-notice) *::after {
     animation: none !important; transition: none !important;
   }
+  .hg-aurora { display: none; }
 }
