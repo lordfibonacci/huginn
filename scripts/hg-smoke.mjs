@@ -194,16 +194,23 @@ try {
     passed++
 
     scenario = '5 reads'
-    for (let n = 0; n < 2; n++)
-      must(
+    // The first upsert inserts, the second hits the conflict and updates. A
+    // supplied read_at far in the past must be replaced by the server clock
+    // on both paths (hg_reads_stamp_trg, migration 0006).
+    for (let n = 0; n < 2; n++) {
+      const rows = must(
         await sb
           .from('hg_reads')
           .upsert(
-            { project_id: projectId, item_id: itemId, user_id: me, read_at: new Date().toISOString() },
+            { project_id: projectId, item_id: itemId, user_id: me, read_at: '2000-01-01T00:00:00Z' },
             { onConflict: 'item_id,user_id' },
-          ),
+          )
+          .select('read_at'),
         `upsert read ${n + 1}`,
       )
+      const at = Date.parse(rows[0]?.read_at ?? '')
+      expect(at > Date.parse('2020-01-01T00:00:00Z'), `upsert read ${n + 1} kept the client read_at ${rows[0]?.read_at}`)
+    }
     passed++
   } finally {
     // runs even on failure so nothing is left behind

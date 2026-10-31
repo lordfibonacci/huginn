@@ -243,6 +243,8 @@ export async function markActionDone(id: string, done: boolean): Promise<void> {
   if (error) fail('Gat ekki uppfært aðgerðina.', error)
 }
 
+// read_at is stamped by the database (hg_reads_stamp_trg, migration 0006), so
+// a device clock behind the server cannot write a mark older than the change.
 export async function markRead(itemId: string): Promise<void> {
   const userId = await currentUserId()
   const { data: item, error: itemError } = await supabase
@@ -257,7 +259,6 @@ export async function markRead(itemId: string): Promise<void> {
       project_id: (item as { project_id: string }).project_id,
       item_id: itemId,
       user_id: userId,
-      read_at: new Date().toISOString(),
     },
     { onConflict: 'item_id,user_id' },
   )
