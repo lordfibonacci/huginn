@@ -41,6 +41,8 @@ const SIMPLE: Record<string, string> = {
   'action.done': 'actionDone',
   'ruling.added': 'rulingAdded',
   'comment.added': 'commentAdded',
+  'analysis.done': 'analysisDone',
+  'analysis.failed': 'analysisFailed',
 }
 
 function str(v: unknown): string | null {

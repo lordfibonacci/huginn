@@ -16,3 +16,4 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0004_hg_trigger_fixes: trigger corrections (no reopen on answer, unforgeable stamps, drag is not a change).
 - 0005_hg_add_participant: security definer RPC that adds a participant by email.
 - 0006_hg_reads_clock_and_guards: read_at stamped with the server clock, and short name checks plus a race safe duplicate message in hg_add_participant.
+- 0007_hg_analyse: analysed_at and the analysis lock on hg_items, the lock and event RPCs for hg-analyse, and the pg_net enqueue triggers (URL and secret from Vault).

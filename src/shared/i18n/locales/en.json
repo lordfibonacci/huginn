@@ -270,6 +270,8 @@
       "actionDone": "checked off an action",
       "rulingAdded": "added a ruling",
       "commentAdded": "commented",
+      "analysisDone": "analysed the item",
+      "analysisFailed": "analysis failed",
       "other": "{{kind}}",
       "someone": "System",
       "fields": {

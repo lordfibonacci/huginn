@@ -70,6 +70,8 @@ describe('describeEvent', () => {
     expect(describeEvent(ev('e', null, 'question.answered'), nameOf).key).toBe('questionAnswered')
     expect(describeEvent(ev('e', null, 'action.done'), nameOf).key).toBe('actionDone')
     expect(describeEvent(ev('e', null, 'ruling.added'), nameOf).key).toBe('rulingAdded')
+    expect(describeEvent(ev('e', null, 'analysis.done', { model: 'm' }), nameOf).key).toBe('analysisDone')
+    expect(describeEvent(ev('e', null, 'analysis.failed', { error: 'x' }), nameOf).key).toBe('analysisFailed')
     expect(describeEvent(ev('e', null, 'something.new'), nameOf)).toEqual({
       key: 'other',
       params: { kind: 'something.new' },

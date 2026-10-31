@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ANALYSIS_TOOL_NAME,
+  ORIGINAL_HEADING,
   BODY_HEADINGS,
   CLIP_MARKER,
   SYSTEM_PROMPT,
@@ -8,6 +9,7 @@ import {
   applyAnalysis,
   buildUserMessage,
   clipText,
+  mergeIntoItem,
   selectTextFiles,
 } from './lib'
 
@@ -296,7 +298,7 @@ describe('applyAnalysis', () => {
     expect(r.tags).toEqual(['hönnun', 'bókun'])
   })
 
-  it('keeps at most 6 model tags, then appends óflokkað', () => {
+  it('R22: the cap of 6 counts model tags only, óflokkað may be a seventh', () => {
     const tags = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
     expect(applyAnalysis({ ...base, tags }, modules).tags).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
     const r = applyAnalysis({ ...base, tags, module_slug: null }, modules)
@@ -320,8 +322,15 @@ describe('applyAnalysis', () => {
       modules,
     )
     expect(JSON.stringify(r)).not.toMatch(DASH)
+    expect(r.summary).toBe('Fyrst, svo')
     expect(r.body).toBe('A,B')
-    expect(r.tags).toEqual(['x,y', 'z'])
+    expect(r.questions[0].body).toBe('Já, eða nei?')
+  })
+
+  it('turns a dash in a tag into a space, never a comma, because the CLI splits tags on commas', () => {
+    const r = applyAnalysis({ ...base, tags: ['x—y', 'a – b', 'z'] }, modules)
+    expect(r.tags).toEqual(['x y', 'a b', 'z'])
+    expect(r.tags.join('')).not.toContain(',')
   })
 
   it('drops questions to anyone but Á or H and questions with an empty body', () => {
@@ -353,5 +362,61 @@ describe('applyAnalysis', () => {
       questions: [],
       unmatchedModule: true,
     })
+  })
+})
+
+describe('mergeIntoItem', () => {
+  const modules = [
+    { id: 'm1', slug: 'bokun' },
+    { id: 'm2', slug: 'greidslur' },
+  ]
+  const raw = {
+    summary: 'Samantekt.',
+    body: '## Hvað þetta er\nGreining.',
+    module_slug: 'greidslur',
+    tags: ['greiðslur', 'hönnun'],
+    questions: [],
+  }
+  const matched = applyAnalysis(raw, modules)
+  const unmatched = applyAnalysis({ ...raw, module_slug: null }, modules)
+  const item = { body: null, module_id: null, tags: [] as string[] }
+
+  it('keeps the author body verbatim under its own heading after the analysis', () => {
+    const r = mergeIntoItem({ ...item, body: '  Árni skrifaði þetta.\n\n- liður' }, matched)
+    expect(ORIGINAL_HEADING).toBe('## Upprunalegur texti')
+    expect(r.body).toBe(
+      '## Hvað þetta er\nGreining.\n\n## Upprunalegur texti\n\n  Árni skrifaði þetta.\n\n- liður',
+    )
+    expect(r.summary).toBe('Samantekt.')
+  })
+
+  it('adds no heading when the author body is empty, whitespace or null', () => {
+    for (const body of [null, '', '  \n\t ']) {
+      expect(mergeIntoItem({ ...item, body }, matched).body).toBe('## Hvað þetta er\nGreining.')
+    }
+  })
+
+  it('takes the suggested module when the author chose none', () => {
+    expect(mergeIntoItem(item, matched).module_id).toBe('m2')
+    expect(mergeIntoItem(item, unmatched).module_id).toBeNull()
+  })
+
+  it('the author module wins over a matched suggestion', () => {
+    expect(mergeIntoItem({ ...item, module_id: 'm1' }, matched).module_id).toBe('m1')
+  })
+
+  it('an author module plus an unmatched suggestion keeps the module and drops óflokkað', () => {
+    const r = mergeIntoItem({ ...item, module_id: 'm1' }, unmatched)
+    expect(r.module_id).toBe('m1')
+    expect(r.tags).toEqual(['greiðslur', 'hönnun'])
+  })
+
+  it('keeps óflokkað when neither the author nor the analysis has a module', () => {
+    expect(mergeIntoItem(item, unmatched).tags).toEqual(['greiðslur', 'hönnun', 'óflokkað'])
+  })
+
+  it('puts author tags first and dedupes ignoring case', () => {
+    const r = mergeIntoItem({ ...item, tags: ['Hönnun', 'brýnt'] }, matched)
+    expect(r.tags).toEqual(['Hönnun', 'brýnt', 'greiðslur'])
   })
 })

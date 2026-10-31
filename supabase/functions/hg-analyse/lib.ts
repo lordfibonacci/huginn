@@ -166,6 +166,15 @@ Undir síðustu fyrirsögninni segirðu hvort hægt sé að byggja þetta núna,
 8. Skrár sem eru aðeins nefndar með nafni og stærð hefurðu ekki séð. Ekki giska á innihald þeirra.
 9. Skrá sem endar á [klippt, skráin er lengri] var stytt. Hafðu það í huga.`
 
+// The shape of the SDK's Anthropic.Tool, copied structurally so lib.ts stays
+// import free and the edge function passes analysisTool without a cast.
+type ToolShape = {
+  name: string
+  description?: string
+  strict?: boolean
+  input_schema: { type: 'object'; properties?: unknown; required?: string[]; [key: string]: unknown }
+}
+
 export const analysisTool = {
   name: ANALYSIS_TOOL_NAME,
   description: 'Skráir fyrstu skyndigreiningu á nýju atriði á vinnuborði Mettu. Kallað er á tólið nákvæmlega einu sinni.',
@@ -209,19 +218,30 @@ export const analysisTool = {
     },
     required: ['summary', 'body', 'module_slug', 'tags', 'questions'],
   },
-}
+} satisfies ToolShape
 
+// Summary, body and question text: a dash becomes a comma, with no space
+// left in front of it.
 function clean(value: unknown): string {
   if (typeof value !== 'string') return ''
-  return value.replace(/[–—]/g, ',').trim()
+  return value.replace(/[–—]/g, ',').replace(/\s+,/g, ',').trim()
 }
 
+// Tags: a dash becomes a space, never a comma, because the CLI splits tags on
+// commas.
+function cleanTag(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  return value.replace(/[–—]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+// The MAX_TAGS cap counts model tags only. applyAnalysis may add óflokkað
+// after it as a seventh tag.
 function cleanTags(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const seen = new Set<string>()
   const tags: string[] = []
   for (const raw of value) {
-    const tag = clean(raw)
+    const tag = cleanTag(raw)
     const key = tag.toLowerCase()
     if (tag === '' || seen.has(key)) continue
     seen.add(key)
@@ -262,5 +282,41 @@ export function applyAnalysis(result: unknown, modules: Array<{ id: string; slug
     tags,
     questions: cleanQuestions(r.questions),
     unmatchedModule,
+  }
+}
+
+export const ORIGINAL_HEADING = '## Upprunalegur texti'
+
+export type ItemFields = { summary: string; body: string; module_id: string | null; tags: string[] }
+
+// What the author wrote wins over the analysis: their text is kept verbatim
+// under its own heading, their module stays, their tags come first. An author
+// who chose a module gets no óflokkað tag.
+export function mergeIntoItem(
+  item: { body: string | null; module_id: string | null; tags: string[] },
+  analysis: Analysis,
+): ItemFields {
+  const original = item.body ?? ''
+  const body =
+    original.trim() === '' ? analysis.body : `${analysis.body}\n\n${ORIGINAL_HEADING}\n\n${original}`
+
+  const suggested =
+    item.module_id === null
+      ? analysis.tags
+      : analysis.tags.filter((t) => t.toLowerCase() !== UNMATCHED_TAG)
+  const seen = new Set<string>()
+  const tags: string[] = []
+  for (const tag of [...item.tags, ...suggested]) {
+    const key = tag.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    tags.push(tag)
+  }
+
+  return {
+    summary: analysis.summary,
+    body,
+    module_id: item.module_id ?? analysis.module_id,
+    tags,
   }
 }
