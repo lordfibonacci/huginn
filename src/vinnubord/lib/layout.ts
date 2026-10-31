@@ -1,5 +1,5 @@
 import { isOnBoard, itemTone, type Tone } from './status'
-import type { Item, Module, Package, Participant } from './types'
+import type { Item, Module, Package, Participant, Plan, PlanStatus } from './types'
 
 export type PackRow = { pkg: Package; modules: Module[] }
 
@@ -25,4 +25,16 @@ export function moduleTone(
 ): Tone {
   const first = items.find((i) => i.module_id === moduleId && isOnBoard(i) && i.status !== 'parked')
   return first ? itemTone(first, viewerId, participants) : 'stone'
+}
+
+const PLAN_FILL: Record<PlanStatus, number> = { done: 1, building: 0.5, todo: 0 }
+
+// Progress bars on an item card, one per plan in position order, and the
+// "Plan N af M" numbers: N is the first plan not done, or the last one.
+export function planProgress(plans: Plan[]): { bars: number[]; current: number; total: number } {
+  const sorted = [...plans].sort((a, b) => a.position - b.position)
+  const total = sorted.length
+  if (total === 0) return { bars: [], current: 0, total: 0 }
+  const open = sorted.findIndex((p) => p.status !== 'done')
+  return { bars: sorted.map((p) => PLAN_FILL[p.status]), current: open === -1 ? total : open + 1, total }
 }

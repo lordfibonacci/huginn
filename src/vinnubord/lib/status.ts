@@ -60,8 +60,37 @@ export function waitsFor(item: Item, actions: Action[], viewerId: string): boole
 
 export type Counts = { new: number; mine: number; others: number; build: number; parked: number }
 
-// Buckets are exclusive per item on the board. "mine" takes precedence: anything
-// waiting for the viewer (waiting_on or an open owned action) counts only there.
+// The counter bucket of one item, null when it is off the board. Buckets are
+// exclusive. "mine" takes precedence: anything waiting for the viewer
+// (waiting_on or an open owned action) counts only there.
+export function countBucket(item: Item, actions: Action[], viewerId: string): keyof Counts | null {
+  if (!isOnBoard(item)) return null
+  if (waitsFor(item, actions, viewerId)) return 'mine'
+  switch (item.status) {
+    case 'new':
+      return 'new'
+    case 'waiting':
+      return 'others'
+    case 'ready':
+    case 'building':
+      return 'build'
+    case 'parked':
+      return 'parked'
+    default:
+      return null
+  }
+}
+
+// Tone of each counter pill. The tone filter matches an item by this tone of
+// its bucket (not by itemTone), so a pill filters exactly what it counts.
+export const BUCKET_TONE: Record<keyof Counts, Tone> = {
+  new: 'gold',
+  mine: 'coral',
+  others: 'lilac',
+  build: 'teal',
+  parked: 'stone',
+}
+
 export function countsFor(
   items: Item[],
   actions: Action[],
@@ -70,26 +99,18 @@ export function countsFor(
 ): Counts {
   const c: Counts = { new: 0, mine: 0, others: 0, build: 0, parked: 0 }
   for (const item of items) {
-    if (!isOnBoard(item)) continue
-    if (waitsFor(item, actions, viewerId)) {
-      c.mine++
-      continue
-    }
-    switch (item.status) {
-      case 'new':
-        c.new++
-        break
-      case 'waiting':
-        c.others++
-        break
-      case 'ready':
-      case 'building':
-        c.build++
-        break
-      case 'parked':
-        c.parked++
-        break
-    }
+    const bucket = countBucket(item, actions, viewerId)
+    if (bucket) c[bucket]++
   }
   return c
+}
+
+// How the wire of an item behaves: pulse (three sparks at a time) when it is
+// new or waits on someone, calm (a rare single spark) when it is in build,
+// parked (dashed, no sparks) when it is on hold.
+export type WireMode = 'pulse' | 'calm' | 'parked'
+
+export function wireMode(item: Item, tone: Tone): WireMode {
+  if (item.status === 'parked') return 'parked'
+  return tone === 'gold' || tone === 'coral' || tone === 'lilac' ? 'pulse' : 'calm'
 }

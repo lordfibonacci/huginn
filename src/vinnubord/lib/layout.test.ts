@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { moduleOpenCount, moduleTone, packLayout } from './layout'
-import type { Item, Module, Package, Participant } from './types'
+import { moduleOpenCount, moduleTone, packLayout, planProgress } from './layout'
+import type { Item, Module, Package, Participant, Plan } from './types'
 
 const pkg = (id: string, position: number): Package => ({
   id, created_at: null, project_id: 'p', name: id, position, pos_x: 0, pos_y: 0,
@@ -53,5 +53,22 @@ describe('moduleTone', () => {
   })
   it('is stone when only parked items remain', () => {
     expect(moduleTone('m', [item('1', 'm', 'parked')], 'u1', people)).toBe('stone')
+  })
+})
+
+const plan = (id: string, status: Plan['status'], position: number): Plan => ({
+  id, created_at: null, project_id: 'p', item_id: 'i', name: id, path: null, status, position, updated_at: '',
+})
+
+describe('planProgress', () => {
+  it('no plans gives no bars', () => {
+    expect(planProgress([])).toEqual({ bars: [], current: 0, total: 0 })
+  })
+  it('bars by position: done 1, building 0.5, todo 0, current is the first not done', () => {
+    const out = planProgress([plan('c', 'todo', 3), plan('a', 'done', 1), plan('b', 'building', 2)])
+    expect(out).toEqual({ bars: [1, 0.5, 0], current: 2, total: 3 })
+  })
+  it('all done points at the last plan', () => {
+    expect(planProgress([plan('a', 'done', 1), plan('b', 'done', 2)])).toEqual({ bars: [1, 1], current: 2, total: 2 })
   })
 })
