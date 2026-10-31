@@ -66,7 +66,8 @@
     "dueTomorrow": "skil á morgun",
     "justNow": "rétt í þessu",
     "overdue_one": "{{count}}d fram yfir",
-    "overdue_other": "{{count}}d fram yfir"
+    "overdue_other": "{{count}}d fram yfir",
+    "today": "í dag"
   },
   "vinnubord": {
     "board": {
@@ -77,17 +78,261 @@
         "others": "Bíða annarra",
         "parked": "Í bið"
       },
+      "fit": "Sýna allt",
       "loadError": "Ekki tókst að sækja verkefnið.",
-      "retry": "Reyna aftur"
+      "moveError": "Ekki tókst að vista nýjan stað spjaldsins. Það er komið aftur á sinn stað.",
+      "noneOpen": "Ekkert opið",
+      "open": "{{count}} opið",
+      "refreshError": "Ekki tókst að uppfæra borðið. Hér er síðasta staða sem náðist.",
+      "retry": "Reyna aftur",
+      "zoomIn": "Stækka",
+      "zoomLevel": "Aðdráttur",
+      "zoomOut": "Minnka"
+    },
+    "card": {
+      "actions_one": "{{count}} opið handtak",
+      "actions_other": "{{count}} opin handtök",
+      "files_one": "{{count}} skjal",
+      "files_other": "{{count}} skjöl",
+      "movedBy": "Síðast hreyft af {{name}}",
+      "planOf": "Plan {{current}} af {{total}}",
+      "unread": "Nýtt hjá þér"
+    },
+    "history": {
+      "actionAdded": "bætti við handtaki",
+      "actionDone": "hakaði við handtak",
+      "commentAdded": "skrifaði athugasemd",
+      "fields": {
+        "body": "lýsinguna",
+        "module_id": "módulinn",
+        "next_prompt": "promptið",
+        "next_step": "næsta skrefið",
+        "summary": "samantektina",
+        "tags": "töggin",
+        "title": "titilinn"
+      },
+      "fileAdded": "bætti við {{name}}",
+      "itemCreated": "stofnaði verkið",
+      "itemStatus": "færði verkið úr {{from}} í {{to}}",
+      "itemUpdated": "uppfærði {{fields}}",
+      "itemWaiting": "verkið bíður nú: {{who}}",
+      "other": "{{kind}}",
+      "planAdded": "bætti við plani",
+      "planStatus": "setti plan í stöðuna {{to}}",
+      "questionAnswered": "svaraði spurningu",
+      "questionAsked": "spurði spurningar",
+      "rulingAdded": "skráði úrskurð",
+      "someone": "Kerfið"
     },
     "loading": "Hleður",
+    "newItem": {
+      "body": "Texti",
+      "bodyHint": "Markdown virkar",
+      "cancel": "Hætta við",
+      "create": "Stofna verk",
+      "createdWithErrors_one": "Verkið var stofnað. {{count}} skrá fór ekki inn, sjá ofar.",
+      "createdWithErrors_other": "Verkið var stofnað. {{count}} skrár fóru ekki inn, sjá ofar.",
+      "creating": "Stofnar",
+      "drop": "Slepptu skrám hér",
+      "files": "Skrár",
+      "heading": "Nýtt verk",
+      "module": "Módull",
+      "noModule": "Enginn módull",
+      "openItem": "Opna verkið",
+      "pick": "Velja skrár",
+      "remove": "Fjarlægja {{name}}",
+      "state": {
+        "done": "Komið",
+        "error": "Villa",
+        "uploading": "Hleður",
+        "waiting": "Bíður"
+      },
+      "tags": "Tögg",
+      "tagsHint": "Komma á milli",
+      "title": "Titill",
+      "titlePlaceholder": "Um hvað snýst verkið",
+      "titleRequired": "Verkið þarf titil.",
+      "uploading": "Hleður skrám"
+    },
     "noAccess": {
       "body": "Biddu Heimi um að gefa þér aðgang.",
       "signOut": "Skrá út",
       "title": "Þú ert ekki þátttakandi í neinu verkefni"
     },
+    "panel": {
+      "actionDone": "Lokið: {{body}}",
+      "actions": "Handtök",
+      "body": "Lýsing",
+      "changeStatus": "Breyta stöðu",
+      "choose": "Velja",
+      "comment": {
+        "hint": "Ctrl og Enter sendir",
+        "placeholder": "Skrifa athugasemd",
+        "send": "Senda"
+      },
+      "copied": "Afritað",
+      "copy": "Afrita",
+      "copyFailed": "Gat ekki afritað",
+      "copyOf": {
+        "nextPrompt": "prompt",
+        "nextStep": "næsta skref",
+        "payload": "blokk",
+        "planPath": "slóð plans",
+        "repoPath": "slóð í repoinu",
+        "source": "heimild"
+      },
+      "copyWhat": "Afrita {{what}}",
+      "cost": "Kostar ef rangt: {{cost}}",
+      "files": {
+        "back": "Aftur í skjöl",
+        "by": "{{name}}, {{when}}",
+        "empty": "Engin skjöl ennþá.",
+        "loading": "Sæki skjal",
+        "open": "Opna {{name}}",
+        "openLink": "Smelltu til að opna {{name}}"
+      },
+      "history": {
+        "empty": "Ekkert hefur gerst ennþá."
+      },
+      "label": "Spjald verks",
+      "module": "Módull",
+      "moduleLabel": "Spjald móduls",
+      "modulePanel": {
+        "comments": "Athugasemdir",
+        "done": "Lokið, síðustu 90 daga",
+        "dropped": "Hætt við, síðustu 90 daga",
+        "kind": "Módull",
+        "noComments": "Engar athugasemdir ennþá.",
+        "noneOpen": "Ekkert opið.",
+        "open": "Opin verk"
+      },
+      "nextStep": "Næsta skref",
+      "noModule": "Enginn módull",
+      "noSummary": "Claude hefur ekki skrifað samantekt ennþá.",
+      "plans": "Plön",
+      "questions": {
+        "answerBy": "{{name}} svaraði {{when}}",
+        "answered": "Svaraðar",
+        "asked": "{{name}} spyr",
+        "empty": "Engar spurningar.",
+        "open": "Ósvaraðar",
+        "placeholder": "Skrifaðu svar",
+        "send": "Svara",
+        "to": "til {{name}}"
+      },
+      "resume": "Halda áfram",
+      "resumeHint": "Afritar samhengisprompt fyrir nýtt spjall.",
+      "reverse": "Snúa við",
+      "rulings_one": "{{count}} úrskurður",
+      "rulings_other": "{{count}} úrskurðir",
+      "save": "Vista",
+      "sheetHandle": "Dragðu upp eða niður, dragðu niður til að loka",
+      "source": "Heimild",
+      "status": "Staða",
+      "sub": "{{module}}. Síðast hreyft: {{name}}, {{when}}.",
+      "subNoMover": "{{module}}.",
+      "tabs": {
+        "files": "Skjöl",
+        "filesCount": "Skjöl ({{count}})",
+        "history": "Saga",
+        "questions": "Spurningar",
+        "questionsCount": "Spurningar ({{count}})",
+        "status": "Staða"
+      },
+      "waitingOn": "Bíður eftir",
+      "whereAreWe": "Hvar erum við"
+    },
     "settings": {
-      "comingSoon": "Stillingar koma í plani 2."
+      "add": "Bæta við",
+      "back": "Aftur á borðið",
+      "colors": {
+        "coral": "Kóral",
+        "gold": "Gull",
+        "lilac": "Lilla",
+        "stone": "Steingrátt",
+        "teal": "Grænblár"
+      },
+      "delete": "Eyða",
+      "loadError": "Gat ekki sótt stillingarnar.",
+      "modules": {
+        "choosePackage": "Veldu pakka",
+        "color": "Litur",
+        "deleteConfirm": "Eyða módulnum {{name}}?",
+        "empty": "Engir módular í þessum pakka.",
+        "ghost": "Draugur (á teikniborðinu, ekki smíðaður)",
+        "hint": "Spjöldin í pakkadálkunum. Röðin gildir innan hvers pakka.",
+        "name": "Nafn",
+        "newTitle": "Nýr módull",
+        "noPackage": "Enginn pakki",
+        "package": "Pakki",
+        "slug": "Slóðarheiti",
+        "slugHint": "Litlir stafir, skipanalínutólið notar það",
+        "statusLine": "Stöðulína",
+        "title": "Módular"
+      },
+      "moveDown": "Færa {{name}} niður",
+      "moveUp": "Færa {{name}} upp",
+      "packages": {
+        "coordError": "x og y þurfa að vera heilar tölur.",
+        "empty": "Engir pakkar ennþá.",
+        "hint": "Dálkarnir á borðinu, í þessari röð. x og y staðsetja dálkinn á borðinu.",
+        "name": "Nafn",
+        "nameError": "Pakkinn þarf nafn.",
+        "newTitle": "Nýr pakki",
+        "title": "Pakkar",
+        "x": "x",
+        "y": "y"
+      },
+      "participants": {
+        "addHint": "Viðkomandi þarf að eiga Huginn aðgang fyrir.",
+        "email": "Netfang",
+        "hint": "Allir á listanum sjá og skrifa allt í verkefninu.",
+        "name": "Nafn",
+        "newTitle": "Bæta við þátttakanda",
+        "removeConfirm": "Fjarlægja {{name}} úr verkefninu?",
+        "service": "Þjónustunotandi",
+        "short": "Stutt nafn",
+        "title": "Þátttakendur",
+        "you": "Þú"
+      },
+      "project": {
+        "bundle": "Samhengi (context bundle)",
+        "bundleHint": "Bakgrunnur sem hver ný lota og skyndigreining les fyrst.",
+        "name": "Nafn",
+        "never": "Aldrei uppfært",
+        "repoHint": "Mappa kóðans, skipanalínutólið notar hana.",
+        "repoPath": "Repo slóð",
+        "title": "Verkefni",
+        "updated": "Síðast uppfært {{when}}"
+      },
+      "remove": "Fjarlægja",
+      "save": "Vista",
+      "saved": "Vistað",
+      "title": "Stillingar verkefnis"
+    },
+    "toast": {
+      "newItem": "{{short}} sendi nýtt verk: {{title}}"
+    },
+    "top": {
+      "clear": "Hreinsa",
+      "connecting": "Tengist",
+      "connectingHint": "Ekki tengt enn, breytingar frá öðrum birtast eftir endurhleðslu",
+      "counters": "Stöðusía",
+      "language": "Tungumál",
+      "live": "Lifandi",
+      "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
+      "newItem": "Nýtt verk",
+      "noPackages": "Engir pakkar enn",
+      "noTags": "Engin tögg enn",
+      "openSearch": "Leita",
+      "package": "Pakki",
+      "participants": "Þátttakendur",
+      "project": "Verkefni",
+      "search": "Leita",
+      "settings": "Stillingar verkefnis",
+      "signOut": "Skrá út",
+      "tags": "Tögg",
+      "viewerMenu": "Valmynd fyrir {{name}}"
     },
     "viewerError": "Gat ekki sótt verkefnin þín."
   }

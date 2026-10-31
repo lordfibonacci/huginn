@@ -41,7 +41,7 @@ export function LanguageToggle({ className = '' }: LanguageToggleProps) {
             }`}
           >
             {lang === 'is' ? 'IS' : 'EN'}
-            <span className="sr-only"> — {LANGUAGE_LABELS[lang]}</span>
+            <span className="sr-only">, {LANGUAGE_LABELS[lang]}</span>
           </button>
         )
       })}

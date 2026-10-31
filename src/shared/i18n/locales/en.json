@@ -66,7 +66,8 @@
     "dueTomorrow": "due tomorrow",
     "dueInDays_one": "due in {{count}}d",
     "dueInDays_other": "due in {{count}}d",
-    "dueOn": "due {{date}}"
+    "dueOn": "due {{date}}",
+    "today": "today"
   },
   "vinnubord": {
     "board": {
@@ -78,7 +79,15 @@
         "parked": "On hold"
       },
       "loadError": "Could not load the project.",
-      "retry": "Try again"
+      "noneOpen": "Nothing open",
+      "open": "{{count}} open",
+      "retry": "Try again",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Show everything",
+      "zoomLevel": "Zoom level",
+      "refreshError": "Could not refresh the board. Showing the last loaded state.",
+      "moveError": "Could not save where the item card was moved. It is back in its place."
     },
     "loading": "Loading",
     "noAccess": {
@@ -87,8 +96,244 @@
       "title": "You are not a participant in any project"
     },
     "settings": {
-      "comingSoon": "Settings arrive in plan 2."
+      "title": "Project settings",
+      "back": "Back to the board",
+      "loadError": "Could not load the settings.",
+      "save": "Save",
+      "saved": "Saved",
+      "add": "Add",
+      "delete": "Delete",
+      "remove": "Remove",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "project": {
+        "title": "Project",
+        "name": "Name",
+        "repoPath": "Repo path",
+        "repoHint": "Folder of the project code, used by the command line tool.",
+        "bundle": "Context bundle",
+        "bundleHint": "Background that every new session and quick analysis reads first.",
+        "updated": "Last updated {{when}}",
+        "never": "Never updated"
+      },
+      "packages": {
+        "title": "Packages",
+        "hint": "Columns on the board, in this order. x and y place the column on the board.",
+        "name": "Name",
+        "x": "x",
+        "y": "y",
+        "newTitle": "New package",
+        "empty": "No packages yet.",
+        "coordError": "x and y must be whole numbers.",
+        "nameError": "The package needs a name."
+      },
+      "modules": {
+        "title": "Modules",
+        "hint": "Cards in the package columns. The order applies within each package.",
+        "name": "Name",
+        "slug": "Slug",
+        "slugHint": "Lowercase, used by the command line tool",
+        "package": "Package",
+        "noPackage": "No package",
+        "statusLine": "Status line",
+        "color": "Color",
+        "ghost": "Ghost (planned, not built)",
+        "newTitle": "New module",
+        "empty": "No modules in this package.",
+        "deleteConfirm": "Delete the module {{name}}?",
+        "choosePackage": "Choose a package"
+      },
+      "colors": {
+        "coral": "Coral",
+        "gold": "Gold",
+        "lilac": "Lilac",
+        "stone": "Stone",
+        "teal": "Teal"
+      },
+      "participants": {
+        "title": "Participants",
+        "hint": "Everyone on the list sees and writes everything in the project.",
+        "you": "You",
+        "service": "Service user",
+        "email": "Email",
+        "short": "Short",
+        "name": "Name",
+        "newTitle": "Add participant",
+        "addHint": "The person must already have a Huginn account.",
+        "removeConfirm": "Remove {{name}} from the project?"
+      }
     },
-    "viewerError": "Could not load your projects."
+    "viewerError": "Could not load your projects.",
+    "card": {
+      "actions_one": "{{count}} open action",
+      "actions_other": "{{count}} open actions",
+      "files_one": "{{count}} file",
+      "files_other": "{{count}} files",
+      "planOf": "Plan {{current}} of {{total}}",
+      "unread": "New for you",
+      "movedBy": "Last moved by {{name}}"
+    },
+    "panel": {
+      "label": "Item panel",
+      "moduleLabel": "Module panel",
+      "sheetHandle": "Drag up or down, drag down to close",
+      "tabs": {
+        "status": "Status",
+        "files": "Files",
+        "filesCount": "Files ({{count}})",
+        "questions": "Questions",
+        "questionsCount": "Questions ({{count}})",
+        "history": "History"
+      },
+      "sub": "{{module}}. Last moved by {{name}} {{when}}.",
+      "subNoMover": "{{module}}.",
+      "noModule": "No module",
+      "whereAreWe": "Where are we",
+      "noSummary": "Claude has not written a summary yet.",
+      "module": "Module",
+      "body": "Description",
+      "plans": "Plans",
+      "rulings_one": "{{count}} ruling",
+      "rulings_other": "{{count}} rulings",
+      "cost": "Cost if wrong: {{cost}}",
+      "reverse": "Reverse",
+      "actions": "Actions",
+      "actionDone": "Done: {{body}}",
+      "nextStep": "Next step",
+      "resume": "Continue",
+      "resumeHint": "Copies a context prompt for a new chat.",
+      "copy": "Copy",
+      "copyWhat": "Copy {{what}}",
+      "copied": "Copied",
+      "copyFailed": "Could not copy",
+      "changeStatus": "Change status",
+      "status": "Status",
+      "waitingOn": "Waiting on",
+      "choose": "Choose",
+      "save": "Save",
+      "source": "Source",
+      "files": {
+        "empty": "No files yet.",
+        "by": "{{name}}, {{when}}",
+        "back": "Back to files",
+        "loading": "Loading file",
+        "open": "Open {{name}}",
+        "openLink": "Tap to open {{name}}"
+      },
+      "questions": {
+        "empty": "No questions.",
+        "open": "Unanswered",
+        "answered": "Answered",
+        "asked": "{{name}} asks",
+        "to": "to {{name}}",
+        "answerBy": "{{name}} answered {{when}}",
+        "placeholder": "Write an answer",
+        "send": "Answer"
+      },
+      "history": {
+        "empty": "Nothing has happened yet."
+      },
+      "comment": {
+        "placeholder": "Write a comment",
+        "send": "Send",
+        "hint": "Ctrl and Enter sends"
+      },
+      "modulePanel": {
+        "kind": "Module",
+        "open": "Open items",
+        "noneOpen": "Nothing open.",
+        "done": "Done, last 90 days",
+        "dropped": "Dropped, last 90 days",
+        "comments": "Comments",
+        "noComments": "No comments yet."
+      },
+      "copyOf": {
+        "payload": "block",
+        "repoPath": "repo path",
+        "planPath": "plan path",
+        "nextStep": "next step",
+        "nextPrompt": "prompt",
+        "source": "source"
+      }
+    },
+    "history": {
+      "itemCreated": "created the item",
+      "itemStatus": "moved it from {{from}} to {{to}}",
+      "itemWaiting": "set it to wait on {{who}}",
+      "itemUpdated": "updated {{fields}}",
+      "planAdded": "added a plan",
+      "planStatus": "set a plan to {{to}}",
+      "fileAdded": "added {{name}}",
+      "questionAsked": "asked a question",
+      "questionAnswered": "answered a question",
+      "actionAdded": "added an action",
+      "actionDone": "checked off an action",
+      "rulingAdded": "added a ruling",
+      "commentAdded": "commented",
+      "other": "{{kind}}",
+      "someone": "System",
+      "fields": {
+        "title": "the title",
+        "summary": "the summary",
+        "body": "the description",
+        "module_id": "the module",
+        "tags": "the tags",
+        "next_step": "the next step",
+        "next_prompt": "the prompt"
+      }
+    },
+    "top": {
+      "project": "Project",
+      "counters": "Status filter",
+      "search": "Search",
+      "openSearch": "Search",
+      "package": "Package",
+      "tags": "Tags",
+      "noPackages": "No packages yet",
+      "noTags": "No tags yet",
+      "clear": "Clear",
+      "live": "Live",
+      "connecting": "Connecting",
+      "liveHint": "Changes from others show up as they happen",
+      "connectingHint": "Not connected yet, changes from others show up after a reload",
+      "participants": "Participants",
+      "viewerMenu": "Menu for {{name}}",
+      "settings": "Project settings",
+      "language": "Language",
+      "signOut": "Sign out",
+      "newItem": "New item"
+    },
+    "newItem": {
+      "heading": "New item",
+      "title": "Title",
+      "titlePlaceholder": "What is this about",
+      "titleRequired": "The item needs a title.",
+      "body": "Text",
+      "bodyHint": "Markdown works",
+      "module": "Module",
+      "noModule": "No module",
+      "tags": "Tags",
+      "tagsHint": "Comma between tags",
+      "files": "Files",
+      "drop": "Drop files here",
+      "pick": "Choose files",
+      "remove": "Remove {{name}}",
+      "state": {
+        "waiting": "Waiting",
+        "uploading": "Uploading",
+        "done": "Uploaded",
+        "error": "Error"
+      },
+      "create": "Create item",
+      "creating": "Creating",
+      "uploading": "Uploading files",
+      "cancel": "Cancel",
+      "openItem": "Open the item",
+      "createdWithErrors_one": "The item was created. {{count}} file did not go in, see above.",
+      "createdWithErrors_other": "The item was created. {{count}} files did not go in, see above."
+    },
+    "toast": {
+      "newItem": "{{short}} sent a new item: {{title}}"
+    }
   }
 }

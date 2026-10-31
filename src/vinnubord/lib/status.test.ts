@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { itemTone, itemStatusLabel, countsFor, isOnBoard, waitsFor } from './status'
+import {
+  BUCKET_TONE,
+  countBucket,
+  countsFor,
+  isOnBoard,
+  itemStatusLabel,
+  itemTone,
+  waitsFor,
+  wireMode,
+} from './status'
 import type { Item, Participant, Action } from './types'
 
 const ME = 'u-me'
@@ -96,7 +105,45 @@ describe('countsFor', () => {
       item({ id: 'i5', status: 'parked' }),
       item({ id: 'i6', status: 'done' }),
     ]
-    const c = countsFor(items, [action({ item_id: 'i1' })], ME, participants)
+    const c = countsFor(items, [action({ item_id: 'i1' })], ME)
     expect(c).toEqual({ new: 1, mine: 1, others: 1, build: 1, parked: 1 })
+  })
+})
+
+describe('countBucket', () => {
+  it('puts each on board item in exactly the bucket countsFor counts', () => {
+    const acts = [action({ item_id: 'i1' })]
+    expect(countBucket(item({ id: 'i1', status: 'ready' }), acts, ME)).toBe('mine')
+    expect(countBucket(item({ id: 'i2', status: 'new' }), acts, ME)).toBe('new')
+    expect(countBucket(item({ id: 'i3', status: 'waiting', waiting_on: OTHER }), acts, ME)).toBe('others')
+    expect(countBucket(item({ id: 'i4', status: 'building' }), acts, ME)).toBe('build')
+    expect(countBucket(item({ id: 'i5', status: 'ready' }), acts, ME)).toBe('build')
+    expect(countBucket(item({ id: 'i6', status: 'parked' }), acts, ME)).toBe('parked')
+  })
+  it('waiting on the service user counts as others, waiting on viewer as mine', () => {
+    expect(countBucket(item({ status: 'waiting', waiting_on: SVC }), [], ME)).toBe('others')
+    expect(countBucket(item({ status: 'waiting', waiting_on: ME }), [], ME)).toBe('mine')
+  })
+  it('done and dropped have no bucket', () => {
+    expect(countBucket(item({ status: 'done' }), [], ME)).toBeNull()
+    expect(countBucket(item({ status: 'dropped', waiting_on: ME }), [], ME)).toBeNull()
+  })
+})
+
+describe('BUCKET_TONE', () => {
+  it('maps every counter bucket to its pill tone', () => {
+    expect(BUCKET_TONE).toEqual({ new: 'gold', mine: 'coral', others: 'lilac', build: 'teal', parked: 'stone' })
+  })
+})
+
+describe('wireMode', () => {
+  it('pulse for items waiting on someone or new', () => {
+    expect(wireMode(item({ status: 'new' }), 'gold')).toBe('pulse')
+    expect(wireMode(item({ status: 'waiting', waiting_on: ME }), 'coral')).toBe('pulse')
+    expect(wireMode(item({ status: 'waiting', waiting_on: OTHER }), 'lilac')).toBe('pulse')
+  })
+  it('calm for teal, parked for parked items', () => {
+    expect(wireMode(item({ status: 'building' }), 'teal')).toBe('calm')
+    expect(wireMode(item({ status: 'parked' }), 'stone')).toBe('parked')
   })
 })

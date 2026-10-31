@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../shared/lib/supabase'
 import { loadBoard } from '../lib/api'
+import { channelStep } from '../lib/realtime'
 import type { BoardData } from '../lib/types'
 
 // Tables in the supabase_realtime publication. hg_projects and hg_participants
@@ -25,6 +26,8 @@ export function useBoardData(projectId: string | null | undefined) {
   const [data, setData] = useState<BoardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Whether the realtime channel is subscribed (ruling R17), for the "Lifandi" dot.
+  const [live, setLive] = useState(false)
   // Only the newest request may write state, so a slow older response
   // cannot overwrite a newer board.
   const requestRef = useRef(0)
@@ -48,6 +51,7 @@ export function useBoardData(projectId: string | null | undefined) {
   useEffect(() => {
     setData(null)
     setError(null)
+    setLive(false)
     if (!projectId) {
       requestRef.current++
       setLoading(false)
@@ -73,14 +77,24 @@ export function useBoardData(projectId: string | null | undefined) {
         scheduleReload,
       )
     }
-    channel.subscribe()
+    let active = true
+    let lost = false
+    channel.subscribe((status) => {
+      if (!active) return
+      const step = channelStep(lost, status)
+      lost = step.lost
+      if (step.live !== null) setLive(step.live)
+      // Back after a gap: fetch what changed while the channel was down.
+      if (step.reload) scheduleReload()
+    })
 
     return () => {
+      active = false
       if (timer) clearTimeout(timer)
       requestRef.current++
       void supabase.removeChannel(channel)
     }
   }, [projectId, reload])
 
-  return { data, loading, error, reload }
+  return { data, loading, error, reload, live }
 }

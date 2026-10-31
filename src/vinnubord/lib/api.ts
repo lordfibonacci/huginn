@@ -1,5 +1,12 @@
 import { supabase } from '../../shared/lib/supabase'
 import { validateUpload } from './upload'
+import {
+  moduleDeleteBlock,
+  participantErrorMessage,
+  participantRemoveBlock,
+  type PositionChange,
+  type ProjectPatch,
+} from './settings'
 import type {
   Action,
   BoardData,
@@ -166,6 +173,8 @@ export async function createItem(input: {
   body?: string
   moduleId?: string | null
   tags?: string[]
+  // Where the card lands on the board; the column default is used without it.
+  pos?: { x: number; y: number }
 }): Promise<Item> {
   const userId = await currentUserId()
   const { data, error } = await supabase
@@ -177,6 +186,7 @@ export async function createItem(input: {
       module_id: input.moduleId ?? null,
       tags: input.tags ?? [],
       created_by: userId,
+      ...(input.pos ? { pos_x: Math.round(input.pos.x), pos_y: Math.round(input.pos.y) } : {}),
     })
     .select('*')
     .single()
@@ -233,6 +243,8 @@ export async function markActionDone(id: string, done: boolean): Promise<void> {
   if (error) fail('Gat ekki uppfært aðgerðina.', error)
 }
 
+// read_at is stamped by the database (hg_reads_stamp_trg, migration 0006), so
+// a device clock behind the server cannot write a mark older than the change.
 export async function markRead(itemId: string): Promise<void> {
   const userId = await currentUserId()
   const { data: item, error: itemError } = await supabase
@@ -247,7 +259,6 @@ export async function markRead(itemId: string): Promise<void> {
       project_id: (item as { project_id: string }).project_id,
       item_id: itemId,
       user_id: userId,
-      read_at: new Date().toISOString(),
     },
     { onConflict: 'item_id,user_id' },
   )
@@ -291,4 +302,121 @@ export async function fileUrl(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage.from(FILES_BUCKET).createSignedUrl(storagePath, SIGNED_URL_SECONDS)
   if (error || !data) fail('Gat ekki opnað skrána.', error)
   return data.signedUrl
+}
+
+// Text of a stored file, for the markdown reader in the panel.
+export async function fileText(storagePath: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(FILES_BUCKET).download(storagePath)
+  if (error || !data) fail('Gat ekki lesið skrána.', error)
+  return data.text()
+}
+
+// Marks a ruling as one to reverse ("snúa við"), or clears the mark.
+export async function setRulingReversed(id: string, reversed: boolean): Promise<void> {
+  const { error } = await supabase.from('hg_rulings').update({ reversed }).eq('id', id)
+  if (error) fail('Gat ekki uppfært úrskurðinn.', error)
+}
+
+// ---------- Project settings ----------
+
+export async function updateProject(id: string, patch: ProjectPatch): Promise<void> {
+  if (Object.keys(patch).length === 0) return
+  const { error } = await supabase.from('hg_projects').update(patch).eq('id', id)
+  if (error) fail('Gat ekki vistað verkefnið.', error)
+}
+
+export type PackageInput = { id?: string; projectId: string; name: string; position: number; pos_x: number; pos_y: number }
+
+// Inserts a package without id, updates it with one.
+export async function upsertPackage(input: PackageInput): Promise<Package> {
+  const fields = { name: input.name.trim(), position: input.position, pos_x: input.pos_x, pos_y: input.pos_y }
+  const query = input.id
+    ? supabase.from('hg_packages').update(fields).eq('id', input.id)
+    : supabase.from('hg_packages').insert({ ...fields, project_id: input.projectId })
+  const { data, error } = await query.select('*').single()
+  if (error || !data) fail('Gat ekki vistað pakkann.', error)
+  return data as Package
+}
+
+export type ModuleInput = {
+  id?: string
+  projectId: string
+  packageId: string | null
+  slug: string
+  name: string
+  statusLine: string | null
+  color: string
+  isGhost: boolean
+  position: number
+}
+
+// Inserts a module without id, updates it with one.
+export async function upsertModule(input: ModuleInput): Promise<Module> {
+  const fields = {
+    package_id: input.packageId,
+    slug: input.slug,
+    name: input.name.trim(),
+    status_line: input.statusLine?.trim() ? input.statusLine.trim() : null,
+    color: input.color,
+    is_ghost: input.isGhost,
+    position: input.position,
+  }
+  const query = input.id
+    ? supabase.from('hg_modules').update(fields).eq('id', input.id)
+    : supabase.from('hg_modules').insert({ ...fields, project_id: input.projectId })
+  const { data, error } = await query.select('*').single()
+  if (error || !data) fail('Gat ekki vistað módulinn.', error)
+  return data as Module
+}
+
+// Writes new positions after a move up or down in a list (see reorder).
+export async function setPositions(table: 'hg_packages' | 'hg_modules', changes: PositionChange[]): Promise<void> {
+  const results = await Promise.all(
+    changes.map((c) => supabase.from(table).update({ position: c.position }).eq('id', c.id)),
+  )
+  const failed = results.find((r) => r.error)
+  if (failed) fail('Gat ekki vistað röðina.', failed.error)
+}
+
+// Only a module without items and without comments can go (ruling R24):
+// comments would be removed with it by the cascade. Closed items count too,
+// so both counts are asked of the database, not taken from the loaded board.
+export async function deleteModule(id: string): Promise<void> {
+  const head = { count: 'exact' as const, head: true }
+  const [items, comments] = await Promise.all([
+    supabase.from('hg_items').select('id', head).eq('module_id', id),
+    supabase.from('hg_comments').select('id', head).eq('module_id', id),
+  ])
+  if (items.error || items.count === null) fail('Gat ekki athugað verk módulsins.', items.error)
+  if (comments.error || comments.count === null) fail('Gat ekki athugað athugasemdir módulsins.', comments.error)
+  const block = moduleDeleteBlock(items.count, comments.count)
+  if (block) throw new Error(block)
+  const { error } = await supabase.from('hg_modules').delete().eq('id', id)
+  if (error) fail('Gat ekki eytt módulnum.', error)
+}
+
+export async function addParticipantByEmail(
+  projectId: string,
+  email: string,
+  short: string,
+  displayName: string,
+): Promise<Participant> {
+  const { data, error } = await supabase.rpc('hg_add_participant', {
+    p_project: projectId,
+    p_email: email.trim(),
+    p_short: short.trim(),
+    p_name: displayName.trim(),
+  })
+  const known = error ? participantErrorMessage(error.code, error.message) : null
+  if (known) throw new Error(known)
+  if (error || !data) fail('Gat ekki bætt þátttakandanum við.', error)
+  return data as Participant
+}
+
+// Never yourself and never the service user (ruling R24).
+export async function removeParticipant(participant: Participant, viewerId: string): Promise<void> {
+  const block = participantRemoveBlock(participant, viewerId)
+  if (block) throw new Error(block)
+  const { error } = await supabase.from('hg_participants').delete().eq('id', participant.id)
+  if (error) fail('Gat ekki fjarlægt þátttakandann.', error)
 }

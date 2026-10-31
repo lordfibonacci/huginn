@@ -1,4 +1,5 @@
-import type { Action, FileRow, Item, ItemStatus, Module, Participant, Plan, PlanStatus, Project, Question, Ruling } from './types'
+import { PLAN_STATUS_NAMES, STATUS_NAMES } from './status'
+import type { Action, FileRow, Item, Module, Participant, Plan, Project, Question, Ruling } from './types'
 
 export type ContinuationInput = {
   project: Project
@@ -14,21 +15,8 @@ export type ContinuationInput = {
 
 const NONE = '(engin)'
 
-const ITEM_STATUS: Record<ItemStatus, string> = {
-  new: 'Nýtt',
-  waiting: 'Bíður',
-  ready: 'Tilbúið til byggingar',
-  building: 'Í byggingu',
-  parked: 'Í bið',
-  done: 'Lokið',
-  dropped: 'Hætt við',
-}
-
-const PLAN_STATUS: Record<PlanStatus, string> = {
-  todo: 'Ekki byrjað',
-  building: 'Í byggingu',
-  done: 'Lokið',
-}
+const ITEM_STATUS = STATUS_NAMES
+const PLAN_STATUS = PLAN_STATUS_NAMES
 
 function section(title: string, lines: string[]): string {
   return `## ${title}\n${lines.length > 0 ? lines.join('\n') : NONE}`

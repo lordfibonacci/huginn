@@ -1,49 +1,159 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useViewer } from '../hooks/useViewer'
 import { useBoardData } from '../hooks/useBoardData'
-import { countsFor, type Counts } from '../lib/status'
+import { useFilter } from '../hooks/useFilter'
+import { useNewItemToast } from '../hooks/useNewItemToast'
+import { packageCounts, tagCounts } from '../lib/filters'
+import { countsFor } from '../lib/status'
+import type { Item } from '../lib/types'
+import { Board, type BoardHandle } from '../components/Board'
+import { ItemPanel } from '../components/ItemPanel'
+import { ModulePanel } from '../components/ModulePanel'
+import { NewItemSheet } from '../components/NewItemSheet'
+import { PanelShell } from '../components/PanelShell'
+import { Toast } from '../components/Toast'
+import { TopBar } from '../components/TopBar'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
 import { NoAccessPage } from './NoAccessPage'
 
-const COUNT_KEYS: (keyof Counts)[] = ['new', 'mine', 'others', 'build', 'parked']
-
-// Plan 1: project name and counters only. The board itself comes in plan 2.
+// The whiteboard of one project: the top bar with counters and filters, the
+// board with all the remaining height, the side panel (bottom sheet on narrow
+// screens) for the selected item or the opened module, and the new item sheet.
 export function BoardPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const { user, projects, loading: viewerLoading, error: viewerError, reload: reloadViewer } = useViewer()
   const project = projects.find((p) => p.slug === slug) ?? null
-  const { data, loading: boardLoading, error, reload } = useBoardData(project?.id ?? null)
+  const { data, loading: boardLoading, error, reload, live } = useBoardData(project?.id ?? null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [openModuleId, setOpenModuleId] = useState<string | null>(null)
+  const [newOpen, setNewOpen] = useState(false)
+  const filterApi = useFilter(project?.id ?? '')
+  const boardRef = useRef<BoardHandle | null>(null)
+  const newItemToast = useNewItemToast(data, user?.id ?? '')
 
-  const counts = useMemo(() => {
-    if (!data || !user) return null
-    return countsFor(data.items, data.actions, user.id, data.participants)
-  }, [data, user])
+  // An item and a module never share the panel: choosing one clears the other,
+  // null (empty board, Esc, sheet dragged shut) clears both.
+  const select = useCallback((id: string | null) => {
+    setSelectedId(id)
+    setOpenModuleId(null)
+  }, [])
+  const openModule = useCallback((id: string) => {
+    setOpenModuleId(id)
+    setSelectedId(null)
+  }, [])
+  const closePanel = useCallback(() => select(null), [select])
+
+  const loaded = data !== null && project !== null && data.project.id === project.id
+  const viewerId = user?.id ?? ''
+  const counts = useMemo(
+    () => (loaded ? countsFor(data.items, data.actions, viewerId) : null),
+    [loaded, data, viewerId],
+  )
+  const tags = useMemo(() => (loaded ? tagCounts(data.items, filterApi.filter.tags) : []), [loaded, data, filterApi.filter.tags])
+  const packages = useMemo(
+    () => (loaded ? packageCounts(data.packages, data.modules, data.items) : []),
+    [loaded, data],
+  )
+
+  // A package deleted while it is in the filter would keep the board dim with
+  // nothing in the Pakki menu to switch off, so unknown ids are dropped.
+  const { keepPackages } = filterApi
+  const packageList = loaded ? data.packages : null
+  useEffect(() => {
+    if (packageList) keepPackages(new Set(packageList.map((p) => p.id)))
+  }, [packageList, keepPackages])
+
+  const place = useCallback((moduleId: string | null) => boardRef.current?.placeNew(moduleId) ?? null, [])
+  const closeNew = useCallback(() => setNewOpen(false), [])
+  const onCreated = useCallback(
+    (item: Item) => {
+      setNewOpen(false)
+      select(item.id)
+      // Realtime brings the item too; this makes the panel open without waiting for it.
+      void reload()
+    },
+    [select, reload],
+  )
 
   if (viewerLoading) return <Loader />
   if (viewerError) return <LoadError centered message={t('vinnubord.viewerError')} onRetry={reloadViewer} />
   if (!user || !project) return <NoAccessPage />
 
-  return (
-    <div className="flex h-full flex-col overflow-auto p-4 sm:p-6">
-      <h1 className="text-xl font-semibold text-huginn-text-primary">{project.name}</h1>
-
-      {error ? (
+  // The full error screen only when there is no board to show. A failed
+  // refresh keeps the loaded board and shows a small notice instead.
+  if (error && !loaded) {
+    return (
+      <div className="flex h-full flex-col p-4 sm:p-6">
         <LoadError message={t('vinnubord.board.loadError')} onRetry={() => void reload()} />
-      ) : boardLoading || !counts ? (
-        <Loader />
-      ) : (
-        <ul className="mt-6 flex flex-wrap gap-3">
-          {COUNT_KEYS.map((key) => (
-            <li key={key} className="min-w-[7rem] rounded-xl border border-huginn-border bg-huginn-card px-4 py-3">
-              <div className="text-2xl font-semibold tabular-nums text-huginn-text-primary">{counts[key]}</div>
-              <div className="text-xs text-huginn-text-secondary">{t(`vinnubord.board.counts.${key}`)}</div>
-            </li>
-          ))}
-        </ul>
+      </div>
+    )
+  }
+  if (boardLoading || !loaded || !counts) return <Loader />
+
+  const selectedItem = selectedId ? (data.items.find((i) => i.id === selectedId) ?? null) : null
+  const openModuleRow = openModuleId ? (data.modules.find((m) => m.id === openModuleId) ?? null) : null
+  const viewerParticipant = data.participants.find((p) => p.user_id === user.id) ?? null
+
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <TopBar
+        project={project}
+        projects={projects}
+        counts={counts}
+        filter={filterApi}
+        tags={tags}
+        packages={packages}
+        participants={data.participants}
+        viewer={{ userId: user.id, participant: viewerParticipant, email: user.email ?? null }}
+        live={live}
+        onNewItem={() => setNewOpen(true)}
+      />
+      <Board
+        key={project.id}
+        ref={boardRef}
+        data={data}
+        viewerId={user.id}
+        filter={filterApi.filter}
+        selectedId={selectedId}
+        onSelect={select}
+        onOpenModule={openModule}
+      >
+        <Toast
+          toast={newItemToast.toast}
+          panelOpen={selectedItem !== null || openModuleRow !== null}
+          onOpen={select}
+          onDone={newItemToast.dismiss}
+        />
+      </Board>
+      <PanelShell
+        open={selectedItem !== null || openModuleRow !== null}
+        onClose={closePanel}
+        label={openModuleRow ? t('vinnubord.panel.moduleLabel') : t('vinnubord.panel.label')}
+      >
+        {selectedItem ? (
+          <ItemPanel key={`item:${selectedItem.id}`} data={data} item={selectedItem} viewerId={user.id} />
+        ) : openModuleRow ? (
+          <ModulePanel
+            key={`module:${openModuleRow.id}`}
+            data={data}
+            module={openModuleRow}
+            viewerId={user.id}
+            onSelectItem={select}
+          />
+        ) : null}
+      </PanelShell>
+      <NewItemSheet open={newOpen} data={data} tags={tags} place={place} onClose={closeNew} onCreated={onCreated} />
+      {error && (
+        <div className="hg-notice" role="status">
+          <span>{t('vinnubord.board.refreshError')}</span>
+          <button type="button" onClick={() => void reload()}>
+            {t('vinnubord.board.retry')}
+          </button>
+        </div>
       )}
     </div>
   )
