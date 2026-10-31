@@ -23,7 +23,7 @@ export function itemTone(item: Item, viewerId: string, participants: Participant
   }
 }
 
-// Status labels are hard-coded Icelandic (ruling R5), not routed through i18n.
+// Status labels are hard coded Icelandic (ruling R5), not routed through i18n.
 export function itemStatusLabel(item: Item, viewerId: string, participants: Participant[]): string {
   switch (item.status) {
     case 'new': {
@@ -60,7 +60,7 @@ export function waitsFor(item: Item, actions: Action[], viewerId: string): boole
 
 export type Counts = { new: number; mine: number; others: number; build: number; parked: number }
 
-// Buckets are exclusive per on-board item. "mine" takes precedence: anything
+// Buckets are exclusive per item on the board. "mine" takes precedence: anything
 // waiting for the viewer (waiting_on or an open owned action) counts only there.
 export function countsFor(
   items: Item[],

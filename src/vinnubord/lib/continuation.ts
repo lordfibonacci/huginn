@@ -1,7 +1,8 @@
-import type { Action, FileRow, Item, Module, Plan, Project, Question, Ruling } from './types'
+import type { Action, FileRow, Item, ItemStatus, Module, Participant, Plan, PlanStatus, Project, Question, Ruling } from './types'
 
 export type ContinuationInput = {
   project: Project
+  participants: Participant[]
   item: Item
   module: Module | null
   plans: Plan[]
@@ -13,12 +14,31 @@ export type ContinuationInput = {
 
 const NONE = '(engin)'
 
+const ITEM_STATUS: Record<ItemStatus, string> = {
+  new: 'Nýtt',
+  waiting: 'Bíður',
+  ready: 'Tilbúið til byggingar',
+  building: 'Í byggingu',
+  parked: 'Í bið',
+  done: 'Lokið',
+  dropped: 'Hætt við',
+}
+
+const PLAN_STATUS: Record<PlanStatus, string> = {
+  todo: 'Ekki byrjað',
+  building: 'Í byggingu',
+  done: 'Lokið',
+}
+
 function section(title: string, lines: string[]): string {
   return `## ${title}\n${lines.length > 0 ? lines.join('\n') : NONE}`
 }
 
 export function buildContinuationPrompt(input: ContinuationInput): string {
-  const { project, item, module, plans, actions, rulings, questions, files } = input
+  const { project, participants, item, module, plans, actions, rulings, questions, files } = input
+
+  const nameOf = (userId: string | null): string =>
+    participants.find((p) => p.user_id === userId)?.display_name ?? '?'
 
   const verk = [
     `Verkefni: ${project.name}`,
@@ -28,15 +48,15 @@ export function buildContinuationPrompt(input: ContinuationInput): string {
   ]
 
   const where = [
-    `Staða: ${item.status}`,
+    `Staða: ${ITEM_STATUS[item.status]}`,
     ...(item.next_step ? [`Næsta skref: ${item.next_step}`] : []),
   ]
 
-  const planLines = plans.map((p) => `- ${p.name}, ${p.status}, ${p.path ?? NONE}`)
+  const planLines = plans.map((p) => `- ${p.name}, ${PLAN_STATUS[p.status]}, ${p.path ?? NONE}`)
 
   const actionLines = actions
     .filter((a) => a.done_at === null)
-    .map((a) => `- ${a.owner}: ${a.body}`)
+    .map((a) => `- ${nameOf(a.owner)}: ${a.body}`)
 
   const questionLines = questions.filter((q) => q.answer === null).map((q) => `- ${q.body}`)
 
