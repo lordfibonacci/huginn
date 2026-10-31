@@ -44,7 +44,7 @@
 
 - [ ] **Step 1:** `config.test.mjs`: `resolveProject` finnur `.huginn-project` í foreldramöppu (tmp dir); án hennar og án `--project` kastar villu með textanum "Ekkert verkefni fundið"; `redact` fjarlægir password. `format.test.mjs`: `statusMarkdown` gefur sama streng tvisvar fyrir sömu gögn og flokkar rétt eftir waiting_on.
 - [ ] **Step 2:** FAIL, skrifa, PASS.
-- [ ] **Step 3:** Skrifa `huginn.mjs`, `client.mjs`. Handpróf: `node cli/huginn.mjs login` með credentials Claude-notandans (Heimir býr til skrána), `node cli/huginn.mjs pull --project metta` prentar tómt borð rétt. `node cli/huginn.mjs pull --project metta --json | grep -c password` = 0.
+- [ ] **Step 3:** Skrifa `huginn.mjs`, `client.mjs`. Byggingaraðili býr til `~/.huginn/credentials.json` sjálfur úr `.env` (url og anonKey úr `VITE_SUPABASE_*`, netfang `claude@huginn.pro`, lykilorð `HG_SMOKE_PASSWORD`), skráin fer aldrei í repo. Handpróf: `node cli/huginn.mjs login`, `node cli/huginn.mjs pull --project metta` prentar tómt borð rétt. `node cli/huginn.mjs pull --project metta --json | grep -c password` = 0.
 - [ ] **Step 4:** Commit `feat(cli): huginn tool, login, pull`.
 
 ### Task 2: Skrifskipanir

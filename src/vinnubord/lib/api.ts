@@ -1,5 +1,6 @@
 import { supabase } from '../../shared/lib/supabase'
-import { validateUpload } from './upload'
+import { storageSafeName, validateUpload } from './upload'
+import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './boardWindow'
 import {
   moduleDeleteBlock,
   participantErrorMessage,
@@ -29,9 +30,6 @@ import type {
 
 export const FILES_BUCKET = 'hg-files'
 const SIGNED_URL_SECONDS = 3600
-const CLOSED_HISTORY_DAYS = 90
-// Most recent events kept in BoardData, below the PostgREST 1000 row cap.
-const EVENTS_LIMIT = 500
 
 type DbError = { message: string } | null
 
@@ -44,16 +42,6 @@ async function currentUserId(): Promise<string> {
   const id = data.session?.user.id
   if (error || !id) fail('Þú ert ekki innskráð(ur).', error)
   return id
-}
-
-// Storage keys reject many characters (Icelandic letters among them), so the
-// key gets a safe copy of the name. The original name is kept in hg_files.name.
-function storageSafeName(name: string): string {
-  const safe = name
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^A-Za-z0-9._-]+/g, '_')
-  return safe.length > 0 ? safe : 'skra'
 }
 
 export async function loadBoard(projectId: string): Promise<BoardData> {

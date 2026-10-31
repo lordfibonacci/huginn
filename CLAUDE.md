@@ -8,16 +8,17 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Pla
 
 ## Current state
 
-Plans 1 and 2 are built and verified (`npm run smoke:hg` prints `ok 6/6` against the live DB, 212 vitest tests, `npm run build` green).
+Plans 1 to 3 are built and verified (360 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
 
 - Plan 1 (grunnur): the `hg_` schema, API layer, realtime board data hook, pure status, filter, upload and continuation logic, the app shell, routes and the participant gate.
 - Plan 2 (bord): the whiteboard. Pack columns and module cards, item cards with spring drag and wires with sparks on a canvas, pan and zoom with touch (pinch, two finger pan, 350 ms long press to drag), side panel and bottom sheet for items and modules (status, files, questions, history, comments, copy buttons, Markdown reader), top bar with counter pills, filters, search and a viewer menu, new item sheet with file upload, aurora and entry motion, new item toast, project settings. The live project metta is seeded with 5 packages and 28 modules.
 
-Not built yet, do not describe them as existing:
-- Plan 3: the command line tool and the `/huginn` skill for Claude Code, session close and the repo mirror (`docs/huginn/`).
+- Plan 3 (cli): the `huginn` command line tool in `cli/` (read, write, `pull --brief`, `sync` mirror to `docs/huginn/` with `STATUS.md`), the `/huginn` skill and SessionStart hook in metta2_new, and the first fill of metta (73 items, `cli/seed/`).
+
+Not built yet, do not describe it as existing:
 - Plan 4: quick analysis (edge function calling the Claude API on new items).
 
-Open items are listed in `docs/progress/01-vinnubord-grunnur.md` and `docs/progress/02-vinnubord-bord.md`.
+Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md` and `docs/progress/03-vinnubord-cli.md`.
 
 ## Tech Stack
 
@@ -26,7 +27,7 @@ Open items are listed in `docs/progress/01-vinnubord-grunnur.md` and `docs/progr
 - **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
 - **Routing:** React Router v7
 - **i18n:** `react-i18next`
-- **Tests:** vitest, `src/**/*.test.ts` only (pure logic in `src/vinnubord/lib/`). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
+- **Tests:** vitest, `src/**/*.test.ts` (pure logic in `src/vinnubord/lib/`) and `cli/**/*.test.mjs` (CLI pure logic and parity with the web). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
 - **PWA:** `vite-plugin-pwa` auto update service worker, manifest description "Vinnuborð Mettu"
 - **Markdown:** `marked` and `dompurify` render Markdown in the panel reader. Loaded lazily (`Markdown.tsx` is a lazy chunk), so the board bundle does not carry them. No other UI libraries, icons are inline SVG.
 - **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs`
@@ -41,6 +42,8 @@ npm run preview   # Preview production build
 npm run lint      # ESLint, currently broken (v9 expects eslint.config.js). Use build and test instead.
 npm run brand     # Regenerate PWA icons and brand PNGs from ../Graffík source
 npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
+npm run seed:metta # One time only, already run 2026-10-31. Refuses a real run once metta has items (--again overrides); --dry-run still works
+node cli/huginn.mjs <command> # The huginn CLI (login, pull, sync, item, plan ...), see cli/README.md
 ```
 
 ## Folder structure
@@ -67,6 +70,11 @@ src/
 │   ├── lib/        # supabase client, types (Profile only), dateUtils
 │   └── i18n/       # index.ts, locales/en.json, locales/is.json
 └── main.tsx
+cli/
+├── huginn.mjs      # entry: login, whoami, pull, sync and the write command groups
+├── lib/            # config, client, format, status, write (pure), ops (Supabase writes), commands, mirror (pure), sync + *.test.mjs
+├── seed/           # seed.mjs, seedlib.mjs (pure, tested), metta-2026-10-31.json
+└── README.md       # setup, credentials, every command and the mirror rules (Icelandic)
 supabase/migrations/  # numbered SQL migrations for hg_ objects
 scripts/              # build-brand-assets, translate-is, import-trello-to-huginn (legacy)
 ```
@@ -153,6 +161,7 @@ Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Ico
 - **Panel survives refetch.** `BoardPage` keys `ItemPanel` by item id, so tab, scroll and drafts live across realtime refetches and reset when another item opens. `markRead` runs on open and whenever someone else changes the open item (not after the viewer's own change, `needsReadMark` in `lib/reads.ts`). The server stamps `read_at`. Optimistic toggles (`useOptimisticToggle`) follow the live value when realtime brings it.
 - **Counter pills filter by count bucket.** `countBucket(item, actions, viewerId)` in `status.ts` decides which pill an item counts in (new, mine, others, build, parked), `countsFor` uses it, and `BUCKET_TONE` maps a bucket to the tone the filter matches, so a pill number and its filter always agree. Card color still comes from `itemTone`.
 - **Status is stored, not computed.** Claude moves status. Dragging only arranges the board.
+- **CLI copies web logic.** `cli/` is plain Node ESM and cannot import the TS in `src`, so it copies the rules it needs as `.mjs` (status names, `isOnBoard`, `waitsFor`, upload limits, `placeNewCard`, card sizes from `--hg-*` tokens) and `cli/lib/parity.test.mjs` asserts they match `src/vinnubord/lib` and `vinnubord.css`. Change both sides together. It signs in as a normal user with the anon key (the Claude service user in Heimir's setup), so RLS and the triggers apply; credentials live in `~/.huginn/`, never in a repo. Flags are strict: write commands and `sync` reject unknown flags.
 - **ErrorBoundary** wraps the router, render errors show a panel instead of a blank screen.
 
 ## Deployment

@@ -1,0 +1,157 @@
+#!/usr/bin/env node
+// huginn: command line tool for the Huginn whiteboard. See cli/README.md.
+import { getClient, getMe, getProject, getUser, loadBoard } from './lib/client.mjs'
+import { resolve } from 'node:path'
+import { WRITE_GROUPS, runWrite, writeUsage } from './lib/commands.mjs'
+import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
+import { briefCounts, briefLine, filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
+import { mirrorTargets, planMirror } from './lib/mirror.mjs'
+import { downloadFile } from './lib/ops.mjs'
+import { executeMirror, listFolders, readExisting, syncReport } from './lib/sync.mjs'
+import { parseCommand } from './lib/write.mjs'
+
+const USAGE = `Notkun: huginn <skipun> [rofar]
+
+Skipanir:
+  login                 Prófar innskráningu úr ~/.huginn/credentials.json
+  whoami                Sýnir notanda og þátttakanda í verkefninu
+  pull [--since ISO]    Sækir borðið og prentar stöðuna
+  pull --brief          Ein lína: hve mörg opin verk bíða hvers þátttakanda
+  sync [--out docs/huginn] [--dry-run]
+                        Speglar opin verk og skrár þeirra í docs/huginn og skrifar STATUS.md
+
+Skrifskipanir (<id> er heilt uuid eða minnst 8 fyrstu stafir þess, t.d. #1a2b3c4d úr pull):
+${writeUsage()}
+
+Rofar:
+  --project <slug>      Verkefni, annars úr .huginn-project í möppunni eða foreldri
+  --json                JSON í stað texta
+  --debug               Prentar stack við villu
+  --help                Þessi texti
+`
+
+// Every secret we know of, masked in all output. Never throws.
+function knownSecrets() {
+  try {
+    return [loadCredentials().password]
+  } catch {
+    return []
+  }
+}
+
+function out(value, flags) {
+  const secrets = knownSecrets()
+  const text = flags.json ? JSON.stringify(redact(value, secrets), null, 2) : redact(String(value), secrets)
+  process.stdout.write(text.endsWith('\n') ? text : `${text}\n`)
+}
+
+async function login(argv, flags) {
+  const client = await getClient({ fresh: true })
+  const user = await getUser(client)
+  out(flags.json ? { ok: true, email: user.email, user_id: user.id } : `Innskráð(ur) sem ${oneLine(user.email)}.`, flags)
+}
+
+async function whoami(argv, flags) {
+  const { slug } = resolveProject(process.cwd(), argv)
+  const client = await getClient()
+  const user = await getUser(client)
+  const project = await getProject(client, slug)
+  const me = await getMe(client, project.id)
+  if (flags.json) {
+    out(
+      {
+        email: user.email,
+        user_id: user.id,
+        project: { id: project.id, slug: project.slug, name: project.name },
+        participant: { id: me.id, display_name: me.display_name, short: me.short, is_service: me.is_service },
+      },
+      flags,
+    )
+    return
+  }
+  out(whoamiText(user, project, me), flags)
+}
+
+async function pull(argv, flags) {
+  const { slug } = resolveProject(process.cwd(), argv)
+  if (flags.since !== undefined && (typeof flags.since !== 'string' || Number.isNaN(Date.parse(flags.since)))) {
+    throw new Error('--since þarf ISO dagsetningu, t.d. 2026-10-31T00:00:00Z.')
+  }
+  if (flags.brief !== undefined && flags.brief !== true) throw new Error('--brief tekur ekkert gildi.')
+  if (flags.brief && flags.since !== undefined) throw new Error('--brief og --since fara ekki saman.')
+  const client = await getClient()
+  const project = await getProject(client, slug)
+  let data = await loadBoard(client, project.id)
+  if (flags.brief) {
+    const counts = briefCounts(data, data.participants)
+    out(flags.json ? counts : briefLine(counts), flags)
+    return
+  }
+  if (flags.since) data = filterSince(data, flags.since)
+  out(flags.json ? data : statusMarkdown(data, data.participants), flags)
+}
+
+const SYNC_USAGE = 'Notkun: huginn sync [--out docs/huginn] [--dry-run]'
+
+// Mirror of the board into the repo (rulings R6, R7, R8, R18). Writes only
+// what changed and never deletes anything.
+async function sync(argv, globalFlags) {
+  const { positional, flags } = parseCommand(argv, { out: 'value', 'dry-run': 'bool' }, 'sync')
+  if (positional.length !== 1) throw new Error(SYNC_USAGE)
+  if (flags.out !== undefined && !flags.out.trim()) throw new Error('--out vantar gildi.')
+  const { slug } = resolveProject(process.cwd(), argv)
+  const outDir = flags.out !== undefined ? resolve(process.cwd(), flags.out) : defaultMirrorDir(process.cwd(), flags.project)
+  const dryRun = flags['dry-run'] === true
+
+  const client = await getClient()
+  const project = await getProject(client, slug)
+  const data = await loadBoard(client, project.id)
+  const now = Date.now()
+  const folders = listFolders(outDir)
+  const targets = mirrorTargets(data, now, folders)
+  const plan = planMirror(data, readExisting(outDir, targets), { now, folders })
+  const result = await executeMirror(outDir, plan, { download: (path) => downloadFile(client, path), dryRun })
+
+  // Failed entries are listed and the run ends with exit code 1, after
+  // everything else, STATUS.md included, has been written.
+  const report = syncReport(outDir, result, dryRun)
+  out(globalFlags.json ? report.json : report.text, globalFlags)
+  if (report.exitCode) process.exitCode = report.exitCode
+}
+
+const COMMANDS = { login, whoami, pull, sync }
+
+async function write(argv) {
+  const { positional } = parseArgs(argv)
+  const { result, flags } = await runWrite(positional[0], positional[1], argv)
+  out(flags.json ? result.json : result.text, flags)
+}
+for (const group of WRITE_GROUPS) COMMANDS[group] = write
+
+async function main(argv) {
+  const { positional, flags } = parseArgs(argv)
+  const name = positional[0]
+  if (flags.help || !name || name === 'help') {
+    process.stdout.write(USAGE)
+    return
+  }
+  const command = COMMANDS[name]
+  if (!command) throw new Error(`Óþekkt skipun: ${name}. Keyrðu huginn --help.`)
+  await command(argv, flags)
+}
+
+const argv = process.argv.slice(2)
+try {
+  await main(argv)
+} catch (error) {
+  const secrets = knownSecrets()
+  const message = error instanceof Error ? error.message : String(error)
+  // Messages can carry database or Supabase text, so they get the same cleaning.
+  process.stderr.write(`Villa: ${oneLine(redact(message, secrets))}\n`)
+  if (parseArgs(argv).flags.debug && error instanceof Error && error.stack) {
+    // Keep the stack's line breaks, drop every other control character.
+    const stack = redact(error.stack, secrets).replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/g, '')
+    process.stderr.write(`${stack}\n`)
+  }
+  process.exitCode = 1
+}

@@ -26,6 +26,16 @@ export function validateUpload(file: { name: string; size: number }): UploadChec
   return { ok: true }
 }
 
+// Storage keys reject many characters (Icelandic letters among them), so the
+// key gets a safe copy of the name. The original name is kept in hg_files.name.
+export function storageSafeName(name: string): string {
+  const safe = name
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '_')
+  return safe.length > 0 ? safe : 'skra'
+}
+
 export function isTextLike(name: string): boolean {
   return TEXT_EXTENSIONS.has(extensionOf(name))
 }
