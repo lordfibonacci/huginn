@@ -837,5 +837,27 @@
     "today": "Í dag",
     "viewAllProjects": "Skoða öll verkefni →",
     "yourProjects": "Þín verkefni"
+  },
+  "vinnubord": {
+    "board": {
+      "counts": {
+        "build": "Í byggingu",
+        "mine": "Bíður þín",
+        "new": "Nýtt",
+        "others": "Bíða annarra",
+        "parked": "Í bið"
+      },
+      "loadError": "Ekki tókst að sækja verkefnið.",
+      "retry": "Reyna aftur"
+    },
+    "loading": "Hleður",
+    "noAccess": {
+      "body": "Biddu Heimi um að gefa þér aðgang.",
+      "signOut": "Skrá út",
+      "title": "Þú ert ekki þátttakandi í neinu verkefni"
+    },
+    "settings": {
+      "comingSoon": "Stillingar koma í plani 2."
+    }
   }
 }

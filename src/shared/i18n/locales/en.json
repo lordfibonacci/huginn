@@ -828,5 +828,27 @@
       "save": "Save",
       "saving": "..."
     }
+  },
+  "vinnubord": {
+    "board": {
+      "counts": {
+        "build": "In build",
+        "mine": "Waiting on you",
+        "new": "New",
+        "others": "Waiting on others",
+        "parked": "On hold"
+      },
+      "loadError": "Could not load the project.",
+      "retry": "Try again"
+    },
+    "loading": "Loading",
+    "noAccess": {
+      "body": "Ask Heimir to give you access.",
+      "signOut": "Sign out",
+      "title": "You are not a participant in any project"
+    },
+    "settings": {
+      "comingSoon": "Settings arrive in plan 2."
+    }
   }
 }

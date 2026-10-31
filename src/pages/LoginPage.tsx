@@ -1,23 +1,18 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../shared/hooks/useAuth'
 import { Lockup } from '../shared/components/Logo'
 import { LanguageToggle } from '../shared/components/LanguageToggle'
 
-type Mode = 'signin' | 'signup' | 'forgot' | 'check-inbox' | 'reset-sent'
-
-const EXPECTED_INVITE_CODE = import.meta.env.VITE_INVITE_CODE ?? 'Huginn_app2026!'
+// Sign in and forgot password only. Accounts are created by Heimir, there is no signup.
+type Mode = 'signin' | 'forgot' | 'reset-sent'
 
 export function LoginPage() {
   const { t } = useTranslation()
-  const { signIn, signUp, requestPasswordReset, resendConfirmation } = useAuth()
-  const [searchParams] = useSearchParams()
-  const initialMode: Mode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
-  const [mode, setMode] = useState<Mode>(initialMode)
+  const { signIn, requestPasswordReset, resendConfirmation } = useAuth()
+  const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -31,19 +26,6 @@ export function LoginPage() {
     try {
       if (mode === 'signin') {
         await signIn(email, password)
-      } else if (mode === 'signup') {
-        if (inviteCode.trim() !== EXPECTED_INVITE_CODE) {
-          setError(t('auth.errors.inviteInvalid'))
-          setLoading(false)
-          return
-        }
-        const { needsEmailConfirmation } = await signUp(email, password)
-        if (needsEmailConfirmation) {
-          setPendingEmail(email)
-          setMode('check-inbox')
-          setPassword('')
-          setInviteCode('')
-        }
       } else if (mode === 'forgot') {
         await requestPasswordReset(email)
         setPendingEmail(email)
@@ -87,15 +69,7 @@ export function LoginPage() {
           <Lockup markSize={104} wordmarkHeight={40} gap={6} />
         </div>
 
-        {mode === 'check-inbox' ? (
-          <CheckInboxPanel
-            email={pendingEmail}
-            error={error}
-            info={info}
-            onResend={handleResend}
-            onBack={() => switchMode('signin')}
-          />
-        ) : mode === 'reset-sent' ? (
+        {mode === 'reset-sent' ? (
           <ResetSentPanel
             email={pendingEmail}
             onBack={() => switchMode('signin')}
@@ -104,7 +78,6 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-sm text-huginn-text-secondary text-center">
               {mode === 'signin' && t('auth.login.subtitle')}
-              {mode === 'signup' && t('auth.signup.subtitle')}
               {mode === 'forgot' && t('auth.forgot.subtitle')}
             </p>
 
@@ -139,26 +112,9 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500"
               />
-            )}
-            {mode === 'signup' && (
-              <div>
-                <input
-                  type="text"
-                  placeholder={t('auth.fields.inviteCode')}
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  required
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="w-full bg-huginn-card text-white rounded-xl px-4 py-3 outline-none border border-huginn-border focus:border-huginn-accent focus:ring-2 focus:ring-huginn-accent placeholder-gray-500 font-mono text-sm"
-                />
-                <p className="text-[11px] text-huginn-text-muted mt-1.5 px-1">
-                  {t('auth.signup.inviteHint')}
-                </p>
-              </div>
             )}
             <button
               type="submit"
@@ -167,24 +123,13 @@ export function LoginPage() {
             >
               {loading ? '…'
                 : mode === 'signin' ? t('auth.login.submit')
-                : mode === 'signup' ? t('auth.signup.submit')
                 : t('auth.forgot.submit')}
             </button>
 
             <div className="flex items-center justify-between text-sm">
               {mode === 'signin' && (
-                <>
-                  <button type="button" onClick={() => switchMode('forgot')} className="text-huginn-text-muted hover:text-white transition-colors">
-                    {t('auth.login.forgotLink')}
-                  </button>
-                  <button type="button" onClick={() => switchMode('signup')} className="text-huginn-text-muted hover:text-white transition-colors">
-                    {t('auth.login.createLink')}
-                  </button>
-                </>
-              )}
-              {mode === 'signup' && (
-                <button type="button" onClick={() => switchMode('signin')} className="w-full text-huginn-text-muted hover:text-white transition-colors text-center">
-                  {t('auth.signup.haveAccountLink')}
+                <button type="button" onClick={() => switchMode('forgot')} className="w-full text-huginn-text-muted hover:text-white transition-colors text-center">
+                  {t('auth.login.forgotLink')}
                 </button>
               )}
               {mode === 'forgot' && (
@@ -195,35 +140,6 @@ export function LoginPage() {
             </div>
           </form>
         )}
-      </div>
-    </div>
-  )
-}
-
-function CheckInboxPanel({ email, error, info, onResend, onBack }: { email: string; error: string | null; info: string | null; onResend: () => void; onBack: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-huginn-card border border-huginn-border rounded-xl p-5 text-center space-y-3">
-      <div className="w-12 h-12 mx-auto rounded-full bg-huginn-accent/20 text-huginn-accent flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M2.25 6.75A2.25 2.25 0 0 1 4.5 4.5h15a2.25 2.25 0 0 1 2.25 2.25v.347l-9.75 5.687L2.25 7.097V6.75Zm0 2.91v7.59A2.25 2.25 0 0 0 4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V9.66l-9.181 5.357a1.5 1.5 0 0 1-1.638 0L2.25 9.66Z" />
-        </svg>
-      </div>
-      <h2 className="text-base font-bold text-white">{t('auth.checkInbox.title')}</h2>
-      <p className="text-sm text-huginn-text-secondary">
-        {t('auth.checkInbox.sentTo')}<br />
-        <span className="text-white font-semibold">{email}</span>
-      </p>
-      <p className="text-xs text-huginn-text-muted">{t('auth.checkInbox.body')}</p>
-      {error && <p className="text-huginn-danger text-xs">{error}</p>}
-      {info && <p className="text-huginn-success text-xs">{info}</p>}
-      <div className="flex flex-col gap-1.5 pt-2">
-        <button onClick={onResend} className="text-xs text-huginn-accent hover:underline">
-          {t('auth.checkInbox.resend')}
-        </button>
-        <button onClick={onBack} className="text-xs text-huginn-text-muted hover:text-white transition-colors">
-          {t('auth.forgot.backLink')}
-        </button>
       </div>
     </div>
   )
