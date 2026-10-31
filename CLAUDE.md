@@ -1,215 +1,155 @@
 # Huginn
 
-Personal-first project management PWA (Trello-style, multi-user). Capture thoughts via text or voice, triage them into Trello-style boards, collaborate with invited members. Live at **huginn.pro** (Vercel).
+Huginn is the shared work whiteboard for Metta ("vinnuborð Mettu"). Three participants read and write the same place: Heimir (decisions, running things), Árni (design, modules, specs in Markdown and HTML prototypes, never code) and Claude (analysis, plans, building, as its own service user). It replaces the Pending section of the metta2 CLAUDE.md, WhatsApp hand offs and memory notes as the single source for what is open. Live at **huginn.pro** (Vercel).
 
-Heimir is the founder (Iceland, Markaðsdeildin). Each project is an independent business (real estate, camping, apps, etc.) — projects are NOT related sub-projects.
+The old Trello style board, inbox, runes and Meta social planner are gone from the code. The repo, the name, login and the Supabase project stay.
+
+Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Plans: `docs/superpowers/plans/2026-10-31-vinnubord-{1-grunnur,2-bord,3-cli,4-skyndigreining}.md`.
+
+## Current state
+
+Plan 1 (grunnur, foundation) is built: the `hg_` schema, an API layer, realtime board data hook, pure status, filter, upload and continuation logic with tests, the app shell, routes and the participant gate. The board page is a placeholder that shows the status counters.
+
+Not built yet, do not describe them as existing:
+- Plan 2: the whiteboard itself (packages, modules, item cards, threads, side panel, filters, touch), project settings.
+- Plan 3: the command line tool and the `/huginn` skill for Claude Code, session close and the repo mirror (`docs/huginn/`).
+- Plan 4: quick analysis (edge function calling the Claude API on new items).
+
+Open items from plan 1 are listed in `docs/progress/01-vinnubord-grunnur.md`.
 
 ## Tech Stack
 
 - **Frontend:** React 19 + Vite 6 + TypeScript
-- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite` plugin) with `huginn-*` color tokens defined in `@theme` in `src/index.css`. **No `tailwind.config.ts`** — v4 uses the `@theme` directive.
+- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite`) with `huginn-*` color tokens in `@theme` in `src/index.css`. No `tailwind.config.ts`.
 - **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
-- **Rich Text:** Tiptap (ProseMirror-based) for card descriptions
-- **Markdown / text viewer:** `marked` (GFM) + `DOMPurify` via `TextAttachmentViewer`. Clicking a `.md`/`.txt`/`.csv`/etc. attachment opens an inline reader; helpers `isMarkdownAttachment` / `isPlainTextAttachment` / `textAttachmentKind` live in the same file. Rendered HTML uses the `.huginn-markdown` class from `src/index.css`.
-- **Drag & Drop:** `@dnd-kit/core` + `@dnd-kit/sortable` (lifted DndContext in `ProjectDetailPage` so board + inbox share it)
-- **PWA:** `vite-plugin-pwa` auto-update service worker
-- **Voice:** Web Speech API (browser-native)
-- **Routing:** React Router v7 (nested routes with `Layout`)
-- **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs` (PWA icons + optimised brand PNGs); run `npm run brand` after replacing source assets
+- **Routing:** React Router v7
+- **i18n:** `react-i18next`
+- **Tests:** vitest, `src/**/*.test.ts` only (pure logic in `src/vinnubord/lib/`)
+- **PWA:** `vite-plugin-pwa` auto update service worker, manifest description "Vinnuborð Mettu"
+- **Kept for plan 2:** `marked` and `dompurify` (markdown reader), not imported yet
+- **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs`
 
 ## Commands
 
 ```bash
 npm run dev       # Vite dev server (prefers 5173, falls back to 5174)
-npm run build     # tsc -b && vite build (Vercel runs this)
+npm run build     # tsc -b && vite build (Vercel runs this). Main verification gate.
+npm run test      # vitest run
 npm run preview   # Preview production build
-npm run lint      # ESLint — currently broken (v9 expects eslint.config.js, migration pending). Use `npm run build` / `tsc -b` as the verification gate.
-npm run brand     # Regenerate PWA icons + optimise brand PNGs from /Graffík source
+npm run lint      # ESLint, currently broken (v9 expects eslint.config.js). Use build and test instead.
+npm run brand     # Regenerate PWA icons and brand PNGs from ../Graffík source
 npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
 ```
 
-## Architecture
-
-Feature-module structure. Desktop has a floating Trello-style toolbar (`ToolBar`) and an optional sidebar inbox (`InboxPanel`). Mobile uses a three-tab `BottomNav` (Inbox · Boards · You) and a dedicated `/inbox` page for quick capture.
+## Folder structure
 
 ```
 src/
-├── app/                  # AppRouter, Layout
-├── features/
-│   ├── inbox/
-│   │   ├── components/   # InboxPanel, VoiceButton, ThoughtCard (legacy), etc.
-│   │   └── hooks/        # useInbox, useVoiceRecorder, useThoughts (legacy)
-│   └── projects/
-│       ├── components/   # BoardView, ListColumn, CardPopup, TaskCard, ChecklistSection,
-│       │                   LabelPicker/Badges, MemberPicker/Avatars, DatePicker,
-│       │                   CalendarView, ProjectSettingsDrawer, ProjectColorPicker,
-│       │                   BoardBackgroundPicker, ProjectCard (tile), ProjectGlyph,
-│       │                   BoardMembersDrawer, BoardMembersStack, PendingInvitesPanel,
-│       │                   CardThreeDotMenu, MoveCardDialog, RichTextEditor,
-│       │                   CommentSection
-│       └── hooks/        # useProjects, useLists, useProjectTasks, useChecklists,
-│                           useChecklistItems (legacy), useLabels, useTaskLabels,
-│                           useComments, useActivity, useAttachments, useBoardMembers,
-│                           useBoardRole, usePendingInvites, useTaskMembers,
-│                           useProjectNotes (legacy)
+├── app/            # App.tsx, routes.tsx (ProtectedRoute, PublicRoute)
+├── vinnubord/      # everything new lives here, nothing imports old feature code
+│   ├── lib/        # types.ts, api.ts, status.ts, filters.ts, upload.ts, continuation.ts (+ *.test.ts)
+│   ├── hooks/      # useViewer (memberships), useBoardData (board load + realtime)
+│   ├── components/ # Shell, Loader, LoadError
+│   └── pages/      # HomePage, BoardPage, SettingsStubPage, NoAccessPage
+├── pages/          # LoginPage, AuthCallbackPage, ResetPasswordPage
 ├── shared/
-│   ├── components/       # Layout, BottomNav, ToolBar, ModalShell, Avatar,
-│   │                       AccountMenu, AccountSettings, AccountSettingsDrawer,
-│   │                       HexInput, Logo (Mark/Wordmark/Lockup/LoadingScreen/EmptyState)
-│   ├── hooks/            # useAuth, useProfile, useAvatarUpload, useTaskCounts,
-│   │                       useProfileSearch
-│   └── lib/              # supabase client, types, dateUtils, boardBackgrounds
-├── pages/                # LandingPage, LoginPage, AuthCallbackPage, ResetPasswordPage,
-│                           ProjectsPage, ProjectDetailPage, InboxPage, SettingsPage
+│   ├── components/ # Avatar, Logo, ErrorBoundary, LanguageToggle, ModalShell
+│   ├── hooks/      # useAuth, useProfile, useIsMobile, useLanguagePreference
+│   ├── lib/        # supabase client, types (Profile only), dateUtils
+│   └── i18n/       # index.ts, locales/en.json, locales/is.json
 └── main.tsx
+supabase/migrations/  # numbered SQL migrations for hg_ objects
+scripts/              # build-brand-assets, translate-is, import-trello-to-huginn (legacy)
 ```
+
+Some kept shared files (Avatar, ModalShell, useIsMobile, useLanguagePreference, dateUtils) are not imported right now. They stay for plan 2.
 
 ## Routes
 
-- `/` — public `LandingPage` (marketing). Authenticated users get bounced: desktop → `/projects`, mobile (< 768px) → `/inbox`.
-- `/login` — sign-in / sign-up / forgot-password state machine. `?mode=signup` deep-links into the signup form. Signup gated by `VITE_INVITE_CODE` (default `Huginn_app2026!`).
-- `/auth/callback` — handles Supabase email-confirm and password-recovery redirects.
-- `/reset-password` — new password form (uses the recovery session).
-- `/projects` — tile grid of boards (protected).
-- `/projects/:id` — `ProjectDetailPage`: board view + optional inbox sidebar + floating ToolBar.
-- `/inbox` — capture-first page (protected); voice + text.
-- `/settings` — `SettingsPage`; also opens in-place as `AccountSettingsDrawer` from the toolbar avatar.
+- `/` : `HomePage`. Signed out goes to `/login`. Signed in goes to the viewer's first project, or `NoAccessPage` if they are a participant in none.
+- `/login` : sign in and forgot password. No signup, accounts are created by Heimir.
+- `/auth/callback` : Supabase email confirm and password recovery redirects, then to `/` or `/reset-password`.
+- `/reset-password` : new password form, then to `/`.
+- `/p/:slug` : `BoardPage` for one project (protected, participant only).
+- `/p/:slug/stillingar` : `SettingsStubPage`, placeholder until plan 2.
+- `*` : redirects to `/`.
 
 ## Supabase
 
-- **Project:** `czdjxtsjgughimlazdmu` (shared with other small projects). All Huginn tables prefixed `huginn_`.
-- **Region:** eu-west-2.
+- **Project:** `czdjxtsjgughimlazdmu`, region eu-west-2. **Shared with other small projects.** Touch only `hg_` objects. The Auth Site URL is shared too, do not change it; the code passes `emailRedirectTo` explicitly.
+- Old `huginn_` tables and the `huginn-attachments` bucket still exist and are not used by the new code, except `huginn_profiles` (read and locale write through `useProfile`). Heimir deletes the old objects by hand later. Never drop or delete them from an agent.
+- The old edge functions `meta-oauth-complete` and `meta-publish` were removed from the repo only. They may still be deployed in Supabase.
 
-### Tables
+### hg_ tables (migration 0001)
 
-- `huginn_projects` — boards. Has `background` (preset id OR a custom CSS string), `color` (solid `#hex` OR `gradient:#a,#b`).
-- `huginn_lists` — Trello-style columns on a board. Sorted by `position`.
-- `huginn_tasks` — cards. `project_id IS NULL` ⇒ inbox card. Fields include `archived`, `updated_at` (trigger), `position`, `start_date`, `due_date`, `recurring`.
-- `huginn_labels` + `huginn_task_labels` — project-scoped labels, label-task junction.
-- `huginn_checklists` + `huginn_checklist_items` — multiple named checklists per card.
-- `huginn_comments` — user comments on cards.
-- `huginn_activity` — auto-logged feed (e.g. `attached` action with `{ name, url, type }` in `details`).
-- `huginn_attachments` — file/image/link per card. `is_cover` promotes an image to the board-tile hero + CardPopup hero.
-- `huginn_board_members` — project membership. `role ∈ {owner, admin, member}`, `status ∈ {pending, active}`, `invited_by uuid`. Pending invites appear on the invitee's `/projects` as `PendingInvitesPanel`.
-- `huginn_task_members` — card assignees.
-- `huginn_profiles` — `display_name`, `email`, `avatar_url`.
-- `huginn_mentions` — one row per @ inserted in a description (`comment_id IS NULL`) or comment. RLS via `huginn_can_access_task`. Realtime-published.
-- `huginn_card_views` — `(task_id, user_id)` PK + `viewed_at`. Updated on `CardPopup` / `TaskDetailDrawer` / `TaskDetailPanel` mount. Unread-mention count = `huginn_mentions WHERE created_at > my last viewed_at`. Self-only RLS. Realtime-published.
-- (legacy, not used in UI) `huginn_thoughts`, `huginn_notes`.
+Every table except `hg_projects` carries `project_id`. RLS on all of them goes through `hg_is_participant(project_id)` (security definer). All participants of a project read and write everything in it, no roles.
 
-### RLS — membership-based
+- `hg_projects` : slug, name, repo_path, context_bundle. Created through MCP or service role. The insert policy needs the creator to already be a participant, so there is no working web insert path (ruling R1).
+- `hg_participants` : user_id, display_name, short (H, Á), is_service (the Claude user).
+- `hg_packages`, `hg_modules` : fixed board structure. Modules belong to a package, have status_line, color, is_ghost.
+- `hg_items` : the things that move. status in new, waiting, ready, building, parked, done, dropped. `waiting_on` points at a participant. tags, pos_x, pos_y, next_step, next_prompt, closed_at.
+- `hg_plans` (todo, building, done), `hg_rulings` (on a plan), `hg_files`, `hg_questions`, `hg_actions`, `hg_comments` (on item or module).
+- `hg_events` : timeline, written only by security definer triggers (migration 0003), select only for participants.
+- `hg_reads` : read marks per (item_id, user_id).
 
-All project-scoped tables route through `SECURITY DEFINER` helpers:
-- `huginn_is_board_member(project_id, user_id)` — only active members.
-- `huginn_board_role(project_id, user_id)` — returns role for active members.
-- `huginn_can_manage_board(project_id, user_id)` — owner or admin.
-- `huginn_can_access_task(task_id, user_id)` — handles both project tasks and owner-only inbox tasks (`project_id IS NULL`).
-- `huginn_can_access_checklist(checklist_id, user_id)` — derives via task.
+Helpers: `hg_is_participant(p_project)`, `hg_service_user(p_project)`. Realtime publication includes all hg_ tables except projects and participants.
 
-Triggers:
-- `huginn_projects_add_owner_trg` — on insert, adds creator as `owner` active member.
-- `huginn_tasks_touch_updated_at_trg` — `BEFORE UPDATE` bumps `updated_at`.
+### Migrations
 
-Pending-invite RPCs:
-- `huginn_pending_invites_for(user_id)` — returns user's pending invites joined with project + inviter profile.
-- `huginn_accept_invite(member_id)` — invitee flips their own row to `active`.
+Files live in `supabase/migrations/` (see the README there). Applied with the Supabase MCP tool `apply_migration`, name = file name without `.sql`. Never `supabase db push`. Files are applied in order and never edited after they are applied. Any DROP or DELETE is run by hand by Heimir in the SQL editor.
 
-### Storage
-
-- `huginn-attachments` — card files/images (public bucket). Path pattern: `${user_id}/${task_id}/${ts}_${name}`. Policies: public read, owner insert/update/delete where the first path segment equals `auth.uid()`.
-- `huginn-avatars` — user profile pictures (public read, owner write). Path: `${user_id}/avatar-${ts}.${ext}`. Max 2 MB. Image MIME types only.
-
-### Realtime publication
-
-Tables must be in the `supabase_realtime` publication for `postgres_changes` to fire. Check with `SELECT tablename FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename LIKE 'huginn_%'`. To enrol a new table: `ALTER PUBLICATION supabase_realtime ADD TABLE huginn_foo`.
+- `0001_hg_schema` : applied.
+- `0002_hg_rls_hardening` : written, not applied yet (Heimir runs it in the SQL editor).
+- `0003_hg_triggers_storage` : not written yet (event log triggers, attribution stamping, closed_at trigger, private bucket `hg-files`).
 
 ### Auth
 
-Email/password via Supabase Auth. **Email confirmation is ON**. Code passes `emailRedirectTo: ${origin}/auth/callback` so confirmation links bounce back to Huginn regardless of the Supabase Site URL (which is shared with Lovable apps, do not change). Password reset uses `/auth/callback?type=recovery` → `/reset-password`.
+Email and password through Supabase Auth, email confirmation on. Password reset goes `/auth/callback?type=recovery` then `/reset-password`. Participants are Heimir, Árni and a Claude service user (not created yet). Access to a project is decided by `hg_participants` only.
 
 ### Env vars (`.env`)
 
 ```
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
-VITE_INVITE_CODE=Huginn_app2026!   # soft-gate for signup; rotate via Vercel env vars
-OPEN_ROUTER_API=sk-or-v1-...       # for npm run translate (not needed at runtime)
+OPEN_ROUTER_API=sk-or-v1-...   # only for npm run translate
 ```
 
 ## Internationalization
 
-Two UI languages: **Icelandic (default)** and **English**. Managed by `react-i18next` via `src/shared/i18n/`.
+Two UI languages: Icelandic (default) and English, through `src/shared/i18n/`.
 
-- **Source of truth:** `src/shared/i18n/locales/en.json` (hand-maintained). Keys in `is.json` are emitted alphabetically by the translate script — insert manual additions in alpha order to avoid diff churn on the next run.
-- `src/shared/i18n/locales/is.json` is generated by `npm run translate` — calls OpenRouter Gemini 3.1 Pro with the English source, hash-diffed per key so only changed/new keys get re-translated. Hand edits to `is.json` stick (cache in `.is.cache.json`, gitignored) as long as the English source doesn't change. Retries transient 504s and persists after each batch so partial progress isn't lost.
-- **Language resolution order:** `huginn_profiles.locale` (DB) → `localStorage.huginn.lang` → `navigator.language` (English browsers → English, everyone else → Icelandic).
-- **Switcher** in `AccountMenu`; preference synced to the nullable `huginn_profiles.locale` column (text, no default).
-- **Dates:** `src/shared/lib/dateUtils.ts` uses `Intl.DateTimeFormat` / `Intl.RelativeTimeFormat` with the active locale. i18next plural suffixes (`_one`/`_other`) handle Icelandic-specific plural rules.
-- **Voice:** `useVoiceRecorder` sets `recognition.lang` from `i18n.language` so Icelandic users dictate in Icelandic.
-- **Missing keys** log to console in dev only — catches drift when adding new features. Convention: add key to `en.json`, run `npm run translate`, commit both JSONs.
+- `en.json` is the hand maintained source. `is.json` is generated by `npm run translate` (OpenRouter Gemini, hash diffed per key, cache in the gitignored `.is.cache.json`). Hand edits to `is.json` stick while the English source is unchanged. Keys in `is.json` are emitted alphabetically, so insert manual additions in alpha order.
+- New strings: add the key to `en.json`, run `npm run translate`, commit both files. Removing keys: remove them from both files by hand, do not run translate for that.
+- New UI keys go under `vinnubord.*`. Status labels in `src/vinnubord/lib/status.ts` are hard coded Icelandic for now (ruling R5).
+- Language resolution: `localStorage.huginn.lang`, then `navigator.language` (English browsers get English, everyone else Icelandic). `LanguageToggle` also writes `huginn_profiles.locale`.
 
 ## Design System
 
-Tokens live in `src/index.css` under `@theme`. **Purple on neutral grey** (NOT midnight blue — that was an early spec; the midnight colour still exists but only as one of the per-project board-background presets).
+Tokens live in `src/index.css` under `@theme`: purple accent `#6c5ce7` on neutral grey (`huginn-base #1d2125`, `huginn-surface #282e33`, `huginn-card #22272b`, `huginn-border #3d474f`, text `#e8e8f0` / `#888888` / `#555555`). The whiteboard look from the spec (blue grey board, gold, lilac, coral, teal and stone status colors, one font family) arrives in plan 2. Keep colors, spacing and motion in tokens in one place, Heimir will restyle a lot.
 
-- `--color-huginn-base: #1d2125` — nav, sidebars, toolbar
-- `--color-huginn-surface: #282e33` — page background
-- `--color-huginn-card: #22272b` — cards, inputs, drawers
-- `--color-huginn-hover: #333c43`
-- `--color-huginn-border: #3d474f`
-- `--color-huginn-accent: #6c5ce7` (purple)
-- `--color-huginn-accent-hover: #5b4bd5`
-- `--color-huginn-accent-soft: rgba(108, 92, 231, 0.15)`
-- `--color-huginn-success: #00b894` · `--color-huginn-warning: #fdcb6e` · `--color-huginn-danger: #e17055`
-- `--color-huginn-text-primary: #e8e8f0` · `--color-huginn-text-secondary: #888888` · `--color-huginn-text-muted: #555555`
-
-Board backgrounds (per-project): 9 presets (Default/Ocean/Sunset/Forest/Ember/Arctic/Midnight/Aurora/Storm) + custom 2-stop or 3-stop gradients. See `src/shared/lib/boardBackgrounds.ts` (`buildCustomGradient`, `parseCustomGradient`).
-
-Project glyph: faceted SVG diamond (`ProjectGlyph`). Accepts a solid hex `#6c5ce7` OR `gradient:#from,#to`. Rendered with dark top-right facet + light bottom-left highlight + optional coloured halo (`drop-shadow`).
-
-Brand: raven mark + `huginn` wordmark. `Lockup` / `Mark` / `Wordmark` components in `src/shared/components/Logo.tsx`. Favicon + PWA icons in `public/icons/` and `public/brand/`.
+Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Icons in `public/icons/` and `public/brand/`.
 
 ## Key Patterns
 
-- **Hooks with Realtime.** Every data hook fetches on mount AND subscribes to Supabase Realtime. Channel names use `crypto.randomUUID()` to avoid collisions between hook instances.
-- **Realtime: filtered for delivery, unfiltered for leavers.** Two truths in tension. (1) Server-filtered `postgres_changes` (e.g. `project_id=eq.X`) is the only RELIABLE delivery path — fully unfiltered subscriptions drop INSERTs from other users intermittently (Árni adds a card → Heimir doesn't see it until refresh). (2) But filtered subscriptions evaluate against the event's NEW row, so rows that LEAVE the filter (task moved to another board → `project_id` changes) never emit on the source board. Resolution: use BOTH on the same channel — a filtered `event:'*'` binding for the in-project events that must arrive, plus an unfiltered `UPDATE` binding as a safety net for leavers. `useProjectTasks` does this. `removeTaskLocal` is the local mover's optimistic drop. `useInbox` / `useTaskCounts` stay fully unfiltered because their fetches aren't scoped to a single project_id (inbox is `project_id IS NULL`, counts span all projects).
-- **Profile freshness across users.** `huginn_profiles` is in the realtime publication; `useProfile` watches the signed-in user's row, and `useBoardMembers` / `useTaskMembers` listen for UPDATEs on members' profile rows so teammate avatar/name/locale changes propagate without refresh.
-- **Module-level bus for own-write echoes.** When a hook writes a row that another hook needs to derive UI state from on the same device, don't rely on the realtime round-trip — it's intermittently slow or dropped (tab-focus changes, bad networks) and used to leave the bell badge stale until refresh. `useMentions.ts` exposes a module-scoped `cardViewedListeners: Set<...>`; `useMarkCardViewed` emits synchronously alongside its `huginn_card_views` upsert, and `useGlobalMentions` / `useUnreadMentionsByTask` merge into local `views` state on subscription. Realtime stays in place as cross-device sync.
-- **Optimistic updates with rollback.** Mutations update local state first; on error revert to previous state.
-- **ModalShell.** Centered modal on desktop, bottom drawer on mobile. Used by Project/Account settings + Move dialog.
-- **Shared DndContext.** `ProjectDetailPage` owns the DndContext so the inbox sidebar and board can drag cards to each other. BoardView lists are per-list `SortableContext`s using `verticalListSortingStrategy`. Never unmount the active sortable item mid-drag (causes dnd-kit to lose track).
-- **Phantom preview for inbox → list drops.** `inboxPreview` state injects a virtual task into `tasksWithPreview` so the destination list animates cards out of the way.
-- **Feature barrels.** Each feature has an `index.ts` re-exporting its public API.
-- **Feedback loop trap in controlled editors.** CardPopup's description debounces DB writes (700 ms), RichTextEditor's prop-sync skips when the editor is focused, and the card popup's `useEffect` only resets local state when `task.id` changes — not on every `task.notes` realtime echo. Violating any of these caused lost keystrokes in an earlier iteration.
-- **Pending-reorder gate.** `handleDragEnd` in `ProjectDetailPage` fires N parallel per-row UPDATEs. Each emits its own realtime event → `tasks` / `lists` refetch with a PARTIALLY-reordered server snapshot mid-flight. The `[tasks]` and `[lists]` resync useEffects guard on `pendingReorderRef.current` to skip the resync until all writes complete. Without this, the card visibly jumps to wrong slots for 200–400 ms before the final echo settles ("drop lag").
-- **Instant, Trello-style drops.** `DragOverlay dropAnimation={null}` plus every `useSortable` uses `transition: null` + `animateLayoutChanges: () => false`. If you reintroduce a transition or layout-animation, hover-time transforms finish animating to zero *after* release — visible as a flash or lag.
-- **Per-list card sort lives in `ProjectDetailPage`**, not `BoardView`, because `handleDragEnd` needs to flip a list to `'manual'` on same-list card drops. `dragSourceListId` suspends the source list's sort visually during the drag (renders as manual) so dnd-kit's arrayMove has a stable order to reorder.
-- **`dragOver` is for cross-list state changes only.** Calling `arrayMove` in `dragOver` for same-list reorders causes max-update-depth crashes when the active card's height differs from its swap partner (cursor stays over the same target → re-fire → loop). Same-list reorder happens only in `dragEnd`. dnd-kit's `verticalListSortingStrategy` handles the visual via transforms (instant snap thanks to `transition: null`).
-- **Cross-list `dragOver` needs the `recentCrossListRef` guard.** Without it, `closestCorners` ping-pongs between cards in adjacent lists when the active card is tall (cover images), looping forever. Suppress the inverse of the most recent cross-list move within ~120 ms.
-- **Mid-drag realtime refetches must be gated by `isDraggingRef`.** A teammate uploading an attachment or labelling a card during your drag re-creates `coverImageMap` / `taskLabelsMap`, re-renders every `TaskCard`, and worsens collision-detection thrash. Queue a trailing refetch (`pendingCoverRefetchRef` / `pendingLabelRefetchRef`) and flush it on `dragEnd` / `dragCancel`.
-- **DragOverlay must render with the same data as the source card.** Pass `coverImageUrl` and `labels` to the overlay's `<TaskCard>` so the active rect's height matches what dnd-kit measured at drag start.
-- **`backdrop-blur-*` creates a stacking context.** Absolutely-positioned children can't z-index above the parent's siblings. If a popover renders behind sibling content, give the parent an explicit `z-*` or use a document-level `mousedown` listener (not a fixed overlay) for outside-click dismissal.
-
-## Multi-User
-
-Fully shipped. Owner / admin / member roles (viewer removed). Pending-invite flow: adding a member inserts a `pending` row → they see it on `/projects` → accept (active) or decline (delete). Members get real-time access to everything on the board including the activity feed with inline image previews.
+- **Realtime board data.** `useBoardData` loads the whole board through `lib/api.ts` and subscribes to hg_ tables filtered on `project_id`. Channel names use `crypto.randomUUID()` to avoid collisions between hook instances.
+- **Pure logic is tested.** Anything that decides status, counters, filters, upload rules or the continuation prompt lives in `src/vinnubord/lib/` without React or Supabase, with a vitest file next to it. Test files import from `vitest` explicitly because `tsc -b` compiles `src`.
+- **Status is stored, not computed.** Claude moves status. Dragging only arranges the board.
+- **ErrorBoundary** wraps the router, render errors show a panel instead of a blank screen.
 
 ## Deployment
 
-- **Prod:** https://huginn.pro on Vercel (auto-deploys on `main`).
-- **Build command:** `npm run build` (Vercel default).
-- **Env vars (Vercel):** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_INVITE_CODE` — all Production scope. Without these the bundle throws `supabaseUrl is required` at mount.
-- **Site URL** in Supabase Auth is *not* Huginn-specific (shared project). Do not change it; the code passes `emailRedirectTo` explicitly.
+- **Prod:** https://huginn.pro on Vercel, auto deploys on `main`. Build command `npm run build`.
+- **Env vars (Vercel):** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, Production scope. Without them the bundle throws `supabaseUrl is required`. `VITE_INVITE_CODE` is no longer used and can be removed.
 
 ## Conventions
 
-- Commit messages: `feat:`, `fix:`, `style:`, `refactor:`, `simplify:`, `docs:` prefixes. Commits include `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>` when Claude authored.
-- No tests yet.
-- `.env` and `.superpowers/` are gitignored. `.playwright-mcp/` + `login-with-brand*.png` also gitignored.
-- Favicon / branded icons are regenerated via `npm run brand`; source PNGs live outside the repo at `../Graffík/`.
-- Feature work uses the superpowers `brainstorming` skill: brainstorm → write spec to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` → implement. Existing specs live alongside as reference.
-- Top-level `ErrorBoundary` (`src/shared/components/ErrorBoundary.tsx`) wraps the router — render exceptions show the error panel instead of a blank screen. Useful for diagnosing live bugs from screenshots.
-
+- **Style:** no em dashes or hyphen dashes as punctuation anywhere: prose, UI copy, code comments, docs. Use commas, periods or colons. Icelandic UI, no all caps banners.
+- Commit messages: `feat:`, `fix:`, `style:`, `refactor:`, `simplify:`, `docs:`, `chore:`, `test:` prefixes, scope `(vinnubord)` for this rebuild. Include a `Co-Authored-By:` trailer for the Claude model that authored the commit.
+- Heimir alone pushes. Agents commit when asked, never push.
+- No mass process spawning on Heimir's PC.
+- `.env`, `.superpowers/`, `docs/session/`, `.playwright-mcp/`, `supabase/.temp/` are gitignored.
+- Feature work: brainstorm, spec in `docs/superpowers/specs/`, plan in `docs/superpowers/plans/`, build in an Opus session. Older specs and plans in those folders describe the removed Trello surface and are history only.
+- `docs/progress/NN-<plan>.md` records what a finished vinnubord plan built and what is still pending. It is a per plan handover, not a session log.
 
 ## End-of-session rituals
 
