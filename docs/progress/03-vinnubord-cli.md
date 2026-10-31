@@ -147,18 +147,9 @@ Ekki skoðað í vafra. Borðið var sannreynt gegnum `pull`, `pull --json`, `pu
    Lestu `D:/Claude Code/metta2/metta2_new/.claude/skills/huginn/SKILL.md` og fylgdu því. Það er eina útgáfan.
    ```
 
-3. **Níu atriði úr fyllingunni til að staðfesta:**
-   1. e1: deploy á parse-sds og askur-chat frá main er opið handtak "ef það er ekki þegar gert" (askur v92 er eldra en B2 commit 222b5e36).
-   2. r1 og i1: askur-chat redeploy handtökin gætu þegar verið leyst með v92, haka við ef svo er.
-   3. h2: titli breytt úr "sex smokes" í "Gemini-yfirferð og opin smokes" eftir doc 105.
-   4. h3: ekki skráð hvort viðvaranir Jans voru settar aftur á og hvort post user smoke Askur var keyrt.
-   5. vh1 heldur opið (bíður Árna) þótt umferðin sé sameinuð: 10 iPad athuganir og eftirfylgni doc 142. Loka þegar hann skilar.
-   6. p1 í byggingu því phone touch er á eigin grein, kjarnaplanið er lokið.
-   7. Úrskurðir R1 til R17 á Plan A eru ensk orðrétt afrit úr doc 141, ekki þýddir.
-   8. Þrjár migration drift línur úr Pending sameinaðar í eitt verk.
-   9. Spjöld við þétta módúla lenda langt niðri í dálki (landing y 4573, vh1 y 3494). Draga á vefnum.
-4. **Plans B1 og B2** á Efnaskrá eru án úrskurða þótt doc 143 og 144 telji þá upp.
-5. **metta2_new `CLAUDE.md:356` og haus doc 145** segja enn að iPad kjarnasameining bíði, en hún er komin í main.
+3. **Atriði úr fyllingunni til að staðfesta** eru handtök á Heimi í Huginn (byrja á "Staðfesta úr fyllingu:"), á viðkomandi verkum. Hakaðu við hvert eftir yfirferð. Spjöld við þétta módúla lenda langt niðri í dálki (allt að y 4573), dragðu þau til á vefnum.
+4. **Plans B1 og B2** á Efnaskrá fengu úrskurði sína úr skjölum 143 (R1 til R14) og 144 (R14 til R25) 2026-10-31.
+5. **metta2_new `CLAUDE.md` iPad línan og haus skjals 145** segja enn að kjarnasameining bíði. Það er handtak á Claude á verkinu "iPad og símar: viðbragðsumferð", gert í næstu metta lotu.
 6. **Má eyða með hendi:** fjögur "Prófun: " verk úr verki 2, öll `dropped`: `a2298eda-7176-483f-ad07-9fb4be5c08c4`, `98b44e36-40be-4b0e-bfb8-ac89d60c58b0`, `3ab242b5-4a05-4c39-ae3c-afe6117a3f72`, `4e64653d-31b6-4cba-9a20-60ddb3379fa4`. Eyðing verkanna tekur með sér spurningar, handtak, plan, úrskurð, skrárraðir og athugasemd. Tvo Storage hluti í `hg-files` þarf að fjarlægja sér, báða í `74e926d8-f53a-42fc-8a83-c93ec405a6ae/a2298eda-7176-483f-ad07-9fb4be5c08c4/`: `850fa243-98d9-4f34-984a-d2811733373e_profun.txt` og `17648ab0-5b67-46b3-8691-46c83878fdda_profun.txt`. Frumrit skránna 17 í `D:\Claude Code\metta2\from_arni` má líka fjarlægja.
 7. **Minnisskrár Claude** halda stöðulínum sínum þar til þú ákveður annað. Huginn er sannleikurinn um opin verk.
 8. **Claude Code hjá Árna** (seinna, sjá næsta kafla).
