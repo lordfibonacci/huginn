@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
 import { useAsyncAction } from '../../hooks/useAsyncAction'
 import { updateProject } from '../../lib/api'
-import { projectPatch, type ProjectFieldsForm } from '../../lib/settings'
+import { projectPatch, validateProjectName, type ProjectFieldsForm } from '../../lib/settings'
 import type { Project } from '../../lib/types'
 import { Actions, Field } from './parts'
 
@@ -19,6 +19,8 @@ export function ProjectFields({ project, onSaved }: { project: Project; onSaved:
   const [saved, setSaved] = useState(false)
   const { busy, error, run } = useAsyncAction()
   const dirty = Object.keys(projectPatch(project, form, '')).length > 0
+  // An emptied name is never saved, so say why instead of leaving Save just disabled.
+  const nameError = validateProjectName(form.name)
 
   const set = (key: keyof ProjectFieldsForm) => (e: { target: { value: string } }) => {
     setSaved(false)
@@ -40,11 +42,11 @@ export function ProjectFields({ project, onSaved }: { project: Project; onSaved:
         className="hg-set-row"
         onSubmit={(e) => {
           e.preventDefault()
-          if (dirty && !busy) void save()
+          if (dirty && !busy && !nameError) void save()
         }}
       >
         <Field label={t('vinnubord.settings.project.name')}>
-          <input value={form.name} onChange={set('name')} required disabled={busy} />
+          <input value={form.name} onChange={set('name')} required aria-invalid={nameError !== null} disabled={busy} />
         </Field>
         <Field label={t('vinnubord.settings.project.repoPath')} hint={t('vinnubord.settings.project.repoHint')}>
           <input value={form.repo_path} onChange={set('repo_path')} disabled={busy} spellCheck={false} />
@@ -61,8 +63,8 @@ export function ProjectFields({ project, onSaved }: { project: Project; onSaved:
             ? t('vinnubord.settings.project.updated', { when: formatStamp(project.context_bundle_at) })
             : t('vinnubord.settings.project.never')}
         </p>
-        <Actions error={error} saved={saved && !dirty}>
-          <button type="submit" className="hg-btn hg-btn-primary" disabled={!dirty || busy}>
+        <Actions error={nameError ?? error} saved={saved && !dirty}>
+          <button type="submit" className="hg-btn hg-btn-primary" disabled={!dirty || busy || nameError !== null}>
             {t('vinnubord.settings.save')}
           </button>
         </Actions>

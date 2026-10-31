@@ -1,4 +1,4 @@
-import { isOnBoard, itemTone, type Tone } from './status'
+import { isOnBoard, isTone, itemTone, type Tone } from './status'
 import type { Item, Module, Package, Participant, Plan, PlanStatus } from './types'
 
 export type PackRow = { pkg: Package; modules: Module[] }
@@ -16,15 +16,17 @@ export function moduleOpenCount(moduleId: string, items: Item[]): number {
   return items.filter((i) => i.module_id === moduleId && isOnBoard(i)).length
 }
 
-// Tone of the first open item that is not parked, otherwise stone.
+// Tone of the first open item that is not parked. Without one, the color the
+// module was given in settings (ruling R27), or stone when that is not a tone.
 export function moduleTone(
-  moduleId: string,
+  module: Pick<Module, 'id' | 'color'>,
   items: Item[],
   viewerId: string,
   participants: Participant[],
 ): Tone {
-  const first = items.find((i) => i.module_id === moduleId && isOnBoard(i) && i.status !== 'parked')
-  return first ? itemTone(first, viewerId, participants) : 'stone'
+  const first = items.find((i) => i.module_id === module.id && isOnBoard(i) && i.status !== 'parked')
+  if (first) return itemTone(first, viewerId, participants)
+  return isTone(module.color) ? module.color : 'stone'
 }
 
 const PLAN_FILL: Record<PlanStatus, number> = { done: 1, building: 0.5, todo: 0 }

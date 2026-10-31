@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   MODULE_COLORS,
   moduleDeleteBlock,
+  participantErrorMessage,
+  validateProjectName,
   nextPosition,
   parseCoord,
   participantRemoveBlock,
@@ -176,5 +178,41 @@ describe('projectPatch', () => {
 describe('MODULE_COLORS', () => {
   it('are the five board tones', () => {
     expect(MODULE_COLORS).toEqual(['gold', 'lilac', 'coral', 'teal', 'stone'])
+  })
+})
+
+describe('moduleDeleteBlock with comments', () => {
+  it('blocks a module with comments even when it has no items', () => {
+    expect(moduleDeleteBlock(0, 1)).toMatch(/athugasemd/i)
+    expect(moduleDeleteBlock(0, 3)).toMatch(/3/)
+  })
+  it('names items first when it has both', () => {
+    expect(moduleDeleteBlock(2, 5)).toMatch(/verk/i)
+  })
+  it('allows a module with neither', () => {
+    expect(moduleDeleteBlock(0, 0)).toBeNull()
+  })
+})
+
+describe('validateProjectName', () => {
+  it('needs a name', () => {
+    expect(validateProjectName('   ')).toMatch(/nafn/i)
+    expect(validateProjectName('Metta')).toBeNull()
+  })
+})
+
+describe('participantErrorMessage', () => {
+  it('maps a unique violation to the fixed Icelandic message', () => {
+    expect(participantErrorMessage('23505', 'duplicate key value violates unique constraint "hg_participants_project_id_user_id_key"')).toBe(
+      'Notandinn er þegar þátttakandi í verkefninu.',
+    )
+  })
+  it('passes the function messages through for its other codes', () => {
+    expect(participantErrorMessage('P0002', 'Notandi fannst ekki')).toBe('Notandi fannst ekki')
+    expect(participantErrorMessage('42501', 'Þú ert ekki þátttakandi í þessu verkefni.')).toBe('Þú ert ekki þátttakandi í þessu verkefni.')
+  })
+  it('gives null for other errors', () => {
+    expect(participantErrorMessage('08006', 'connection failure')).toBeNull()
+    expect(participantErrorMessage(undefined, 'x')).toBeNull()
   })
 })

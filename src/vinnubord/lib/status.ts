@@ -20,6 +20,13 @@ export const PLAN_STATUS_NAMES: Record<PlanStatus, string> = {
 
 export type Tone = 'gold' | 'coral' | 'lilac' | 'teal' | 'stone'
 
+// The five tones, in the order the settings color picker shows them.
+export const TONES: readonly Tone[] = ['gold', 'lilac', 'coral', 'teal', 'stone']
+
+export function isTone(value: string): value is Tone {
+  return (TONES as readonly string[]).includes(value)
+}
+
 function isServiceUser(userId: string | null, participants: Participant[]): boolean {
   if (!userId) return false
   return participants.some((p) => p.user_id === userId && p.is_service)

@@ -1,6 +1,12 @@
 import { supabase } from '../../shared/lib/supabase'
 import { validateUpload } from './upload'
-import { moduleDeleteBlock, participantRemoveBlock, type PositionChange, type ProjectPatch } from './settings'
+import {
+  moduleDeleteBlock,
+  participantErrorMessage,
+  participantRemoveBlock,
+  type PositionChange,
+  type ProjectPatch,
+} from './settings'
 import type {
   Action,
   BoardData,
@@ -371,22 +377,22 @@ export async function setPositions(table: 'hg_packages' | 'hg_modules', changes:
   if (failed) fail('Gat ekki vistað röðina.', failed.error)
 }
 
-// Only a module without items can go (ruling R24). Closed items count too,
-// so the count is asked of the database, not taken from the loaded board.
+// Only a module without items and without comments can go (ruling R24):
+// comments would be removed with it by the cascade. Closed items count too,
+// so both counts are asked of the database, not taken from the loaded board.
 export async function deleteModule(id: string): Promise<void> {
-  const { count, error: countError } = await supabase
-    .from('hg_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('module_id', id)
-  if (countError || count === null) fail('Gat ekki athugað verk módulsins.', countError)
-  const block = moduleDeleteBlock(count)
+  const head = { count: 'exact' as const, head: true }
+  const [items, comments] = await Promise.all([
+    supabase.from('hg_items').select('id', head).eq('module_id', id),
+    supabase.from('hg_comments').select('id', head).eq('module_id', id),
+  ])
+  if (items.error || items.count === null) fail('Gat ekki athugað verk módulsins.', items.error)
+  if (comments.error || comments.count === null) fail('Gat ekki athugað athugasemdir módulsins.', comments.error)
+  const block = moduleDeleteBlock(items.count, comments.count)
   if (block) throw new Error(block)
   const { error } = await supabase.from('hg_modules').delete().eq('id', id)
   if (error) fail('Gat ekki eytt módulnum.', error)
 }
-
-// Error codes raised by hg_add_participant with an Icelandic message of their own.
-const ADD_PARTICIPANT_CODES = new Set(['42501', 'P0002', '23505', '22023'])
 
 export async function addParticipantByEmail(
   projectId: string,
@@ -400,7 +406,8 @@ export async function addParticipantByEmail(
     p_short: short.trim(),
     p_name: displayName.trim(),
   })
-  if (error && error.code && ADD_PARTICIPANT_CODES.has(error.code)) throw new Error(error.message)
+  const known = error ? participantErrorMessage(error.code, error.message) : null
+  if (known) throw new Error(known)
   if (error || !data) fail('Gat ekki bætt þátttakandanum við.', error)
   return data as Participant
 }

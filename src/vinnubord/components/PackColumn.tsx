@@ -24,7 +24,7 @@ export function PackColumn({ pkg, modules, items, viewerId, participants, hotMod
           key={m.id}
           module={m}
           openCount={moduleOpenCount(m.id, items)}
-          tone={moduleTone(m.id, items, viewerId, participants)}
+          tone={moduleTone(m, items, viewerId, participants)}
           hot={hotModuleIds?.has(m.id) ?? false}
           ghost={m.is_ghost}
           dim={dimModuleIds?.has(m.id) ?? false}

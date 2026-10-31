@@ -44,15 +44,25 @@ describe('moduleOpenCount', () => {
 })
 
 describe('moduleTone', () => {
-  it('is stone with no items', () => {
-    expect(moduleTone('m', [], 'u1', people)).toBe('stone')
+  const m = (color: string) => ({ id: 'm', color })
+  it('is stone with no items and no tone color', () => {
+    expect(moduleTone(m('stone'), [], 'u1', people)).toBe('stone')
+    expect(moduleTone(m('#fff'), [], 'u1', people)).toBe('stone')
   })
   it('skips parked and closed items and uses the first remaining', () => {
     const items = [item('1', 'm', 'parked'), item('2', 'm', 'done'), item('3', 'm', 'building')]
-    expect(moduleTone('m', items, 'u1', people)).toBe('teal')
+    expect(moduleTone(m('stone'), items, 'u1', people)).toBe('teal')
   })
-  it('is stone when only parked items remain', () => {
-    expect(moduleTone('m', [item('1', 'm', 'parked')], 'u1', people)).toBe('stone')
+  it('an open item wins over the module color', () => {
+    expect(moduleTone(m('lilac'), [item('1', 'm', 'new')], 'u1', people)).toBe('gold')
+  })
+  it('falls back to the module color (ruling R27) with no open item that is not parked', () => {
+    expect(moduleTone(m('teal'), [], 'u1', people)).toBe('teal')
+    expect(moduleTone(m('coral'), [item('1', 'm', 'parked')], 'u1', people)).toBe('coral')
+    expect(moduleTone(m('gold'), [item('1', 'm', 'done')], 'u1', people)).toBe('gold')
+  })
+  it('is stone when only parked items remain and the color is not a tone', () => {
+    expect(moduleTone(m('purple'), [item('1', 'm', 'parked')], 'u1', people)).toBe('stone')
   })
 })
 

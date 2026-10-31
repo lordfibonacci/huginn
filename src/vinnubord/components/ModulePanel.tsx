@@ -20,7 +20,7 @@ type Props = {
 // dropped in the last 90 days under their own headings, and its comments.
 export function ModulePanel({ data, module, viewerId, onSelectItem }: Props) {
   const { t } = useTranslation()
-  const tone = moduleTone(module.id, data.items, viewerId, data.participants)
+  const tone = moduleTone(module, data.items, viewerId, data.participants)
   const { open, done, dropped } = useMemo(() => moduleItems(data.items, module.id), [data.items, module.id])
   const comments = data.comments.filter((c) => c.module_id === module.id)
 

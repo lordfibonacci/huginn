@@ -1,10 +1,10 @@
-import type { Tone } from './status'
+import { TONES, type Tone } from './status'
 
 // Pure parts of the project settings page: slugs, shorts, coordinates, order
 // within a list, the delete guards (ruling R24) and the project field diff.
 
 // The five board tones a module can be given.
-export const MODULE_COLORS: readonly Tone[] = ['gold', 'lilac', 'coral', 'teal', 'stone']
+export const MODULE_COLORS: readonly Tone[] = TONES
 
 const ICELANDIC: Record<string, string> = { þ: 'th', ð: 'd', æ: 'ae', ö: 'o', ø: 'o' }
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -29,7 +29,7 @@ export function validateSlug(slug: string, modules: { id: string; slug: string }
 }
 
 export function validateModuleName(name: string): string | null {
-  return name.trim() === '' ? 'Módúllinn þarf nafn.' : null
+  return name.trim() === '' ? 'Módullinn þarf nafn.' : null
 }
 
 export function validateShort(short: string, participants: { id: string; short: string }[], selfId?: string): string | null {
@@ -70,12 +70,36 @@ export function reorder(rows: { id: string; position: number }[], id: string, de
   return sorted.flatMap((r, i) => (r.position === i ? [] : [{ id: r.id, position: i }]))
 }
 
-// count is every item in the module, closed ones too.
-export function moduleDeleteBlock(count: number): string | null {
-  if (count <= 0) return null
-  return count === 1
-    ? 'Ekki hægt að eyða módul sem á verk: 1 verk tengist honum. Færðu það fyrst.'
-    : `Ekki hægt að eyða módul sem á verk: ${count} verk tengjast honum. Færðu þau fyrst.`
+// items is every item in the module, closed ones too. comments are the
+// module's own comments, which a delete would remove with it (on delete cascade).
+export function moduleDeleteBlock(items: number, comments = 0): string | null {
+  if (items > 0) {
+    return items === 1
+      ? 'Ekki hægt að eyða módul sem á verk: 1 verk tengist honum. Færðu það fyrst.'
+      : `Ekki hægt að eyða módul sem á verk: ${items} verk tengjast honum. Færðu þau fyrst.`
+  }
+  if (comments > 0) {
+    return comments === 1
+      ? 'Ekki hægt að eyða módul sem á athugasemd: 1 athugasemd fylgir honum og myndi hverfa með.'
+      : `Ekki hægt að eyða módul sem á athugasemdir: ${comments} athugasemdir fylgja honum og myndu hverfa með.`
+  }
+  return null
+}
+
+// Messages from hg_add_participant for the codes it raises. A unique violation
+// is always the fixed Icelandic text: two people adding the same user at once
+// hit the table constraint, whose own message is English. null for other errors.
+const ALREADY_PARTICIPANT = 'Notandinn er þegar þátttakandi í verkefninu.'
+const PARTICIPANT_CODES = new Set(['42501', 'P0002', '22023'])
+
+export function participantErrorMessage(code: string | undefined, message: string): string | null {
+  if (code === '23505') return ALREADY_PARTICIPANT
+  if (code && PARTICIPANT_CODES.has(code)) return message
+  return null
+}
+
+export function validateProjectName(name: string): string | null {
+  return name.trim() === '' ? 'Verkefnið þarf nafn.' : null
 }
 
 export function participantRemoveBlock(p: { user_id: string; is_service: boolean }, viewerId: string): string | null {
