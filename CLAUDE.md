@@ -77,7 +77,7 @@ Some kept shared files (Avatar, ModalShell, useIsMobile, useLanguagePreference, 
 ## Supabase
 
 - **Project:** `czdjxtsjgughimlazdmu`, region eu-west-2. **Shared with other small projects.** Touch only `hg_` objects. The Auth Site URL is shared too, do not change it; the code passes `emailRedirectTo` explicitly.
-- Old `huginn_` tables and the `huginn-attachments` bucket still exist and are not used by the new code, except `huginn_profiles` (read and locale write through `useProfile`). Heimir deletes the old objects by hand later. Never drop or delete them from an agent.
+- The old `huginn_` tables, helper functions and the `huginn-meta-publish` cron job were dropped on 2026-10-31. Only `huginn_profiles` remains and must stay: the shared auth trigger `handle_new_user` on `auth.users` inserts into it for every new user of every project on this database, and `useProfile` reads it. The old buckets `huginn-attachments` and `huginn-avatars` are unused and can be deleted in the dashboard.
 - The old edge functions `meta-oauth-complete` and `meta-publish` were removed from the repo only. They may still be deployed in Supabase.
 
 ### hg_ tables (migration 0001)

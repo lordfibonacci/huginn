@@ -34,7 +34,7 @@ Innskráð(ur) í vafra: Claude lendir á `/p/metta` með fimm núll teljara. Sa
 
 ### Hjá Heimi
 
-1. **Gamla kerfið í Supabase** helst þar til Heimir eyðir því sjálfur: töflurnar `huginn_*` (`huginn_profiles` er enn notuð), og public bucket `huginn-attachments`. Agent snertir þetta ekki.
+1. **Gamla kerfið í Supabase:** töflum, föllum og cron verki gamla Huginn var eytt 2026-10-31. `huginn_profiles` helst, því sameiginlegi auth triggerinn `handle_new_user` skrifar í hana fyrir alla nýja notendur. Eftir er að eyða bucketunum `huginn-attachments` og `huginn-avatars` í dashboard.
 2. **Fjarlægja `VITE_INVITE_CODE`** úr Vercel env. Það er ekki notað lengur (engin nýskráning).
 
 ### Opið í kóða
