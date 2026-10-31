@@ -97,11 +97,115 @@
       "planOf": "Plan {{current}} af {{total}}",
       "unread": "Nýtt hjá þér"
     },
+    "history": {
+      "actionAdded": "bætti við handtaki",
+      "actionDone": "hakaði við handtak",
+      "commentAdded": "skrifaði athugasemd",
+      "fields": {
+        "body": "lýsinguna",
+        "module_id": "módulinn",
+        "next_prompt": "promptið",
+        "next_step": "næsta skrefið",
+        "summary": "samantektina",
+        "tags": "töggin",
+        "title": "titilinn"
+      },
+      "fileAdded": "bætti við {{name}}",
+      "itemCreated": "stofnaði verkið",
+      "itemStatus": "færði verkið úr {{from}} í {{to}}",
+      "itemUpdated": "uppfærði {{fields}}",
+      "itemWaiting": "verkið bíður nú: {{who}}",
+      "other": "{{kind}}",
+      "planAdded": "bætti við plani",
+      "planStatus": "setti plan í stöðuna {{to}}",
+      "questionAnswered": "svaraði spurningu",
+      "questionAsked": "spurði spurningar",
+      "rulingAdded": "skráði úrskurð",
+      "someone": "Kerfið"
+    },
     "loading": "Hleður",
     "noAccess": {
       "body": "Biddu Heimi um að gefa þér aðgang.",
       "signOut": "Skrá út",
       "title": "Þú ert ekki þátttakandi í neinu verkefni"
+    },
+    "panel": {
+      "actionDone": "Lokið: {{body}}",
+      "actions": "Handtök",
+      "body": "Lýsing",
+      "changeStatus": "Breyta stöðu",
+      "choose": "Velja",
+      "comment": {
+        "hint": "Ctrl og Enter sendir",
+        "placeholder": "Skrifa athugasemd",
+        "send": "Senda"
+      },
+      "copied": "Afritað",
+      "copy": "Afrita",
+      "copyFailed": "Gat ekki afritað",
+      "copyWhat": "Afrita {{what}}",
+      "cost": "Kostar ef rangt: {{cost}}",
+      "files": {
+        "back": "Aftur í skjöl",
+        "by": "{{name}}, {{when}}",
+        "empty": "Engin skjöl ennþá.",
+        "loading": "Sæki skjal",
+        "open": "Opna {{name}}",
+        "repoPath": "slóð í repoinu"
+      },
+      "history": {
+        "empty": "Ekkert hefur gerst ennþá."
+      },
+      "label": "Spjald verks",
+      "module": "Módull",
+      "moduleLabel": "Spjald móduls",
+      "modulePanel": {
+        "comments": "Athugasemdir",
+        "done": "Lokið, síðustu 90 daga",
+        "dropped": "Hætt við, síðustu 90 daga",
+        "kind": "Módull",
+        "noComments": "Engar athugasemdir ennþá.",
+        "noneOpen": "Ekkert opið.",
+        "open": "Opin verk"
+      },
+      "nextPrompt": "Prompt",
+      "nextStep": "Næsta skref",
+      "noModule": "Enginn módull",
+      "noSummary": "Claude hefur ekki skrifað samantekt ennþá.",
+      "payload": "blokk",
+      "planPath": "slóð plans",
+      "plans": "Plön",
+      "questions": {
+        "answerBy": "{{name}} svaraði {{when}}",
+        "answered": "Svaraðar",
+        "asked": "{{name}} spyr",
+        "empty": "Engar spurningar.",
+        "open": "Ósvaraðar",
+        "placeholder": "Skrifaðu svar",
+        "send": "Svara",
+        "to": "til {{name}}"
+      },
+      "resume": "Halda áfram",
+      "resumeHint": "Afritar samhengisprompt fyrir nýtt spjall.",
+      "reverse": "Snúa við",
+      "rulings_one": "{{count}} úrskurður",
+      "rulings_other": "{{count}} úrskurðir",
+      "save": "Vista",
+      "sheetHandle": "Dragðu upp eða niður, dragðu niður til að loka",
+      "source": "Heimild",
+      "status": "Staða",
+      "sub": "{{module}}. Síðast hreyft: {{name}}, {{when}}.",
+      "subNoMover": "{{module}}.",
+      "tabs": {
+        "files": "Skjöl",
+        "filesCount": "Skjöl ({{count}})",
+        "history": "Saga",
+        "questions": "Spurningar",
+        "questionsCount": "Spurningar ({{count}})",
+        "status": "Staða"
+      },
+      "waitingOn": "Bíður eftir",
+      "whereAreWe": "Hvar erum við"
     },
     "settings": {
       "comingSoon": "Stillingar koma í plani 2."

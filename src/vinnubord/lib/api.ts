@@ -292,3 +292,16 @@ export async function fileUrl(storagePath: string): Promise<string> {
   if (error || !data) fail('Gat ekki opnað skrána.', error)
   return data.signedUrl
 }
+
+// Text of a stored file, for the markdown reader in the panel.
+export async function fileText(storagePath: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(FILES_BUCKET).download(storagePath)
+  if (error || !data) fail('Gat ekki lesið skrána.', error)
+  return data.text()
+}
+
+// Marks a ruling as one to reverse ("snúa við"), or clears the mark.
+export async function setRulingReversed(id: string, reversed: boolean): Promise<void> {
+  const { error } = await supabase.from('hg_rulings').update({ reversed }).eq('id', id)
+  if (error) fail('Gat ekki uppfært úrskurðinn.', error)
+}

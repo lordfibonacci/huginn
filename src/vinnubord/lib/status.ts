@@ -1,4 +1,22 @@
-import type { Action, Item, Participant } from './types'
+import type { Action, Item, ItemStatus, Participant, PlanStatus } from './types'
+
+// Plain status names (ruling R5, hard coded Icelandic). itemStatusLabel below is
+// the viewer relative label; these are for selects, history lines and prompts.
+export const STATUS_NAMES: Record<ItemStatus, string> = {
+  new: 'Nýtt',
+  waiting: 'Bíður',
+  ready: 'Tilbúið til byggingar',
+  building: 'Í byggingu',
+  parked: 'Í bið',
+  done: 'Lokið',
+  dropped: 'Hætt við',
+}
+
+export const PLAN_STATUS_NAMES: Record<PlanStatus, string> = {
+  todo: 'Ekki byrjað',
+  building: 'Í byggingu',
+  done: 'Lokið',
+}
 
 export type Tone = 'gold' | 'coral' | 'lilac' | 'teal' | 'stone'
 

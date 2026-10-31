@@ -106,6 +106,110 @@
       "planOf": "Plan {{current}} of {{total}}",
       "unread": "New for you",
       "movedBy": "Last moved by {{name}}"
+    },
+    "panel": {
+      "label": "Item panel",
+      "moduleLabel": "Module panel",
+      "sheetHandle": "Drag up or down, drag down to close",
+      "tabs": {
+        "status": "Status",
+        "files": "Files",
+        "filesCount": "Files ({{count}})",
+        "questions": "Questions",
+        "questionsCount": "Questions ({{count}})",
+        "history": "History"
+      },
+      "sub": "{{module}}. Last moved by {{name}} {{when}}.",
+      "subNoMover": "{{module}}.",
+      "noModule": "No module",
+      "whereAreWe": "Where are we",
+      "noSummary": "Claude has not written a summary yet.",
+      "module": "Module",
+      "body": "Description",
+      "plans": "Plans",
+      "planPath": "Plan path",
+      "rulings_one": "{{count}} ruling",
+      "rulings_other": "{{count}} rulings",
+      "cost": "Cost if wrong: {{cost}}",
+      "reverse": "Reverse",
+      "actions": "Actions",
+      "actionDone": "Done: {{body}}",
+      "payload": "Block",
+      "nextStep": "Next step",
+      "nextPrompt": "Prompt",
+      "resume": "Continue",
+      "resumeHint": "Copies a context prompt for a new chat.",
+      "copy": "Copy",
+      "copyWhat": "Copy {{what}}",
+      "copied": "Copied",
+      "copyFailed": "Could not copy",
+      "changeStatus": "Change status",
+      "status": "Status",
+      "waitingOn": "Waiting on",
+      "choose": "Choose",
+      "save": "Save",
+      "source": "Source",
+      "files": {
+        "empty": "No files yet.",
+        "by": "{{name}}, {{when}}",
+        "repoPath": "In the repo",
+        "back": "Back to files",
+        "loading": "Loading file",
+        "open": "Open {{name}}"
+      },
+      "questions": {
+        "empty": "No questions.",
+        "open": "Unanswered",
+        "answered": "Answered",
+        "asked": "{{name}} asks",
+        "to": "to {{name}}",
+        "answerBy": "{{name}} answered {{when}}",
+        "placeholder": "Write an answer",
+        "send": "Answer"
+      },
+      "history": {
+        "empty": "Nothing has happened yet."
+      },
+      "comment": {
+        "placeholder": "Write a comment",
+        "send": "Send",
+        "hint": "Ctrl and Enter sends"
+      },
+      "modulePanel": {
+        "kind": "Module",
+        "open": "Open items",
+        "noneOpen": "Nothing open.",
+        "done": "Done, last 90 days",
+        "dropped": "Dropped, last 90 days",
+        "comments": "Comments",
+        "noComments": "No comments yet."
+      }
+    },
+    "history": {
+      "itemCreated": "created the item",
+      "itemStatus": "moved it from {{from}} to {{to}}",
+      "itemWaiting": "set it to wait on {{who}}",
+      "itemUpdated": "updated {{fields}}",
+      "planAdded": "added a plan",
+      "planStatus": "set a plan to {{to}}",
+      "fileAdded": "added {{name}}",
+      "questionAsked": "asked a question",
+      "questionAnswered": "answered a question",
+      "actionAdded": "added an action",
+      "actionDone": "checked off an action",
+      "rulingAdded": "added a ruling",
+      "commentAdded": "commented",
+      "other": "{{kind}}",
+      "someone": "System",
+      "fields": {
+        "title": "the title",
+        "summary": "the summary",
+        "body": "the description",
+        "module_id": "the module",
+        "tags": "the tags",
+        "next_step": "the next step",
+        "next_prompt": "the prompt"
+      }
     }
   }
 }
