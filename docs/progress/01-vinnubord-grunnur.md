@@ -40,7 +40,10 @@ Innskráð(ur) í vafra: Claude lendir á `/p/metta` með fimm núll teljara. Sa
 ### Opið í kóða
 
 - Borðsíðan hefur enn engan útskráningarhnapp. Hann kemur með topplínu í plani 2.
-- Lokayfirferð plans 1 yfir alla greinina er í gangi.
+- Lokayfirferð plans 1 (Fable) er lokið og hrein eftir lagfæringu 0004. Smoke prentar `ok 6/6`.
+- Svari sem þegar er svarað má breyta af öðrum þátttakanda og `answered_by` helst sá upprunalegi, án atburðar. Ákveða í plani 2: stimpla upp á nýtt eða skrá `question.answer_edited`.
+- `answered_at` er alltaf `now()`, líka fyrir service role, svo innflutningur í plani 3 getur ekki haldið upprunalegum svartíma.
+- Íslensku textarnir `auth.callback.recoveryVerified` og `auth.reset.done.body` voru handskrifaðir. Næsta `npm run translate` gæti skrifað yfir þá, athuga eftir keyrslu.
 
 ## Næst
 
