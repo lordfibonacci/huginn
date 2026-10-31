@@ -124,6 +124,35 @@
       "someone": "Kerfið"
     },
     "loading": "Hleður",
+    "newItem": {
+      "body": "Texti",
+      "bodyHint": "Markdown virkar",
+      "cancel": "Hætta við",
+      "create": "Stofna verk",
+      "createdWithErrors_one": "Verkið var stofnað. {{count}} skrá fór ekki inn, sjá ofar.",
+      "createdWithErrors_other": "Verkið var stofnað. {{count}} skrár fóru ekki inn, sjá ofar.",
+      "creating": "Stofnar",
+      "drop": "Slepptu skrám hér",
+      "files": "Skrár",
+      "heading": "Nýtt verk",
+      "module": "Módull",
+      "noModule": "Enginn módull",
+      "openItem": "Opna verkið",
+      "pick": "Velja skrár",
+      "remove": "Fjarlægja {{name}}",
+      "state": {
+        "done": "Komið",
+        "error": "Villa",
+        "uploading": "Hleður",
+        "waiting": "Bíður"
+      },
+      "tags": "Tögg",
+      "tagsHint": "Komma á milli",
+      "title": "Titill",
+      "titlePlaceholder": "Um hvað snýst verkið",
+      "titleRequired": "Verkið þarf titil.",
+      "uploading": "Hleður skrám"
+    },
     "noAccess": {
       "body": "Biddu Heimi um að gefa þér aðgang.",
       "signOut": "Skrá út",
@@ -210,6 +239,27 @@
     },
     "settings": {
       "comingSoon": "Stillingar koma í plani 2."
+    },
+    "top": {
+      "clear": "Hreinsa",
+      "connecting": "Tengist",
+      "connectingHint": "Ekki tengt enn, breytingar frá öðrum birtast eftir endurhleðslu",
+      "counters": "Stöðusía",
+      "language": "Tungumál",
+      "live": "Lifandi",
+      "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
+      "newItem": "Nýtt verk",
+      "noPackages": "Engir pakkar enn",
+      "noTags": "Engin tögg enn",
+      "openSearch": "Leita",
+      "package": "Pakki",
+      "participants": "Þátttakendur",
+      "project": "Verkefni",
+      "search": "Leita",
+      "settings": "Stillingar verkefnis",
+      "signOut": "Skrá út",
+      "tags": "Tögg",
+      "viewerMenu": "Valmynd fyrir {{name}}"
     },
     "viewerError": "Gat ekki sótt verkefnin þín."
   }

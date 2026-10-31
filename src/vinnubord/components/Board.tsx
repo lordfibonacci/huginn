@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type MouseEvent } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, type MouseEvent, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag } from '../hooks/useCardDrag'
 import { updateItemPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
-import type { Rect } from '../lib/geometry'
+import { screenToWorld, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
+import { placeNewCard } from '../lib/placement'
 import { isUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, wireMode } from '../lib/status'
@@ -27,7 +28,12 @@ type Props = {
   selectedId: string | null
   onSelect: (id: string | null) => void
   onOpenModule: (moduleId: string) => void
+  ref?: Ref<BoardHandle>
 }
+
+// placeNew: a free world position for a new card beside its module, or on
+// the centre of the current view when it has none.
+export type BoardHandle = { placeNew: (moduleId: string | null) => { x: number; y: number } }
 
 // A dropped position waiting for the database. base is the data position the
 // drag started from: data still showing base is stale and ignored, data at pos
@@ -41,6 +47,8 @@ const ENTRY_STEP_MS = 45
 const ENTRY_BURST = 8
 const DROP_BURST = 4
 const NO_DESELECT = '[data-card], [data-module], [data-panel]'
+// Size assumed for a card that is not drawn yet (its width is --hg-card-w).
+const NEW_CARD_SIZE = { w: 250, h: 120 }
 
 function place(el: HTMLElement, s: Spring) {
   el.style.left = `${s.x}px`
@@ -51,7 +59,7 @@ function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule }: Props) {
+export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule, ref }: Props) {
   const { t } = useTranslation()
   const boardRef = useRef<HTMLDivElement | null>(null)
   const wiresRef = useRef<WiresHandle | null>(null)
@@ -308,6 +316,41 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     fitAll()
     fitted.current = true
   })
+
+  // ---------- new card placement ----------
+  useImperativeHandle(
+    ref,
+    () => ({
+      placeNew: (moduleId) => {
+        const host = boardRef.current
+        const obstacles: Rect[] = []
+        let w = NEW_CARD_SIZE.w
+        for (const [id, el] of els.current) {
+          const s = springs.current.get(id)
+          if (s) obstacles.push({ x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight })
+          w = el.offsetWidth || w
+        }
+        host?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
+          obstacles.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
+        })
+        const hostRect = host?.getBoundingClientRect()
+        const ox = hostRect?.left ?? 0
+        const oy = hostRect?.top ?? 0
+        const [cx, cy] = screenToWorld(view, (hostRect?.width ?? 0) / 2, (hostRect?.height ?? 0) / 2)
+        let anchor: Rect | null = null
+        const mod = moduleId ? host?.querySelector(`.hg-mod[data-module="${CSS.escape(moduleId)}"]`) : null
+        if (mod) {
+          const r = mod.getBoundingClientRect()
+          const [x, y] = screenToWorld(view, r.left - ox, r.top - oy)
+          anchor = { x, y, w: r.width / view.z, h: r.height / view.z }
+        }
+        // Cards and pack columns are obstacles. The spots beside a module lie
+        // outside its own column, so the column never pushes its card away.
+        return placeNewCard({ anchor, center: { x: cx, y: cy }, size: { ...NEW_CARD_SIZE, w }, obstacles })
+      },
+    }),
+    [view],
+  )
 
   const onBoardClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {

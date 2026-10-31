@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { emptyFilter, isActive, matches } from './filters'
+import {
+  emptyFilter,
+  filterStorageKey,
+  isActive,
+  matches,
+  packageCounts,
+  parseFilter,
+  serializeFilter,
+  tagCounts,
+  toggleFilter,
+  withQuery,
+} from './filters'
 import type { Item } from './types'
 
 function item(over: Partial<Item> = {}): Item {
@@ -48,5 +59,107 @@ describe('filters', () => {
     expect(matches(item({ summary: 'zzz hér' }), ctx, f)).toBe(true)
     expect(matches(item({ body: 'og zzz' }), ctx, f)).toBe(true)
     expect(matches(item({ tags: ['Zzz'] }), ctx, f)).toBe(true)
+  })
+})
+
+describe('filter storage', () => {
+  it('key is per project', () => {
+    expect(filterStorageKey('p1')).toBe('hg.filter.p1')
+  })
+  it('round trips through a string', () => {
+    const f = emptyFilter()
+    f.tones.add('coral')
+    f.tones.add('gold')
+    f.packages.add('pk1')
+    f.tags.add('smokes')
+    f.q = 'efna'
+    const back = parseFilter(serializeFilter(f))
+    expect([...back.tones].sort()).toEqual(['coral', 'gold'])
+    expect([...back.packages]).toEqual(['pk1'])
+    expect([...back.tags]).toEqual(['smokes'])
+    expect(back.q).toBe('efna')
+  })
+  it('null, garbage and wrong shapes give an empty filter', () => {
+    for (const raw of [null, '', 'not json', '42', '[]', '{"tones":"gold"}']) {
+      const f = parseFilter(raw)
+      expect(isActive(f)).toBe(false)
+    }
+  })
+  it('drops unknown tones and non string entries', () => {
+    const f = parseFilter(JSON.stringify({ tones: ['gold', 'pink', 3], packages: ['a', null], tags: [1, 'x'], q: 5 }))
+    expect([...f.tones]).toEqual(['gold'])
+    expect([...f.packages]).toEqual(['a'])
+    expect([...f.tags]).toEqual(['x'])
+    expect(f.q).toBe('')
+  })
+})
+
+describe('toggleFilter and withQuery', () => {
+  it('adds then removes a value and never mutates the input', () => {
+    const a = emptyFilter()
+    const b = toggleFilter(a, 'tones', 'coral')
+    expect(a.tones.size).toBe(0)
+    expect(b.tones.has('coral')).toBe(true)
+    const c = toggleFilter(b, 'tones', 'coral')
+    expect(c.tones.has('coral')).toBe(false)
+    expect(b.tones.has('coral')).toBe(true)
+  })
+  it('toggles packages and tags independently', () => {
+    const f = toggleFilter(toggleFilter(emptyFilter(), 'packages', 'pk1'), 'tags', 'db')
+    expect([...f.packages]).toEqual(['pk1'])
+    expect([...f.tags]).toEqual(['db'])
+  })
+  it('withQuery replaces q only', () => {
+    const f = withQuery(toggleFilter(emptyFilter(), 'tags', 'db'), 'efna')
+    expect(f.q).toBe('efna')
+    expect(f.tags.has('db')).toBe(true)
+  })
+})
+
+describe('tagCounts', () => {
+  it('counts tags of items on the board, most used first, then by name', () => {
+    const items = [
+      item({ id: 'a', tags: ['smokes', 'efni'] }),
+      item({ id: 'b', tags: ['efni'] }),
+      item({ id: 'c', tags: ['ákvörðun'] }),
+      item({ id: 'd', tags: ['efni'], status: 'done' }),
+      item({ id: 'e', tags: ['gamalt'], status: 'dropped' }),
+    ]
+    expect(tagCounts(items, new Set())).toEqual([
+      { key: 'efni', label: 'efni', count: 2 },
+      { key: 'ákvörðun', label: 'ákvörðun', count: 1 },
+      { key: 'smokes', label: 'smokes', count: 1 },
+    ])
+  })
+  it('keeps a selected tag that no open item has, with count 0, so it can be turned off', () => {
+    expect(tagCounts([item({ tags: ['a'] })], new Set(['horfið']))).toEqual([
+      { key: 'a', label: 'a', count: 1 },
+      { key: 'horfið', label: 'horfið', count: 0 },
+    ])
+  })
+})
+
+describe('packageCounts', () => {
+  const pk = (id: string, position: number) => ({
+    id, created_at: null, project_id: 'pr', name: id.toUpperCase(), position, pos_x: 0, pos_y: 0,
+  })
+  const mod = (id: string, packageId: string | null) => ({
+    id, created_at: null, project_id: 'pr', package_id: packageId, slug: id, name: id, status_line: null,
+    color: '', is_ghost: false, position: 0,
+  })
+  it('lists packages in position order with their open item counts', () => {
+    const packages = [pk('b', 2), pk('a', 1)]
+    const modules = [mod('m1', 'a'), mod('m2', 'b'), mod('m3', null)]
+    const items = [
+      item({ id: '1', module_id: 'm1' }),
+      item({ id: '2', module_id: 'm1' }),
+      item({ id: '3', module_id: 'm2', status: 'done' }),
+      item({ id: '4', module_id: 'm3' }),
+      item({ id: '5', module_id: null }),
+    ]
+    expect(packageCounts(packages, modules, items)).toEqual([
+      { key: 'a', label: 'A', count: 2 },
+      { key: 'b', label: 'B', count: 0 },
+    ])
   })
 })

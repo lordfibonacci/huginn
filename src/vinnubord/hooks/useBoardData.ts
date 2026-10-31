@@ -25,6 +25,8 @@ export function useBoardData(projectId: string | null | undefined) {
   const [data, setData] = useState<BoardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Whether the realtime channel is subscribed (ruling R17), for the "Lifandi" dot.
+  const [live, setLive] = useState(false)
   // Only the newest request may write state, so a slow older response
   // cannot overwrite a newer board.
   const requestRef = useRef(0)
@@ -48,6 +50,7 @@ export function useBoardData(projectId: string | null | undefined) {
   useEffect(() => {
     setData(null)
     setError(null)
+    setLive(false)
     if (!projectId) {
       requestRef.current++
       setLoading(false)
@@ -73,14 +76,20 @@ export function useBoardData(projectId: string | null | undefined) {
         scheduleReload,
       )
     }
-    channel.subscribe()
+    let active = true
+    channel.subscribe((status) => {
+      if (!active) return
+      if (status === 'SUBSCRIBED') setLive(true)
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') setLive(false)
+    })
 
     return () => {
+      active = false
       if (timer) clearTimeout(timer)
       requestRef.current++
       void supabase.removeChannel(channel)
     }
   }, [projectId, reload])
 
-  return { data, loading, error, reload }
+  return { data, loading, error, reload, live }
 }

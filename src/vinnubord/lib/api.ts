@@ -166,6 +166,8 @@ export async function createItem(input: {
   body?: string
   moduleId?: string | null
   tags?: string[]
+  // Where the card lands on the board; the column default is used without it.
+  pos?: { x: number; y: number }
 }): Promise<Item> {
   const userId = await currentUserId()
   const { data, error } = await supabase
@@ -177,6 +179,7 @@ export async function createItem(input: {
       module_id: input.moduleId ?? null,
       tags: input.tags ?? [],
       created_by: userId,
+      ...(input.pos ? { pos_x: Math.round(input.pos.x), pos_y: Math.round(input.pos.y) } : {}),
     })
     .select('*')
     .single()

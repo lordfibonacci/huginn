@@ -211,6 +211,56 @@
         "next_step": "the next step",
         "next_prompt": "the prompt"
       }
+    },
+    "top": {
+      "project": "Project",
+      "counters": "Status filter",
+      "search": "Search",
+      "openSearch": "Search",
+      "package": "Package",
+      "tags": "Tags",
+      "noPackages": "No packages yet",
+      "noTags": "No tags yet",
+      "clear": "Clear",
+      "live": "Live",
+      "connecting": "Connecting",
+      "liveHint": "Changes from others show up as they happen",
+      "connectingHint": "Not connected yet, changes from others show up after a reload",
+      "participants": "Participants",
+      "viewerMenu": "Menu for {{name}}",
+      "settings": "Project settings",
+      "language": "Language",
+      "signOut": "Sign out",
+      "newItem": "New item"
+    },
+    "newItem": {
+      "heading": "New item",
+      "title": "Title",
+      "titlePlaceholder": "What is this about",
+      "titleRequired": "The item needs a title.",
+      "body": "Text",
+      "bodyHint": "Markdown works",
+      "module": "Module",
+      "noModule": "No module",
+      "tags": "Tags",
+      "tagsHint": "Comma between tags",
+      "files": "Files",
+      "drop": "Drop files here",
+      "pick": "Choose files",
+      "remove": "Remove {{name}}",
+      "state": {
+        "waiting": "Waiting",
+        "uploading": "Uploading",
+        "done": "Uploaded",
+        "error": "Error"
+      },
+      "create": "Create item",
+      "creating": "Creating",
+      "uploading": "Uploading files",
+      "cancel": "Cancel",
+      "openItem": "Open the item",
+      "createdWithErrors_one": "The item was created. {{count}} file did not go in, see above.",
+      "createdWithErrors_other": "The item was created. {{count}} files did not go in, see above."
     }
   }
 }
