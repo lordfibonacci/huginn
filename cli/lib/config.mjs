@@ -7,8 +7,10 @@ const PROJECT_FILE = '.huginn-project'
 const CREDENTIAL_FIELDS = ['url', 'anonKey', 'email', 'password']
 
 // Flags that never take a value. Any other flag takes the next word as its
-// value unless that word is itself a flag.
-const BOOLEAN_FLAGS = new Set(['json', 'debug', 'help'])
+// value unless that word is itself a flag. The write commands parse their own
+// flags strictly (parseCommand in write.mjs); this list only keeps main from
+// reading a positional after --force or --dropped as a flag value.
+const BOOLEAN_FLAGS = new Set(['json', 'debug', 'help', 'force', 'dropped'])
 
 export function huginnDir(home = homedir()) {
   return join(home, '.huginn')

@@ -40,14 +40,19 @@ function shortOf(userId, participants) {
   return short ? oneLine(short) : '?'
 }
 
-// "[tone] titill, staða, hver, hvenær". Who is the participant a waiting item
+// The first 8 characters of an id. Write commands take this prefix (ruling R15).
+export function shortId(id) {
+  return oneLine(String(id ?? '').slice(0, 8))
+}
+
+// "[tone] titill, staða, hver, hvenær #id". Who is the participant a waiting item
 // waits on, otherwise the creator. When is updated_at.
 export function itemLine(item, participants) {
   const who = item.status === 'waiting' && item.waiting_on
     ? `bíður ${shortOf(item.waiting_on, participants)}`
     : `frá ${shortOf(item.created_by, participants)}`
   const status = STATUS_NAMES[item.status] ?? oneLine(item.status)
-  return `[${toneOf(item, participants)}] ${oneLine(item.title)}, ${status}, ${who}, ${oneLine(iso(item.updated_at))}`
+  return `[${toneOf(item, participants)}] ${oneLine(item.title)}, ${status}, ${who}, ${oneLine(iso(item.updated_at))} #${shortId(item.id)}`
 }
 
 function subLines(item, data, participants) {
@@ -55,14 +60,14 @@ function subLines(item, data, participants) {
   const actions = (data.actions ?? [])
     .filter((a) => a.item_id === item.id && a.done_at === null)
     .sort(byCreated)
-    .map((a) => `  - Handtak, ${shortOf(a.owner, participants)}: ${oneLine(a.body)}`)
+    .map((a) => `  - Handtak, ${shortOf(a.owner, participants)}: ${oneLine(a.body)} #${shortId(a.id)}`)
   const questions = (data.questions ?? [])
     .filter((q) => q.item_id === item.id && q.answered_at === null)
     .sort(byCreated)
     .map((q) =>
       q.asked_to
-        ? `  - Spurning til ${shortOf(q.asked_to, participants)}: ${oneLine(q.body)}`
-        : `  - Spurning: ${oneLine(q.body)}`,
+        ? `  - Spurning til ${shortOf(q.asked_to, participants)}: ${oneLine(q.body)} #${shortId(q.id)}`
+        : `  - Spurning: ${oneLine(q.body)} #${shortId(q.id)}`,
     )
   return [...actions, ...questions]
 }

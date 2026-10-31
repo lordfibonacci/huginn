@@ -73,21 +73,26 @@ const data = board(items, { actions, questions })
 
 describe('itemLine', () => {
   it('reads tone, title, status, who and when', () => {
-    expect(itemLine(items[0], participants)).toBe('[gold] Verk i01, Nýtt, frá H, 2026-10-28T08:00:00.000Z')
-    expect(itemLine(items[3], participants)).toBe('[lilac] Verk i04, Bíður, bíður Á, 2026-10-30T10:00:00.000Z')
-    expect(itemLine(items[1], participants)).toBe('[gold] Verk i02, Bíður, bíður C, 2026-10-31T09:00:00.000Z')
+    expect(itemLine(items[0], participants)).toBe('[gold] Verk i01, Nýtt, frá H, 2026-10-28T08:00:00.000Z #i01')
+    expect(itemLine(items[3], participants)).toBe('[lilac] Verk i04, Bíður, bíður Á, 2026-10-30T10:00:00.000Z #i04')
+    expect(itemLine(items[1], participants)).toBe('[gold] Verk i02, Bíður, bíður C, 2026-10-31T09:00:00.000Z #i02')
   })
 
   it('names the creator when the item is not waiting, even with a stale waiting_on', () => {
     expect(itemLine(item('s', 'building', { waiting_on: 'u-a' }), participants)).toBe(
-      '[teal] Verk s, Í byggingu, frá H, 2026-10-30T10:00:00.000Z',
+      '[teal] Verk s, Í byggingu, frá H, 2026-10-30T10:00:00.000Z #s',
     )
   })
 
   it('keeps a multi line title on one line', () => {
     expect(itemLine(item('z', 'ready', { title: 'Tvær\n  línur ' }), participants)).toBe(
-      '[teal] Tvær línur, Tilbúið til byggingar, frá H, 2026-10-30T10:00:00.000Z',
+      '[teal] Tvær línur, Tilbúið til byggingar, frá H, 2026-10-30T10:00:00.000Z #z',
     )
+  })
+
+  it('ends with the first 8 characters of the id, so a write command can take it', () => {
+    const full = item('1a2b3c4d-0000-4000-8000-000000000001', 'new', { title: 'Langt' })
+    expect(itemLine(full, participants)).toBe('[gold] Langt, Nýtt, frá H, 2026-10-30T10:00:00.000Z #1a2b3c4d')
   })
 })
 
@@ -107,36 +112,36 @@ describe('statusMarkdown', () => {
         '# Staða: Metta',
         '',
         '## Nýtt',
-        '- [gold] Verk i01, Nýtt, frá H, 2026-10-28T08:00:00.000Z',
+        '- [gold] Verk i01, Nýtt, frá H, 2026-10-28T08:00:00.000Z #i01',
         '',
         '## Bíður ákvörðunar',
-        '- [lilac] Verk i05, Bíður, frá H, 2026-10-30T10:00:00.000Z',
-        '  - Spurning: Opin spurning',
+        '- [lilac] Verk i05, Bíður, frá H, 2026-10-30T10:00:00.000Z #i05',
+        '  - Spurning: Opin spurning #q3',
         '',
         '## Bíður Claude',
-        '- [gold] Verk i12, Bíður, bíður C, 2026-10-31T11:00:00.000Z',
-        '- [gold] Verk i00, Bíður, bíður C, 2026-10-31T09:00:00.000Z',
-        '- [gold] Verk i02, Bíður, bíður C, 2026-10-31T09:00:00.000Z',
-        '  - Handtak, H: Keyra SQL í ritli',
-        '  - Spurning til Á: Hvaða litur?',
+        '- [gold] Verk i12, Bíður, bíður C, 2026-10-31T11:00:00.000Z #i12',
+        '- [gold] Verk i00, Bíður, bíður C, 2026-10-31T09:00:00.000Z #i00',
+        '- [gold] Verk i02, Bíður, bíður C, 2026-10-31T09:00:00.000Z #i02',
+        '  - Handtak, H: Keyra SQL í ritli #a1',
+        '  - Spurning til Á: Hvaða litur? #q1',
         '',
         '## Bíður Árna',
-        '- [lilac] Verk i04, Bíður, bíður Á, 2026-10-30T10:00:00.000Z',
+        '- [lilac] Verk i04, Bíður, bíður Á, 2026-10-30T10:00:00.000Z #i04',
         '',
         '## Bíður Heimis',
-        '- [lilac] Verk i03, Bíður, bíður H, 2026-10-30T10:00:00.000Z',
+        '- [lilac] Verk i03, Bíður, bíður H, 2026-10-30T10:00:00.000Z #i03',
         '',
         '## Bíður: Xena',
-        '- [lilac] Verk i11, Bíður, bíður X, 2026-10-30T10:00:00.000Z',
+        '- [lilac] Verk i11, Bíður, bíður X, 2026-10-30T10:00:00.000Z #i11',
         '',
         '## Tilbúið til byggingar',
-        '- [teal] Verk i06, Tilbúið til byggingar, frá H, 2026-10-30T10:00:00.000Z',
+        '- [teal] Verk i06, Tilbúið til byggingar, frá H, 2026-10-30T10:00:00.000Z #i06',
         '',
         '## Í byggingu',
-        '- [teal] Verk i07, Í byggingu, frá H, 2026-10-30T10:00:00.000Z',
+        '- [teal] Verk i07, Í byggingu, frá H, 2026-10-30T10:00:00.000Z #i07',
         '',
         '## Í bið',
-        '- [stone] Verk i08, Í bið, frá H, 2026-10-30T10:00:00.000Z',
+        '- [stone] Verk i08, Í bið, frá H, 2026-10-30T10:00:00.000Z #i08',
         '',
       ].join('\n'),
     )
@@ -167,7 +172,7 @@ describe('control characters from the database', () => {
         '# Staða: Metta',
         '',
         '## Bíður: EveIll[31m ## fakeend',
-        '- [lilac] VerkIll[31m ## fakeend, Bíður, bíður E, 2026-10-30T10:00:00.000Z',
+        '- [lilac] VerkIll[31m ## fakeend, Bíður, bíður E, 2026-10-30T10:00:00.000Z #n1',
         '',
       ].join('\n'),
     )

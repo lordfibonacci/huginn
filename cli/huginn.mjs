@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // huginn: command line tool for the Huginn whiteboard. See cli/README.md.
 import { getClient, getMe, getProject, getUser, loadBoard } from './lib/client.mjs'
+import { WRITE_GROUPS, runWrite, writeUsage } from './lib/commands.mjs'
 import { loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
 import { filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
 
@@ -10,6 +11,9 @@ Skipanir:
   login                 Prófar innskráningu úr ~/.huginn/credentials.json
   whoami                Sýnir notanda og þátttakanda í verkefninu
   pull [--since ISO]    Sækir borðið og prentar stöðuna
+
+Skrifskipanir (<id> er heilt uuid eða minnst 8 fyrstu stafir þess, t.d. #1a2b3c4d úr pull):
+${writeUsage()}
 
 Rofar:
   --project <slug>      Verkefni, annars úr .huginn-project í möppunni eða foreldri
@@ -73,6 +77,13 @@ async function pull(argv, flags) {
 }
 
 const COMMANDS = { login, whoami, pull }
+
+async function write(argv) {
+  const { positional } = parseArgs(argv)
+  const { result, flags } = await runWrite(positional[0], positional[1], argv)
+  out(flags.json ? result.json : result.text, flags)
+}
+for (const group of WRITE_GROUPS) COMMANDS[group] = write
 
 async function main(argv) {
   const { positional, flags } = parseArgs(argv)
