@@ -143,19 +143,36 @@ export function itemsToMirror(data, now) {
   )
 }
 
+// Uploads store a file at <project id>/<item id>/<uuid>_<name>. A row whose
+// storage_path is outside that folder (or has empty, . or .. segments) is never
+// downloaded: a participant could otherwise point a row at another project's
+// object, and a user in both projects would copy it into this repo.
+export function storagePathOk(file, projectId, itemId) {
+  const path = String(file.storage_path ?? '')
+  const prefix = `${projectId}/${itemId}/`
+  if (!projectId || !itemId || !path.startsWith(prefix)) return false
+  return path
+    .slice(prefix.length)
+    .split('/')
+    .every((part) => part !== '' && part !== '.' && part !== '..' && !part.includes('\\'))
+}
+
+export const BAD_STORAGE_PATH = 'Storage slóð skrárinnar er ekki í möppu verkefnisins og verksins, skráin var ekki sótt.'
+
 // Where each file of an item goes. kind: 'copy' (written next to item.md),
-// 'pointer' (name is the pointer file) or 'repo' (already in the repo, only
-// listed). The earlier file by created_at keeps a name; a later one that
-// clashes with it or with item.md, ignoring case, gets the id suffix.
-export function fileTargets(itemId, files) {
+// 'pointer' (name is the pointer file), 'repo' (already in the repo, only
+// listed) or 'invalid' (storage_path fails storagePathOk, never downloaded).
+// The earlier file by created_at keeps a name; a later one that clashes with
+// it or with item.md, ignoring case, gets the id suffix.
+export function fileTargets(item, files, projectId) {
   const used = new Set([ITEM_FILE])
   const out = []
-  for (const file of files.filter((f) => f.item_id === itemId).sort(byCreated)) {
+  for (const file of files.filter((f) => f.item_id === item.id).sort(byCreated)) {
     if (file.repo_path) {
       out.push({ file, kind: 'repo', name: null })
       continue
     }
-    const kind = file.size < MIRROR_MAX_BYTES ? 'copy' : 'pointer'
+    const kind = !storagePathOk(file, projectId, item.id) ? 'invalid' : file.size < MIRROR_MAX_BYTES ? 'copy' : 'pointer'
     const local = (n) => (kind === 'pointer' ? `${n}${POINTER_SUFFIX}` : n)
     let name = safeFileName(file.name)
     for (const suffix of [idPart(file.id), idPart(file.id, Infinity)]) {
@@ -174,6 +191,7 @@ function fileLine({ file, kind, name }) {
   const head = `- ${oneLine(file.name)}, ${Number(file.size) || 0} bæti`
   if (kind === 'repo') return `${head}: í repoinu, ${oneLine(file.repo_path)}`
   if (kind === 'pointer') return `${head}: í Storage, bendiskrá ${name}`
+  if (kind === 'invalid') return `${head}: ekki sótt, Storage slóðin er utan verksins`
   return `${head}: afrit í möppunni, ${name}`
 }
 
@@ -280,47 +298,92 @@ export function pointerJson(file, hash) {
 
 // ---------- the plan ----------
 
+// The local folder of an item. A folder already on disk that ends with the
+// item's id suffix is reused, so a title change does not start a new folder.
+// The folder named by the current slug wins, otherwise the lexically first
+// match. A folder claimed by an earlier item is not reused. When the slug is
+// taken by an earlier item (same title, same first 6 id characters) the whole
+// id is the suffix.
+function folderFor(item, folders, claimed) {
+  const slug = itemSlug(item)
+  const short = idPart(item.id)
+  const base = slug.slice(0, slug.length - short.length)
+  let want = slug
+  for (const tag of [short, idPart(item.id, Infinity)]) {
+    want = base + tag
+    if (claimed.has(want)) continue
+    const local = folders.filter((f) => (f === tag || f.endsWith(`-${tag}`)) && !claimed.has(f)).sort()
+    if (local.includes(want)) return want
+    return local[0] ?? want
+  }
+  return want
+}
+
+function itemTargets(item, data, slug, withFiles) {
+  const files = fileTargets(item, data.files ?? [], data.project?.id)
+  const module = (data.modules ?? []).find((m) => m.id === item.module_id) ?? null
+  const content = renderItemMd(item, data.plans ?? [], data.actions ?? [], data.questions ?? [], data.rulings ?? [], data.participants ?? [], {
+    module,
+    files,
+  })
+  const targets = [{ path: `${slug}/${ITEM_FILE}`, kind: 'md', source: ITEM_FILE, content, files }]
+  if (!withFiles) return targets
+  for (const f of files) {
+    if (f.kind === 'repo') continue
+    const t = { path: `${slug}/${f.name}`, kind: f.kind, source: f.file }
+    if (f.kind === 'invalid') t.reason = BAD_STORAGE_PATH
+    targets.push(t)
+  }
+  return targets
+}
+
 // Every path sync may write, relative to the out folder with / separators:
 // { path, kind: 'md', source: 'item.md' | 'STATUS.md', content, files? }
-// { path, kind: 'copy' | 'pointer', source: FileRow }.
-// Item folders in board order of creation, STATUS.md last.
-export function mirrorTargets(data, now) {
-  const participants = data.participants ?? []
+// { path, kind: 'copy' | 'pointer', source: FileRow }
+// { path, kind: 'invalid', source: FileRow, reason }.
+// folders: names of the folders directly under the out folder.
+// Mirrored items come first in order of creation. Then items that left the
+// mirror set (dropped, or done too long ago) but still have a local folder
+// and are in data: their item.md is rendered one last time, with no file
+// downloads. STATUS.md last.
+export function mirrorTargets(data, now, folders = []) {
   const targets = []
-  const seen = new Set()
-  for (const item of itemsToMirror(data, now).sort(byCreated)) {
-    let slug = itemSlug(item)
-    // Two items whose first 6 id characters agree and whose titles map to the
-    // same slug: the later one gets the whole id.
-    if (seen.has(slug)) slug = slug.slice(0, slug.length - idPart(item.id).length) + idPart(item.id, Infinity)
-    seen.add(slug)
-    const files = fileTargets(item.id, data.files ?? [])
-    const module = (data.modules ?? []).find((m) => m.id === item.module_id) ?? null
-    const content = renderItemMd(item, data.plans ?? [], data.actions ?? [], data.questions ?? [], data.rulings ?? [], participants, {
-      module,
-      files,
-    })
-    targets.push({ path: `${slug}/${ITEM_FILE}`, kind: 'md', source: ITEM_FILE, content, files })
-    for (const f of files) {
-      if (f.kind !== 'repo') targets.push({ path: `${slug}/${f.name}`, kind: f.kind, source: f.file })
-    }
+  const claimed = new Set()
+  const mirrored = itemsToMirror(data, now).sort(byCreated)
+  const ids = new Set(mirrored.map((i) => i.id))
+  for (const item of mirrored) {
+    const slug = folderFor(item, folders, claimed)
+    claimed.add(slug)
+    targets.push(...itemTargets(item, data, slug, true))
   }
-  targets.push({ path: STATUS_FILE, kind: 'md', source: STATUS_FILE, content: statusMarkdown(data, participants) })
+  for (const item of (data.items ?? []).filter((i) => !ids.has(i.id)).sort(byCreated)) {
+    const slug = folderFor(item, folders, claimed)
+    if (!folders.includes(slug)) continue
+    claimed.add(slug)
+    targets.push(...itemTargets(item, data, slug, false))
+  }
+  targets.push({ path: STATUS_FILE, kind: 'md', source: STATUS_FILE, content: statusMarkdown(data, data.participants ?? []) })
   return targets
 }
 
 // existing: Map<path, { size, sha256?, pointerStoragePath? }> for files on disk.
-// Returns [{ path, action: 'write' | 'skip' | 'pointer', source, content? }].
-export function planMirror(data, existing, { now }) {
-  return mirrorTargets(data, now).map((t) => {
+// opts: { now, folders }. Returns [{ path, action, source, content?, reason? }]
+// with action 'write', 'skip', 'pointer' or 'fail'. A copy is also skipped
+// when an earlier sync left a pointer next to it for the same object (the
+// bytes turned out to be 10 MB or more, see executeMirror).
+export function planMirror(data, existing, { now, folders = [] }) {
+  return mirrorTargets(data, now, folders).map((t) => {
     const have = existing.get(t.path)
     if (t.kind === 'md') {
       const same = have?.sha256 === sha256(t.content)
       return same ? { path: t.path, action: 'skip', source: t.source } : { path: t.path, action: 'write', source: t.source, content: t.content }
     }
+    if (t.kind === 'invalid') return { path: t.path, action: 'fail', source: t.source, reason: t.reason }
     if (t.kind === 'pointer') {
       return { path: t.path, action: have?.pointerStoragePath === t.source.storage_path ? 'skip' : 'pointer', source: t.source }
     }
-    return { path: t.path, action: have && have.size === t.source.size ? 'skip' : 'write', source: t.source }
+    const fallback = existing.get(`${t.path}${POINTER_SUFFIX}`)
+    const same = (have && have.size === t.source.size) || fallback?.pointerStoragePath === t.source.storage_path
+    return { path: t.path, action: same ? 'skip' : 'write', source: t.source }
   })
 }

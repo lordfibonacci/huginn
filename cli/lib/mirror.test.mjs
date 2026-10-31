@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
+  BAD_STORAGE_PATH,
   MIRROR_MAX_BYTES,
   itemSlug,
   itemsToMirror,
@@ -12,8 +13,9 @@ import {
   pointerJson,
   renderItemMd,
   safeFileName,
+  storagePathOk,
 } from './mirror.mjs'
-import { executeMirror, readExisting, resolveInside } from './sync.mjs'
+import { executeMirror, listFolders, readExisting, resolveInside, syncReport } from './sync.mjs'
 
 const NOW = Date.parse('2026-10-31T12:00:00Z')
 const MB = 1024 * 1024
@@ -303,6 +305,62 @@ describe('planMirror', () => {
     }
   })
 
+  it('never downloads a file whose storage_path is outside the project and item folder', () => {
+    const it = item('i1')
+    const data = board([it], {
+      files: [
+        file('f1', 'i1', 'annad.pdf', 10, { storage_path: 'other-project/i1/f1_annad.pdf' }),
+        file('f2', 'i1', 'annad-verk.pdf', 10, { storage_path: 'pr/other-item/f2_x.pdf' }),
+        file('f3', 'i1', 'upp.pdf', 10, { storage_path: 'pr/i1/../../other-project/x/f3.pdf' }),
+        file('f4', 'i1', 'gott.pdf', 10, { storage_path: 'pr/i1/f4_gott.pdf' }),
+        file('f5', 'i1', 'stort.mp4', 12 * MB, { storage_path: 'pr2/i1/f5.mp4' }),
+      ],
+    })
+    expect(storagePathOk({ storage_path: 'pr/i1/x' }, 'pr', 'i1')).toBe(true)
+    expect(storagePathOk({ storage_path: 'pr/i1//x' }, 'pr', 'i1')).toBe(false)
+    expect(storagePathOk({ storage_path: 'pr/i1/./x' }, 'pr', 'i1')).toBe(false)
+    expect(storagePathOk({ storage_path: 'pr/i10/x' }, 'pr', 'i1')).toBe(false)
+    const plan = planMirror(data, new Map(), { now: NOW })
+    expect(plan.map((e) => [e.path.split('/').pop(), e.action])).toEqual([
+      ['item.md', 'write'],
+      ['annad.pdf', 'fail'],
+      ['annad-verk.pdf', 'fail'],
+      ['upp.pdf', 'fail'],
+      ['gott.pdf', 'write'],
+      ['stort.mp4', 'fail'],
+      ['STATUS.md', 'write'],
+    ])
+    expect(plan[1].reason).toBe(BAD_STORAGE_PATH)
+    expect(plan[0].content).toContain('- annad.pdf, 10 bæti: ekki sótt, Storage slóðin er utan verksins')
+  })
+
+  it('reuses a local folder with the same id suffix after a title change, the slug folder winning, else lexical first', () => {
+    const it = item('abcdef99', { title: 'Nýr titill' })
+    const data = board([it])
+    const paths = (folders) => planMirror(data, new Map(), { now: NOW, folders }).map((e) => e.path)
+    expect(paths([])).toEqual(['nyr-titill-abcdef/item.md', 'STATUS.md'])
+    expect(paths(['gamall-titill-abcdef'])).toEqual(['gamall-titill-abcdef/item.md', 'STATUS.md'])
+    expect(paths(['b-abcdef', 'a-abcdef'])).toEqual(['a-abcdef/item.md', 'STATUS.md'])
+    expect(paths(['a-abcdef', 'nyr-titill-abcdef'])).toEqual(['nyr-titill-abcdef/item.md', 'STATUS.md'])
+    expect(paths(['abcdef9', 'x-abcdeg'])).toEqual(['nyr-titill-abcdef/item.md', 'STATUS.md'])
+  })
+
+  it('renders a last item.md without files for an item that left the mirror set but has a folder', () => {
+    const it = item('i1', { status: 'dropped', closed_at: '2026-10-30T00:00:00Z' })
+    const old = item('i2', { status: 'done', closed_at: '2026-08-01T00:00:00Z' })
+    const data = board([it, old], { files: [file('f1', 'i1', 'mynd.png', 10)] })
+    const none = planMirror(data, new Map(), { now: NOW, folders: [] })
+    expect(none.map((e) => e.path)).toEqual(['STATUS.md'])
+    const plan = planMirror(data, new Map(), { now: NOW, folders: ['verk-i1-i1', 'verk-i2-i2'] })
+    expect(plan.map((e) => [e.path, e.action])).toEqual([
+      ['verk-i1-i1/item.md', 'write'],
+      ['verk-i2-i2/item.md', 'write'],
+      ['STATUS.md', 'write'],
+    ])
+    expect(plan[0].content).toContain('- Staða: Hætt við')
+    expect(plan[1].content).toContain('- Staða: Lokið')
+  })
+
   it('mirrors no dropped item and lists STATUS.md last with statusMarkdown content', () => {
     const data = board([item('x', { status: 'dropped', closed_at: '2026-10-30T00:00:00Z' })])
     const plan = planMirror(data, new Map(), { now: NOW })
@@ -411,11 +469,12 @@ describe('sync on disk', () => {
     rmSync(out, { recursive: true, force: true })
   })
 
-  async function run(data) {
-    const targets = mirrorTargets(data, NOW)
+  async function run(data, fetch = download) {
+    const folders = listFolders(out)
+    const targets = mirrorTargets(data, NOW, folders)
     const existing = readExisting(out, targets)
-    const plan = planMirror(data, existing, { now: NOW })
-    return executeMirror(out, plan, { download })
+    const plan = planMirror(data, existing, { now: NOW, folders })
+    return executeMirror(out, plan, { download: fetch })
   }
 
   it('writes everything once, then a second run writes and downloads nothing', async () => {
@@ -477,6 +536,101 @@ describe('sync on disk', () => {
     expect(text).toContain('Ný staða')
     expect(text.endsWith('\n')).toBe(true)
     expect(text.includes('\r')).toBe(false)
+  })
+
+  it('keeps going when one download fails, writes later files and STATUS.md, and reports exit code 1', async () => {
+    const data = fullBoard()
+    data.files.push(file('f4000000-0004', ITEM_ID, 'seinni.txt', 5, { created_at: '2026-10-09T00:00:00Z' }))
+    const later = 'pr/' + ITEM_ID + '/f4000000-0004_seinni.txt'
+    const flaky = async (path) => {
+      downloads.push(path)
+      if (path.endsWith('_drog.md')) throw new Error('HTTP 500')
+      if (path === later) return Buffer.from('hallo')
+      return download(path)
+    }
+    const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
+    const result = await run(data, flaky)
+    expect(result.failed).toEqual([{ path: slug + '/drog.md', reason: 'HTTP 500' }])
+    expect(result.written).toEqual([slug + '/item.md', slug + '/seinni.txt', 'STATUS.md'])
+    expect(result.pointers).toEqual([slug + '/upptaka.mp4.pointer.json'])
+    expect(existsSync(join(out, 'STATUS.md'))).toBe(true)
+    expect(existsSync(join(out, slug, 'drog.md'))).toBe(false)
+    const report = syncReport(out, result, false)
+    expect(report.exitCode).toBe(1)
+    expect(report.json.ok).toBe(false)
+    expect(report.json.failed).toEqual(result.failed)
+    expect(report.text).toContain('Mistókst: 1\n  ' + slug + '/drog.md: HTTP 500')
+    expect(syncReport(out, await run(data), false).exitCode).toBe(0)
+  })
+
+  it('lists a storage_path outside the item as failed and never downloads it', async () => {
+    const data = fullBoard()
+    data.files[0].storage_path = 'other-project/x/f1_drog.md'
+    const result = await run(data)
+    expect(result.failed).toEqual([{ path: 'efnaskra-a-og-b-endurhonnun-a1b2c3/drog.md', reason: BAD_STORAGE_PATH }])
+    expect(downloads).not.toContain('other-project/x/f1_drog.md')
+    expect(result.written).toContain('STATUS.md')
+  })
+
+  it('writes into the old folder after a title change and makes no new one', async () => {
+    const data = fullBoard()
+    await run(data)
+    data.items[0].title = 'Alveg nýr titill'
+    downloads = []
+    const again = await run(data)
+    expect(again.written).toEqual(['efnaskra-a-og-b-endurhonnun-a1b2c3/item.md', 'STATUS.md'])
+    expect(readdirSync(out).sort()).toEqual(['STATUS.md', 'efnaskra-a-og-b-endurhonnun-a1b2c3'])
+    expect(readFileSync(join(out, 'efnaskra-a-og-b-endurhonnun-a1b2c3', 'item.md'), 'utf8')).toContain('# Alveg nýr titill')
+    expect(downloads).toEqual([])
+  })
+
+  it('rewrites item.md of a dropped item that has a folder, without downloads, and leaves its files', async () => {
+    const data = fullBoard()
+    const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
+    await run(data)
+    data.items[0].status = 'dropped'
+    data.items[0].closed_at = '2026-10-31T11:00:00Z'
+    downloads = []
+    const again = await run(data)
+    expect(again.written).toEqual([slug + '/item.md', 'STATUS.md'])
+    expect(downloads).toEqual([])
+    expect(readFileSync(join(out, slug, 'item.md'), 'utf8')).toContain('- Staða: Hætt við')
+    expect(readdirSync(join(out, slug)).sort()).toEqual(['drog.md', 'item.md', 'upptaka.mp4.pointer.json'])
+  })
+
+  it('gives a dropped item without a folder nothing', async () => {
+    const data = fullBoard()
+    data.items[0].status = 'dropped'
+    data.items[0].closed_at = '2026-10-31T11:00:00Z'
+    const result = await run(data)
+    expect(result.written).toEqual(['STATUS.md'])
+    expect(readdirSync(out)).toEqual(['STATUS.md'])
+  })
+
+  it('writes a pointer with a warning when the downloaded bytes are 10 MB or more, then skips it', async () => {
+    const data = fullBoard()
+    const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
+    const big = Buffer.alloc(MIRROR_MAX_BYTES, 1)
+    const liar = async (path) => {
+      downloads.push(path)
+      return path.endsWith('_drog.md') ? big : download(path)
+    }
+    const result = await run(data, liar)
+    expect(result.written).toEqual([slug + '/item.md', 'STATUS.md'])
+    expect(result.pointers).toEqual([slug + '/drog.md.pointer.json', slug + '/upptaka.mp4.pointer.json'])
+    expect(result.warnings).toEqual([
+      slug + '/drog.md: skráin er ' + MIRROR_MAX_BYTES + ' bæti í Storage en 120 bæti samkvæmt gagnagrunni, bendiskrá skrifuð í staðinn.',
+    ])
+    expect(existsSync(join(out, slug, 'drog.md'))).toBe(false)
+    const pointer = JSON.parse(readFileSync(join(out, slug, 'drog.md.pointer.json'), 'utf8'))
+    expect(pointer.size).toBe(MIRROR_MAX_BYTES)
+    expect(pointer.sha256).toBe(sha(big))
+    expect(syncReport(out, result, false).text).toContain('Viðvaranir: 1')
+    downloads = []
+    const again = await run(data, liar)
+    expect(again.written).toEqual([])
+    expect(again.pointers).toEqual([])
+    expect(downloads).toEqual([])
   })
 
   it('refuses a path that leaves the out folder', () => {

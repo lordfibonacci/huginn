@@ -7,7 +7,7 @@ import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } 
 import { filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
 import { mirrorTargets, planMirror } from './lib/mirror.mjs'
 import { downloadFile } from './lib/ops.mjs'
-import { executeMirror, readExisting } from './lib/sync.mjs'
+import { executeMirror, listFolders, readExisting, syncReport } from './lib/sync.mjs'
 import { parseCommand } from './lib/write.mjs'
 
 const USAGE = `Notkun: huginn <skipun> [rofar]
@@ -85,17 +85,6 @@ async function pull(argv, flags) {
 
 const SYNC_USAGE = 'Notkun: huginn sync [--out docs/huginn] [--dry-run]'
 
-function syncText(dir, result, dryRun) {
-  const lines = [dryRun ? `Spegill í ${dir}, prufukeyrsla, ekkert skrifað.` : `Spegill í ${dir}.`]
-  const list = (heading, paths) => {
-    lines.push(`${heading}: ${paths.length}`, ...paths.map((p) => `  ${p}`))
-  }
-  list(dryRun ? 'Yrði skrifað' : 'Skrifað', result.written)
-  list('Óbreytt', result.skipped)
-  list(dryRun ? 'Bendiskrár sem yrðu skrifaðar' : 'Bendiskrár', result.pointers)
-  return lines.join('\n')
-}
-
 // Mirror of the board into the repo (rulings R6, R7, R8, R18). Writes only
 // what changed and never deletes anything.
 async function sync(argv, globalFlags) {
@@ -110,15 +99,16 @@ async function sync(argv, globalFlags) {
   const project = await getProject(client, slug)
   const data = await loadBoard(client, project.id)
   const now = Date.now()
-  const targets = mirrorTargets(data, now)
-  const plan = planMirror(data, readExisting(outDir, targets), { now })
+  const folders = listFolders(outDir)
+  const targets = mirrorTargets(data, now, folders)
+  const plan = planMirror(data, readExisting(outDir, targets), { now, folders })
   const result = await executeMirror(outDir, plan, { download: (path) => downloadFile(client, path), dryRun })
 
-  if (globalFlags.json) {
-    out({ ok: true, out: outDir, dry_run: dryRun, ...result }, globalFlags)
-    return
-  }
-  out(syncText(outDir, result, dryRun), globalFlags)
+  // Failed entries are listed and the run ends with exit code 1, after
+  // everything else, STATUS.md included, has been written.
+  const report = syncReport(outDir, result, dryRun)
+  out(globalFlags.json ? report.json : report.text, globalFlags)
+  if (report.exitCode) process.exitCode = report.exitCode
 }
 
 const COMMANDS = { login, whoami, pull, sync }
