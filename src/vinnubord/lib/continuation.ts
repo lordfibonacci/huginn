@@ -1,76 +1,29 @@
-import { PLAN_STATUS_NAMES, STATUS_NAMES } from './status'
-import type { Action, FileRow, Item, Module, Participant, Plan, Project, Question, Ruling } from './types'
+import type { Item, Plan, Project } from './types'
 
-export type ContinuationInput = {
-  project: Project
-  participants: Participant[]
-  item: Item
-  module: Module | null
-  plans: Plan[]
-  actions: Action[]
-  rulings: Ruling[]
-  questions: Question[]
-  files: FileRow[]
-}
+// The mirror folder of an item (`huginn sync`, cli/lib/mirror.mjs) ends with
+// the first 6 characters of its id, the CLI accepts the first 8.
+const MIRROR_ID = 6
+const CLI_ID = 8
 
-const NONE = '(engin)'
-
-const ITEM_STATUS = STATUS_NAMES
-const PLAN_STATUS = PLAN_STATUS_NAMES
-
-function section(title: string, lines: string[]): string {
-  return `## ${title}\n${lines.length > 0 ? lines.join('\n') : NONE}`
-}
-
-export function buildContinuationPrompt(input: ContinuationInput): string {
-  const { project, participants, item, module, plans, actions, rulings, questions, files } = input
-
-  const nameOf = (userId: string | null): string =>
-    participants.find((p) => p.user_id === userId)?.display_name ?? '?'
-
-  const verk = [
-    `Verkefni: ${project.name}`,
-    ...(module ? [`Eining: ${module.name}`] : []),
-    `Verk: ${item.title}`,
-    ...(item.summary ? [item.summary] : []),
-  ]
-
-  const where = [
-    `Staða: ${ITEM_STATUS[item.status]}`,
-    ...(item.next_step ? [`Næsta skref: ${item.next_step}`] : []),
-  ]
-
-  const planLines = plans.map((p) => `- ${p.name}, ${PLAN_STATUS[p.status]}, ${p.path ?? NONE}`)
-
-  const actionLines = actions
-    .filter((a) => a.done_at === null)
-    .map((a) => `- ${nameOf(a.owner)}: ${a.body}`)
-
-  const questionLines = questions.filter((q) => q.answer === null).map((q) => `- ${q.body}`)
-
-  const planIds = new Set(plans.map((p) => p.id))
-  const rulingLines = rulings
-    .filter((r) => !r.reversed && planIds.has(r.plan_id))
-    .map((r) => `- ${r.code}: ${r.body}`)
-
-  const fileLines = files.map((f) => `- ${f.repo_path ?? f.name}`)
-
-  const needsBuild = plans.some((p) => p.status === 'todo' || p.status === 'building')
-  const run = [
-    ...(project.repo_path ? [`Mappa: ${project.repo_path}`] : []),
-    needsBuild ? 'claude --model opus' : 'claude',
-  ]
-
-  const parts = [
-    section('Verk', verk),
-    section('Hvar erum við', where),
-    section('Plön', planLines),
-    section('Opin handtök', actionLines),
-    section('Ósvaraðar spurningar', questionLines),
-    section('Úrskurðir sem skipta máli', rulingLines),
-    section('Skjöl', fileLines),
-    section('Keyra', run),
-  ]
-  const out = parts.join('\n\n')
+// "Halda áfram": a short prompt that points the new session at the mirror.
+// `huginn sync` writes item.md (description, where we are, plans, rulings,
+// actions, questions, file list) and copies the files next to it, and skips
+// what is already on disk, so the prompt does not repeat any of it.
+export function buildContinuationPrompt(item: Item): string {
+  const lines = [`Huginn verk #${item.id.slice(0, CLI_ID)}: ${item.title}`]
+  if (item.source_ref) lines.push(`Heimild: ${item.source_ref}`)
+  lines.push(
+    `Keyrðu huginn sync og lestu möppuna í docs/huginn sem endar á ${item.id.slice(0, MIRROR_ID)}: item.md og skjölin í henni` +
+      (item.source_ref ? ', og heimildina ef hún er skrá í repoinu' : '') +
+      '. Skrá með .pointer.json sækirðu með huginn file get. Vinndu svo eftir /huginn.',
+  )
+  const out = lines.join('\n')
   return item.next_prompt ? `${out}\n\n${item.next_prompt}` : out
+}
+
+// Where and how to start that session, shown next to the button. Opus when
+// the item is ready or building, or a plan is not done.
+export function resumeCommand(project: Project, item: Item, plans: Plan[]): { command: string; folder: string | null } {
+  const build = item.status === 'ready' || item.status === 'building' || plans.some((p) => p.status !== 'done')
+  return { command: build ? 'claude --model opus' : 'claude', folder: project.repo_path }
 }

@@ -205,6 +205,8 @@
       "nextStep": "Next step",
       "resume": "Continue",
       "resumeHint": "Copies a context prompt for a new chat.",
+      "resumeRunIn": "in",
+      "resumeRunWith": "Start the session with",
       "copy": "Copy",
       "copyWhat": "Copy {{what}}",
       "copied": "Copied",

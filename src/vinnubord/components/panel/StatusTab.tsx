@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAsyncAction } from '../../hooks/useAsyncAction'
 import { updateItem } from '../../lib/api'
-import { buildContinuationPrompt } from '../../lib/continuation'
+import { buildContinuationPrompt, resumeCommand } from '../../lib/continuation'
 import { statusPatch } from '../../lib/panel'
 import { STATUS_NAMES, type Tone } from '../../lib/status'
 import type { BoardData, Item, ItemStatus, Module } from '../../lib/types'
@@ -69,7 +69,7 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
         </section>
       )}
 
-      <ResumeButton data={data} item={item} module={module} />
+      <ResumeButton data={data} item={item} />
 
       {plans.length > 0 && (
         <section className="hg-pn-sec">
@@ -101,31 +101,28 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
 }
 
 // "Halda áfram": copies the continuation prompt exactly as built (ruling R15)
-// and says "Afritað" for 1.5 s.
-function ResumeButton({ data, item, module }: { data: BoardData; item: Item; module: Module | null }) {
+// and says "Afritað" for 1.5 s. Where and how to start the session is shown
+// beside it, not copied.
+function ResumeButton({ data, item }: { data: BoardData; item: Item }) {
   const { t } = useTranslation()
   const { state, copy } = useCopy()
-  const onClick = () => {
-    const plans = data.plans.filter((p) => p.item_id === item.id).sort((a, b) => a.position - b.position)
-    const prompt = buildContinuationPrompt({
-      project: data.project,
-      participants: data.participants,
-      item,
-      module,
-      plans,
-      actions: data.actions.filter((a) => a.item_id === item.id),
-      rulings: data.rulings,
-      questions: data.questions.filter((q) => q.item_id === item.id),
-      files: data.files.filter((f) => f.item_id === item.id),
-    })
-    void copy(prompt)
-  }
+  const run = resumeCommand(data.project, item, data.plans.filter((p) => p.item_id === item.id))
   return (
     <div className="hg-resume">
-      <button type="button" className="hg-btn hg-btn-primary hg-resume-btn" onClick={onClick}>
+      <button type="button" className="hg-btn hg-btn-primary hg-resume-btn" onClick={() => void copy(buildContinuationPrompt(item))}>
         {state === 'ok' ? t('vinnubord.panel.copied') : state === 'fail' ? t('vinnubord.panel.copyFailed') : t('vinnubord.panel.resume')}
       </button>
-      <span className="hg-pn-muted">{t('vinnubord.panel.resumeHint')}</span>
+      <span className="hg-pn-muted">
+        {t('vinnubord.panel.resumeHint')}
+        <br />
+        {t('vinnubord.panel.resumeRunWith')} <code>{run.command}</code>
+        {run.folder && (
+          <>
+            {' '}
+            {t('vinnubord.panel.resumeRunIn')} <code>{run.folder}</code>
+          </>
+        )}
+      </span>
       <span className="hg-sr" role="status">
         {state === 'ok' ? t('vinnubord.panel.copied') : ''}
       </span>

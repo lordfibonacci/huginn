@@ -229,6 +229,8 @@
       },
       "resume": "Halda áfram",
       "resumeHint": "Afritar samhengisprompt fyrir nýtt spjall.",
+      "resumeRunIn": "í",
+      "resumeRunWith": "Hefja lotu með",
       "reverse": "Snúa við",
       "rulings_one": "{{count}} úrskurður",
       "rulings_other": "{{count}} úrskurðir",
