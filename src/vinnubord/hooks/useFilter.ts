@@ -7,6 +7,7 @@ import {
   prunePackages,
   serializeFilter,
   toggleFilter,
+  toggleUnread as toggleUnreadFilter,
   withQuery,
   type Filter,
 } from '../lib/filters'
@@ -59,13 +60,14 @@ export function useFilter(projectId: string) {
   const toggleTone = useCallback((tone: Tone) => update((f) => toggleFilter(f, 'tones', tone)), [update])
   const togglePackage = useCallback((id: string) => update((f) => toggleFilter(f, 'packages', id)), [update])
   const toggleTag = useCallback((tag: string) => update((f) => toggleFilter(f, 'tags', tag)), [update])
+  const toggleUnread = useCallback(() => update((f) => toggleUnreadFilter(f)), [update])
   const setQuery = useCallback((q: string) => update((f) => withQuery(f, q)), [update])
   const clear = useCallback(() => update(() => emptyFilter()), [update])
   // Forget package ids that are not on the board (called when packages load).
   const keepPackages = useCallback((known: Set<string>) => update((f) => prunePackages(f, known)), [update])
 
   const filter = current.filter
-  return { filter, toggleTone, togglePackage, toggleTag, setQuery, clear, keepPackages, active: isActive(filter) }
+  return { filter, toggleTone, togglePackage, toggleTag, toggleUnread, setQuery, clear, keepPackages, active: isActive(filter) }
 }
 
 export type FilterApi = ReturnType<typeof useFilter>

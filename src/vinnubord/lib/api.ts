@@ -23,6 +23,7 @@ import type {
   Question,
   Read,
   Ruling,
+  UnreadRow,
 } from './types'
 
 // Data layer for the vinnubord. Every function throws an Error with a short
@@ -62,6 +63,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     comments,
     events,
     reads,
+    unread,
   ] = await Promise.all([
     supabase.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
     byProject('hg_participants').order('created_at'),
@@ -80,6 +82,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     // Newest first so the row cap drops old events, reversed below.
     byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
     byProject('hg_reads'),
+    supabase.rpc('hg_unread', { p_project: projectId }),
   ])
 
   const results = [
@@ -96,6 +99,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     comments,
     events,
     reads,
+    unread,
   ]
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið.', failed.error)
@@ -115,7 +119,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     comments: (comments.data ?? []) as Comment[],
     events: ((events.data ?? []) as Event[]).reverse(),
     reads: (reads.data ?? []) as Read[],
-    unread: [],
+    unread: (unread.data ?? []) as UnreadRow[],
   }
 }
 
@@ -252,6 +256,12 @@ export async function markRead(itemId: string): Promise<void> {
     { onConflict: 'item_id,user_id' },
   )
   if (error) fail('Gat ekki merkt verkið lesið.', error)
+}
+
+// Every open item of the project read for the viewer, stamped by the server (0010).
+export async function markAllRead(projectId: string): Promise<void> {
+  const { error } = await supabase.rpc('hg_mark_all_read', { p_project: projectId })
+  if (error) fail('Gat ekki merkt allt lesið.', error)
 }
 
 export async function uploadFile(input: { projectId: string; itemId: string; file: File }): Promise<FileRow> {
