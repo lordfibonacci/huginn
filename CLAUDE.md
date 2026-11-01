@@ -4,9 +4,7 @@ Huginn is the shared work whiteboard for Metta ("vinnuborð Mettu"). Three parti
 
 The old Trello style board, inbox, runes and Meta social planner are gone from the code. The repo, the name, login and the Supabase project stay.
 
-Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Plans: `docs/superpowers/plans/2026-10-31-vinnubord-{1-grunnur,2-bord,3-cli,4-skyndigreining}.md`.
-
-Plan 5 (staða úr gögnum) is specced and planned, not built: spec `docs/superpowers/specs/2026-11-01-stada-ur-gognum-design.md`, plan `docs/superpowers/plans/2026-11-01-stada-ur-gognum.md`. Run it in an Opus session with subagent-driven-development; task 6 edits the `/huginn` skill in metta2_new.
+Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`; plan 5 spec: `docs/superpowers/specs/2026-11-01-stada-ur-gognum-design.md`. Plans: `docs/superpowers/plans/2026-10-31-vinnubord-{1-grunnur,2-bord,3-cli,4-skyndigreining}.md` and `docs/superpowers/plans/2026-11-01-stada-ur-gognum.md`.
 
 ## Current state
 
@@ -21,7 +19,7 @@ Plans 1 to 5 are built (428 vitest tests, `npm run build` green; `npm run smoke:
 
 - Plan 5 (staða úr gögnum): migration 0008 moves the item when a plan moves, the card shows "N hjá þér" and counts plans with a path as files, the status tab lists actions first with done ones folded, the files tab lists plans, and the `/huginn` skill in metta2_new carries a prompt template that makes the build session write at three fixed moments. See `docs/progress/05-stada-ur-gognum.md`.
 
-Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md`, `docs/progress/03-vinnubord-cli.md` and `docs/progress/04-vinnubord-skyndigreining.md`.
+Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md`, `docs/progress/03-vinnubord-cli.md`, `docs/progress/04-vinnubord-skyndigreining.md` and `docs/progress/05-stada-ur-gognum.md`.
 
 ## Tech Stack
 
