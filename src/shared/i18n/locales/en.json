@@ -221,7 +221,8 @@
         "back": "Back to files",
         "loading": "Loading file",
         "open": "Open {{name}}",
-        "openLink": "Tap to open {{name}}"
+        "openLink": "Tap to open {{name}}",
+        "planKind": "Plan"
       },
       "questions": {
         "empty": "No questions.",

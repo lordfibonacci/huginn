@@ -195,7 +195,8 @@
         "empty": "Engin skjöl ennþá.",
         "loading": "Sæki skjal",
         "open": "Opna {{name}}",
-        "openLink": "Smelltu til að opna {{name}}"
+        "openLink": "Smelltu til að opna {{name}}",
+        "planKind": "Plan"
       },
       "history": {
         "empty": "Ekkert hefur gerst ennþá."

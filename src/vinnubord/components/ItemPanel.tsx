@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
+import { fileCountsByItem } from '../lib/panel'
 import { needsReadMark } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
@@ -49,6 +50,8 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const label = itemStatusLabel(item, viewerId, data.participants)
   const module = data.modules.find((m) => m.id === item.module_id) ?? null
   const files = data.files.filter((f) => f.item_id === item.id)
+  const plans = data.plans.filter((p) => p.item_id === item.id)
+  const fileCount = fileCountsByItem(data.files, data.plans).get(item.id) ?? 0
   const questions = data.questions.filter((q) => q.item_id === item.id)
   const openQuestions = questions.filter((q) => q.answer === null).length
   const moverId = item.updated_by ?? item.created_by
@@ -56,7 +59,7 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const moduleName = module ? module.name : t('vinnubord.panel.noModule')
 
   const tabLabel = (k: Tab) => {
-    if (k === 'files' && files.length > 0) return t('vinnubord.panel.tabs.filesCount', { count: files.length })
+    if (k === 'files' && fileCount > 0) return t('vinnubord.panel.tabs.filesCount', { count: fileCount })
     if (k === 'questions' && openQuestions > 0) return t('vinnubord.panel.tabs.questionsCount', { count: openQuestions })
     return t(`vinnubord.panel.tabs.${k}`)
   }
@@ -105,7 +108,7 @@ export function ItemPanel({ data, item, viewerId }: Props) {
           <StatusTab data={data} item={item} module={module} tone={tone} label={label} />
         </div>
         <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
-          <FilesTab files={files} participants={data.participants} />
+          <FilesTab files={files} plans={plans} participants={data.participants} />
         </div>
         <div role="tabpanel" id="hg-tabpanel-questions" aria-labelledby="hg-tab-questions" hidden={tab !== 'questions'}>
           <QuestionsTab questions={questions} participants={data.participants} />

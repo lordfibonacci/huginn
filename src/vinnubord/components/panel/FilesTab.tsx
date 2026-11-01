@@ -3,21 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
 import { fileText, fileUrl } from '../../lib/api'
 import { fileKindLabel } from '../../lib/upload'
-import type { FileRow, Participant } from '../../lib/types'
+import type { FileRow, Participant, Plan } from '../../lib/types'
 import { CopyButton } from '../CopyButton'
 import { Markdown } from '../Markdown'
 
 type Props = {
   files: FileRow[]
+  plans: Plan[]
   participants: Participant[]
 }
 
 type Reader = { file: FileRow; text: string | null; error: string | null }
 
-// "Skjöl": who added what and when, the repo path to copy. A tap opens the
-// file: md and txt in the reader inside the panel, anything else in a new tab
-// through a signed url.
-export function FilesTab({ files, participants }: Props) {
+// "Skjöl": plans with a repo path come first (path only, no open), then who
+// added what and when, the repo path to copy. A tap opens the file: md and txt
+// in the reader inside the panel, anything else in a new tab through a signed
+// url.
+export function FilesTab({ files, plans, participants }: Props) {
   const { t } = useTranslation()
   const [reader, setReader] = useState<Reader | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +89,11 @@ export function FilesTab({ files, participants }: Props) {
     )
   }
 
-  if (files.length === 0) return <p className="hg-pn-muted">{t('vinnubord.panel.files.empty')}</p>
+  const withPath = [...plans].filter((p) => p.path).sort((a, b) => a.position - b.position)
+
+  if (files.length === 0 && withPath.length === 0) {
+    return <p className="hg-pn-muted">{t('vinnubord.panel.files.empty')}</p>
+  }
 
   return (
     <>
@@ -97,6 +103,18 @@ export function FilesTab({ files, participants }: Props) {
         </p>
       )}
       <ul className="hg-pn-list">
+        {withPath.map((p) => (
+          <li key={p.id} className="hg-file hg-file-plan">
+            <div className="hg-file-head">
+              <span className="hg-pill">{t('vinnubord.panel.files.planKind')}</span>
+              <span className="hg-file-name">{p.name}</span>
+            </div>
+            <div className="hg-path">
+              <code>{p.path}</code>
+              <CopyButton text={p.path as string} what={t('vinnubord.panel.copyOf.planPath')} />
+            </div>
+          </li>
+        ))}
         {files.map((f) => {
           const by = participants.find((p) => p.user_id === f.uploaded_by)
           return (
