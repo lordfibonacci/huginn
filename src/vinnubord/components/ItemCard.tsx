@@ -11,6 +11,8 @@ type Props = {
   label: string
   plans: Plan[]
   actionsOpen: number
+  // open actions owned by the viewer, shown instead of the open count
+  actionsMine: number
   fileCount: number
   // Who changed the item last (updated_by, else created_by).
   mover: { short: string; name: string } | null
@@ -35,6 +37,7 @@ export const ItemCard = memo(function ItemCard({
   label,
   plans,
   actionsOpen,
+  actionsMine,
   fileCount,
   mover,
   unread,
@@ -110,10 +113,14 @@ export const ItemCard = memo(function ItemCard({
           {formatStamp(item.updated_at)}
         </div>
       )}
-      {(item.tags.length > 0 || fileCount > 0 || actionsOpen > 0) && (
+      {(item.tags.length > 0 || fileCount > 0 || actionsOpen > 0 || actionsMine > 0) && (
         <div className="hg-card-chips">
           {fileCount > 0 && <span>{t('vinnubord.card.files', { count: fileCount })}</span>}
-          {actionsOpen > 0 && <span>{t('vinnubord.card.actions', { count: actionsOpen })}</span>}
+          {actionsMine > 0 ? (
+            <span className="hg-chip-mine hg-tone-coral">{t('vinnubord.card.actionsMine', { count: actionsMine })}</span>
+          ) : (
+            actionsOpen > 0 && <span>{t('vinnubord.card.actions', { count: actionsOpen })}</span>
+          )}
           {item.tags.map((tag) => (
             <span key={tag}>{tag}</span>
           ))}

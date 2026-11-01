@@ -165,6 +165,8 @@
     },
     "viewerError": "Could not load your projects.",
     "card": {
+      "actionsMine_one": "{{count}} for you",
+      "actionsMine_other": "{{count}} for you",
       "actions_one": "{{count}} open action",
       "actions_other": "{{count}} open actions",
       "files_one": "{{count}} file",

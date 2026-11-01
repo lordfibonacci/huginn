@@ -90,6 +90,8 @@
       "zoomOut": "Minnka"
     },
     "card": {
+      "actionsMine_one": "{{count}} hjá þér",
+      "actionsMine_other": "{{count}} hjá þér",
       "actions_one": "{{count}} opið handtak",
       "actions_other": "{{count}} opin handtök",
       "files_one": "{{count}} skjal",

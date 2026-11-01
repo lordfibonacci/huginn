@@ -20,9 +20,10 @@ import { screenToWorld, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
+import { fileCountsByItem } from '../lib/panel'
 import { isUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
-import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, wireMode } from '../lib/status'
+import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
 import type { BoardData, Item, Plan } from '../lib/types'
 import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
@@ -101,16 +102,13 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     for (const p of data.plans) map.set(p.item_id, [...(map.get(p.item_id) ?? []), p])
     return map
   }, [data.plans])
-  const filesByItem = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const f of data.files) map.set(f.item_id, (map.get(f.item_id) ?? 0) + 1)
-    return map
-  }, [data.files])
+  const filesByItem = useMemo(() => fileCountsByItem(data.files, data.plans), [data.files, data.plans])
   const openActionsByItem = useMemo(() => {
     const map = new Map<string, number>()
     for (const a of data.actions) if (a.done_at === null) map.set(a.item_id, (map.get(a.item_id) ?? 0) + 1)
     return map
   }, [data.actions])
+  const mineByItem = useMemo(() => mineActionsByItem(data.actions, viewerId), [data.actions, viewerId])
 
   const filterOn = isActive(filter)
   const cards = useMemo(
@@ -492,6 +490,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
               label={c.label}
               plans={plansByItem.get(c.item.id) ?? NO_PLANS}
               actionsOpen={openActionsByItem.get(c.item.id) ?? 0}
+              actionsMine={mineByItem.get(c.item.id) ?? 0}
               fileCount={filesByItem.get(c.item.id) ?? 0}
               mover={c.mover}
               unread={c.unread}

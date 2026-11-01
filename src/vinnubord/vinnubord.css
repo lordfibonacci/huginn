@@ -616,6 +616,7 @@
   font-size: var(--hg-chip-size); padding: var(--hg-card-chip-pad); border-radius: var(--hg-radius-chip); background: var(--hg-chip-bg);
   color: var(--hg-ink-2);
 }
+.hg-card-chips .hg-chip-mine { color: var(--hg-c); font-weight: 700; }
 .hg-card-plans { display: flex; gap: var(--hg-card-chip-gap); margin-top: var(--hg-card-plans-gap); }
 .hg-card-plans i {
   height: var(--hg-bar-h); flex: 1; border-radius: var(--hg-radius-bar); background: var(--hg-bar-track);
