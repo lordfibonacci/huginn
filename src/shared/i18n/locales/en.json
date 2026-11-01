@@ -86,6 +86,7 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "fit": "Show everything",
+      "fitPack": "Show {{name}}",
       "zoomLevel": "Zoom level",
       "refreshError": "Could not refresh the board. Showing the last loaded state.",
       "moveError": "Could not save where the item card was moved. It is back in its place."

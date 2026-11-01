@@ -80,6 +80,7 @@
         "unread": "Ólesin"
       },
       "fit": "Sýna allt",
+      "fitPack": "Sýna {{name}}",
       "loadError": "Ekki tókst að sækja verkefnið.",
       "moveError": "Ekki tókst að vista nýjan stað spjaldsins. Það er komið aftur á sinn stað.",
       "noneOpen": "Ekkert opið",

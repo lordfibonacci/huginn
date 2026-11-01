@@ -15,7 +15,7 @@ import { useViewport } from '../hooks/useViewport'
 import { useCardDrag } from '../hooks/useCardDrag'
 import { updateItemPosition, upsertViewPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
-import { screenToWorld, type Rect } from '../lib/geometry'
+import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
@@ -79,9 +79,9 @@ const ENTRY_STEP_MS = 45
 const ENTRY_BURST = 8
 const DROP_BURST = 4
 const NO_DESELECT = '[data-card], [data-module], [data-panel]'
-// The phone layout breakpoint (top bar in two rows, bottom sheet). Crossing it
-// changes the board size a lot, so the board fits again.
-const PHONE_QUERY = '(max-width: 767px)'
+// A board narrower than this, or any coarse pointer, opens on the first pack
+// at START_ZOOM instead of fitting the whole board (spec 4.4).
+const START_PACK_MAX_W = 1024
 // Size assumed for a card that is not drawn yet (its width is --hg-card-w).
 const NEW_CARD_SIZE = { w: 250, h: 120 }
 
@@ -434,31 +434,32 @@ export function Board({
     fit(rects, undefined, animate)
   }, [fit])
 
-  // Fit once per load, as soon as the board has a size.
+  // Open once per load, as soon as the board has a size. Narrow and touch
+  // boards start readable on the first pack, the rest fit the whole board.
+  // Rotating or resizing later keeps the view where it is.
   const fitted = useRef(false)
   useLayoutEffect(() => {
     if (fitted.current) return
     const el = boardRef.current
     if (!el || el.clientWidth === 0 || el.clientHeight === 0) return
-    fitAll(false)
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    if ((el.clientWidth < START_PACK_MAX_W || coarse) && rows.length > 0) {
+      vp.setView(startAtPack({ x: rows[0].pkg.pos_x, y: rows[0].pkg.pos_y }))
+    } else {
+      fitAll(false)
+    }
     fitted.current = true
   })
 
-  // Fit again when the window crosses the phone breakpoint: the top bar
-  // changes height and the board is a different shape.
-  useEffect(() => {
-    const mq = window.matchMedia(PHONE_QUERY)
-    let raf = 0
-    const refit = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => fitAll(false))
-    }
-    mq.addEventListener('change', refit)
-    return () => {
-      mq.removeEventListener('change', refit)
-      cancelAnimationFrame(raf)
-    }
-  }, [fitAll])
+  // A pack title glides to its column, fitted in width with its top under the top bar.
+  const { fitWidth } = vp
+  const onFitPack = useCallback(
+    (id: string) => {
+      const p = boardRef.current?.querySelector<HTMLElement>(`[data-pack="${CSS.escape(id)}"]`)
+      if (p) fitWidth({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
+    },
+    [fitWidth],
+  )
 
   // ---------- new card placement ----------
   useImperativeHandle(
@@ -534,6 +535,7 @@ export function Board({
               hotModuleIds={hotModuleIds}
               dimModuleIds={dimModuleIds}
               onOpenModule={onOpenModule}
+              onFitPack={onFitPack}
             />
           ))}
           {cards.map((c) => (
