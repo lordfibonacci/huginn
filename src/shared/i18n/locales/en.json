@@ -180,6 +180,8 @@
           "action_one": "+{{count}} action",
           "action_other": "+{{count}} actions",
           "actionDone": "action done",
+          "actionEdited": "action changed",
+          "actionCancelled": "action cancelled",
           "question_one": "+{{count}} question",
           "question_other": "+{{count}} questions",
           "answer_one": "+{{count}} answer",
@@ -228,6 +230,9 @@
       "actionsDone": "Done ({{count}})",
       "actionsWithNew": "Actions ({{count}} new)",
       "actionDone": "Done: {{body}}",
+      "actionEdited": "changed {{when}} by {{name}}",
+      "actionCancelled": "cancelled",
+      "actionCancelReason": "Reason: {{reason}}",
       "fresh": "new",
       "nextStep": "Next step",
       "resume": "Continue",
@@ -301,6 +306,8 @@
       "questionAnswered": "answered a question",
       "actionAdded": "added an action",
       "actionDone": "checked off an action",
+      "actionUpdated": "changed an action: {{fields}}",
+      "actionCancelled": "cancelled an action",
       "rulingAdded": "added a ruling",
       "commentAdded": "commented",
       "analysisDone": "analysed the item",
@@ -316,6 +323,11 @@
         "tags": "the tags",
         "next_step": "the next step",
         "next_prompt": "the prompt"
+      },
+      "actionFields": {
+        "body": "the text",
+        "owner": "the owner",
+        "payload": "the block"
       }
     },
     "top": {

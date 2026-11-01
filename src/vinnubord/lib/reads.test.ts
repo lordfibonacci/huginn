@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { freshChips, isFresh, latestForeignAt, readAtOf, summarizeUnread, type UnreadSummary } from './reads'
+import { freshChips, isActionFresh, isFresh,latestForeignAt, readAtOf, summarizeUnread, type UnreadSummary } from './reads'
 import type { Event, Read, UnreadRow } from './types'
 
 const ME = 'u-me'
@@ -30,9 +30,19 @@ describe('summarizeUnread', () => {
     expect(summarizeUnread([{ item_id: 'i9', kind: 'something.else', n: 4, latest: '2026-11-01T10:00:00Z' }]).size).toBe(0)
   })
   it('maps every event kind the triggers write', () => {
-    const kinds = ['action.done', 'question.asked', 'question.answered', 'comment.added', 'item.status', 'ruling.added', 'analysis.done', 'analysis.failed', 'item.updated']
+    const kinds = ['action.done', 'action.updated', 'action.cancelled', 'question.asked', 'question.answered', 'comment.added', 'item.status', 'ruling.added', 'analysis.done', 'analysis.failed', 'item.updated']
     const m = summarizeUnread(kinds.map((kind, i) => ({ item_id: `i${i}`, kind, n: 1, latest: '2026-11-01T10:00:00Z' })))
-    expect([...m.values()].map((s) => s.kinds[0].kind)).toEqual(['actionDone', 'question', 'answer', 'comment', 'status', 'ruling', 'analysis', 'analysisFailed', 'text'])
+    expect([...m.values()].map((s) => s.kinds[0].kind)).toEqual(['actionDone', 'actionEdited', 'actionCancelled', 'question', 'answer', 'comment', 'status', 'ruling', 'analysis', 'analysisFailed', 'text'])
+  })
+  it('orders edited and cancelled actions right after done ones', () => {
+    const rows: UnreadRow[] = [
+      { item_id: 'i1', kind: 'question.asked', n: 1, latest: '2026-11-01T10:00:00Z' },
+      { item_id: 'i1', kind: 'action.cancelled', n: 1, latest: '2026-11-01T10:00:00Z' },
+      { item_id: 'i1', kind: 'action.updated', n: 2, latest: '2026-11-01T10:00:00Z' },
+      { item_id: 'i1', kind: 'action.done', n: 1, latest: '2026-11-01T10:00:00Z' },
+      { item_id: 'i1', kind: 'action.added', n: 1, latest: '2026-11-01T10:00:00Z' },
+    ]
+    expect(summarizeUnread(rows).get('i1')?.kinds.map((k) => k.kind)).toEqual(['action', 'actionDone', 'actionEdited', 'actionCancelled', 'question'])
   })
   it('compares latest as instants, not strings', () => {
     const m = summarizeUnread([
@@ -64,6 +74,19 @@ describe('isFresh', () => {
     expect(isFresh('2026-11-01T10:00:00Z', OTHER, '2026-11-01T10:00:00Z', ME)).toBe(false)
     expect(isFresh('2026-11-01T10:00:00Z', ME, null, ME)).toBe(false)
     expect(isFresh(null, OTHER, null, ME)).toBe(false)
+  })
+})
+
+describe('isActionFresh', () => {
+  const fresh = (at: string | null, by: string | null) => isFresh(at, by, '2026-11-01T09:00:00Z', ME)
+  const act = { created_at: '2026-11-01T08:00:00Z', created_by: OTHER, updated_at: null, updated_by: null }
+  it('fresh when added or changed by someone else after the read mark', () => {
+    expect(isActionFresh({ ...act, created_at: '2026-11-01T10:00:00Z' }, fresh)).toBe(true)
+    expect(isActionFresh({ ...act, updated_at: '2026-11-01T10:00:00Z', updated_by: OTHER }, fresh)).toBe(true)
+  })
+  it('not fresh when old, or changed by the viewer', () => {
+    expect(isActionFresh(act, fresh)).toBe(false)
+    expect(isActionFresh({ ...act, updated_at: '2026-11-01T10:00:00Z', updated_by: ME }, fresh)).toBe(false)
   })
 })
 

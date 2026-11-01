@@ -118,6 +118,10 @@ export type Action = {
   payload: string | null
   done_at: string | null
   done_by: string | null
+  updated_at: string | null
+  updated_by: string | null
+  cancelled: boolean
+  cancel_reason: string | null
 }
 
 export type Ruling = {

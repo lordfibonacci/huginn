@@ -60,5 +60,9 @@ function lineOf(entry: HistoryEntry, nameOf: (id: string | null) => string, t: T
     const fields = line.fields.map((f) => t(`vinnubord.history.fields.${f}`, { defaultValue: f })).join(', ')
     return t('vinnubord.history.itemUpdated', { fields })
   }
+  if (line.key === 'actionUpdated') {
+    const fields = line.fields.map((f) => t(`vinnubord.history.actionFields.${f}`, { defaultValue: f })).join(', ')
+    return t('vinnubord.history.actionUpdated', { fields })
+  }
   return t(`vinnubord.history.${line.key}`, line.params)
 }

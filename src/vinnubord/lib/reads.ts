@@ -1,4 +1,4 @@
-import type { Event, Read, UnreadRow } from './types'
+import type { Action, Event, Read, UnreadRow } from './types'
 
 // "Nýtt hjá þeim sem horfir": the server (hg_unread) counts events by other
 // authors on an item after the viewer's read mark. This file groups those rows
@@ -6,13 +6,13 @@ import type { Event, Read, UnreadRow } from './types'
 // never count, and a read mark is stamped by the server clock.
 
 export type UnreadKind =
-  | 'created' | 'action' | 'actionDone' | 'question' | 'answer' | 'file' | 'comment'
+  | 'created' | 'action' | 'actionDone' | 'actionEdited' | 'actionCancelled' | 'question' | 'answer' | 'file' | 'comment'
   | 'status' | 'plan' | 'ruling' | 'analysis' | 'analysisFailed' | 'text'
 
 export type UnreadSummary = { created: boolean; kinds: { kind: UnreadKind; n: number }[]; latest: string }
 
 export const UNREAD_ORDER: readonly UnreadKind[] = [
-  'action', 'actionDone', 'question', 'answer', 'file', 'comment', 'status', 'plan', 'ruling',
+  'action', 'actionDone', 'actionEdited', 'actionCancelled', 'question', 'answer', 'file', 'comment', 'status', 'plan', 'ruling',
   'analysis', 'analysisFailed', 'text',
 ]
 
@@ -20,6 +20,8 @@ const KIND_OF: Record<string, UnreadKind> = {
   'item.created': 'created',
   'action.added': 'action',
   'action.done': 'actionDone',
+  'action.updated': 'actionEdited',
+  'action.cancelled': 'actionCancelled',
   'question.asked': 'question',
   'question.answered': 'answer',
   'file.added': 'file',
@@ -84,6 +86,15 @@ export function isFresh(
 ): boolean {
   if (!createdAt || author === viewerId) return false
   return readAtOnOpen === null || Date.parse(createdAt) > Date.parse(readAtOnOpen)
+}
+
+// An action row is fresh when its add or its last change (body, owner or
+// payload) is fresh by the rule above.
+export function isActionFresh(
+  action: Pick<Action, 'created_at' | 'created_by' | 'updated_at' | 'updated_by'>,
+  fresh: (at: string | null, by: string | null) => boolean,
+): boolean {
+  return fresh(action.created_at, action.created_by) || fresh(action.updated_at, action.updated_by)
 }
 
 export function readAtOf(reads: Read[], itemId: string, viewerId: string): string | null {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
 import { fileCountsByItem } from '../lib/panel'
-import { isFresh, latestForeignAt, readAtOf } from '../lib/reads'
+import { isActionFresh, isFresh, latestForeignAt, readAtOf } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
 import { CommentBox } from './panel/CommentBox'
@@ -61,7 +61,7 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const questions = data.questions.filter((q) => q.item_id === item.id)
   const openQuestions = questions.filter((q) => q.answer === null).length
   const freshActions = data.actions.filter(
-    (a) => a.item_id === item.id && a.done_at === null && fresh(a.created_at, a.created_by),
+    (a) => a.item_id === item.id && a.done_at === null && isActionFresh(a, fresh),
   ).length
   const moverId = item.updated_by ?? item.created_by
   const mover = data.participants.find((p) => p.user_id === moverId)

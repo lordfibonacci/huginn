@@ -100,7 +100,9 @@
       "fresh": {
         "created": "Nýtt spjald",
         "kinds": {
+          "actionCancelled": "handtak fellt niður",
           "actionDone": "handtak lokið",
+          "actionEdited": "handtak breytt",
           "action_one": "+{{count}} handtak",
           "action_other": "+{{count}} handtök",
           "analysis": "greind",
@@ -127,7 +129,14 @@
     },
     "history": {
       "actionAdded": "bætti við handtaki",
+      "actionCancelled": "felldi niður handtak",
       "actionDone": "hakaði við handtak",
+      "actionFields": {
+        "body": "textanum",
+        "owner": "eigandanum",
+        "payload": "blokkinni"
+      },
+      "actionUpdated": "breytti handtaki: {{fields}}",
       "analysisDone": "greindi verkið",
       "analysisFailed": "greining mistókst: {{error}}",
       "analysisFailedBare": "greining mistókst",
@@ -190,7 +199,10 @@
       "title": "Þú ert ekki þátttakandi í neinu verkefni"
     },
     "panel": {
+      "actionCancelReason": "Ástæða: {{reason}}",
+      "actionCancelled": "fellt niður",
       "actionDone": "Lokið: {{body}}",
+      "actionEdited": "breytt {{when}} af {{name}}",
       "actions": "Handtök",
       "actionsDone": "Afgreitt ({{count}})",
       "actionsWithNew": "Handtök ({{count}} ný)",

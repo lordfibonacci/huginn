@@ -57,6 +57,13 @@ describe('describeEvent', () => {
     expect(describeEvent(e, nameOf)).toEqual({ key: 'itemUpdated', params: {}, fields: ['summary', 'next_step'] })
   })
 
+  it('lists the changed fields of an action and names a cancel', () => {
+    const e = ev('e', null, 'action.updated', { fields: ['body', 'owner'] })
+    expect(describeEvent(e, nameOf)).toEqual({ key: 'actionUpdated', params: {}, fields: ['body', 'owner'] })
+    expect(describeEvent(ev('e', null, 'action.updated', { fields: 'body' }), nameOf).fields).toEqual([])
+    expect(describeEvent(ev('e', null, 'action.cancelled', { reason: 'prófun' }), nameOf).key).toBe('actionCancelled')
+  })
+
   it('names the added file and the plan status', () => {
     expect(describeEvent(ev('e', null, 'file.added', { name: 'spec.md' }), nameOf).params).toEqual({ name: 'spec.md' })
     expect(describeEvent(ev('e', null, 'plan.status', { from: 'todo', to: 'done' }), nameOf)).toEqual({

@@ -34,7 +34,7 @@ function item(over: Partial<Item> = {}): Item {
 function action(over: Partial<Action> = {}): Action {
   return {
     id: 'a1', created_at: null, project_id: 'pr', item_id: 'i1', body: 'x', owner: ME, created_by: null, payload: null,
-    done_at: null, done_by: null, ...over,
+    done_at: null, done_by: null, updated_at: null, updated_by: null, cancelled: false, cancel_reason: null, ...over,
   }
 }
 

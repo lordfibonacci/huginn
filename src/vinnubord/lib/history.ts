@@ -29,7 +29,8 @@ export function itemHistory(events: Event[], comments: Comment[], itemId: string
 }
 
 // One event as an i18n key under vinnubord.history plus its parameters.
-// fields lists the changed columns of item.updated, translated by the caller.
+// fields lists the changed columns of item.updated and action.updated,
+// translated by the caller.
 export type EventLine = { key: string; params: Record<string, string>; fields: string[] }
 
 const SIMPLE: Record<string, string> = {
@@ -39,6 +40,7 @@ const SIMPLE: Record<string, string> = {
   'question.answered': 'questionAnswered',
   'action.added': 'actionAdded',
   'action.done': 'actionDone',
+  'action.cancelled': 'actionCancelled',
   'ruling.added': 'rulingAdded',
   'comment.added': 'commentAdded',
   'analysis.done': 'analysisDone',
@@ -46,6 +48,10 @@ const SIMPLE: Record<string, string> = {
 
 function str(v: unknown): string | null {
   return typeof v === 'string' ? v : null
+}
+
+function fieldsOf(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((f): f is string => typeof f === 'string') : []
 }
 
 function itemStatusName(v: unknown): string {
@@ -74,10 +80,10 @@ export function describeEvent(event: Event, nameOf: (userId: string | null) => s
       }
       return line('itemStatus', { from: itemStatusName(data.from), to: itemStatusName(data.to) })
     }
-    case 'item.updated': {
-      const fields = Array.isArray(data.fields) ? data.fields.filter((f): f is string => typeof f === 'string') : []
-      return line('itemUpdated', {}, fields)
-    }
+    case 'item.updated':
+      return line('itemUpdated', {}, fieldsOf(data.fields))
+    case 'action.updated':
+      return line('actionUpdated', {}, fieldsOf(data.fields))
     case 'plan.status':
       return line('planStatus', { to: planStatusName(data.to) })
     case 'file.added':
