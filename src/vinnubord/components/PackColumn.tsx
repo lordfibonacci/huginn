@@ -1,4 +1,4 @@
-import { moduleOpenCount, moduleTone } from '../lib/layout'
+import { moduleAccent, moduleOpenCount, moduleTone } from '../lib/layout'
 import type { Item, Module, Package, Participant } from '../lib/types'
 import { ModuleCard } from './ModuleCard'
 
@@ -25,6 +25,7 @@ export function PackColumn({ pkg, modules, items, viewerId, participants, hotMod
           module={m}
           openCount={moduleOpenCount(m.id, items)}
           tone={moduleTone(m, items, viewerId, participants)}
+          accent={moduleAccent(m)}
           hot={hotModuleIds?.has(m.id) ?? false}
           ghost={m.is_ghost}
           dim={dimModuleIds?.has(m.id) ?? false}

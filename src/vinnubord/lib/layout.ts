@@ -29,6 +29,12 @@ export function moduleTone(
   return isTone(module.color) ? module.color : 'stone'
 }
 
+// A module's own color, a #rrggbb hex in color (the module colors of the
+// product, e.g. metta). It paints the module card bar instead of the tone.
+export function moduleAccent(module: Pick<Module, 'color'>): string | null {
+  return /^#[0-9a-f]{6}$/i.test(module.color) ? module.color : null
+}
+
 const PLAN_FILL: Record<PlanStatus, number> = { done: 1, building: 0.5, todo: 0 }
 
 // Progress bars on an item card, one per plan in position order, and the

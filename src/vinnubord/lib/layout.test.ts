@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boardOrder, moduleOpenCount, moduleTone, packLayout, planProgress } from './layout'
+import { boardOrder, moduleAccent, moduleOpenCount, moduleTone, packLayout, planProgress } from './layout'
 import type { Item, Module, Package, Participant, Plan } from './types'
 
 const pkg = (id: string, position: number): Package => ({
@@ -101,5 +101,16 @@ describe('boardOrder', () => {
     const rows = [item('b', null, 'new'), item('a', null, 'new')]
     boardOrder(rows)
     expect(rows.map((i) => i.id)).toEqual(['b', 'a'])
+  })
+})
+
+describe('moduleAccent', () => {
+  it('is the hex color of the module', () => {
+    expect(moduleAccent({ color: '#0D9488' })).toBe('#0D9488')
+  })
+  it('is null for a tone name or anything that is not a six digit hex', () => {
+    expect(moduleAccent({ color: 'teal' })).toBeNull()
+    expect(moduleAccent({ color: '#fff' })).toBeNull()
+    expect(moduleAccent({ color: 'red; x: y' })).toBeNull()
   })
 })

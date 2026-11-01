@@ -104,7 +104,7 @@
   --hg-card-dot: 9px;
   --hg-card-glow: 12px;
   --hg-card-st-size: 12px;
-  --hg-card-title-size: 15px;
+  --hg-card-title-size: 17px;
   --hg-card-by-size: 12px;
   --hg-card-row-gap: 9px;
   --hg-card-st-gap: 8px;
@@ -495,6 +495,7 @@
 
 .hg-board {
   position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none;
+  user-select: none; -webkit-user-select: none;
   background-image: radial-gradient(circle, var(--hg-grid-dot) 1px, transparent 1.3px);
   background-size: var(--hg-grid-size) var(--hg-grid-size);
 }

@@ -320,7 +320,7 @@ const base = {
   cardPadX: 34,
   cardStSize: 12,
   cardStGap: 8,
-  cardTitleSize: 15,
+  cardTitleSize: 17,
   avSize: 20,
   cardChipsGap: 10,
   cardChipGap: 5,
