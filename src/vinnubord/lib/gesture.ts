@@ -19,8 +19,34 @@ export function pressOutcome(p: PressState): 'drop' | 'tap' | 'none' {
   return 'none'
 }
 
+// What a touch started on, as classified by useViewport.
+export type TouchKind = 'field' | 'noPan' | 'button' | 'card' | 'board'
+
+// Fields and data-no-pan areas keep their own touch behaviour; everything else
+// is tracked, buttons included (a swipe that starts on a button still pans).
+export function touchTracks(kind: TouchKind): boolean {
+  return kind !== 'field' && kind !== 'noPan'
+}
+
+// How far a tracked touch moves before it becomes a pan.
+export function touchSlop(kind: TouchKind): number {
+  return kind === 'button' || kind === 'card' ? CARD_PAN_SLOP : PAN_THRESHOLD
+}
+
 // Whether a single pointer that has not panned yet starts a pan.
-export function panStep(s: { fromCard: boolean; dragging: boolean; dist: number }): 'wait' | 'start' | 'blocked' {
+export function panStep(s: { slop: number; dragging: boolean; dist: number }): 'wait' | 'start' | 'blocked' {
   if (s.dragging) return 'blocked'
-  return s.dist > (s.fromCard ? CARD_PAN_SLOP : PAN_THRESHOLD) ? 'start' : 'wait'
+  return s.dist > s.slop ? 'start' : 'wait'
+}
+
+// Two quick taps close together are a double tap. Unlike the pan slops this
+// distance is straight line (the spec test has a 20 + 10 px pair that counts).
+export const DOUBLE_TAP_MS = 300
+export const DOUBLE_TAP_SLOP = 24
+
+export type Tap = { t: number; x: number; y: number }
+
+export function isDoubleTap(prev: Tap | null, next: Tap): boolean {
+  if (!prev) return false
+  return next.t - prev.t <= DOUBLE_TAP_MS && Math.hypot(next.x - prev.x, next.y - prev.y) <= DOUBLE_TAP_SLOP
 }

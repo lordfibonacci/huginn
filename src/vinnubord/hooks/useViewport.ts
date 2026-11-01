@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
 import { fitAll, pinchView, zoomAt, type Rect, type View } from '../lib/geometry'
-import { panStep } from '../lib/gesture'
+import { CARD_PAN_SLOP, PAN_THRESHOLD, panStep } from '../lib/gesture'
 
 // Pan and zoom for the board element in ref.
 //
@@ -308,7 +308,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         // p.last is still the down point here, so the first pan step includes
         // the distance travelled below the threshold.
         const dist = Math.abs(pt.x - p.last.x) + Math.abs(pt.y - p.last.y)
-        if (panStep({ fromCard: p.fromCard, dragging: false, dist }) !== 'start') return
+        if (panStep({ slop: p.fromCard ? CARD_PAN_SLOP : PAN_THRESHOLD, dragging: false, dist }) !== 'start') return
         p.moved = true
         gestureMoved.current = true
         e.currentTarget.setPointerCapture(e.pointerId)
