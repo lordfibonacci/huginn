@@ -54,6 +54,8 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `question answer <qid>` | `huginn question answer 9f8e7d6c --body "Blár"` |
 | `action add <item>` | `huginn action add 1a2b3c4d --owner H --body "Keyra SQL" --payload-file 0007.sql` |
 | `action done <aid>` | `huginn action done 5e6f7a8b` |
+| `action set <aid>` | `huginn action set 5e6f7a8b --body "Nýr texti" --owner Á --payload-file 0012.sql` (aðeins opið handtak, stofndagur helst, breytingin er merkt) |
+| `action cancel <aid>` | `huginn action cancel 5e6f7a8b --reason "Planið breyttist"` (lokar handtaki sem á ekki lengur við án þess að það teljist gert) |
 | `plan add <item>` | `huginn plan add 1a2b3c4d --name "Plan A" --path docs/plan.md --status todo` |
 | `plan set <pid>` | `huginn plan set 0c1d2e3f --status building` |
 | `ruling add <plan>` | `huginn ruling add 0c1d2e3f --code R1 --body "Engin ný tafla" --cost "Lítill"` |
@@ -68,6 +70,7 @@ Með `--json` skilar hver skrifskipun `{ "ok": true, "id": "<uuid>" }`.
 - **Fólk.** `--waiting-on`, `--to` og `--owner` taka skammstöfun þátttakanda (H, Á, C), óháð stórum og litlum stöfum. `none` þýðir enginn (ekki fyrir `--owner`).
 - **Staða.** Önnur staða en `waiting` hreinsar `waiting_on`. `--waiting-on H` án `--status` setur verkið í bið eftir H. `--status waiting` án manns er leyft.
 - **Lokun.** `item close` og `item set --status done|dropped` neita ef verkið á ósvaraða spurningu eða opið handtak. `--force` lokar samt.
+- **Handtök.** Handtak sem varð rangt er lagað með `action set`, aldrei hakað sem gert. Handtak sem á ekki lengur við er fellt niður með `action cancel`; það telst lokað (stöðvar hvorki `item close` né plan sem fer í done) en ekki gert.
 - **Hreinsun.** `--module none` tekur verkið úr módúl, `--tags ""` tæmir merki, tómt gildi á textareit tæmir hann.
 - **Skrár.** Sömu reglur og vefurinn: hámark 50 MB, nafn að hámarki 180 stafir, geymt í `hg-files`. `--file` má endurtaka.
 - **Staðsetning.** Nýtt spjald lendir við hlið módúlsins eins og í vefnum, annars efst til vinstri við það sem er á borðinu, aldrei ofan á spjaldi eða pakka.

@@ -10,6 +10,7 @@ import {
   addRuling,
   answerQuestion,
   askQuestion,
+  cancelAction,
   createItem,
   downloadFile,
   findById,
@@ -19,6 +20,7 @@ import {
   openWork,
   pushBundle,
   setPlanStatus,
+  updateAction,
   updateItem,
   uploadFile,
 } from './ops.mjs'
@@ -275,6 +277,42 @@ const WRITE = {
         const a = await findById(client, 'action', project.id, aid)
         const done = await markActionDone(client, a.id)
         return { json: { ok: true, id: done.id }, text: `Handtak #${shortId(done.id)} merkt lokið.` }
+      },
+    },
+
+    set: {
+      usage: 'action set <aid> [--body ".."] [--owner short] [--payload-file f.sql]',
+      args: 1,
+      spec: { body: 'value', owner: 'value', 'payload-file': 'value' },
+      async run(flags, [aid]) {
+        if (flags.body === undefined && flags.owner === undefined && flags['payload-file'] === undefined) {
+          throw new Error('Gefðu --body, --owner eða --payload-file.')
+        }
+        const patch = {}
+        if (flags.body !== undefined) patch.body = need(flags, 'body')
+        if (flags['payload-file'] !== undefined) patch.payload = readText(flags['payload-file'])
+        const { client, project } = await context(flags)
+        const a = await findById(client, 'action', project.id, aid)
+        if (flags.owner !== undefined) {
+          const owner = resolveShort(await listParticipants(client, project.id), flags.owner)
+          if (!owner) throw new Error('Handtak þarf eiganda, --owner none gengur ekki.')
+          patch.owner = owner
+        }
+        const updated = await updateAction(client, a.id, patch)
+        return { json: { ok: true, id: updated.id }, text: `Handtak #${shortId(updated.id)} breytt.` }
+      },
+    },
+
+    cancel: {
+      usage: 'action cancel <aid> [--reason ".."]',
+      args: 1,
+      spec: { reason: 'value' },
+      async run(flags, [aid]) {
+        const reason = flags.reason !== undefined ? textOrNull(flags.reason) : null
+        const { client, project } = await context(flags)
+        const a = await findById(client, 'action', project.id, aid)
+        const cancelled = await cancelAction(client, a.id, reason)
+        return { json: { ok: true, id: cancelled.id }, text: `Handtak #${shortId(cancelled.id)} fellt niður.` }
       },
     },
   },

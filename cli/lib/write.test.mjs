@@ -210,6 +210,13 @@ describe('parseCommand', () => {
   it('accepts an empty value, so --tags "" can clear tags', () => {
     expect(parseCommand(['x', '--title', ''], spec, 'x').flags.title).toBe('')
   })
+
+  it('pins the flag shapes of action cancel and action set', () => {
+    const r = parseCommand(['x', '--reason', 'r'], { reason: 'value' }, 'action cancel')
+    expect(r.positional).toEqual(['x'])
+    expect(r.flags).toEqual({ reason: 'r' })
+    expect(() => parseCommand(['x', '--body'], { body: 'value' }, 'action set')).toThrow('--body vantar gildi.')
+  })
 })
 
 describe('upload rules', () => {

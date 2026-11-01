@@ -142,6 +142,35 @@ export async function markActionDone(client, id) {
   return data[0]
 }
 
+// Fixes an open action. The trigger (0012) stamps updated_at and updated_by
+// when body, owner or payload change. A closed action is never edited.
+export async function updateAction(client, id, patch) {
+  const { data, error } = await client
+    .from('hg_actions')
+    .update(patch)
+    .eq('id', id)
+    .is('done_at', null)
+    .select('*')
+  if (error) fail('Gat ekki breytt handtakinu', error)
+  if (!data?.length) fail('Handtakið er lokað.')
+  return data[0]
+}
+
+// Closes an open action that no longer applies. The trigger (0012) only accepts
+// cancelled and cancel_reason when done_at goes from null to set in the same
+// update, so all three are sent together.
+export async function cancelAction(client, id, reason) {
+  const { data, error } = await client
+    .from('hg_actions')
+    .update({ done_at: new Date().toISOString(), cancelled: true, cancel_reason: reason ?? null })
+    .eq('id', id)
+    .is('done_at', null)
+    .select('*')
+  if (error) fail('Gat ekki fellt handtakið niður', error)
+  if (!data?.length) fail('Handtakið er lokað.')
+  return data[0]
+}
+
 // A new plan goes after the item's other plans.
 export async function addPlan(client, { projectId, itemId, name, path, status }) {
   const { data: last, error: lastError } = await client
