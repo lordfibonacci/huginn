@@ -642,7 +642,7 @@ Handtökin eru eina heimildin um hvað er eftir hjá hverjum. Enginn texti endur
 - Greining Claude í lýsingunni telur ekki upp "Eftir hjá Heimi" eða "Eftir hjá Árna". Hvert slíkt atriði er handtak með `action add`.
 - Prompt og næsta skref vísa í handtök með orðum þeirra ("athugaðu í Huginn hvort handtakið um DWD sé hakað"), ekki með því að endurtaka hvað er eftir.
 - `action done` kallar ekki á neina aðra uppfærslu, því enginn texti endurtekur handtakið.
-- Nýtt framhaldsatriði sem lota stofnar fer inn í bið eftir Heimi með summary: `huginn item create --title "..." --body-file <skrá> --module <módúll> --waiting-on H --json` og svo `huginn item set <id> --summary "..."`. Aldrei `--status parked` nema Heimir hafi sjálfur ákveðið að það bíði. Skyndigreiningin sleppir verkum sem Claude stofnar, svo summary og staða verða að koma frá lotunni; annars er kortið bæði ógreint og falið.
+- Nýtt framhaldsatriði sem lota stofnar fer inn í bið eftir Heimi: `huginn item create --title "..." --body-file <skrá> --module <módúll> --waiting-on H --json`. Summary aðeins ef verkið er þegar komið af stað, fyrir hugmynd sem er ekki byrjuð dugar lýsingin. Aldrei `--status parked` nema Heimir hafi sjálfur ákveðið að það bíði. Skyndigreiningin sleppir verkum sem Claude stofnar, svo staðan verður að koma frá lotunni; annars er kortið falið.
 ```
 
 - [ ] **Step 3: "Að haka við"**
@@ -660,7 +660,7 @@ Replace the numbered list with this order (text of each item as today unless wri
 3. Úrskurðir (today's item 4, unchanged).
 4. Plön: `huginn plan set <pid> --status done` fyrir plan sem lokarýni kom hrein á, `--status building` fyrir plan sem er í miðju, ný plön með `plan add`. Þegar síðasta plan verksins fer í done fer verkið sjálft í bið eftir þeim sem á elsta opna handtakið, annars viðtakanda elstu ósvöruðu spurningar, annars í Lokið. Þess vegna koma skjöl, handtök og úrskurðir á undan.
 5. Verkið sjálft: `huginn item set <id> --summary "Hvar erum við" --next-step "..." --next-prompt-file <skrá>`. Summary eftir reglunum í Texti sem úreldist ekki. `--waiting-on` aðeins ef annar á næsta leik en triggerinn valdi, `--status ready` aðeins ef næst er bygging og enginn skuldar neitt.
-6. Nýtt framhaldsatriði sem áður fór í Pending í CLAUDE.md: `huginn item create --title "..." --body-file <skrá> --module <módúll> --waiting-on H --json`, svo `huginn item set <id> --summary "..."`. Aldrei `--status parked` nema Heimir hafi ákveðið það (sjá Texti sem úreldist ekki).
+6. Nýtt framhaldsatriði sem áður fór í Pending í CLAUDE.md: `huginn item create --title "..." --body-file <skrá> --module <módúll> --waiting-on H --json`. Summary aðeins ef það er þegar komið af stað. Aldrei `--status parked` nema Heimir hafi ákveðið það (sjá Texti sem úreldist ekki).
 7. Verk án plans sem er alveg búið: `huginn item close <id>`. Verk með plan lokast sjálft í lið 4 ef enginn skuldar neitt; ef Heimir á eftir að prófa er það handtak á hann í lið 2. `item close` neitar ef verkið á ósvaraða spurningu eða opið handtak, `--force` aðeins ef Heimir biður um það.
 8. `huginn sync` (today's item 8, unchanged).
 9. Samhengisbúnt (today's item 9, unchanged).
