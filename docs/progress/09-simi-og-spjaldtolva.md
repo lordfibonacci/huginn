@@ -1,11 +1,11 @@
 # 09 Vinnuborð: sími og spjaldtölva (plan 9)
 
 Dagsetning: 2026-11-01
-Grein: `vinnubord-9` (commits 104ef30 til 5d8aad1 ofan á main e0c5e61, auk þessa skjals og CLAUDE.md)
+Grein: `vinnubord-9` (commits 104ef30 til 5d8aad1 ofan á main e0c5e61, auk þessa skjals og CLAUDE.md, og lagfæringar lokayfirferðar 19e5837, c3b6fbe og 3531871)
 Plan: `docs/superpowers/plans/2026-11-01-simi-og-spjaldtolva.md`
 Spekk: `docs/superpowers/specs/2026-11-01-simi-og-spjaldtolva-design.md`
 
-Staða: lokið, bíður yfirferðar og prófunar Heimis á tæki. Kóðinn er búinn og yfirfarinn task fyrir task, build og próf eru græn. Mælingarmarkmiðin í spekki 4.9 nást fyrir `pan` og `idle` en ekki fyrir klípu (`pinch-out@min`) í hermi, sjá Staðfesting. Lokayfirferð allrar greinarinnar á Fable er eftir og gerist áður en ýtt er. Enginn commit er ýttur.
+Staða: lokið, bíður yfirferðar og prófunar Heimis á tæki. Kóðinn er búinn og yfirfarinn task fyrir task, build og próf eru græn. Mælingarmarkmiðin í spekki 4.9 nást fyrir `pan` og `idle` en ekki fyrir klípu (`pinch-out@min`) í hermi, sjá Staðfesting. Lokayfirferð allrar greinarinnar á Fable er gerð og lagfæringarnar úr henni eru taldar upp í Lokayfirferð hér að neðan. Yfirferð þeirra lagfæringa er eftir og gerist áður en ýtt er. Enginn commit er ýttur.
 
 ## Hvað var gert
 
@@ -32,6 +32,19 @@ Staða: lokið, bíður yfirferðar og prófunar Heimis á tæki. Kóðinn er b�
 **Task 11, spjaldið á síma** (31eadf9, lagfæring 6dd4c20). Spjaldið undir 768 px opnast í fullri hæð, er fast í hæð og færist með `transform` eftir `--hg-sheet-offset` (óeiningartala í px sem `PanelShell` skrifar, kom í stað `--hg-sheet-open`). Það er dregið frá handfangi, haus og efni (efnið aðeins með snertingu sem byrjar efst og fer niður). Þrjár stöður: full, hálf (45%) og lokað, með flick. Lagfæringin kom í veg fyrir að spjald sæti fast ef dráttur var rofinn. Skriftan pannar nú borðið til að finna spil á símanum og handfangsdrátturinn er 300 px.
 
 **Task 11b, þrjár lagfæringar fyrir skil** (31e5f8b, 157937b, 5d8aad1). Ýting sem stöðvar skrið eða líðandi hreyfingu er aldrei tap eða smellur (`gestureRef.current.stoppedMotion`, innfæddur capture `pointerdown` á borðinu, `useCardDrag` sleppir `onTap`, smellurinn á eftir er gleyptur). Það gildir líka um mús á 220 ms líðandi hreyfingu. Ekkert skrið undir `prefers-reduced-motion`. Tailwind síðurnar (Login, ResetPassword, AuthCallback, NoAccess, ErrorBoundary, LoadError) og stillingasíðan fá öruggt svæði með nýjum `safe-p-*`, `safe-top-*` og `safe-right-*` í `src/index.css`.
+
+## Lokayfirferð
+
+Lagfæringar eftir yfirferð allrar greinarinnar:
+
+- **Lokunarhnappur á spjaldinu á síma** (19e5837). Í fullri hæð var ekkert til að ýta á sem lokaði spjaldinu, því röndin fyrir ofan er efri stikan og flick úr fullri stöðu fer aðeins í hálfa. Nú er 44 px hnappur (`.hg-sheet-close`, x tákn, `aria-label` "Loka") hægra megin í handfangsröðinni. Ýting á hann er aldrei dráttur, tap á handfang eða yfirtaka efnisins. `snapSheet` og stöðurnar eru óbreyttar. Hlutverkið `separator` færðist af röðinni á gripið sjálft, svo hnappurinn hverfi ekki sem skrautbarn aðskilnaðar.
+- **Spjaldið undir hakinu á iPhone** (19e5837). Hæð spjaldsins og efri bil `.hg-sheet-wrap` á síma draga nú líka frá `--hg-safe-top`. Full hæð spjaldsins er mæld `offsetHeight` þess sjálfs (lesin þegar farið er undir 768 px og við `resize`, aldrei í hverri hreyfingu), því `getPropertyValue` getur ekki lesið `env()` í gegnum tákn. Fyrir fyrstu mælingu gildir gamli útreikningurinn. Þetta lagar líka að `sheetMax()` keyrði `getComputedStyle` í hverri teikningu.
+- **Tákn í stað fastra gilda** (19e5837). Talan á síuhnappnum les `--hg-filter-badge-offset` og `--hg-filter-badge-size`, og fókushringur pakkatitils les `--hg-card-focus-ring` og `--hg-card-focus-offset` (hringurinn fer úr 4 px í 3 px frá titlinum).
+- **Textahnútur aðdráttartölunnar** (c3b6fbe). `apply()` í `useViewport` skrifar `nodeValue` á textahnút React í stað `textContent`, sem skipti hnútnum út og lét React skrifa í aftengdan hnút.
+- **Athugasemdir** (c3b6fbe). `useViewport` (stöðvunarýting gleypir aðeins smellinn sem fylgir, og ekki aðal `pointerdown` hreinsar ekki gleypinguna meðan stöðvunarýting er niðri), `lib/fling.ts` ("above"), `lib/gesture.ts` (bein fjarlægð, svo lítið skáhallt flökt telur enn) og haus `useCardDrag.ts` (línulengd).
+- **Pakkahaus í CLI** (3531871). `packHead` í `cli/lib/write.mjs` reiknar titilinn sem hærra gildið af `touch` (44 px, úr `--hg-touch`) og textalínunni, því titillinn er hnappur með `min-height: var(--hg-touch)`. Pakkahausinn er því 74 px. `parity.test.mjs` krefst þess að `touch` sé jafnt tákninu og að `packHead` fylgi táknunum. Engu `--hg-pack-*`, `--hg-module-*` eða `--hg-card-*` stærðartákni var breytt.
+
+Staðfest: `npm run build` grænt, `npm run test` 29 skrár og 474 próf græn. `vite preview` á port 4173 og `SITE=http://localhost:4173 npm run shots:hg phone`: `phone-5-panel.png` sýnir x hnappinn hægra megin í handfangsröðinni. Tímabundin skrifta (utan git, öllum skrifum í gagnagrunn hafnað nema les RPC `hg_unread`): tap á handfang fer í hálfa stöðu (offset 358,2 af 796) og annað tap aftur í fulla; efnið skrunað um 200 px og snertidráttur niður um 200 px: `scrollTop` 15, spjaldið kyrrt í fullri hæð; dráttur sem byrjar á x hnappnum hreyfir spjaldið ekki; tap á x hnappinn lokar spjaldinu. Mús á 1440 x 900: hliðarspjaldið óbreytt (efri brún 76, hæð 808, hvorki handfang né x hnappur) og Tab á pakkatitil sýnir hringinn (2 px, 3 px frá). Preview stöðvað, ekkert hlustar á 4173 til 4177.
 
 ## Staðfesting
 
@@ -190,7 +203,7 @@ Skoða á alvöru síma og iPad. Planið gat aðeins prófað í hermi, þar sem
 3. **Skrið.** Fljótt dregið og sleppt á borðið á að renna áfram og deyja út. Ný snerting á að stöðva það án þess að opna spil eða módúl.
 4. **Tvísmellur** á autt borð zoomar inn. Tvísmellur á spil gerir það ekki.
 5. **Pakkatitill.** Snerting á titil pakka líður yfir dálkinn í breidd skjásins.
-6. **Spjaldið á síma.** Opnast í fullri hæð. Dregið niður frá handfangi, haus og frá efninu þegar það er efst: full, hálf, lokað. Efnið skrunast sem áður þegar það er ekki efst.
+6. **Spjaldið á síma.** Opnast í fullri hæð. Dregið niður frá handfangi, haus og frá efninu þegar það er efst: full, hálf, lokað. Efnið skrunast sem áður þegar það er ekki efst. x hnappurinn hægra megin í handfangsröðinni lokar því, og á iPhone með haki byrjar spjaldið í fullri hæð fyrir neðan stöðustikuna.
 7. **Síuspjaldið.** Sliders hnappurinn með tölu, Sýn, Pakki, Tögg, Hreinsa, Loka. Á iPad bæði upprétt og lárétt.
 8. **Ekkert pull to refresh** þegar borðið eða spjaldið er dregið niður.
 9. **Standalone PWA.** Bæta á heimaskjá og opna þar. Skoða stikuna efst og heimaröndina neðst.
@@ -199,9 +212,17 @@ Skoða á alvöru síma og iPad. Planið gat aðeins prófað í hermi, þar sem
 Úrskurðir sem breyta hegðun og Heimir ætti að staðfesta:
 
 - **Tvísmellur notar beina fjarlægð** (24 px hringur), ekki ferhyrning. Tvær snertingar sem eru 20 og 10 px í sundur telja sem tvísmellur.
-- **Spjaldið í fullri hæð lokast með drætti eða handfangi, ekki með snertingu fyrir ofan það.** Í fullri stöðu er 48 px röndin fyrir ofan spjaldið fyrsta röð efri stikunnar, ekki borð, svo snerting þar hittir stikuna. Snerting á borðið fyrir ofan lokar aðeins í hálfri stöðu. Ef þetta er óþægilegt þarf að tengja `--hg-sheet-top` við hæð stikunnar.
+- **Spjaldið í fullri hæð lokast með x hnappnum eða drætti, ekki með snertingu fyrir ofan það.** Í fullri stöðu er 48 px röndin fyrir ofan spjaldið fyrsta röð efri stikunnar, ekki borð, svo snerting þar hittir stikuna. Snerting á borðið fyrir ofan lokar aðeins í hálfri stöðu. x hnappurinn í handfangsröðinni lokar í hvaða stöðu sem er.
 - **Smellur á 220 ms líðandi hreyfingu er gleyptur líka með mús.** Smellur á borðið, módúl eða spil innan 220 ms eftir aðdráttarhnapp, fit eða pakkatitil stöðvar hreyfinguna og fer ekki í gegn, eins og með snertingu. Aðdráttarhnapparnir sjálfir eru utan borðsins og verða ekki fyrir þessu.
 - **Leitarröðin getur legið undir hliðarspjaldinu** á spjaldtölvu (768 til 1023 px) þegar leitin er opin og spjald er opið. Spjaldið er einbeittur lestrarhamur og mæld hliðrun þarf ResizeObserver fyrir eitt jaðartilvik.
+
+### Afköst eftir prófun á tæki
+
+Grunur sem á að skoða eftir að klípan hefur verið prófuð á síma, ekki fyrr:
+
+1. `--hg-z` er skrifað inline á heimslagið í hverri hreyfingu, en aðeins stækkun korts undir mús (hover peek) les það.
+2. `Wires` les 2 x 70 `getBoundingClientRect` í hverjum ramma. Það mætti leiða staðsetningarnar af gormunum og `viewRef`.
+3. Skuggar með blur eru eftir undir `pointer: coarse`: `--hg-card-shadow` (24 px blur) og glóðin í `.hg-mod::before`.
 
 ### Smálegt sem bíður
 
@@ -210,16 +231,15 @@ Fannst í yfirferð og er ekki lagað. Ekkert af því brýtur neitt í dag.
 1. `scripts/hg-shots.mjs`: `OUT` er hlutfallsleg við vinnumöppu en `.env` er lesið frá `import.meta.url`.
 2. `package-lock.json` fékk óskyldan `bin` blokk (npm sync).
 3. Skriftan sleppir skrefum þegjandi: leitin á 810 px hæð og handfangið á `tabletLand`.
-4. Athugasemd í `lib/fling.ts` (um línu 204) segir "at or above" en `flingStarts` notar `>`, og athugasemd í `lib/gesture.ts` (um línu 460) vísar í "the spec test" par og þarf að orðast öðruvísi.
-5. Tvær hraðar ýtingar á + zooma frá miðri líðandi stöðu og gefa aðeins minna en 1,25 í öðru veldi.
-6. Lok skriðs er skrifað tvisvar í `useViewport` og skarast að hluta við `finish()`, einn hjálparfall myndi duga.
-7. Tab fókus á pakkatitil sem er utan skjás skrunar `overflow: hidden` `.hg-board` (módúlar gerðu það þegar).
-8. Fókushringur pakkatitils notar `--hg-line`, lág birtuskil.
-9. `MediaQueryList.addEventListener` kastar villu á Safari eldra en 14, ekkert varaúrræði. `useMediaQuery`, `Board` og `Wires` gera ráð fyrir `matchMedia`.
-10. `.hg-notice` og `.hg-toast-wrap` hafa ekki öruggt svæði til hliðar fyrir hak í láréttri stöðu. `ModalShell` notar hráa `env(safe-area-inset-bottom, 16px)` og er ekki í notkun núna.
-11. Hvorugt spjaldið (nýtt verk, síur) skilar fókus á hnappinn sem opnaði það þegar það lokast.
-12. `sheetMax()` keyrir `getComputedStyle` í hverri þröngri teikningu og `resize` hlustandi liggur áfram meðan spjaldið er lokað, hvort tveggja mætti geyma.
-13. Snerting í efni spjaldsins sem byrjar efst, fer fyrst niður og beygir svo til hliðar, getur misst lárétta skrun þeirrar bendingar á iOS. Önnur fingur í spjalddrætti lætur spjaldið stökkva til baka án mýktar.
-14. Athugasemdir í `useCardDrag.ts` (um línu 231, of löng lína) og `useViewport.ts` (um línur 66 til 69 segir að hver smellur sé gleyptur, en það er aðeins smellurinn sem fylgir, og reglan "Click after a gesture" nefnir ekki tilvikið með ekki aðal `pointerdown`) þurfa lagfæringu.
-15. `safe-p-*` bætir líka neðri innfellingunni við (umfram það sem þurfti, skaðlaust).
-16. `perf` skriftan hermir ekki skrið því CDP sendir hreyfingar með um 47 ms millibili. Skrið og stöðvun þess eru sannreynd sér, ekki í mælingunni.
+4. Tvær hraðar ýtingar á + zooma frá miðri líðandi stöðu og gefa aðeins minna en 1,25 í öðru veldi.
+5. Lok skriðs er skrifað tvisvar í `useViewport` og skarast að hluta við `finish()`, einn hjálparfall myndi duga.
+6. Tab fókus á pakkatitil sem er utan skjás skrunar `overflow: hidden` `.hg-board` (módúlar gerðu það þegar).
+7. Fókushringur pakkatitils notar `--hg-line`, lág birtuskil.
+8. `MediaQueryList.addEventListener` kastar villu á Safari eldra en 14, ekkert varaúrræði. `useMediaQuery`, `Board` og `Wires` gera ráð fyrir `matchMedia`.
+9. `.hg-notice` og `.hg-toast-wrap` hafa ekki öruggt svæði til hliðar fyrir hak í láréttri stöðu. `ModalShell` notar hráa `env(safe-area-inset-bottom, 16px)` og er ekki í notkun núna.
+10. Hvorugt spjaldið (nýtt verk, síur) skilar fókus á hnappinn sem opnaði það þegar það lokast.
+11. `resize` hlustandinn í `PanelShell` liggur áfram meðan spjaldið á síma er lokað (hann mælir aðeins hæðina aftur, skaðlaust).
+12. Snerting í efni spjaldsins sem byrjar efst, fer fyrst niður og beygir svo til hliðar, getur misst lárétta skrun þeirrar bendingar á iOS. Önnur fingur í spjalddrætti lætur spjaldið stökkva til baka án mýktar.
+13. `safe-p-*` bætir líka neðri innfellingunni við (umfram það sem þurfti, skaðlaust).
+14. `perf` skriftan hermir ekki skrið því CDP sendir hreyfingar með um 47 ms millibili. Skrið og stöðvun þess eru sannreynd sér, ekki í mælingunni.
+15. Rönd pakkans byrjar við `--hg-pack-rail-top` (71 px) en fyrsti módúllinn við 74 px síðan pakkatitillinn varð 44 px hnappur. 3 px munur sést varla og stærðartáknum pakka var ekki breytt.
