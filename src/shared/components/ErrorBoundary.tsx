@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
     if (!this.state.error) return this.props.children
 
     return (
-      <div className="min-h-screen bg-huginn-surface text-huginn-text-primary flex items-center justify-center p-6">
+      <div className="min-h-screen bg-huginn-surface text-huginn-text-primary flex items-center justify-center safe-p-6">
         <div className="max-w-2xl w-full bg-huginn-card border border-huginn-border rounded-xl p-6 shadow-2xl">
           <h1 className="text-lg font-bold text-huginn-danger mb-2">Something broke</h1>
           <p className="text-sm text-huginn-text-secondary mb-4">

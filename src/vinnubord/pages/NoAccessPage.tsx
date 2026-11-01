@@ -20,7 +20,7 @@ export function NoAccessPage() {
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center safe-p-4">
       <div className="w-full max-w-sm space-y-4 rounded-xl border border-huginn-border bg-huginn-card p-6 text-center">
         <h1 className="text-lg font-semibold text-huginn-text-primary">{t('vinnubord.noAccess.title')}</h1>
         <p className="text-sm text-huginn-text-secondary">{t('vinnubord.noAccess.body')}</p>

@@ -76,14 +76,14 @@ export function AuthCallbackPage() {
 
   if (state.kind === 'processing') {
     return (
-      <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
+      <div className="min-h-screen bg-huginn-surface flex items-center justify-center safe-p-4">
         <LoadingScreen message={t('auth.callback.confirming')} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
+    <div className="min-h-screen bg-huginn-surface flex items-center justify-center safe-p-4">
       <div className="w-full max-w-sm flex flex-col items-center gap-5 text-center">
         <Lockup markSize={72} wordmarkHeight={28} gap={4} />
         {state.kind === 'success' ? (

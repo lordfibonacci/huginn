@@ -44,14 +44,14 @@ export function ResetPasswordPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
+      <div className="min-h-screen bg-huginn-surface flex items-center justify-center safe-p-4">
         <LoadingScreen message={t('common.loading')} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
+    <div className="min-h-screen bg-huginn-surface flex items-center justify-center safe-p-4">
       <div className="w-full max-w-sm space-y-4">
         <div className="flex justify-center pb-2">
           <Lockup markSize={88} wordmarkHeight={32} gap={4} />

@@ -25,6 +25,24 @@
 
 html, body { overscroll-behavior: none; }
 
+/* Page padding plus the safe area insets: in the iOS standalone PWA
+   (viewport-fit=cover) pages run under the status bar and the notch. safe-p-4
+   is p-4 plus the insets; on a desktop the insets are 0, so it equals p-4. */
+@utility safe-p-* {
+  padding-top: calc(--spacing(--value(integer)) + env(safe-area-inset-top, 0px));
+  padding-right: calc(--spacing(--value(integer)) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(--spacing(--value(integer)) + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(--spacing(--value(integer)) + env(safe-area-inset-left, 0px));
+}
+
+/* An absolute corner control kept clear of the status bar and the notch. */
+@utility safe-top-* {
+  top: calc(--spacing(--value(integer)) + env(safe-area-inset-top, 0px));
+}
+@utility safe-right-* {
+  right: calc(--spacing(--value(integer)) + env(safe-area-inset-right, 0px));
+}
+
 /* Selection */
 ::selection { background: rgba(108, 92, 231, 0.3); }
 

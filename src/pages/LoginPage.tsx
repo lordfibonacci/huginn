@@ -60,8 +60,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-huginn-surface flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen bg-huginn-surface flex items-center justify-center safe-p-4">
+      <div className="absolute safe-top-4 safe-right-4">
         <LanguageToggle />
       </div>
       <div className="w-full max-w-sm space-y-4">
