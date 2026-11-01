@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-const TOTAL = 7
+const TOTAL = 8
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -343,6 +343,35 @@ try {
     expect(evs7.length >= 6, `item.status events ${evs7.length}, expected at least 6`)
     expect(evs7.every((e) => e.actor === me), 'an item.status event has another actor than the signed in user')
     expect(evs7[0].data.from === 'parked' && evs7[0].data.to === 'building', `first move is ${JSON.stringify(evs7[0].data)}`)
+    passed++
+
+    scenario = '8 unread'
+    // a: the signed in user's own events are never unread for them, with or without a read mark
+    must(await sb.from('hg_reads').delete().eq('item_id', itemId).eq('user_id', me), 'drop read mark')
+    const own = must(await sb.rpc('hg_unread', { p_project: projectId }), 'hg_unread')
+    expect(!own.some((r) => r.item_id === itemId), `own events reported unread: ${JSON.stringify(own.filter((r) => r.item_id === itemId))}`)
+    // b: created_by is stamped from auth.uid() on insert and cannot be rewritten
+    const stamped = must(
+      await sb
+        .from('hg_actions')
+        .insert({ project_id: projectId, item_id: itemId, body: 'stamp me', owner: heimir.user_id, created_by: heimir.user_id })
+        .select('id, created_by')
+        .single(),
+      'insert action 8',
+    )
+    expect(stamped.created_by === me, `created_by is ${stamped.created_by}, expected signed in user`)
+    must(await sb.from('hg_actions').update({ created_by: heimir.user_id }).eq('id', stamped.id), 'rewrite created_by')
+    const kept = must(await sb.from('hg_actions').select('created_by').eq('id', stamped.id).single(), 'read action 8')
+    expect(kept.created_by === me, 'created_by was rewritten on update')
+    // c: hg_mark_all_read skips done items (itemId is done since scenario 2), so no mark appears
+    must(await sb.rpc('hg_mark_all_read', { p_project: projectId }), 'hg_mark_all_read')
+    const none = must(await sb.from('hg_reads').select('read_at').eq('item_id', itemId).eq('user_id', me).maybeSingle(), 'read mark 8 done')
+    expect(none === null, 'a done item got a read mark')
+    // once reopened the item is open and hg_mark_all_read writes a server stamped read mark
+    must(await sb.from('hg_items').update({ status: 'parked' }).eq('id', itemId), 'reopen item 8')
+    must(await sb.rpc('hg_mark_all_read', { p_project: projectId }), 'hg_mark_all_read again')
+    const mark = must(await sb.from('hg_reads').select('read_at').eq('item_id', itemId).eq('user_id', me).single(), 'read mark 8')
+    expect(Date.now() - Date.parse(mark.read_at) < 60_000, `read_at ${mark.read_at} is not fresh`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind
