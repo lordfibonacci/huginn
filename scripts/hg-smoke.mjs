@@ -227,7 +227,13 @@ try {
       return row.id
     }
     const readOne = async (id) =>
-      must(await sb.from('hg_items').select('status, waiting_on, closed_at, updated_at').eq('id', id).single(), 'read plan item')
+      must(
+        await sb.from('hg_items').select('status, waiting_on, closed_at, updated_at, next_step, next_prompt').eq('id', id).single(),
+        'read plan item',
+      )
+    const setNext = async (id) => must(await sb.from('hg_items').update({ next_step: 'n', next_prompt: 'p' }).eq('id', id), 'set next')
+    const hasNext = (row) => row.next_step === 'n' && row.next_prompt === 'p'
+    const noNext = (row) => row.next_step === null && row.next_prompt === null
     const addPlan = async (id, status = 'todo') =>
       must(
         await sb.from('hg_plans').insert({ project_id: projectId, item_id: id, name: 'p', status }).select('id').single(),
@@ -243,20 +249,24 @@ try {
     let s = await readOne(pItem)
     expect(s.status === 'parked', `after todo plan status is ${s.status}, expected parked`)
 
-    // b. plan building moves a parked item to building
+    // b. plan building moves a parked item to building and keeps its next step and prompt
+    await setNext(pItem)
     await setPlan(p1, 'building')
     s = await readOne(pItem)
     expect(s.status === 'building' && s.waiting_on === null, `after plan building: ${s.status}, ${s.waiting_on}`)
+    expect(hasNext(s), `plan building cleared next: ${s.next_step}, ${s.next_prompt}`)
 
-    // c. plan done while another plan is todo puts the item in ready
+    // c. plan done while another plan is todo puts the item in ready and clears next (0009)
     const p2 = await addPlan(pItem)
     await setPlan(p1, 'done')
     s = await readOne(pItem)
     expect(s.status === 'ready', `after first plan done with a todo plan: ${s.status}, expected ready`)
+    expect(noNext(s), `plan done to ready kept next: ${s.next_step}, ${s.next_prompt}`)
 
-    // d. plan done beside a building plan leaves a waiting item alone (waiting on Árni)
+    // d. plan done beside a building plan leaves a waiting item alone (waiting on Árni), next too
     await setPlan(p2, 'building')
     must(await sb.from('hg_items').update({ status: 'waiting', waiting_on: arni.user_id }).eq('id', pItem), 'item to waiting')
+    await setNext(pItem)
     await setPlan(p1, 'todo')
     await setPlan(p1, 'done')
     s = await readOne(pItem)
@@ -264,6 +274,7 @@ try {
       s.status === 'waiting' && s.waiting_on === arni.user_id,
       `plan done beside a building plan moved the item: ${s.status}, ${s.waiting_on}`,
     )
+    expect(hasNext(s), `plan done beside a building plan cleared next: ${s.next_step}, ${s.next_prompt}`)
 
     // e. last plan done with an open action waits on its owner
     const act7 = must(
@@ -277,6 +288,7 @@ try {
     await setPlan(p2, 'done')
     s = await readOne(pItem)
     expect(s.status === 'waiting' && s.waiting_on === heimir.user_id, `last plan done with open action: ${s.status}, ${s.waiting_on}`)
+    expect(noNext(s), `last plan done with open action kept next: ${s.next_step}, ${s.next_prompt}`)
 
     // f. with the action done and a question open, waits on the question's recipient
     must(await sb.from('hg_actions').update({ done_at: new Date().toISOString() }).eq('id', act7.id), 'done action 7')
@@ -306,9 +318,11 @@ try {
     // g. nothing open: the item is done with closed_at
     must(await sb.from('hg_questions').update({ answer: 'ok' }).eq('id', q7.id), 'answer q7')
     await setPlan(p2, 'todo')
+    await setNext(pItem)
     await setPlan(p2, 'done')
     s = await readOne(pItem)
     expect(s.status === 'done' && s.closed_at !== null, `last plan done with nothing open: ${s.status}, closed_at ${s.closed_at}`)
+    expect(noNext(s), `last plan done with nothing open kept next: ${s.next_step}, ${s.next_prompt}`)
 
     // h. a done item is never touched
     await setPlan(p2, 'building')
