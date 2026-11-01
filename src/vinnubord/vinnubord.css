@@ -893,9 +893,11 @@
 }
 .hg-act-edited { margin: 0; padding: 0 0 var(--hg-pn-meta-margin); font-size: var(--hg-hist-when-size); color: var(--hg-ink-3); }
 .hg-act-cancel-mark {
-  flex: none; width: var(--hg-check-size); font-size: var(--hg-chip-size); line-height: var(--hg-check-size); color: var(--hg-ink-3); text-align: center;
+  flex: none; min-width: var(--hg-check-size); font-size: var(--hg-chip-size); line-height: var(--hg-check-size); color: var(--hg-ink-3); text-align: center;
+  white-space: nowrap;
 }
 .hg-act.hg-act-cancelled .hg-act-body { color: var(--hg-ink-3); text-decoration: line-through; }
+.hg-act.hg-act-cancelled .hg-check { cursor: default; }
 .hg-hist.hg-fresh { padding: var(--hg-hist-comment-pad); border-radius: var(--hg-radius-code); }
 .hg-resume { margin-top: var(--hg-pn-sec-gap); display: flex; align-items: center; gap: var(--hg-resume-gap); flex-wrap: wrap; }
 .hg-resume-btn { min-width: var(--hg-resume-btn-w); }
