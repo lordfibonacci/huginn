@@ -72,6 +72,23 @@ Miðað við task 4: í hvíld fer vinna í ramma úr mean 5.5 í 0.1 ms (p90 ú
 
 Mús á 1440 x 900 (tímabundin skrifta utan repo, öllum skrifum í gagnagrunn hafnað): `pointer: coarse` er ósatt, vírarnir teikna um 230 ramma á 5 s með um 65 neista í hverjum ramma og `shadowBlur` 14 eins og áður. Á rólegum vír (ekki pulse, ekki parked) teiknuðust 0 neistar á 5 s áður en kortið var valið og 682 neistabogar á 5 s eftir að það var valið.
 
+## Eftir task 7
+
+Tákn fyrir snertitæki (`@media (pointer: coarse)` á eftir `prefers-reduced-motion`): enginn `backdrop-filter` á kortum, módúlum, stjórntökkum, valmyndum og hliðarspjaldi, næstum ógegnsæir fletir og léttari skuggar. Staðfest í símahermi: `pointer: coarse` er satt, `backdrop-filter` er `none` á korti og módúl og bakgrunnur korts er ógegnsær litstigull. Keyrt með `npm run build`, `vite preview` og `SITE=http://localhost:4173 npm run shots:hg perf`, sími með 4x hægari örgjörva:
+
+```
+pinch-out@min    gap  n=186 mean=42.1 p50=17 p90=100 max=117 >33ms=63
+                 work n=186 mean=4.9 p50=0 p90=5 max=54 >33ms=16
+pan              gap  n=189 mean=16.8 p50=17 p90=17 max=33 >33ms=1
+                 work n=189 mean=1.6 p50=0 p90=5 max=9 >33ms=0
+pinch-in         gap  n=181 mean=40.4 p50=17 p90=83 max=133 >33ms=61
+                 work n=181 mean=4.7 p50=0 p90=5 max=64 >33ms=16
+idle             gap  n=60 mean=16.7 p50=17 p90=17 max=17 >33ms=0
+                 work n=60 mean=0.1 p50=0 p90=0 max=0 >33ms=0
+```
+
+Miðað við task 6: gap mean í klípu fer úr 46.8 í 42.1 (`pinch-out@min`) og úr 46.6 í 40.4 (`pinch-in`), work er í raun óbreytt. Pan og hvíld eru óbreytt innan skekkju. Munurinn er lítill í hermi því hermirinn teiknar ekki með GPU eins og sími. Mús á 1440 x 900: sama útlit og áður, blur sést á kortum yfir norðurljósunum.
+
 ## Hvað bíður
 
 Tasks 2 og áfram í planinu. Þessi skrá fær sína kafla eftir því sem þeir klárast.

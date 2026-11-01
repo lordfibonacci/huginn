@@ -432,6 +432,29 @@
   }
 }
 
+/* Touch devices: no backdrop blur (every blurred element is its own
+   compositing layer and is re-rastered at each zoom step) and lighter
+   shadows. Surfaces go nearly opaque so the wires do not show through
+   unblurred. Mouse desktops keep the look above. */
+@media (pointer: coarse) {
+  :root {
+    --hg-blur-card: none;
+    --hg-module-blur: none;
+    --hg-blur-control: none;
+    --hg-panel-blur: none;
+    --hg-card-bg: linear-gradient(180deg, #1d2838, #161e2b);
+    --hg-module-bg: rgba(22, 30, 43, 0.96);
+    --hg-module-bg-hover: rgba(29, 40, 56, 0.98);
+    --hg-panel-bg: rgba(22, 30, 43, 0.98);
+    --hg-menu-bg: rgba(22, 30, 43, 0.99);
+    --hg-control-bg: rgba(22, 30, 43, 0.96);
+    --hg-card-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --hg-card-lift-shadow: 0 16px 32px -16px;
+    --hg-module-hot-lift: 0 10px 24px -16px;
+    --hg-panel-shadow: 0 16px 40px -24px rgba(0, 0, 0, 0.9);
+  }
+}
+
 /* ---------- Pack columns and module cards ----------
    Positioned in world coordinates by Board. */
 .hg-pack {
