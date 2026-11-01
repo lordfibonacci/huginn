@@ -6,6 +6,8 @@ The old Trello style board, inbox, runes and Meta social planner are gone from t
 
 Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Plans: `docs/superpowers/plans/2026-10-31-vinnubord-{1-grunnur,2-bord,3-cli,4-skyndigreining}.md`.
 
+Plan 5 (staða úr gögnum) is specced and planned, not built: spec `docs/superpowers/specs/2026-11-01-stada-ur-gognum-design.md`, plan `docs/superpowers/plans/2026-11-01-stada-ur-gognum.md`. Run it in an Opus session with subagent-driven-development; task 6 edits the `/huginn` skill in metta2_new.
+
 ## Current state
 
 Plans 1 to 4 are built (423 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
