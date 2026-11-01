@@ -57,7 +57,8 @@ import { parseDuration } from '../lib/motion'
 //   until the last pointer lifts, or until the fling that follows it stops.
 // - Touch pan release above FLING_START px/ms flings the view (lib/fling), a
 //   new pointer stops it. While it runs, active and isPanning stay true and
-//   sync() runs when it stops. A gesture that had a pinch never flings.
+//   sync() runs when it stops. A gesture that had a pinch never flings, and
+//   nothing flings under prefers-reduced-motion: reduce.
 // - Two taps on the empty board within DOUBLE_TAP_MS and DOUBLE_TAP_SLOP zoom
 //   in by DOUBLE_TAP_FACTOR around the point; taps on cards, modules and pack
 //   titles never count. A tap whose press stopped a fling or a glide never
@@ -174,6 +175,10 @@ function pinchOf(a: Pt, b: Pt) {
 // The glide length from its token, 0 under reduced motion.
 function viewDurMs(): number {
   return parseDuration(getComputedStyle(document.documentElement).getPropertyValue('--hg-dur-view'))
+}
+
+function reducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 function touchKind(target: Element): TouchKind {
@@ -549,8 +554,8 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
           lastTap.current = null
         }
 
-        // Fling: a touch pan that moved, alone in its gesture.
-        if (released && !flags.pinched && p && p.id === e.pointerId && p.moved) {
+        // Fling: a touch pan that moved, alone in its gesture, motion allowed.
+        if (released && !flags.pinched && p && p.id === e.pointerId && p.moved && !reducedMotion()) {
           const v = releaseVelocity(p.samples, e.timeStamp)
           if (flingStarts(v)) {
             runFling(v, e.timeStamp)
