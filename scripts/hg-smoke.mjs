@@ -227,7 +227,7 @@ try {
       return row.id
     }
     const readOne = async (id) =>
-      must(await sb.from('hg_items').select('status, waiting_on, closed_at').eq('id', id).single(), 'read plan item')
+      must(await sb.from('hg_items').select('status, waiting_on, closed_at, updated_at').eq('id', id).single(), 'read plan item')
     const addPlan = async (id, status = 'todo') =>
       must(
         await sb.from('hg_plans').insert({ project_id: projectId, item_id: id, name: 'p', status }).select('id').single(),
@@ -254,12 +254,16 @@ try {
     s = await readOne(pItem)
     expect(s.status === 'ready', `after first plan done with a todo plan: ${s.status}, expected ready`)
 
-    // d. plan done while another plan is building moves nothing
+    // d. plan done beside a building plan leaves a waiting item alone
     await setPlan(p2, 'building')
+    must(await sb.from('hg_items').update({ status: 'waiting', waiting_on: heimir.user_id }).eq('id', pItem), 'item to waiting')
     await setPlan(p1, 'todo')
     await setPlan(p1, 'done')
     s = await readOne(pItem)
-    expect(s.status === 'building', `plan done beside a building plan: ${s.status}, expected building`)
+    expect(
+      s.status === 'waiting' && s.waiting_on === heimir.user_id,
+      `plan done beside a building plan moved the item: ${s.status}, ${s.waiting_on}`,
+    )
 
     // e. last plan done with an open action waits on its owner
     const act7 = must(
@@ -291,6 +295,14 @@ try {
     s = await readOne(pItem)
     expect(s.status === 'waiting' && s.waiting_on === arni.user_id, `last plan done with open question: ${s.status}, ${s.waiting_on}`)
 
+    // i. a no change plan update moves nothing and writes no event
+    const nBefore = (await statusEvents(pItem)).length
+    const updBefore = s.updated_at
+    await setPlan(p2, 'done')
+    const sAfter = await readOne(pItem)
+    expect((await statusEvents(pItem)).length === nBefore, 'a no change plan update wrote an item.status event')
+    expect(sAfter.updated_at === updBefore, 'a no change plan update touched the item updated_at')
+
     // g. nothing open: the item is done with closed_at
     must(await sb.from('hg_questions').update({ answer: 'ok' }).eq('id', q7.id), 'answer q7')
     await setPlan(p2, 'todo')
@@ -302,11 +314,6 @@ try {
     await setPlan(p2, 'building')
     s = await readOne(pItem)
     expect(s.status === 'done', `plan building on a done item: ${s.status}, expected done`)
-
-    // i. a no change update writes no event
-    const nBefore = (await statusEvents(pItem)).length
-    await setPlan(p2, 'building')
-    expect((await statusEvents(pItem)).length === nBefore, 'a no change plan update wrote an item.status event')
 
     // j. a plan inserted directly as building moves a new item
     const iItem = await newItem()
