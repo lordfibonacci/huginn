@@ -8,9 +8,9 @@ import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { packageCounts, tagCounts } from '../lib/filters'
 import { summarizeUnread } from '../lib/reads'
-import { countsFor } from '../lib/status'
+import { countsFor, isOnBoard } from '../lib/status'
 import type { Item, View } from '../lib/types'
-import { itemsInView } from '../lib/views'
+import { itemsInView, viewCounts } from '../lib/views'
 import { Board, type BoardHandle } from '../components/Board'
 import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
@@ -18,6 +18,7 @@ import { NewItemSheet } from '../components/NewItemSheet'
 import { PanelShell } from '../components/PanelShell'
 import { Toast } from '../components/Toast'
 import { TopBar } from '../components/TopBar'
+import { ViewMenu } from '../components/ViewMenu'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
 import { NoAccessPage } from './NoAccessPage'
@@ -75,6 +76,17 @@ export function BoardPage() {
     () => (loaded ? packageCounts(data.packages, data.modules, visibleItems) : []),
     [loaded, data, visibleItems],
   )
+  // The view menu and editor read the whole board, so a view can take in a
+  // package or tag the active view hides.
+  const allPackages = useMemo(
+    () => (loaded ? packageCounts(data.packages, data.modules, data.items) : []),
+    [loaded, data],
+  )
+  const allTags = useMemo(() => (loaded ? tagCounts(data.items, new Set()) : []), [loaded, data])
+  const perView = useMemo(
+    () => (loaded ? viewCounts(data.views, data.items, data.modules, data.actions, viewerId) : new Map<string, number>()),
+    [loaded, data, viewerId],
+  )
 
   // A package deleted while it is in the filter would keep the board dim with
   // nothing in the Pakki menu to switch off, so unknown ids are dropped.
@@ -127,6 +139,20 @@ export function BoardPage() {
         participants={data.participants}
         viewer={{ userId: user.id, participant: viewerParticipant, email: user.email ?? null }}
         live={live}
+        viewMenu={
+          <ViewMenu
+            projectId={project.id}
+            views={data.views}
+            active={activeView.view}
+            counts={perView}
+            boardCount={data.items.filter(isOnBoard).length}
+            packages={allPackages}
+            tags={allTags}
+            filter={filterApi.filter}
+            onChoose={activeView.choose}
+            onReload={reload}
+          />
+        }
         onNewItem={() => setNewOpen(true)}
       />
       <Board

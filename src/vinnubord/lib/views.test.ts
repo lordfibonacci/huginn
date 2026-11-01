@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   activeViewKey,
   itemsInView,
+  normalizeViewFilter,
   positionOf,
   positionsOf,
   resolveActiveView,
@@ -150,5 +151,41 @@ describe('viewCounts', () => {
     expect(counts.get('db')).toBe(1)
     expect(counts.get('none')).toBe(0)
     expect(counts.size).toBe(5)
+  })
+})
+
+describe('normalizeViewFilter', () => {
+  it('a group with every option ticked is saved as empty, meaning all', () => {
+    const json = {
+      tones: ['gold', 'lilac', 'coral', 'teal', 'stone'],
+      packages: ['p2', 'p1'],
+      tags: ['ui', 'db'],
+    }
+    expect(normalizeViewFilter(json, ['p1', 'p2'], ['db', 'ui'])).toEqual({ tones: [], packages: [], tags: [] })
+  })
+
+  it('a partial group is kept as it is', () => {
+    const json = { tones: ['gold', 'coral'], packages: ['p1'], tags: ['db'] }
+    expect(normalizeViewFilter(json, ['p1', 'p2'], ['db', 'ui'])).toEqual(json)
+  })
+
+  it('none ticked stays empty', () => {
+    expect(normalizeViewFilter({ tones: [], packages: [], tags: [] }, ['p1'], ['db'])).toEqual({
+      tones: [],
+      packages: [],
+      tags: [],
+    })
+  })
+
+  it('every offered tag plus one no item carries still means all', () => {
+    expect(normalizeViewFilter({ tags: ['db', 'ui', 'gone'] }, [], ['db', 'ui']).tags).toEqual([])
+  })
+
+  it('with nothing offered a ticked tag or package is kept', () => {
+    expect(normalizeViewFilter({ packages: ['p1'], tags: ['gone'] }, [], [])).toEqual({
+      tones: [],
+      packages: ['p1'],
+      tags: ['gone'],
+    })
   })
 })

@@ -371,6 +371,21 @@
     },
     "toast": {
       "newItem": "{{short}} sent a new item: {{title}}"
+    },
+    "views": {
+      "menu": "View",
+      "main": "Main board",
+      "new": "New view",
+      "edit": "Edit view",
+      "delete": "Delete view",
+      "deleteConfirm": "Delete the view {{name}}? Its card positions go with it.",
+      "sharedHint": "Views are shared. The chosen view is kept in this browser.",
+      "name": "Name",
+      "show": "Show",
+      "packages": "Packages",
+      "tags": "Tags",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   }
 }

@@ -1117,6 +1117,16 @@
   display: flex; align-items: center; justify-content: space-between; gap: var(--hg-pill-gap); min-height: var(--hg-touch);
   padding: var(--hg-menu-item-pad); color: var(--hg-ink-2); font-weight: 600;
 }
+/* The view menu and its editor */
+.hg-view-menu { min-width: var(--hg-menu-w); }
+.hg-menu-sep { height: 1px; margin: var(--hg-control-gap) 0; background: var(--hg-line); }
+.hg-view-editor { display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); padding: var(--hg-menu-item-pad); padding-bottom: var(--hg-menu-pad); }
+.hg-view-group { margin: 0; font-size: var(--hg-menu-who-size); color: var(--hg-ink-3); }
+.hg-view-chips { display: flex; flex-wrap: wrap; gap: var(--hg-control-gap); }
+.hg-view-chips .hg-chip { width: auto; }
+.hg-view-actions { display: flex; gap: var(--hg-pill-gap); }
+/* A long view name must not push the rest of the bar away. */
+.hg-view-ddb em { max-width: var(--hg-menu-w); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The shared LanguageToggle, sized for touch inside the menu. */
 .hg-lang button { min-width: var(--hg-touch); min-height: var(--hg-touch); }
 .hg-clear {
@@ -1191,6 +1201,8 @@
   .hg-proj-select { padding: 0; }
   .hg-proj-select select { max-width: var(--hg-proj-max-w-phone); text-overflow: ellipsis; }
   .hg-ddb { padding: var(--hg-ddb-pad-phone); }
+  /* No room for the view name on a phone: the lit button and the menu show it. */
+  .hg-view-ddb em { display: none; }
   .hg-count { padding: var(--hg-count-pad-phone); }
   /* Menus span the bar instead of hanging off a button near the edge. */
   .hg-top-g .hg-dd { position: static; }

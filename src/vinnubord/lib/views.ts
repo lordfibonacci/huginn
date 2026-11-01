@@ -2,7 +2,7 @@
 // The local filter only dims inside a view, the view decides what is drawn.
 
 import { matches, parseFilter, prunePackages, type Filter } from './filters'
-import { BUCKET_TONE, countBucket, isOnBoard } from './status'
+import { BUCKET_TONE, TONES, countBucket, isOnBoard } from './status'
 import type { Action, Item, Module, View, ViewFilterJson, ViewPosition } from './types'
 
 type Point = { x: number; y: number }
@@ -15,6 +15,23 @@ export function viewFilterOf(view: View): Filter {
 // The part of a filter that a view keeps. Never q or unread.
 export function viewFilterJson(f: Filter): ViewFilterJson {
   return { tones: [...f.tones], packages: [...f.packages], tags: [...f.tags] }
+}
+
+// What the editor saves. A group with every offered option ticked means all,
+// the same as none ticked, so it is saved as an empty list. A group with
+// nothing offered keeps what is ticked.
+export function normalizeViewFilter(
+  json: ViewFilterJson,
+  packageKeys: string[],
+  tagKeys: string[],
+): ViewFilterJson {
+  const all = (picked: string[], offered: readonly string[]) =>
+    offered.length > 0 && offered.every((k) => picked.includes(k)) ? [] : picked
+  return {
+    tones: all(json.tones ?? [], TONES),
+    packages: all(json.packages ?? [], packageKeys),
+    tags: all(json.tags ?? [], tagKeys),
+  }
 }
 
 // The on board items a view draws. Without a view, all of them. Packages that

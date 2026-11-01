@@ -371,6 +371,21 @@
       "tags": "Tögg",
       "viewerMenu": "Valmynd fyrir {{name}}"
     },
-    "viewerError": "Gat ekki sótt verkefnin þín."
+    "viewerError": "Gat ekki sótt verkefnin þín.",
+    "views": {
+      "cancel": "Hætta við",
+      "delete": "Eyða sýn",
+      "deleteConfirm": "Eyða sýninni {{name}}? Uppröðun hennar fer með.",
+      "edit": "Breyta sýn",
+      "main": "Aðalborð",
+      "menu": "Sýn",
+      "name": "Nafn",
+      "new": "Ný sýn",
+      "packages": "Pakkar",
+      "save": "Vista",
+      "sharedHint": "Sýnir eru sameiginlegar. Valin sýn vistast í þessum vafra.",
+      "show": "Sýna",
+      "tags": "Tögg"
+    }
   }
 }

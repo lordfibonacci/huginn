@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../shared/hooks/useAuth'
@@ -20,6 +20,7 @@ type Props = {
   participants: Participant[]
   viewer: { userId: string; participant: Participant | null; email: string | null }
   live: boolean
+  viewMenu: ReactNode
   onNewItem: () => void
 }
 
@@ -27,12 +28,24 @@ type Props = {
 const COUNT_ORDER: (keyof Counts)[] = ['unread', 'new', 'mine', 'others', 'build', 'parked']
 
 // The top bar above the board: brand, project switcher, the counters (which
-// are the status filter), search, package and tag menus, "Hreinsa" while a
+// are the status filter), search, package and tag menus, the view menu, "Hreinsa" while a
 // filter is on, the live dot, participants, the viewer menu and "+ Nýtt verk".
 // From 768 px one row; below it two rows with the counters scrolling sideways
 // and search behind a magnifier button. It sits outside the board element, so
 // its clicks never reach the board's pan or deselect.
-export function TopBar({ project, projects, counts, filter, tags, packages, participants, viewer, live, onNewItem }: Props) {
+export function TopBar({
+  project,
+  projects,
+  counts,
+  filter,
+  tags,
+  packages,
+  participants,
+  viewer,
+  live,
+  viewMenu,
+  onNewItem,
+}: Props) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [searchOpen, setSearchOpen] = useState(false)
@@ -140,6 +153,7 @@ export function TopBar({ project, projects, counts, filter, tags, packages, part
           onToggle={filter.toggleTag}
           empty={t('vinnubord.top.noTags')}
         />
+        {viewMenu}
         {filter.active && (
           <button type="button" className="hg-clear" onClick={filter.clear}>
             {t('vinnubord.top.clear')}
