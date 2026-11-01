@@ -755,7 +755,7 @@
   left: 0; right: 0; bottom: 0; border-bottom: none;
   border-radius: var(--hg-radius-sheet) var(--hg-radius-sheet) 0 0;
   height: calc(100dvh - var(--hg-sheet-top));
-  transform: translateY(calc(var(--hg-sheet-offset, 100vh) * 1px));
+  transform: translateY(calc(var(--hg-sheet-offset, 100000) * 1px));
   padding-bottom: var(--hg-safe-bottom); padding-left: var(--hg-safe-left); padding-right: var(--hg-safe-right);
   transition: transform var(--hg-dur-panel) var(--hg-ease);
 }

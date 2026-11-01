@@ -131,6 +131,14 @@ export function PanelShell({ open, onClose, label, children }: Props) {
     if (!dragging && ref.current) ref.current.style.transform = ''
   }, [dragging, stop, open, narrow])
 
+  // Opening, closing or crossing the breakpoint ends any drag in flight, so a
+  // drag cut short never leaves the dragging class or a stale transform.
+  useLayoutEffect(() => {
+    drag.current = null
+    setDragging(false)
+    if (ref.current) ref.current.style.transform = ''
+  }, [open, narrow])
+
   const settle = useCallback((offset: number, max: number, v: number) => {
     const next = snapSheet(offset, max, v)
     if (next === 'closed') onCloseRef.current()
@@ -205,22 +213,39 @@ export function PanelShell({ open, onClose, label, children }: Props) {
   // Body touch takeover. A touch that starts in the body while it is scrolled
   // to the top and first moves down moves the sheet; any other touch scrolls
   // the body and is left alone. Touches in the handle, the head or a field
-  // are not ours.
+  // are not ours. Touch events keep going to the node the touch started on
+  // even after React removes it (a remounted panel, a lazy chunk, a refetch),
+  // so the move and end listeners also sit on that node for the length of
+  // the touch. An event that bubbles from it to the aside is handled once.
   useEffect(() => {
     const el = ref.current
     if (!narrow || !open || !el) return
     let touch: BodyTouch | null = null
+    let origin: EventTarget | null = null
+    let handled: Event | null = null
 
+    const detach = () => {
+      if (!origin) return
+      origin.removeEventListener('touchmove', onMove as EventListener)
+      origin.removeEventListener('touchend', onEnd as EventListener)
+      origin.removeEventListener('touchcancel', onCancel)
+      origin = null
+    }
     const cancel = () => {
+      detach()
       if (touch?.mode === 'sheet') setDragging(false)
       touch = null
     }
+    const onCancel = (e: Event) => {
+      if (e === handled) return
+      handled = e
+      cancel()
+    }
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
-        cancel()
-        return
-      }
-      touch = null
+      // A touch that never ended (its node was removed mid drag) is dropped
+      // here, which also clears the dragging class and the transform.
+      cancel()
+      if (e.touches.length !== 1) return
       const target = e.target as Element | null
       if (!target?.closest || target.closest('.hg-sheet-handle, .hg-pn-head, input, textarea, select')) return
       const body = target.closest('.hg-pn-body')
@@ -240,8 +265,16 @@ export function PanelShell({ open, onClose, label, children }: Props) {
         lastT: e.timeStamp,
         v: 0,
       }
+      if (target !== el) {
+        origin = target
+        origin.addEventListener('touchmove', onMove as EventListener, { passive: false })
+        origin.addEventListener('touchend', onEnd as EventListener)
+        origin.addEventListener('touchcancel', onCancel)
+      }
     }
     const onMove = (e: TouchEvent) => {
+      if (e === handled) return
+      handled = e
       const s = touch
       if (!s || s.mode === 'scroll') return
       const p = e.touches[0]
@@ -272,6 +305,9 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       el.style.transform = `translateY(${s.offset}px)`
     }
     const onEnd = (e: TouchEvent) => {
+      if (e === handled) return
+      handled = e
+      detach()
       const s = touch
       touch = null
       if (s?.mode !== 'sheet') return
@@ -282,13 +318,13 @@ export function PanelShell({ open, onClose, label, children }: Props) {
     el.addEventListener('touchstart', onStart, { passive: true })
     el.addEventListener('touchmove', onMove, { passive: false })
     el.addEventListener('touchend', onEnd)
-    el.addEventListener('touchcancel', cancel)
+    el.addEventListener('touchcancel', onCancel)
     return () => {
       el.removeEventListener('touchstart', onStart)
       el.removeEventListener('touchmove', onMove)
       el.removeEventListener('touchend', onEnd)
-      el.removeEventListener('touchcancel', cancel)
-      if (touch?.mode === 'sheet') setDragging(false)
+      el.removeEventListener('touchcancel', onCancel)
+      cancel()
     }
   }, [narrow, open, settle])
 
