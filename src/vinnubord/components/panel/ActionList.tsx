@@ -9,16 +9,25 @@ type Props = {
   participants: Participant[]
 }
 
-// Actions on an item: open ones first, each with a check box, its owner and
+// Actions on an item: open ones, then done ones folded away, each with a check box, its owner and
 // its payload (an SQL block, a path) in a copyable block.
 export function ActionList({ actions, participants }: Props) {
-  const sorted = [...actions.filter((a) => a.done_at === null), ...actions.filter((a) => a.done_at !== null)]
+  const { t } = useTranslation()
+  const open = actions.filter((a) => a.done_at === null)
+  const done = actions.filter((a) => a.done_at !== null)
+  const row = (a: Action) => (
+    <ActionRow key={a.id} action={a} owner={participants.find((p) => p.user_id === a.owner) ?? null} />
+  )
   return (
-    <ul className="hg-pn-list">
-      {sorted.map((a) => (
-        <ActionRow key={a.id} action={a} owner={participants.find((p) => p.user_id === a.owner) ?? null} />
-      ))}
-    </ul>
+    <>
+      {open.length > 0 && <ul className="hg-pn-list">{open.map(row)}</ul>}
+      {done.length > 0 && (
+        <details className="hg-details">
+          <summary>{t('vinnubord.panel.actionsDone', { count: done.length })}</summary>
+          <ul className="hg-pn-list">{done.map(row)}</ul>
+        </details>
+      )}
+    </>
   )
 }
 

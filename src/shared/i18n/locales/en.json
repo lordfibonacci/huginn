@@ -200,6 +200,7 @@
       "cost": "Cost if wrong: {{cost}}",
       "reverse": "Reverse",
       "actions": "Actions",
+      "actionsDone": "Done ({{count}})",
       "actionDone": "Done: {{body}}",
       "nextStep": "Next step",
       "resume": "Continue",

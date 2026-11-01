@@ -167,6 +167,7 @@
     "panel": {
       "actionDone": "Lokið: {{body}}",
       "actions": "Handtök",
+      "actionsDone": "Afgreitt ({{count}})",
       "body": "Lýsing",
       "changeStatus": "Breyta stöðu",
       "choose": "Velja",

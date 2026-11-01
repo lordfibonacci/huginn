@@ -21,8 +21,8 @@ type Props = {
 
 const STATUSES = Object.keys(STATUS_NAMES) as ItemStatus[]
 
-// "Staða": where we are, the description, plans with rulings, actions, the
-// next step with its prompt, "Halda áfram", the status control and the source.
+// "Staða": where we are, actions, the next step with its prompt, "Halda áfram",
+// plans with rulings, the description, the status control and the source.
 export function StatusTab({ data, item, module, tone, label }: Props) {
   const { t } = useTranslation()
   const plans = data.plans.filter((p) => p.item_id === item.id)
@@ -43,20 +43,6 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
           {t('vinnubord.panel.module')}: {module ? module.name : t('vinnubord.panel.noModule')}
         </p>
       </section>
-
-      {item.body && (
-        <section className="hg-pn-sec">
-          <h3>{t('vinnubord.panel.body')}</h3>
-          <Markdown source={item.body} />
-        </section>
-      )}
-
-      {plans.length > 0 && (
-        <section className="hg-pn-sec">
-          <h3>{t('vinnubord.panel.plans')}</h3>
-          <PlanList plans={plans} rulings={rulings} />
-        </section>
-      )}
 
       {actions.length > 0 && (
         <section className="hg-pn-sec">
@@ -84,6 +70,20 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
       )}
 
       <ResumeButton data={data} item={item} module={module} />
+
+      {plans.length > 0 && (
+        <section className="hg-pn-sec">
+          <h3>{t('vinnubord.panel.plans')}</h3>
+          <PlanList plans={plans} rulings={rulings} />
+        </section>
+      )}
+
+      {item.body && (
+        <section className="hg-pn-sec">
+          <h3>{t('vinnubord.panel.body')}</h3>
+          <Markdown source={item.body} />
+        </section>
+      )}
 
       <StatusControl key={item.id} data={data} item={item} />
 
