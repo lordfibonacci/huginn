@@ -23,7 +23,7 @@
 
   --hg-radius-card: 20px;
   --hg-radius-panel: 24px;
-  --hg-radius-module: 20px;
+  --hg-radius-module: 22px;
 
   /* Touch target, and the field font size that keeps iOS from zooming in. */
   --hg-touch: 44px;
@@ -31,32 +31,36 @@
   --hg-fs-field-wide: 13.5px;
 
   /* ---------- Pack columns ---------- */
-  --hg-pack-w: 380px;
+  --hg-pack-w: 440px;
   --hg-pack-z: 3;
   --hg-pack-pad-top: 14px;
-  --hg-pack-title-gap: 14px;
+  --hg-pack-title-gap: 16px;
   --hg-pack-title-indent: 14px;
-  --hg-pack-title-size: 22px;
-  --hg-pack-rail-top: 58px;
+  --hg-pack-title-size: 30px;
+  --hg-pack-rail-top: 71px;
 
   /* ---------- Module cards ---------- */
   --hg-module-bg: rgba(22, 30, 43, 0.72);
   --hg-module-bg-hover: rgba(29, 40, 56, 0.85);
   --hg-module-border: rgba(255, 255, 255, 0.04);
-  --hg-module-pad: 18px 20px 18px 26px;
-  --hg-module-gap: 10px;
+  --hg-module-pad: 24px 24px 24px 32px;
+  --hg-module-gap: 12px;
   --hg-module-indent: 8px;
   --hg-module-blur: blur(8px);
-  --hg-module-bar-inset: 18px;
-  --hg-module-bar-w: 4px;
+  --hg-module-bar-inset: 20px;
+  --hg-module-bar-w: 5px;
   --hg-module-bar-radius: 2px;
   --hg-module-glow: 12px;
   --hg-module-hot-lift: 0 20px 50px -30px;
   --hg-module-row-gap: 10px;
-  --hg-module-name-size: 20px;
-  --hg-module-count-size: 14px;
-  --hg-module-line-size: 14px;
+  --hg-module-name-size: 26px;
+  --hg-module-count-size: 15px;
+  --hg-module-line-size: 15px;
   --hg-module-line-gap: 3px;
+  /* How much of the module's color tints its card and border, so modules read
+     as a different kind of thing than the neutral item cards. */
+  --hg-module-tint: 18%;
+  --hg-module-border-tint: 35%;
 
   /* ---------- Board surface and zoom controls ---------- */
   --hg-grid-dot: rgba(255, 255, 255, 0.075);
@@ -91,10 +95,13 @@
   /* Hover magnifies a card like a local zoom: scale is peek-k divided by the
      board zoom (--hg-z, set on the world layer), kept between min and max,
      so a far zoomed out card grows the most. */
-  --hg-card-peek-k: 0.95;
-  --hg-card-peek-min: 1.2;
-  --hg-card-peek-max: 2.4;
+  --hg-card-peek-k: 0.7;
+  --hg-card-peek-min: 1.12;
+  --hg-card-peek-max: 1.7;
   --hg-card-peek-rise: -6px;
+  --hg-card-peek-dur: 0.38s;
+  --hg-card-peek-delay: 70ms;
+  --hg-card-peek-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --hg-card-peek-z: 7;
   --hg-card-parked-opacity: 0.6;
   --hg-card-focus-ring: 2px;
@@ -417,6 +424,8 @@
     --hg-dur-fast: 0s;
     --hg-dur-panel: 0s;
     --hg-dur-pop: 0s;
+    --hg-card-peek-dur: 0s;
+    --hg-card-peek-delay: 0s;
   }
 }
 
@@ -428,7 +437,7 @@
 }
 .hg-pack-title {
   margin: 0 0 var(--hg-pack-title-gap) var(--hg-pack-title-indent); font-size: var(--hg-pack-title-size); font-weight: 800;
-  color: var(--hg-ink-2); letter-spacing: -0.01em; display: flex; align-items: center; gap: var(--hg-pack-title-gap);
+  color: var(--hg-ink); letter-spacing: -0.01em; display: flex; align-items: center; gap: var(--hg-pack-title-gap);
 }
 .hg-pack-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--hg-line), transparent); }
 .hg-pack-rail {
@@ -446,7 +455,8 @@
   position: relative; display: block; width: calc(100% - var(--hg-module-indent)); min-height: var(--hg-touch); text-align: left;
   font: inherit; color: var(--hg-ink); border-radius: var(--hg-radius-module); padding: var(--hg-module-pad);
   margin: 0 0 var(--hg-module-gap) var(--hg-module-indent);
-  cursor: pointer; border: 1px solid var(--hg-module-border); background: var(--hg-module-bg);
+  cursor: pointer; border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-module-border-tint), var(--hg-module-border));
+  background: linear-gradient(90deg, color-mix(in oklab, var(--hg-c) var(--hg-module-tint), var(--hg-module-bg)), var(--hg-module-bg));
   backdrop-filter: var(--hg-module-blur);
   transition: background var(--hg-dur-fast) var(--hg-ease), border-color var(--hg-dur-fast) var(--hg-ease),
     box-shadow var(--hg-dur-fast) var(--hg-ease);
@@ -456,7 +466,10 @@
   width: var(--hg-module-bar-w); border-radius: var(--hg-module-bar-radius);
   background: var(--hg-c); box-shadow: 0 0 var(--hg-module-glow) var(--hg-c); opacity: 0.9;
 }
-.hg-mod:hover, .hg-mod:focus-visible { background: var(--hg-module-bg-hover); border-color: var(--hg-line); outline: none; }
+.hg-mod:hover, .hg-mod:focus-visible {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--hg-c) var(--hg-module-tint), var(--hg-module-bg-hover)), var(--hg-module-bg-hover));
+  border-color: color-mix(in oklab, var(--hg-c) 60%, var(--hg-line)); outline: none;
+}
 .hg-mod.hg-mod-hot {
   border-color: color-mix(in oklab, var(--hg-c) 45%, var(--hg-line));
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--hg-c) 20%, transparent),
@@ -542,7 +555,8 @@
   z-index: var(--hg-card-z);
   background: var(--hg-card-bg); border: 1px solid var(--hg-line); backdrop-filter: var(--hg-blur-card); box-shadow: var(--hg-card-shadow);
   transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-dur-fast) var(--hg-ease),
-    opacity var(--hg-dur-fast) var(--hg-ease), scale var(--hg-dur-fast) var(--hg-spring), translate var(--hg-dur-fast) var(--hg-ease);
+    opacity var(--hg-dur-fast) var(--hg-ease), scale var(--hg-card-peek-dur) var(--hg-card-peek-ease),
+    translate var(--hg-card-peek-dur) var(--hg-card-peek-ease), z-index 0s linear var(--hg-card-peek-dur);
 }
 .hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) backwards; }
 @keyframes hg-pop { from { opacity: 0; transform: scale(var(--hg-card-enter-scale)); } }
@@ -553,6 +567,12 @@
     z-index: var(--hg-card-peek-z);
     scale: clamp(var(--hg-card-peek-min), calc(var(--hg-card-peek-k) / var(--hg-z, 1)), var(--hg-card-peek-max));
     translate: 0 var(--hg-card-peek-rise);
+    /* Grows after a short pause, so sweeping the pointer over the board does
+       not pop every card; it rises above its neighbours at once and stays
+       above them (base rule's z-index delay) until it has shrunk back. */
+    transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-card-peek-dur) var(--hg-card-peek-ease),
+      opacity var(--hg-dur-fast) var(--hg-ease), scale var(--hg-card-peek-dur) var(--hg-card-peek-ease) var(--hg-card-peek-delay),
+      translate var(--hg-card-peek-dur) var(--hg-card-peek-ease) var(--hg-card-peek-delay), z-index 0s;
     box-shadow: var(--hg-card-lift-shadow) color-mix(in oklab, var(--hg-c) 45%, rgba(0, 0, 0, 0.9));
   }
 }
