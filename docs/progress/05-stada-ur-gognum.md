@@ -41,6 +41,5 @@ Staða: kóðinn er búinn og yfirfarinn task fyrir task. Staðan á verki kemur
 ### Síðar
 
 - Kapphlaup: tvö plön sem klárast samtímis í sitthvorri færslu geta bæði tekið reglu 2 og skilið verkið eftir í `building`. Lausn: `select for update` á `hg_items`.
-- Plan nafnið í Skjalaflipanum er ekki feitletrað eins og skráarnöfn.
 - Kubburinn "N hjá þér" felur önnur opin handtök þegar áhorfandinn á sum (eins og spekkinn segir).
 - Prompt sniðið raðar handtökum á undan skjölum en Lotulok raða skjölum fyrst.
