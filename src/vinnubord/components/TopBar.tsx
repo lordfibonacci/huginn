@@ -2,6 +2,7 @@ import { useCallback, useId, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../shared/hooks/useAuth'
+import { useMediaQuery } from '../../shared/hooks/useMediaQuery'
 import { LanguageToggle } from '../../shared/components/LanguageToggle'
 import type { FilterApi } from '../hooks/useFilter'
 import { markAllRead } from '../lib/api'
@@ -21,6 +22,10 @@ type Props = {
   viewer: { userId: string; participant: Participant | null; email: string | null }
   live: boolean
   viewMenu: ReactNode
+  filterSheetOpen: boolean
+  onOpenFilters: () => void
+  // Chosen packages and tags, plus one when a view is active.
+  picks: number
   onNewItem: () => void
 }
 
@@ -30,9 +35,11 @@ const COUNT_ORDER: (keyof Counts)[] = ['unread', 'new', 'mine', 'others', 'build
 // The top bar above the board: brand, project switcher, the counters (which
 // are the status filter), search, package and tag menus, the view menu, "Hreinsa" while a
 // filter is on, the live dot, participants, the viewer menu and "+ Nýtt verk".
-// From 768 px one row; below it two rows with the counters scrolling sideways
-// and search behind a magnifier button. It sits outside the board element, so
-// its clicks never reach the board's pan or deselect.
+// From 1024 px one row; below it two rows, the counters alone in the second
+// row scrolling sideways, search behind a magnifier button and the package,
+// tag and view menus behind a filter button that opens the filter sheet. It
+// sits outside the board element, so its clicks never reach the board's pan
+// or deselect.
 export function TopBar({
   project,
   projects,
@@ -44,10 +51,14 @@ export function TopBar({
   viewer,
   live,
   viewMenu,
+  filterSheetOpen,
+  onOpenFilters,
+  picks,
   onNewItem,
 }: Props) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const narrow = useMediaQuery('(max-width: 1023px)')
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const f = filter.filter
@@ -138,28 +149,30 @@ export function TopBar({
         />
       </div>
 
-      <div className="hg-top-g">
-        <FilterMenu
-          label={t('vinnubord.top.package')}
-          options={packages}
-          selected={f.packages}
-          onToggle={filter.togglePackage}
-          empty={t('vinnubord.top.noPackages')}
-        />
-        <FilterMenu
-          label={t('vinnubord.top.tags')}
-          options={tags}
-          selected={f.tags}
-          onToggle={filter.toggleTag}
-          empty={t('vinnubord.top.noTags')}
-        />
-        {viewMenu}
-        {filter.active && (
-          <button type="button" className="hg-clear" onClick={filter.clear}>
-            {t('vinnubord.top.clear')}
-          </button>
-        )}
-      </div>
+      {!narrow && (
+        <div className="hg-top-g">
+          <FilterMenu
+            label={t('vinnubord.top.package')}
+            options={packages}
+            selected={f.packages}
+            onToggle={filter.togglePackage}
+            empty={t('vinnubord.top.noPackages')}
+          />
+          <FilterMenu
+            label={t('vinnubord.top.tags')}
+            options={tags}
+            selected={f.tags}
+            onToggle={filter.toggleTag}
+            empty={t('vinnubord.top.noTags')}
+          />
+          {viewMenu}
+          {filter.active && (
+            <button type="button" className="hg-clear" onClick={filter.clear}>
+              {t('vinnubord.top.clear')}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="hg-top-b">
         <span
@@ -182,6 +195,23 @@ export function TopBar({
             <path d="M10.5 10.5L14 14" />
           </svg>
         </button>
+        {narrow && (
+          <button
+            type="button"
+            className={`hg-icon-btn hg-filter-btn${picks > 0 ? ' hg-on' : ''}`}
+            aria-label={t('vinnubord.top.filters')}
+            aria-expanded={filterSheetOpen}
+            onClick={onOpenFilters}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2 4h12M2 8h12M2 12h12" />
+              <circle cx="5" cy="4" r="1.6" />
+              <circle cx="11" cy="8" r="1.6" />
+              <circle cx="7" cy="12" r="1.6" />
+            </svg>
+            {picks > 0 && <em>{picks}</em>}
+          </button>
+        )}
         {others.length > 0 && (
           <ul className="hg-who" aria-label={t('vinnubord.top.participants')}>
             {others.map((p) => (

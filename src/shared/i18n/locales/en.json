@@ -336,6 +336,7 @@
       "counters": "Status filter",
       "search": "Search",
       "openSearch": "Search",
+      "filters": "Filters",
       "package": "Package",
       "tags": "Tags",
       "noPackages": "No packages yet",
@@ -352,6 +353,9 @@
       "language": "Language",
       "signOut": "Sign out",
       "newItem": "New item"
+    },
+    "filters": {
+      "heading": "Filters"
     },
     "newItem": {
       "heading": "New item",

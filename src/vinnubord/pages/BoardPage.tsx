@@ -12,6 +12,7 @@ import { countsFor, isOnBoard } from '../lib/status'
 import type { Item, View } from '../lib/types'
 import { itemsInView, viewCounts } from '../lib/views'
 import { Board, type BoardHandle } from '../components/Board'
+import { FilterSheet } from '../components/FilterSheet'
 import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
 import { NewItemSheet } from '../components/NewItemSheet'
@@ -39,6 +40,7 @@ export function BoardPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const filterApi = useFilter(project?.id ?? '')
   const boardRef = useRef<BoardHandle | null>(null)
   const newItemToast = useNewItemToast(data, user?.id ?? '')
@@ -98,6 +100,9 @@ export function BoardPage() {
 
   const place = useCallback((moduleId: string | null) => boardRef.current?.placeNew(moduleId) ?? null, [])
   const closeNew = useCallback(() => setNewOpen(false), [])
+  const closeFilters = useCallback(() => setFiltersOpen(false), [])
+  const { choose: chooseView } = activeView
+  const clearView = useCallback(() => chooseView(null), [chooseView])
   const onCreated = useCallback(
     (item: Item) => {
       setNewOpen(false)
@@ -126,6 +131,23 @@ export function BoardPage() {
   const selectedItem = selectedId ? (data.items.find((i) => i.id === selectedId) ?? null) : null
   const openModuleRow = openModuleId ? (data.modules.find((m) => m.id === openModuleId) ?? null) : null
   const viewerParticipant = data.participants.find((p) => p.user_id === user.id) ?? null
+  // The number on the filter button: chosen packages and tags, plus one for an
+  // active view. Tones, unread and search show on the pills and in the field.
+  const picks = filterApi.filter.packages.size + filterApi.filter.tags.size + (activeView.view ? 1 : 0)
+  // One set of view menu props for both places it shows (the top bar and the
+  // filter sheet), so the two never drift apart.
+  const viewMenuProps = {
+    projectId: project.id,
+    views: data.views,
+    active: activeView.view,
+    counts: perView,
+    boardCount: data.items.filter(isOnBoard).length,
+    packages: allPackages,
+    tags: allTags,
+    filter: filterApi.filter,
+    onChoose: activeView.choose,
+    onReload: reload,
+  }
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -139,20 +161,10 @@ export function BoardPage() {
         participants={data.participants}
         viewer={{ userId: user.id, participant: viewerParticipant, email: user.email ?? null }}
         live={live}
-        viewMenu={
-          <ViewMenu
-            projectId={project.id}
-            views={data.views}
-            active={activeView.view}
-            counts={perView}
-            boardCount={data.items.filter(isOnBoard).length}
-            packages={allPackages}
-            tags={allTags}
-            filter={filterApi.filter}
-            onChoose={activeView.choose}
-            onReload={reload}
-          />
-        }
+        viewMenu={<ViewMenu {...viewMenuProps} />}
+        filterSheetOpen={filtersOpen}
+        onOpenFilters={() => setFiltersOpen(true)}
+        picks={picks}
         onNewItem={() => setNewOpen(true)}
       />
       <Board
@@ -191,6 +203,16 @@ export function BoardPage() {
           />
         ) : null}
       </PanelShell>
+      <FilterSheet
+        open={filtersOpen}
+        onClose={closeFilters}
+        picks={picks}
+        filter={filterApi}
+        tags={tags}
+        packages={packages}
+        viewMenu={<ViewMenu inline {...viewMenuProps} />}
+        onClearView={clearView}
+      />
       <NewItemSheet open={newOpen} data={data} tags={allTags} place={place} onClose={closeNew} onCreated={onCreated} />
       {error && (
         <div className="hg-notice" role="status">

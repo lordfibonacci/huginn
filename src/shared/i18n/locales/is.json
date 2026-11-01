@@ -128,6 +128,9 @@
       "planOf": "Plan {{current}} af {{total}}",
       "unread": "Nýtt hjá þér"
     },
+    "filters": {
+      "heading": "Síur"
+    },
     "history": {
       "actionAdded": "bætti við handtaki",
       "actionCancelled": "felldi niður handtak",
@@ -367,6 +370,7 @@
       "connecting": "Tengist",
       "connectingHint": "Ekki tengt enn, breytingar frá öðrum birtast eftir endurhleðslu",
       "counters": "Stöðusía",
+      "filters": "Síur",
       "language": "Tungumál",
       "live": "Lifandi",
       "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",

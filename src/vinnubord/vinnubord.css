@@ -334,7 +334,6 @@
   --hg-search-icon-inset: 12px;
   --hg-icon: 15px;
   --hg-ddb-gap: 7px;
-  --hg-ddb-pad-phone: 0 10px;
   --hg-ddb-badge-pad: 0 6px;
   --hg-ddb-badge-size: 11.5px;
   --hg-radius-badge: 6px;
@@ -350,7 +349,6 @@
   --hg-menu-max-h: 60vh;
   --hg-menu-pad: 6px;
   --hg-menu-offset: 6px;
-  --hg-menu-offset-phone: -2px;
   --hg-menu-item-pad: 0 12px;
   --hg-menu-empty-pad: 10px 12px;
   --hg-menu-who-pad: 8px 12px 10px;
@@ -1115,7 +1113,15 @@
   border-radius: var(--hg-radius-control); background: var(--hg-pill-bg); border: 1px solid var(--hg-line); color: var(--hg-ink-2);
 }
 .hg-icon-btn:hover, .hg-icon-btn:focus-visible, .hg-icon-btn.hg-on { color: var(--hg-ink); border-color: var(--hg-pill-hover); outline: none; }
-.hg-search-btn { display: none; }
+.hg-search-btn, .hg-filter-btn { display: none; }
+/* The filter button below 1024 px: sliders, and a badge with the number of picks. */
+.hg-filter-btn { position: relative; }
+.hg-filter-btn circle { fill: var(--hg-board); }
+.hg-filter-btn em {
+  position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: var(--hg-ddb-badge-pad);
+  border-radius: var(--hg-radius-badge); background: var(--hg-ink); color: var(--hg-board); font-size: var(--hg-ddb-badge-size);
+  font-style: normal; font-weight: 800; display: grid; place-items: center;
+}
 
 /* Package and tag menus, the viewer menu */
 .hg-dd { position: relative; flex: none; }
@@ -1220,38 +1226,31 @@
   .hg-new { padding: 0; }
 }
 
-/* Phone: two rows. Row one: brand, project, live dot, search button, viewer,
-   new item. Row two: the counters scrolling sideways and the menus. The
-   search field opens as a third row. */
-@media (max-width: 767px) {
+/* Below 1024 px: two rows. Row one: brand, project | live dot, search button,
+   filter button, viewer, new item. Row two: the counters alone across the full
+   width, scrolling sideways. The package, tag and view menus live in the
+   filter sheet (the group is not rendered here). The search field opens as a
+   third row. */
+@media (max-width: 1023px) {
   .hg-top {
     height: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "a b" "f g" "s s"; gap: var(--hg-top-gap-phone);
+    grid-template-areas: "a b" "f f" "s s"; gap: var(--hg-top-gap-phone);
     padding: calc(var(--hg-top-pad-top-phone) + var(--hg-safe-top)) calc(var(--hg-top-pad-x-phone) + var(--hg-safe-right)) var(--hg-top-pad-bottom-phone) calc(var(--hg-top-pad-x-phone) + var(--hg-safe-left));
   }
   .hg-top-a { grid-area: a; min-width: 0; gap: var(--hg-top-gap-phone); }
   .hg-top-b { grid-area: b; gap: var(--hg-top-gap-phone); }
   .hg-counts { grid-area: f; }
-  .hg-top-g { grid-area: g; gap: var(--hg-top-gap-phone); }
   .hg-top-s { grid-area: s; display: none; }
   .hg-top-searching .hg-top-s { display: flex; }
   /* 16 px keeps iOS from zooming into a focused field or select. */
   .hg-top .hg-search, .hg-top .hg-proj-select select { font-size: var(--hg-fs-field); }
   .hg-search { width: 100%; }
-  .hg-search-btn { display: grid; }
+  .hg-search-btn, .hg-filter-btn { display: grid; }
   .hg-brand svg { width: var(--hg-brand-mark-phone); height: var(--hg-brand-mark-phone); }
   .hg-proj { min-width: 0; padding: var(--hg-proj-pad-phone); }
   .hg-proj-select { padding: 0; }
   .hg-proj-select select { max-width: var(--hg-proj-max-w-phone); text-overflow: ellipsis; }
-  .hg-ddb { padding: var(--hg-ddb-pad-phone); }
-  /* No room for the view name on a phone: the lit button and the menu show it. */
-  .hg-view-ddb em { display: none; }
   .hg-count { padding: var(--hg-count-pad-phone); }
-  /* Menus span the bar instead of hanging off a button near the edge. */
-  .hg-top-g .hg-dd { position: static; }
-  .hg-top-g .hg-menu {
-    left: var(--hg-top-pad-x-phone); right: var(--hg-top-pad-x-phone); top: calc(100% + var(--hg-menu-offset-phone));
-  }
 }
 
 /* ---------- New item sheet: centred dialog, bottom sheet on phones ---------- */
@@ -1261,7 +1260,7 @@
 }
 .hg-sheet-backdrop { position: absolute; inset: 0; background: var(--hg-backdrop); animation: hg-fade var(--hg-dur-fast) var(--hg-ease); }
 @keyframes hg-fade { from { opacity: 0; } }
-.hg-new-sheet {
+.hg-new-sheet, .hg-modal-sheet {
   position: relative; display: flex; flex-direction: column; width: min(var(--hg-new-w), 100%);
   max-height: calc(100dvh - 2 * var(--hg-sheet-wrap-pad));
   border-radius: var(--hg-radius-panel); background: var(--hg-panel-bg); border: 1px solid var(--hg-line); box-shadow: var(--hg-panel-shadow);
@@ -1324,9 +1323,15 @@
   flex: none; display: flex; justify-content: flex-end; gap: var(--hg-pn-list-gap);
   padding: var(--hg-new-foot-pad-top) var(--hg-new-pad) var(--hg-new-pad); border-top: 1px solid var(--hg-line);
 }
+/* The filter sheet: same frame, a head with "Hreinsa" at the end. Its view
+   menu lays out its separator, hint, error and editor on rows of their own. */
+.hg-filter-head { display: flex; align-items: center; justify-content: space-between; gap: var(--hg-pill-gap); }
+.hg-filter-sheet .hg-view-chips > :is(.hg-menu-sep, .hg-menu-empty, .hg-pn-error, .hg-view-editor) { flex-basis: 100%; }
 @media (max-width: 767px) {
-  .hg-sheet-wrap { place-items: end stretch; padding: var(--hg-sheet-top) 0 0; }
-  .hg-new-sheet {
+  /* One row the height of the wrap, so the sheet's max-height binds and a
+     long body scrolls with the foot in view. */
+  .hg-sheet-wrap { place-items: end stretch; padding: var(--hg-sheet-top) 0 0; grid-template-rows: minmax(0, 1fr); }
+  .hg-new-sheet, .hg-modal-sheet {
     width: 100%; max-height: 100%; border-radius: var(--hg-radius-sheet) var(--hg-radius-sheet) 0 0; border-bottom: none;
     padding-bottom: var(--hg-safe-bottom);
   }
