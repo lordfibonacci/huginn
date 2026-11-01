@@ -568,7 +568,8 @@ export function Board({
             <path d="M3 8h10" />
           </svg>
         </button>
-        {/* One text child, so React and useViewport's apply() write the same node. */}
+        {/* One string child, one text node: useViewport's apply() writes its
+            nodeValue, so React and apply() keep updating the same node. */}
         <span ref={vp.zoomLabelRef} className="hg-zoom-val" aria-label={t('vinnubord.board.zoomLevel')}>
           {`${Math.round(view.z * 100)}%`}
         </span>

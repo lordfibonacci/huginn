@@ -40,7 +40,8 @@ export function panStep(s: { slop: number; dragging: boolean; dist: number }): '
 }
 
 // Two quick taps close together are a double tap. Unlike the pan slops this
-// distance is straight line (the spec test has a 20 + 10 px pair that counts).
+// distance is the straight line between the taps, so a small diagonal wobble
+// between them still counts.
 export const DOUBLE_TAP_MS = 300
 export const DOUBLE_TAP_SLOP = 24
 // A double tap on the empty board zooms in by this around the tap.

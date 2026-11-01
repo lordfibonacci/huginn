@@ -4,7 +4,7 @@
 
 // Only samples this close before the release count.
 export const FLING_WINDOW_MS = 80
-// A release at or above this speed (px/ms) starts a fling.
+// A release above this speed (px/ms) starts a fling.
 export const FLING_START = 0.2
 // A fling below this speed (px/ms) is over.
 export const FLING_STOP = 0.02

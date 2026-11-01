@@ -65,8 +65,9 @@ import { parseDuration } from '../lib/motion'
 //   counts either. Mouse gets neither.
 // - A press that stops a glide or fling is never a tap, on any target in the
 //   board: gestureRef.current.stoppedMotion is true from its pointerdown until
-//   the next primary pointerdown, and every click on the element is swallowed
-//   while it is down and for 500 ms after it lifts.
+//   the next primary pointerdown, and the one click that follows it on the
+//   element is swallowed (the deadline is held while it is down and runs
+//   500 ms after it lifts).
 // - A pointer the board tracks that loses the board's capture without an up
 //   or cancel (lostpointercapture on the board element itself) ends like
 //   pointercancel. Capture lost by a child bubbles up and is ignored.
@@ -76,9 +77,11 @@ import { parseDuration } from '../lib/motion'
 //   capture away from a card that held it.
 // - Click after a gesture: when a pan that moved or a pinch ends, the next
 //   click on the element (within 500 ms, and only if no new pointerdown came
-//   first) is swallowed by a native capture phase listener, so React onClick handlers on the board and on anything
-//   inside it do not fire for the click that ends a pan. onClickCapture
-//   handlers above the board still see it.
+//   first) is swallowed by a native capture phase listener, so React onClick
+//   handlers on the board and on anything inside it do not fire for the click
+//   that ends a pan. onClickCapture handlers above the board still see it.
+//   While a stop press is down, a non primary pointerdown does not clear the
+//   suppression.
 // - Wheel zooms around the cursor. React attaches wheel listeners as passive,
 //   so preventDefault does nothing there. The real wheel handler is a native
 //   non passive listener on ref.current, and bind.onWheel is a no op kept so
@@ -227,10 +230,16 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       world.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.z})`
       world.style.setProperty('--hg-z', String(v.z))
     }
+    // Writes React's own text node, so a later render updates the node on
+    // screen. textContent would swap in a new node and leave React writing to
+    // a detached one; it is only the fallback when there is no text node.
     const label = zoomLabelRef.current
     if (label) {
       const text = `${Math.round(v.z * 100)}%`
-      if (label.textContent !== text) label.textContent = text
+      const node = label.firstChild
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue !== text) node.nodeValue = text
+      } else if (label.textContent !== text) label.textContent = text
     }
   }, [])
 
