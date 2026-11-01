@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { LanguageToggle } from '../../shared/components/LanguageToggle'
 import type { FilterApi } from '../hooks/useFilter'
+import { markAllRead } from '../lib/api'
 import type { FilterOption } from '../lib/filters'
 import { BUCKET_TONE, type Counts } from '../lib/status'
 import type { Participant, Project } from '../lib/types'
@@ -22,8 +23,8 @@ type Props = {
   onNewItem: () => void
 }
 
-// Pill order follows the mockup: new, waiting on you, waiting on others, in build, on hold.
-const COUNT_ORDER: (keyof Counts)[] = ['new', 'mine', 'others', 'build', 'parked']
+// Pill order follows the mockup: unread first, then new, waiting on you, waiting on others, in build, on hold.
+const COUNT_ORDER: (keyof Counts)[] = ['unread', 'new', 'mine', 'others', 'build', 'parked']
 
 // The top bar above the board: brand, project switcher, the counters (which
 // are the status filter), search, package and tag menus, "Hreinsa" while a
@@ -47,7 +48,7 @@ export function TopBar({ project, projects, counts, filter, tags, packages, part
 
   // A pill shows when it counts something or is switched on, so an active
   // tone whose count drops to 0 can still be switched off.
-  const pills = COUNT_ORDER.filter((k) => counts[k] > 0 || f.tones.has(BUCKET_TONE[k]))
+  const pills = COUNT_ORDER.filter((k) => counts[k] > 0 || (k === 'unread' ? f.unread : f.tones.has(BUCKET_TONE[k])))
   const others = participants.filter((p) => p.user_id !== viewer.userId)
 
   return (
@@ -82,15 +83,16 @@ export function TopBar({ project, projects, counts, filter, tags, packages, part
       <div className="hg-counts" role="group" aria-label={t('vinnubord.top.counters')}>
         {pills.map((k) => {
           const tone = BUCKET_TONE[k]
-          const on = f.tones.has(tone)
+          const isUnread = k === 'unread'
+          const on = isUnread ? f.unread : f.tones.has(tone)
           const label = t(`vinnubord.board.counts.${k}`).toLocaleLowerCase(i18n.language)
           return (
             <button
               key={k}
               type="button"
-              className={`hg-count hg-tone-${tone}${on ? ' hg-on' : ''}`}
+              className={`hg-count hg-tone-${tone}${isUnread ? ' hg-count-unread' : ''}${on ? ' hg-on' : ''}`}
               aria-pressed={on}
-              onClick={() => filter.toggleTone(tone)}
+              onClick={() => (isUnread ? filter.toggleUnread() : filter.toggleTone(tone))}
             >
               <i aria-hidden="true" />
               <b>{counts[k]}</b>
@@ -176,7 +178,7 @@ export function TopBar({ project, projects, counts, filter, tags, packages, part
             ))}
           </ul>
         )}
-        <ViewerMenu slug={project.slug} viewer={viewer} />
+        <ViewerMenu slug={project.slug} projectId={project.id} viewer={viewer} />
         <button type="button" className="hg-new" onClick={onNewItem} aria-label={t('vinnubord.top.newItem')}>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 3v10M3 8h10" />
@@ -189,11 +191,12 @@ export function TopBar({ project, projects, counts, filter, tags, packages, part
 }
 
 // The viewer's own avatar (ruling R4): project settings, language and sign out.
-function ViewerMenu({ slug, viewer }: { slug: string; viewer: Props['viewer'] }) {
+function ViewerMenu({ slug, projectId, viewer }: { slug: string; projectId: string; viewer: Props['viewer'] }) {
   const { t } = useTranslation()
   const { signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [marking, setMarking] = useState(false)
   const root = useRef<HTMLDivElement | null>(null)
   const menuId = useId()
   const close = useCallback(() => setOpen(false), [])
@@ -209,6 +212,19 @@ function ViewerMenu({ slug, viewer }: { slug: string; viewer: Props['viewer'] })
     } catch (e) {
       console.error(e)
       setBusy(false)
+    }
+  }
+
+  async function handleMarkAll() {
+    setMarking(true)
+    try {
+      await markAllRead(projectId)
+      close()
+    } catch (e) {
+      // The menu stays open so the viewer can try again.
+      console.error(e)
+    } finally {
+      setMarking(false)
     }
   }
 
@@ -233,6 +249,9 @@ function ViewerMenu({ slug, viewer }: { slug: string; viewer: Props['viewer'] })
           <Link className="hg-chip" to={`/p/${slug}/stillingar`} onClick={close}>
             {t('vinnubord.top.settings')}
           </Link>
+          <button type="button" className="hg-chip" disabled={marking} onClick={() => void handleMarkAll()}>
+            {t('vinnubord.top.markAllRead')}
+          </button>
           <div className="hg-menu-row">
             <span>{t('vinnubord.top.language')}</span>
             <LanguageToggle className="hg-lang" />

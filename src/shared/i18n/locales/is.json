@@ -76,7 +76,8 @@
         "mine": "Bíður þín",
         "new": "Nýtt",
         "others": "Bíða annarra",
-        "parked": "Í bið"
+        "parked": "Í bið",
+        "unread": "Ólesin"
       },
       "fit": "Sýna allt",
       "loadError": "Ekki tókst að sækja verkefnið.",
@@ -354,6 +355,7 @@
       "language": "Tungumál",
       "live": "Lifandi",
       "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
+      "markAllRead": "Merkja allt lesið",
       "newItem": "Nýtt verk",
       "noPackages": "Engir pakkar enn",
       "noTags": "Engin tögg enn",

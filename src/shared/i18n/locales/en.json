@@ -76,7 +76,8 @@
         "mine": "Waiting on you",
         "new": "New",
         "others": "Waiting on others",
-        "parked": "On hold"
+        "parked": "On hold",
+        "unread": "Unread"
       },
       "loadError": "Could not load the project.",
       "noneOpen": "Nothing open",
@@ -332,6 +333,7 @@
       "participants": "Participants",
       "viewerMenu": "Menu for {{name}}",
       "settings": "Project settings",
+      "markAllRead": "Mark everything read",
       "language": "Language",
       "signOut": "Sign out",
       "newItem": "New item"

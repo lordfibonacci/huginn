@@ -1043,6 +1043,8 @@
 .hg-count.hg-on {
   background: var(--hg-pill-on-bg); color: var(--hg-ink); border-color: color-mix(in oklab, var(--hg-c) 50%, var(--hg-line));
 }
+/* The unread pill: a ring instead of a dot. */
+.hg-count-unread i { background: transparent; border: 2px solid var(--hg-c); }
 
 /* Search */
 .hg-top-s { position: relative; }
