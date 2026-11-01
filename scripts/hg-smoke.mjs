@@ -15,6 +15,7 @@ const expect = (cond, msg) => {
 let passed = 0
 let scenario = 'setup'
 let itemId = null
+let viewId = null
 let extraItems = []
 let projectId = null
 let failure = null
@@ -374,7 +375,7 @@ try {
     expect(Date.now() - Date.parse(mark.read_at) < 60_000, `read_at ${mark.read_at} is not fresh`)
     passed++
     scenario = '9 views'
-    const posBefore = must(await sb.from('hg_items').select('pos_x, pos_y').eq('id', itemId).single(), 'item pos')
+    const posBefore = must(await sb.from('hg_items').select('pos_x, pos_y, updated_at').eq('id', itemId).single(), 'item pos')
     const view = must(
       await sb
         .from('hg_views')
@@ -383,19 +384,27 @@ try {
         .single(),
       'insert view',
     )
+    viewId = view.id
     expect(view.created_by === me, `view created_by is ${view.created_by}, expected signed in user`)
     must(
       await sb.from('hg_view_positions').upsert({ project_id: projectId, view_id: view.id, item_id: itemId, pos_x: 999, pos_y: 888 }, { onConflict: 'view_id,item_id' }),
       'upsert view position',
     )
-    const posAfter = must(await sb.from('hg_items').select('pos_x, pos_y').eq('id', itemId).single(), 'item pos after')
+    const posAfter = must(await sb.from('hg_items').select('pos_x, pos_y, updated_at').eq('id', itemId).single(), 'item pos after')
     expect(posAfter.pos_x === posBefore.pos_x && posAfter.pos_y === posBefore.pos_y, 'a view position changed the item position')
+    expect(posAfter.updated_at === posBefore.updated_at, 'a view position touched the item updated_at')
     must(await sb.from('hg_views').delete().eq('id', view.id), 'delete view')
+    viewId = null
     const left = must(await sb.from('hg_view_positions').select('item_id').eq('view_id', view.id), 'positions after delete')
     expect(left.length === 0, `${left.length} view positions survived the view delete`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind
+    if (viewId) {
+      const d = await sb.from('hg_views').delete().eq('id', viewId).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_views id ${viewId}: ${d.error.message}`)
+      else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_views id ${viewId}`)
+    }
     if (itemId) {
       const d = await sb.from('hg_items').delete().eq('id', itemId).select('id')
       if (d.error) console.error(`cleanup failed, leaked hg_items id ${itemId}: ${d.error.message}`)
