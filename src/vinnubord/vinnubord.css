@@ -27,6 +27,11 @@
 
   /* Touch target, and the field font size that keeps iOS from zooming in. */
   --hg-touch: 44px;
+  /* Device safe areas (notch, home bar, rounded corners); 0 where there are none. */
+  --hg-safe-top: env(safe-area-inset-top, 0px);
+  --hg-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hg-safe-left: env(safe-area-inset-left, 0px);
+  --hg-safe-right: env(safe-area-inset-right, 0px);
   --hg-fs-field: 16px;
   --hg-fs-field-wide: 13.5px;
 
@@ -78,7 +83,7 @@
   --hg-blur-card: blur(8px);
   --hg-blur-control: blur(10px);
   /* Height of the bottom control row (zoom), so what floats above it clears it. */
-  --hg-control-stack: calc(2 * var(--hg-control-inset) + var(--hg-touch) + 2 * var(--hg-control-pad) + 2px);
+  --hg-control-stack: calc(2 * var(--hg-control-inset) + var(--hg-touch) + 2 * var(--hg-control-pad) + 2px + var(--hg-safe-bottom));
   --hg-zoom-icon: 14px;
   --hg-zoom-val-w: 46px;
   --hg-zoom-val-size: 12.5px;
@@ -179,7 +184,7 @@
   --hg-panel-w: 460px;
   --hg-panel-inset: 16px;
   /* The side panel opens below the top bar. */
-  --hg-panel-top: calc(var(--hg-top-h) + 12px);
+  --hg-panel-top: calc(var(--hg-top-h) + var(--hg-safe-top) + 12px);
   --hg-panel-bg: rgba(22, 30, 43, 0.94);
   --hg-panel-blur: blur(22px);
   --hg-panel-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9);
@@ -555,7 +560,7 @@
 
 /* Zoom controls */
 .hg-zoom {
-  position: absolute; right: var(--hg-control-inset); bottom: var(--hg-control-inset); z-index: var(--hg-control-z);
+  position: absolute; right: calc(var(--hg-control-inset) + var(--hg-safe-right)); bottom: calc(var(--hg-control-inset) + var(--hg-safe-bottom)); z-index: var(--hg-control-z);
   display: flex; align-items: center; gap: var(--hg-control-gap); padding: var(--hg-control-pad);
   border-radius: var(--hg-radius-control); background: var(--hg-control-bg); border: 1px solid var(--hg-line);
   backdrop-filter: var(--hg-blur-control);
@@ -679,7 +684,7 @@
    Bottom left, never wider than half the board so it cannot reach the zoom
    controls; on phones it sits above the control row instead. */
 .hg-notice {
-  position: absolute; left: var(--hg-control-inset); bottom: var(--hg-control-inset); z-index: var(--hg-control-z);
+  position: absolute; left: var(--hg-control-inset); bottom: calc(var(--hg-control-inset) + var(--hg-safe-bottom)); z-index: var(--hg-control-z);
   max-width: calc(50% - var(--hg-control-inset));
   display: flex; align-items: center; gap: var(--hg-card-row-gap);
   padding: var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-pad) var(--hg-control-inset);
@@ -750,7 +755,7 @@
   left: 0; right: 0; bottom: 0; border-bottom: none;
   border-radius: var(--hg-radius-sheet) var(--hg-radius-sheet) 0 0;
   height: calc((100dvh - var(--hg-sheet-top)) * var(--hg-sheet-open, 0));
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--hg-safe-bottom); padding-left: var(--hg-safe-left); padding-right: var(--hg-safe-right);
   transition: height var(--hg-dur-panel) var(--hg-ease);
 }
 /* Closed: no padding or border can keep a sliver showing (iPhone safe area),
@@ -1037,7 +1042,9 @@
    height still covers the bar itself. */
 .hg-top {
   position: relative; flex: none; display: flex; align-items: center; gap: var(--hg-top-gap);
-  height: var(--hg-top-h); padding: 0 var(--hg-top-pad-x); background: var(--hg-top-bg);
+  height: calc(var(--hg-top-h) + var(--hg-safe-top));
+  padding: var(--hg-safe-top) calc(var(--hg-top-pad-x) + var(--hg-safe-right)) 0 calc(var(--hg-top-pad-x) + var(--hg-safe-left));
+  background: var(--hg-top-bg);
   border-bottom: 1px solid var(--hg-top-border); color: var(--hg-ink); font-family: var(--hg-font); font-size: var(--hg-top-size);
 }
 .hg-top button, .hg-top select, .hg-top input { font: inherit; }
@@ -1220,7 +1227,7 @@
   .hg-top {
     height: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "a b" "f g" "s s"; gap: var(--hg-top-gap-phone);
-    padding: var(--hg-top-pad-top-phone) var(--hg-top-pad-x-phone) var(--hg-top-pad-bottom-phone);
+    padding: calc(var(--hg-top-pad-top-phone) + var(--hg-safe-top)) calc(var(--hg-top-pad-x-phone) + var(--hg-safe-right)) var(--hg-top-pad-bottom-phone) calc(var(--hg-top-pad-x-phone) + var(--hg-safe-left));
   }
   .hg-top-a { grid-area: a; min-width: 0; gap: var(--hg-top-gap-phone); }
   .hg-top-b { grid-area: b; gap: var(--hg-top-gap-phone); }
@@ -1321,7 +1328,7 @@
   .hg-sheet-wrap { place-items: end stretch; padding: var(--hg-sheet-top) 0 0; }
   .hg-new-sheet {
     width: 100%; max-height: 100%; border-radius: var(--hg-radius-sheet) var(--hg-radius-sheet) 0 0; border-bottom: none;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--hg-safe-bottom);
   }
   .hg-new-head, .hg-new-body, .hg-new-foot { padding-left: var(--hg-panel-gap); padding-right: var(--hg-panel-gap); }
   .hg-new-foot .hg-btn { flex: 1; }

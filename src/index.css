@@ -23,6 +23,8 @@
 ::-webkit-scrollbar-thumb { background: #3d474f; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #4a545d; }
 
+html, body { overscroll-behavior: none; }
+
 /* Selection */
 ::selection { background: rgba(108, 92, 231, 0.3); }
 
