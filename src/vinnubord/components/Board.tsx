@@ -21,7 +21,7 @@ import { boardOrder, packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
 import { fileCountsByItem } from '../lib/panel'
-import { isUnread } from '../lib/reads'
+import { summarizeUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
 import type { BoardData, Item, Plan } from '../lib/types'
@@ -112,13 +112,15 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
 
   const filterOn = isActive(filter)
   const cards = useMemo(
-    () =>
-      onBoard.map((item) => {
+    () => {
+      const unreadIds = summarizeUnread(data.unread)
+      return onBoard.map((item) => {
         const tone = itemTone(item, viewerId, data.participants)
         const bucket = countBucket(item, data.actions, viewerId)
         const packageId = item.module_id ? (packageOfModule.get(item.module_id) ?? null) : null
+        const unread = unreadIds.has(item.id)
         const visible =
-          !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId }, filter))
+          !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread }, filter))
         const moverId = item.updated_by ?? item.created_by
         const mover = data.participants.find((p) => p.user_id === moverId)
         return {
@@ -127,11 +129,12 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
           label: itemStatusLabel(item, viewerId, data.participants),
           mode: wireMode(item, tone),
           visible,
-          unread: isUnread(item, data.reads, viewerId),
+          unread,
           mover: mover ? { short: mover.short, name: mover.display_name } : null,
         }
-      }),
-    [onBoard, viewerId, data.participants, data.actions, data.reads, packageOfModule, filterOn, filter],
+      })
+    },
+    [onBoard, viewerId, data.participants, data.actions, data.unread, packageOfModule, filterOn, filter],
   )
 
   const wireItems = useMemo<WireItem[]>(

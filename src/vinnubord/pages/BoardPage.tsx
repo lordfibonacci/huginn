@@ -6,6 +6,7 @@ import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { packageCounts, tagCounts } from '../lib/filters'
+import { summarizeUnread } from '../lib/reads'
 import { countsFor } from '../lib/status'
 import type { Item } from '../lib/types'
 import { Board, type BoardHandle } from '../components/Board'
@@ -50,7 +51,7 @@ export function BoardPage() {
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
   const counts = useMemo(
-    () => (loaded ? countsFor(data.items, data.actions, viewerId) : null),
+    () => (loaded ? countsFor(data.items, data.actions, viewerId, new Set(summarizeUnread(data.unread).keys())) : null),
     [loaded, data, viewerId],
   )
   const tags = useMemo(() => (loaded ? tagCounts(data.items, filterApi.filter.tags) : []), [loaded, data, filterApi.filter.tags])

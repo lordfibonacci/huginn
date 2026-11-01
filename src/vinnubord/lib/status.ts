@@ -100,7 +100,7 @@ export function mineActionsByItem(actions: Action[], viewerId: string): Map<stri
   return map
 }
 
-export type Counts = { new: number; mine: number; others: number; build: number; parked: number }
+export type Counts = { new: number; mine: number; others: number; build: number; parked: number; unread: number }
 
 // The counter bucket of one item, null when it is off the board. Buckets are
 // exclusive. "mine" takes precedence: anything waiting for the viewer
@@ -131,13 +131,16 @@ export const BUCKET_TONE: Record<keyof Counts, Tone> = {
   others: 'lilac',
   build: 'teal',
   parked: 'stone',
+  unread: 'gold',
 }
 
-export function countsFor(items: Item[], actions: Action[], viewerId: string): Counts {
-  const c: Counts = { new: 0, mine: 0, others: 0, build: 0, parked: 0 }
+// "unread" is counted beside the exclusive buckets: an item can be mine and unread.
+export function countsFor(items: Item[], actions: Action[], viewerId: string, unreadIds: Set<string>): Counts {
+  const c: Counts = { new: 0, mine: 0, others: 0, build: 0, parked: 0, unread: 0 }
   for (const item of items) {
     const bucket = countBucket(item, actions, viewerId)
     if (bucket) c[bucket]++
+    if (isOnBoard(item) && unreadIds.has(item.id)) c.unread++
   }
   return c
 }

@@ -114,6 +114,7 @@ export type Action = {
   item_id: string
   body: string
   owner: string
+  created_by: string | null
   payload: string | null
   done_at: string | null
   done_by: string | null
@@ -159,6 +160,9 @@ export type Read = {
   read_at: string
 }
 
+// One row of the hg_unread rpc: unread events of one kind on one item.
+export type UnreadRow = { item_id: string; kind: string; n: number; latest: string }
+
 export type BoardData = {
   project: Project
   participants: Participant[]
@@ -173,4 +177,5 @@ export type BoardData = {
   comments: Comment[]
   events: Event[]
   reads: Read[]
+  unread: UnreadRow[]
 }

@@ -33,7 +33,7 @@ function item(over: Partial<Item> = {}): Item {
 
 function action(over: Partial<Action> = {}): Action {
   return {
-    id: 'a1', created_at: null, project_id: 'pr', item_id: 'i1', body: 'x', owner: ME, payload: null,
+    id: 'a1', created_at: null, project_id: 'pr', item_id: 'i1', body: 'x', owner: ME, created_by: null, payload: null,
     done_at: null, done_by: null, ...over,
   }
 }
@@ -106,8 +106,15 @@ describe('countsFor', () => {
       item({ id: 'i5', status: 'parked' }),
       item({ id: 'i6', status: 'done' }),
     ]
-    const c = countsFor(items, [action({ item_id: 'i1' })], ME)
-    expect(c).toEqual({ new: 1, mine: 1, others: 1, build: 1, parked: 1 })
+    const c = countsFor(items, [action({ item_id: 'i1' })], ME, new Set())
+    expect(c).toEqual({ new: 1, mine: 1, others: 1, build: 1, parked: 1, unread: 0 })
+  })
+  it('counts unread beside the exclusive buckets, on board items only', () => {
+    const items = [item({ id: 'i1', status: 'new' }), item({ id: 'i2', status: 'waiting', waiting_on: ME }), item({ id: 'i3', status: 'done' })]
+    const c = countsFor(items, [], ME, new Set(['i1', 'i2', 'i3']))
+    expect(c.unread).toBe(2)
+    expect(c.new).toBe(1)
+    expect(c.mine).toBe(1)
   })
 })
 
@@ -133,7 +140,7 @@ describe('countBucket', () => {
 
 describe('BUCKET_TONE', () => {
   it('maps every counter bucket to its pill tone', () => {
-    expect(BUCKET_TONE).toEqual({ new: 'gold', mine: 'coral', others: 'lilac', build: 'teal', parked: 'stone' })
+    expect(BUCKET_TONE).toEqual({ new: 'gold', mine: 'coral', others: 'lilac', build: 'teal', parked: 'stone', unread: 'gold' })
   })
 })
 

@@ -115,6 +115,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     comments: (comments.data ?? []) as Comment[],
     events: ((events.data ?? []) as Event[]).reverse(),
     reads: (reads.data ?? []) as Read[],
+    unread: [],
   }
 }
 

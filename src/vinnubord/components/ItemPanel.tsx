@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
 import { fileCountsByItem } from '../lib/panel'
-import { needsReadMark } from '../lib/reads'
+import { latestForeignAt } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
 import { CommentBox } from './panel/CommentBox'
@@ -30,16 +30,13 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const [tab, setTab] = useState<Tab>('status')
   const bodyRef = useRef<HTMLDivElement | null>(null)
 
-  // Ruling R14: read on open and whenever someone else changes the item while
-  // it is open. The panel is keyed by item id, so the ref starts false per item.
-  const marked = useRef(false)
-  const { id: itemId, updated_at: updatedAt, updated_by: updatedBy, created_by: createdBy } = item
+  // Read on open, and again whenever someone else adds an event to the item
+  // while it is open. Own changes do not move foreignAt, so they cost no write.
+  const itemId = item.id
+  const foreignAt = latestForeignAt(data.events, itemId, viewerId)
   useEffect(() => {
-    const opening = !marked.current
-    marked.current = true
-    if (!needsReadMark({ updated_by: updatedBy, created_by: createdBy }, viewerId, opening)) return
     markRead(itemId).catch((e: unknown) => console.error(e))
-  }, [itemId, updatedAt, updatedBy, createdBy, viewerId])
+  }, [itemId, foreignAt, viewerId])
 
   const choose = (next: Tab) => {
     setTab(next)

@@ -10,6 +10,7 @@ import {
   serializeFilter,
   tagCounts,
   toggleFilter,
+  toggleUnread,
   withQuery,
 } from './filters'
 import type { Item } from './types'
@@ -27,30 +28,37 @@ describe('filters', () => {
   it('empty filter is inactive and matches everything', () => {
     const f = emptyFilter()
     expect(isActive(f)).toBe(false)
-    expect(matches(item(), { tone: 'stone', packageId: null }, f)).toBe(true)
+    expect(matches(item(), { tone: 'stone', packageId: null, unread: false }, f)).toBe(true)
   })
   it('tone filter', () => {
     const f = emptyFilter()
     f.tones.add('gold')
     expect(isActive(f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: null }, f)).toBe(true)
-    expect(matches(item(), { tone: 'teal', packageId: null }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false }, f)).toBe(true)
+    expect(matches(item(), { tone: 'teal', packageId: null, unread: false }, f)).toBe(false)
   })
   it('package filter does not match null packageId', () => {
     const f = emptyFilter()
     f.packages.add('pk1')
-    expect(matches(item(), { tone: 'gold', packageId: null }, f)).toBe(false)
-    expect(matches(item(), { tone: 'gold', packageId: 'pk1' }, f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: 'pk2' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: 'pk1', unread: false }, f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: 'pk2', unread: false }, f)).toBe(false)
   })
   it('tag filter', () => {
     const f = emptyFilter()
     f.tags.add('db')
-    expect(matches(item({ tags: ['db'] }), { tone: 'gold', packageId: null }, f)).toBe(true)
-    expect(matches(item({ tags: ['ui'] }), { tone: 'gold', packageId: null }, f)).toBe(false)
+    expect(matches(item({ tags: ['db'] }), { tone: 'gold', packageId: null, unread: false }, f)).toBe(true)
+    expect(matches(item({ tags: ['ui'] }), { tone: 'gold', packageId: null, unread: false }, f)).toBe(false)
+  })
+  it('unread filter keeps only unread items and counts as active', () => {
+    const f = toggleUnread(emptyFilter())
+    expect(isActive(f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: true }, f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false }, f)).toBe(false)
+    expect(toggleUnread(f).unread).toBe(false)
   })
   it('search is lowercased and finds title, summary, body, tags', () => {
-    const ctx = { tone: 'gold' as const, packageId: null }
+    const ctx = { tone: 'gold' as const, packageId: null, unread: false }
     const f = emptyFilter()
     f.q = 'efnaskr'
     expect(isActive(f)).toBe(true)
@@ -79,6 +87,10 @@ describe('filter storage', () => {
     expect([...back.packages]).toEqual(['pk1'])
     expect([...back.tags]).toEqual(['smokes'])
     expect(back.q).toBe('efna')
+  })
+  it('round trips unread', () => {
+    expect(parseFilter(serializeFilter(toggleUnread(emptyFilter()))).unread).toBe(true)
+    expect(parseFilter('{"unread":"yes"}').unread).toBe(false)
   })
   it('null, garbage and wrong shapes give an empty filter', () => {
     for (const raw of [null, '', 'not json', '42', '[]', '{"tones":"gold"}']) {

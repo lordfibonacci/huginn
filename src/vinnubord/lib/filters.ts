@@ -6,21 +6,23 @@ export type Filter = {
   packages: Set<string>
   tags: Set<string>
   q: string
+  unread: boolean
 }
 
 export function emptyFilter(): Filter {
-  return { tones: new Set(), packages: new Set(), tags: new Set(), q: '' }
+  return { tones: new Set(), packages: new Set(), tags: new Set(), q: '', unread: false }
 }
 
 export function isActive(f: Filter): boolean {
-  return f.tones.size > 0 || f.packages.size > 0 || f.tags.size > 0 || f.q.trim() !== ''
+  return f.tones.size > 0 || f.packages.size > 0 || f.tags.size > 0 || f.q.trim() !== '' || f.unread
 }
 
 export function matches(
   item: Item,
-  ctx: { tone: Tone; packageId: string | null },
+  ctx: { tone: Tone; packageId: string | null; unread: boolean },
   f: Filter,
 ): boolean {
+  if (f.unread && !ctx.unread) return false
   if (f.tones.size > 0 && !f.tones.has(ctx.tone)) return false
   if (f.packages.size > 0 && (ctx.packageId === null || !f.packages.has(ctx.packageId))) return false
   if (f.tags.size > 0 && !item.tags.some((t) => f.tags.has(t))) return false
@@ -42,7 +44,7 @@ export function filterStorageKey(projectId: string): string {
 }
 
 export function serializeFilter(f: Filter): string {
-  return JSON.stringify({ tones: [...f.tones], packages: [...f.packages], tags: [...f.tags], q: f.q })
+  return JSON.stringify({ tones: [...f.tones], packages: [...f.packages], tags: [...f.tags], q: f.q, unread: f.unread })
 }
 
 function strings(v: unknown): string[] {
@@ -65,6 +67,7 @@ export function parseFilter(raw: string | null): Filter {
   for (const p of strings(o.packages)) f.packages.add(p)
   for (const t of strings(o.tags)) f.tags.add(t)
   if (typeof o.q === 'string') f.q = o.q
+  if (typeof o.unread === 'boolean') f.unread = o.unread
   return f
 }
 
@@ -77,6 +80,10 @@ export function toggleFilter(f: Filter, field: 'tones' | 'packages' | 'tags', va
   if (next.has(value)) next.delete(value)
   else next.add(value)
   return { ...f, [field]: next }
+}
+
+export function toggleUnread(f: Filter): Filter {
+  return { ...f, unread: !f.unread }
 }
 
 export function withQuery(f: Filter, q: string): Filter {
