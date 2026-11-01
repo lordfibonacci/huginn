@@ -23,7 +23,8 @@ import type { Gesture } from './useViewport'
 // when it is set, losing pointer capture to the board cancels a drag, and
 // gestureRef.current.dragPointer names the pointer of an active drag so the
 // board never pans it. A press that saw a second finger never taps and never
-// lifts. Release and cancel are read on window in the capture phase, because a
+// lifts. A press that stopped a glide or fling (gestureRef.current.stoppedMotion)
+// never taps, though a long press still lifts. Release and cancel are read on window in the capture phase, because a
 // pinch moves capture to the board and the finger's pointerup then never
 // passes through the world layer.
 // A cancelled drag puts the card back where it started.
@@ -244,7 +245,7 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
       const outcome = pressOutcome(p)
       clear(p)
       if (outcome === 'drop') o.current.onDrop(p.id, p.x, p.y)
-      else if (outcome === 'tap') o.current.onTap(p.id)
+      else if (outcome === 'tap' && !g?.stoppedMotion) o.current.onTap(p.id)
     }
     const onCancel = (e: PointerEvent) => {
       const p = press.current

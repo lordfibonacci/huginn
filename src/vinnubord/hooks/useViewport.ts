@@ -62,6 +62,10 @@ import { parseDuration } from '../lib/motion'
 //   in by DOUBLE_TAP_FACTOR around the point; taps on cards, modules and pack
 //   titles never count. A tap whose press stopped a fling or a glide never
 //   counts either. Mouse gets neither.
+// - A press that stops a glide or fling is never a tap, on any target in the
+//   board: gestureRef.current.stoppedMotion is true from its pointerdown until
+//   the next primary pointerdown, and every click on the element is swallowed
+//   while it is down and for 500 ms after it lifts.
 // - A pointer the board tracks that loses the board's capture without an up
 //   or cancel (lostpointercapture on the board element itself) ends like
 //   pointercancel. Capture lost by a child bubbles up and is ignored.
@@ -99,6 +103,7 @@ import { parseDuration } from '../lib/motion'
 //   on the card as a cancel.
 // - Read the zoom from viewRef.current, never from `view`: during a gesture
 //   `view` is the state of the last gesture end.
+// - Never call onTap for a press while gestureRef.current.stoppedMotion is set.
 
 const WHEEL_SPEED = 0.0016
 const WHEEL_SYNC_MS = 120
@@ -117,7 +122,15 @@ type Pan = { id: number; last: Pt; moved: boolean; slop: number; kind: TouchKind
 // pinches counts pinch starts, so a press can tell whether one happened while
 // it was down. dragPointer is written by useCardDrag: the pointer that drags a
 // card, or null. active: a pan or pinch is moving the view right now.
-export type Gesture = { touchCount: number; pinching: boolean; pinches: number; dragPointer: number | null; active: boolean }
+// stoppedMotion: the current press stopped a glide or fling, so it is no tap.
+export type Gesture = {
+  touchCount: number
+  pinching: boolean
+  pinches: number
+  dragPointer: number | null
+  active: boolean
+  stoppedMotion: boolean
+}
 export type Padding = { top: number; sides: number; bottom: number }
 
 export type ViewportBind = {
@@ -186,12 +199,14 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   // suppression deadline.
   const pointers = useRef(new Map<number, Tracked>())
   const pan = useRef<Pan | null>(null)
-  const gestureRef = useRef<Gesture>({ touchCount: 0, pinching: false, pinches: 0, dragPointer: null, active: false })
+  const gestureRef = useRef<Gesture>({ touchCount: 0, pinching: false, pinches: 0, dragPointer: null, active: false, stoppedMotion: false })
   const gestureMoved = useRef(false)
   const suppressClickUntil = useRef(0)
-  // What the current gesture saw: a pinch, or a press that stopped a glide or
-  // fling. Neither may end as a tap. Cleared when a gesture starts and ends.
-  const gestureFlags = useRef({ pinched: false, stoppedMotion: false })
+  // The pointer of a press that stopped a glide or fling, until it lifts.
+  const stopPointer = useRef<number | null>(null)
+  // Whether the current gesture had a pinch, which may not end as a tap.
+  // Cleared when a gesture starts and ends.
+  const gestureFlags = useRef({ pinched: false })
   // The last touch tap on the empty board, for the double tap.
   const lastTap = useRef<Tap | null>(null)
   // The frame of the running glide or fling (only one runs at a time), whether
@@ -378,10 +393,44 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     e.stopPropagation()
     e.preventDefault()
   }, [])
-  // A new press means the click that ends a pan did not come (touch pans
-  // usually fire none), so the next click is a real one.
-  const onNativeDown = useCallback(() => {
-    suppressClickUntil.current = 0
+  // Runs before every React pointerdown in the board. Any press stops a glide
+  // or fling where it is. A new press means the click that ends a pan did not
+  // come (touch pans usually fire none), so the next click is a real one,
+  // unless a press that stopped motion is still down. A press that stops
+  // motion swallows clicks until it lifts (the window listener below arms the
+  // usual window from there).
+  const onNativeDown = useCallback(
+    (e: PointerEvent) => {
+      const g = gestureRef.current
+      if (e.isPrimary) {
+        g.stoppedMotion = false
+        stopPointer.current = null
+      }
+      if (stopPointer.current === null) suppressClickUntil.current = 0
+      if (!stopMotion()) return
+      sync()
+      g.stoppedMotion = true
+      stopPointer.current = e.pointerId
+      suppressClickUntil.current = Number.POSITIVE_INFINITY
+    },
+    [stopMotion, sync],
+  )
+  // The press that stopped motion lifted: its click, if one comes, is still
+  // swallowed. Window, capture phase, so a release off the board counts too.
+  useEffect(() => {
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerId !== stopPointer.current) return
+      stopPointer.current = null
+      if (suppressClickUntil.current === Number.POSITIVE_INFINITY) {
+        suppressClickUntil.current = performance.now() + CLICK_SUPPRESS_MS
+      }
+    }
+    window.addEventListener('pointerup', onUp, true)
+    window.addEventListener('pointercancel', onUp, true)
+    return () => {
+      window.removeEventListener('pointerup', onUp, true)
+      window.removeEventListener('pointercancel', onUp, true)
+    }
   }, [])
   useEffect(() => {
     const el = ref.current
@@ -452,7 +501,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     pointers.current.clear()
     pan.current = null
     gestureMoved.current = false
-    gestureFlags.current = { pinched: false, stoppedMotion: false }
+    gestureFlags.current = { pinched: false }
     gestureRef.current.touchCount = 0
     if (gestureRef.current.active) finish()
     if (gestureRef.current.pinching) setPinching(false)
@@ -483,11 +532,11 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         const moved = gestureMoved.current
         if (moved) suppressClickUntil.current = performance.now() + CLICK_SUPPRESS_MS
         gestureMoved.current = false
-        gestureFlags.current = { pinched: false, stoppedMotion: false }
+        gestureFlags.current = { pinched: false }
         pan.current = null
 
         // Double tap: a still touch on the empty board, no pinch, no stopped motion.
-        if (released && !moved && !flags.pinched && !flags.stoppedMotion && tracked.kind === 'board') {
+        if (released && !moved && !flags.pinched && !gestureRef.current.stoppedMotion && tracked.kind === 'board') {
           const pt = local(e.clientX, e.clientY)
           const tap: Tap = { t: e.timeStamp, x: pt.x, y: pt.y }
           if (isDoubleTap(lastTap.current, tap)) {
@@ -528,9 +577,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
 
   const onPointerDown = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
-      // Any press stops a glide or fling where it is, and its release is not a tap.
-      const stopped = stopMotion()
-      if (stopped) sync()
+      // The native capture listener already stopped any glide or fling.
       if (e.pointerType === 'mouse' && e.button !== 0) return
       const target = e.target as Element
       const touch = e.pointerType === 'touch'
@@ -544,7 +591,6 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       }
 
       if (e.isPrimary) reset()
-      if (stopped) gestureFlags.current.stoppedMotion = true
       const pt = local(e.clientX, e.clientY)
       const map = pointers.current
       map.set(e.pointerId, { pt, touch, canPan: kind !== 'card', kind })
@@ -571,7 +617,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         setIsPanning(true)
       }
     },
-    [stopMotion, sync, local, reset, syncTouchCount, setPinching],
+    [local, reset, syncTouchCount, setPinching],
   )
 
   const onPointerMove = useCallback(
