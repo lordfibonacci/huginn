@@ -101,6 +101,9 @@
     "history": {
       "actionAdded": "bætti við handtaki",
       "actionDone": "hakaði við handtak",
+      "analysisDone": "greindi verkið",
+      "analysisFailed": "greining mistókst: {{error}}",
+      "analysisFailedBare": "greining mistókst",
       "commentAdded": "skrifaði athugasemd",
       "fields": {
         "body": "lýsinguna",

@@ -8,17 +8,16 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`. Pla
 
 ## Current state
 
-Plans 1 to 3 are built and verified (364 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
+Plans 1 to 4 are built (423 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 6/6` against the live DB at the end of plan 2).
 
 - Plan 1 (grunnur): the `hg_` schema, API layer, realtime board data hook, pure status, filter, upload and continuation logic, the app shell, routes and the participant gate.
 - Plan 2 (bord): the whiteboard. Pack columns and module cards, item cards with spring drag and wires with sparks on a canvas, pan and zoom with touch (pinch, two finger pan, 350 ms long press to drag), side panel and bottom sheet for items and modules (status, files, questions, history, comments, copy buttons, Markdown reader), top bar with counter pills, filters, search and a viewer menu, new item sheet with file upload, aurora and entry motion, new item toast, project settings. The live project metta is seeded with 5 packages and 28 modules.
 
 - Plan 3 (cli): the `huginn` command line tool in `cli/` (read, write, `pull --brief`, `sync` mirror to `docs/huginn/` with `STATUS.md`), the `/huginn` skill and SessionStart hook in metta2_new, and the first fill of metta (73 items, `cli/seed/`).
 
-Not built yet, do not describe it as existing:
-- Plan 4: quick analysis (edge function calling the Claude API on new items).
+- Plan 4 (skyndigreining): the edge function `hg-analyse` analyses new items with the Claude API (summary, body, tags, module, questions, status to waiting on Heimir). Built, deployed (version 10) and verified live on 2026-11-01: handpróf A to F all pass, at about 0.15 USD per analysis. Steps and results are in `docs/progress/04-vinnubord-skyndigreining.md`.
 
-Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md` and `docs/progress/03-vinnubord-cli.md`.
+Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md`, `docs/progress/03-vinnubord-cli.md` and `docs/progress/04-vinnubord-skyndigreining.md`.
 
 ## Tech Stack
 
@@ -27,7 +26,7 @@ Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress
 - **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
 - **Routing:** React Router v7
 - **i18n:** `react-i18next`
-- **Tests:** vitest, `src/**/*.test.ts` (pure logic in `src/vinnubord/lib/`) and `cli/**/*.test.mjs` (CLI pure logic and parity with the web). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
+- **Tests:** vitest, `src/**/*.test.ts` (pure logic in `src/vinnubord/lib/`), `cli/**/*.test.mjs` (CLI pure logic and parity with the web) and `supabase/functions/**/*.test.ts` (`lib.ts` of the edge function, which stays import free and Deno free so vitest can load it). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
 - **PWA:** `vite-plugin-pwa` auto update service worker, manifest description "Vinnuborð Mettu"
 - **Markdown:** `marked` and `dompurify` render Markdown in the panel reader. Loaded lazily (`Markdown.tsx` is a lazy chunk), so the board bundle does not carry them. No other UI libraries, icons are inline SVG.
 - **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs`
@@ -39,6 +38,7 @@ npm run dev       # Vite dev server (prefers 5173, falls back to 5174)
 npm run build     # tsc -b && vite build (Vercel runs this). Main verification gate.
 npm run test      # vitest run
 npm run preview   # Preview production build
+npx -y deno@2 check --no-lock --node-modules-dir=none supabase/functions/hg-analyse/index.ts  # the only type check for index.ts (tsc -b covers src only)
 npm run lint      # ESLint, currently broken (v9 expects eslint.config.js). Use build and test instead.
 npm run brand     # Regenerate PWA icons and brand PNGs from ../Graffík source
 npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
@@ -75,7 +75,9 @@ cli/
 ├── lib/            # config, client, format, status, write (pure), ops (Supabase writes), commands, mirror (pure), sync + *.test.mjs
 ├── seed/           # seed.mjs, seedlib.mjs (pure, tested), metta-2026-10-31.json
 └── README.md       # setup, credentials, every command and the mirror rules (Icelandic)
-supabase/migrations/  # numbered SQL migrations for hg_ objects
+supabase/
+├── migrations/        # numbered SQL migrations for hg_ objects
+└── functions/hg-analyse/  # index.ts (Deno entry), lib.ts (pure helpers and SYSTEM_PROMPT), lib.test.ts. No prompt.md, the prompt is SYSTEM_PROMPT in lib.ts.
 scripts/              # build-brand-assets, translate-is, import-trello-to-huginn (legacy)
 ```
 
@@ -121,12 +123,17 @@ Files live in `supabase/migrations/` (see the README there). Applied with the Su
 - `0004_hg_trigger_fixes` : applied through MCP. Answering the last question no longer moves done, dropped or parked items; a `waiting_on` change logs `item.status` (data adds `waiting_on_from`); answer and done stamps cannot be forged and are stamped on insert too (new trigger `hg_actions_stamp_ins_trg`); a pos only update keeps `updated_at` and `updated_by`; an insert keeps a supplied `closed_at`; `hg_service_user` is no longer executable by `authenticated`.
 - `0005_hg_add_participant` : applied through MCP. `hg_add_participant(p_project, p_email, p_short, p_name)` security definer RPC: only a participant of the project may call it, it looks the user up in auth.users by email ("Notandi fannst ekki" when there is none), refuses someone already in the project and always inserts `is_service = false`. Execute granted to `authenticated` only. Removing a participant (never yourself or the service user) and deleting a module (only one without items or comments) are guarded in the UI and in `lib/api.ts`, RLS is unchanged.
 - `0006_hg_reads_clock_and_guards` : applied by Heimir on 2026-10-31 (the MCP connector was not connected in the fix session). Trigger `hg_reads_stamp_trg` (before insert or update) sets `hg_reads.read_at = now()`, so read marks use the server clock like `updated_at`; `markRead` no longer sends `read_at`. `hg_add_participant` also checks the short name (not empty, at most 3 characters, unique per project case insensitively, errcode 22023) and turns a `unique_violation` on the insert into the Icelandic "already a participant" message (23505). `npm run smoke:hg` scenario 5 asserts the server stamp.
+- `0007_hg_analyse` : applied through MCP 2026-10-31. Adds `analysed_at` and `analyse_lock_until` on `hg_items`; `hg_touch_updated_at` also ignores `analyse_lock_until` (a lock only update marks nothing unread); `hg_claim_analysis(p_item)` atomic 2 minute lock (security invoker); `hg_log_analysis(p_item, p_kind, p_data)` security definer RPC that lets only the project's service participant write `analysis.done` and `analysis.failed` events; `hg_enqueue_analyse` security definer with triggers `hg_items_analyse_trg` and `hg_files_analyse_trg` (after insert) that post to the function through pg_net, reading URL and secret from Vault and doing nothing when either is missing.
+
+### Edge function hg-analyse
+
+Quick analysis of new items (plan 4). Live since 2026-11-01 (version 10). Deployed with the MCP `deploy_edge_function` as two files (`index.ts`, `lib.ts`), `verify_jwt` false because it checks its own bearer (`HG_ANALYSE_SECRET`). Edge secrets by name: `HG_ANALYSE_SECRET`, `HG_SERVICE_EMAIL`, `HG_SERVICE_PASSWORD`, and `HG_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY` (the HG_ one wins when not empty; never change `ANTHROPIC_API_KEY`, other functions on the shared project may use it). Vault entries by name: `hg_analyse_secret` (same value as `HG_ANALYSE_SECRET`) and `hg_analyse_url`. Never write values in the repo. Flow: the `0007` triggers post `{ item_id }` through pg_net, the function answers 202 and works in `EdgeRuntime.waitUntil`: 20 s debounce, sign in as the service user, atomic 2 minute lock (`hg_claim_analysis`), gated write. The free plan has a 150 s wall clock per worker, which is why the Anthropic timeout is 90 s with no retries. Model `claude-opus-5-5`, effort medium.
 
 ### Auth
 
 Email and password through Supabase Auth, email confirmation on. Password reset goes `/auth/callback?type=recovery` then `/reset-password`. Participants are Heimir, Árni and a Claude service user (`claude@huginn.pro`, auth id `6ea33ea7-0072-4e4b-a625-156ebf487399`, participant of metta with short `C`, `is_service = true`; password in `.env` as `HG_SMOKE_PASSWORD`). A sandbox user `sandbox@huginn.pro` (participant of no project, credentials `HG_SANDBOX_*` in `.env`) exists for testing the no-access path. Access to a project is decided by `hg_participants` only.
 
-Plan 4's edge function must sign in as the Claude service user (preferred, so RLS applies) or set `updated_by` on every write, because `hg_stamp_author` keeps a supplied `updated_by` only when `auth.uid()` is null.
+`hg-analyse` signs in as the Claude service user with the anon key (so RLS and the stamp triggers apply, no service role key) and skips items that user created itself, because those are Claude Code's own already analysed items. Árni's CLI items under his own account are analysed.
 
 ### Env vars (`.env`)
 
@@ -160,6 +167,7 @@ Brand: raven mark and `huginn` wordmark in `src/shared/components/Logo.tsx`. Ico
 - **Gesture contract.** `useViewport` owns pan, wheel zoom and pinch on the board element and exposes a `gestureRef` (pinching state). `useCardDrag` is bound on the world layer and runs first: mouse lifts a card on press and drags past 3 px; touch lifts after a 350 ms long press, and a touch that moves more than 10 px before that gives up and the viewport pans instead. Two touches always pinch, also with a finger on a card, and a pinch cancels a lifted drag and returns the card to its start. `useCardDrag` never calls `stopPropagation`, and card elements are `div role="button"` (not `<button>`) because the viewport ignores pointers on buttons. Drag only writes `pos_x` and `pos_y`, springs run in the Wires animation frame so wires read card rects after they moved.
 - **Panel survives refetch.** `BoardPage` keys `ItemPanel` by item id, so tab, scroll and drafts live across realtime refetches and reset when another item opens. `markRead` runs on open and whenever someone else changes the open item (not after the viewer's own change, `needsReadMark` in `lib/reads.ts`). The server stamps `read_at`. Optimistic toggles (`useOptimisticToggle`) follow the live value when realtime brings it.
 - **Counter pills filter by count bucket.** `countBucket(item, actions, viewerId)` in `status.ts` decides which pill an item counts in (new, mine, others, build, parked), `countsFor` uses it, and `BUCKET_TONE` maps a bucket to the tone the filter matches, so a pill number and its filter always agree. Card color still comes from `itemTone`.
+- **Analysis rules.** `hg-analyse` never touches an item that is not `new` (the write is gated on status and on `updated_at`, with one re-merge). The author's body is kept verbatim under `## Upprunalegur texti`, the author's module and tags win over the model's. Success writes `analysis.done`, failure writes `analysis.failed` with error and stage and leaves the item `new`; both show in the item history. Skips (not found, not new, locked, created by the service user) are console only, no board event.
 - **Status is stored, not computed.** Claude moves status. Dragging only arranges the board.
 - **CLI copies web logic.** `cli/` is plain Node ESM and cannot import the TS in `src`, so it copies the rules it needs as `.mjs` (status names, `isOnBoard`, `waitsFor`, upload limits, `placeNewCard`, card sizes from `--hg-*` tokens) and `cli/lib/parity.test.mjs` asserts they match `src/vinnubord/lib` and `vinnubord.css`. Change both sides together. It signs in as a normal user with the anon key (the Claude service user in Heimir's setup), so RLS and the triggers apply; credentials live in `~/.huginn/`, never in a repo. Flags are strict: write commands and `sync` reject unknown flags.
 - **ErrorBoundary** wraps the router, render errors show a panel instead of a blank screen.
