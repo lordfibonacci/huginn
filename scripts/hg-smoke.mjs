@@ -254,14 +254,14 @@ try {
     s = await readOne(pItem)
     expect(s.status === 'ready', `after first plan done with a todo plan: ${s.status}, expected ready`)
 
-    // d. plan done beside a building plan leaves a waiting item alone
+    // d. plan done beside a building plan leaves a waiting item alone (waiting on Árni)
     await setPlan(p2, 'building')
-    must(await sb.from('hg_items').update({ status: 'waiting', waiting_on: heimir.user_id }).eq('id', pItem), 'item to waiting')
+    must(await sb.from('hg_items').update({ status: 'waiting', waiting_on: arni.user_id }).eq('id', pItem), 'item to waiting')
     await setPlan(p1, 'todo')
     await setPlan(p1, 'done')
     s = await readOne(pItem)
     expect(
-      s.status === 'waiting' && s.waiting_on === heimir.user_id,
+      s.status === 'waiting' && s.waiting_on === arni.user_id,
       `plan done beside a building plan moved the item: ${s.status}, ${s.waiting_on}`,
     )
 
