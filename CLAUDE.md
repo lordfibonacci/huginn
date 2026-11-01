@@ -52,6 +52,7 @@ npm run brand     # Regenerate PWA icons and brand PNGs from ../Graffík source
 npm run translate # Regenerate is.json from en.json via OpenRouter Gemini
 npm run seed:metta # One time only, already run 2026-10-31. Refuses a real run once metta has items (--again overrides); --dry-run still works
 node cli/huginn.mjs <command> # The huginn CLI (login, pull, sync, item, plan ...), see cli/README.md
+npm run shots:hg [phone|tablet|tabletLand|perf|all]  # phone and tablet screenshots and pinch timing in .playwright-mcp/shots/, signs in from .env; SITE=http://localhost:4173 for a local preview; needs npx playwright install chromium-headless-shell once
 ```
 
 ## Folder structure

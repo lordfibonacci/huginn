@@ -15,6 +15,7 @@
     "translate": "node scripts/translate-is.mjs",
     "test": "vitest run",
     "smoke:hg": "node scripts/hg-smoke.mjs",
+    "shots:hg": "node scripts/hg-shots.mjs",
     "seed:metta": "node cli/seed/seed.mjs --project metta --file cli/seed/metta-2026-10-31.json"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "jsdom": "^26.1.0",
+    "playwright": "^1.64.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.7.2",
