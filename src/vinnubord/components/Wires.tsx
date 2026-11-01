@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref } from 'react'
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref, type RefObject } from 'react'
 import { bezierControl, bezierPoint, bezierTail, wireEndpoints, type Rect, type View } from '../lib/geometry'
 import { canvasIdle, drawUpProgress } from '../lib/motion'
 import type { Tone, WireMode } from '../lib/status'
@@ -31,7 +31,8 @@ export type WiresHandle = {
 
 type Props = {
   items: WireItem[]
-  view: View
+  // The live view (useViewport), read every frame.
+  viewRef: RefObject<View>
   // Items treated as active (selected or being dragged): they spark like pulse wires.
   hotIds: Set<string>
   // Runs at the start of every frame, before the rects are read (card
@@ -104,12 +105,12 @@ function relRect(el: Element, host: DOMRect): Rect {
   return { x: r.left - host.left, y: r.top - host.top, w: r.width, h: r.height }
 }
 
-export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
+export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const sparks = useRef(new Map<string, Spark[]>())
-  const live = useRef({ items, view, hotIds, onFrame })
+  const live = useRef({ items, viewRef, hotIds, onFrame })
   useLayoutEffect(() => {
-    live.current = { items, view, hotIds, onFrame }
+    live.current = { items, viewRef, hotIds, onFrame }
   })
   const reduced = useRef(false)
   // Draw up: requested by drawUp(), started on the next frame.
@@ -220,7 +221,8 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
       raf = requestAnimationFrame(frame)
       const dt = Math.min(MAX_DT, ts - last || FRAME_MS)
       last = ts
-      const { items: list, view: v, hotIds: hot, onFrame: step } = live.current
+      const { items: list, viewRef: vr, hotIds: hot, onFrame: step } = live.current
+      const v = vr.current
       const moved = step?.() ?? false
       const motion = !reduced.current
 
@@ -258,7 +260,14 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
         drawUpWanted.current = false
         drawUpStart = motion ? ts : null
       }
-      const changed = dirty || drawn === null || drawn.items !== list || drawn.view !== v || drawn.hotIds !== hot
+      const changed =
+        dirty ||
+        drawn === null ||
+        drawn.items !== list ||
+        drawn.view.x !== v.x ||
+        drawn.view.y !== v.y ||
+        drawn.view.z !== v.z ||
+        drawn.hotIds !== hot
       const idle = canvasIdle({
         changed,
         moving: moved,
@@ -268,7 +277,8 @@ export function Wires({ items, view, hotIds, onFrame, ref }: Props) {
       })
       if (idle) return
       dirty = false
-      drawn = { items: list, view: v, hotIds: hot }
+      // A copy: the view is compared by its numbers, not by identity.
+      drawn = { items: list, view: { ...v }, hotIds: hot }
 
       // Share of every wire drawn, grown from the module end.
       let reach = 1

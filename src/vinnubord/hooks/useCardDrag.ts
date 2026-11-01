@@ -27,6 +27,7 @@ import type { Gesture } from './useViewport'
 // pinch moves capture to the board and the finger's pointerup then never
 // passes through the world layer.
 // A cancelled drag puts the card back where it started.
+// The zoom comes from viewRef.current at each move, never from React state.
 
 const LONG_PRESS_MS = 350
 const HAPTIC_MS = 10
@@ -56,7 +57,7 @@ type Press = {
 }
 
 export type CardDragOptions = {
-  view: View
+  viewRef: RefObject<View>
   gestureRef: RefObject<Gesture>
   // Current world position of a card, null if it is unknown.
   getPos: (id: string) => { x: number; y: number } | null
@@ -224,7 +225,7 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         // A mouse press shows as lifted from here, touch did at the lift.
         if (!p.touch) setDraggingId(p.id)
       }
-      const z = o.current.view.z
+      const z = o.current.viewRef.current.z
       p.x = p.ox + dx / z
       p.y = p.oy + dy / z
       o.current.onMove(p.id, p.x, p.y)

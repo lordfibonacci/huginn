@@ -416,6 +416,8 @@
   --hg-dur-panel: 0.45s;
   --hg-dur-pop: 0.7s;
   --hg-dur-beat: 2s;
+  /* zoom buttons, fit, pack title and double tap glide */
+  --hg-dur-view: 0.22s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -424,6 +426,7 @@
     --hg-dur-fast: 0s;
     --hg-dur-panel: 0s;
     --hg-dur-pop: 0s;
+    --hg-dur-view: 0s;
     --hg-card-peek-dur: 0s;
     --hg-card-peek-delay: 0s;
   }

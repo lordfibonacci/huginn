@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type MouseEvent,
   type ReactNode,
   type Ref,
@@ -38,6 +37,10 @@ import { Wires, type WireItem, type WiresHandle } from './Wires'
 // it is dragged here or its own drop is still on the way to the database.
 // Inside a view a card rests at its place in that view (hg_view_positions),
 // else at its own place, and a drop is saved to the view, never to the item.
+// The pan and zoom view is written to the world layer by useViewport (worldRef);
+// nothing here writes its transform or --hg-z, so a re-render in the middle of
+// a gesture never moves the world. Anything that needs the live view reads
+// vp.viewRef.
 
 type Props = {
   data: BoardData
@@ -112,7 +115,7 @@ export function Board({
   const boardRef = useRef<HTMLDivElement | null>(null)
   const wiresRef = useRef<WiresHandle | null>(null)
   const vp = useViewport(boardRef)
-  const { fit, view } = vp
+  const { fit, view, viewRef } = vp
 
   // ---------- derived board ----------
   const onBoard = useMemo(() => boardOrder(items), [items])
@@ -353,7 +356,7 @@ export function Board({
 
   const onTap = useCallback((id: string) => onSelect(id), [onSelect])
 
-  const drag = useCardDrag({ view, gestureRef: vp.gestureRef, getPos, onMove, onDrop, onCancel, onTap })
+  const drag = useCardDrag({ viewRef, gestureRef: vp.gestureRef, getPos, onMove, onDrop, onCancel, onTap })
   const draggingId = drag.draggingId
   useLayoutEffect(() => {
     draggingRef.current = draggingId
@@ -418,7 +421,8 @@ export function Board({
   }, [onBoard])
 
   // ---------- fit ----------
-  const fitAll = useCallback(() => {
+  // animate: glide over --hg-dur-view (the fit button), or jump (first load).
+  const fitAll = useCallback((animate: boolean) => {
     const rects: Rect[] = []
     for (const [id, el] of els.current) {
       const s = springs.current.get(id)
@@ -427,7 +431,7 @@ export function Board({
     boardRef.current?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
       rects.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
     })
-    fit(rects)
+    fit(rects, undefined, animate)
   }, [fit])
 
   // Fit once per load, as soon as the board has a size.
@@ -436,7 +440,7 @@ export function Board({
     if (fitted.current) return
     const el = boardRef.current
     if (!el || el.clientWidth === 0 || el.clientHeight === 0) return
-    fitAll()
+    fitAll(false)
     fitted.current = true
   })
 
@@ -447,7 +451,7 @@ export function Board({
     let raf = 0
     const refit = () => {
       cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(fitAll)
+      raf = requestAnimationFrame(() => fitAll(false))
     }
     mq.addEventListener('change', refit)
     return () => {
@@ -483,20 +487,21 @@ export function Board({
         const hostRect = host?.getBoundingClientRect()
         const ox = hostRect?.left ?? 0
         const oy = hostRect?.top ?? 0
-        const [cx, cy] = screenToWorld(view, (hostRect?.width ?? 0) / 2, (hostRect?.height ?? 0) / 2)
+        const v = viewRef.current
+        const [cx, cy] = screenToWorld(v, (hostRect?.width ?? 0) / 2, (hostRect?.height ?? 0) / 2)
         let anchor: Rect | null = null
         const mod = moduleId ? host?.querySelector(`.hg-mod[data-module="${CSS.escape(moduleId)}"]`) : null
         if (mod) {
           const r = mod.getBoundingClientRect()
-          const [x, y] = screenToWorld(view, r.left - ox, r.top - oy)
-          anchor = { x, y, w: r.width / view.z, h: r.height / view.z }
+          const [x, y] = screenToWorld(v, r.left - ox, r.top - oy)
+          anchor = { x, y, w: r.width / v.z, h: r.height / v.z }
         }
         // Cards and pack columns are obstacles. The spots beside a module lie
         // outside its own column, so the column never pushes its card away.
         return placeNewCard({ anchor, center: { x: cx, y: cy }, size: { ...NEW_CARD_SIZE, w }, obstacles })
       },
     }),
-    [view, activeView, data.items],
+    [viewRef, activeView, data.items],
   )
 
   const onBoardClick = useCallback(
@@ -516,12 +521,8 @@ export function Board({
         {...vp.bind}
         onClick={onBoardClick}
       >
-        <Wires ref={wiresRef} items={wireItems} view={view} hotIds={hotIds} onFrame={stepFrame} />
-        <div
-          className="hg-world"
-          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})`, '--hg-z': view.z } as CSSProperties}
-          {...drag.bind}
-        >
+        <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} hotIds={hotIds} onFrame={stepFrame} />
+        <div ref={vp.worldRef} className="hg-world" {...drag.bind}>
           {rows.map(({ pkg, modules }) => (
             <PackColumn
               key={pkg.id}
@@ -565,15 +566,16 @@ export function Board({
             <path d="M3 8h10" />
           </svg>
         </button>
-        <span className="hg-zoom-val" aria-label={t('vinnubord.board.zoomLevel')}>
-          {Math.round(view.z * 100)}%
+        {/* One text child, so React and useViewport's apply() write the same node. */}
+        <span ref={vp.zoomLabelRef} className="hg-zoom-val" aria-label={t('vinnubord.board.zoomLevel')}>
+          {`${Math.round(view.z * 100)}%`}
         </span>
         <button type="button" onClick={vp.zoomIn} aria-label={t('vinnubord.board.zoomIn')}>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M3 8h10M8 3v10" />
           </svg>
         </button>
-        <button type="button" onClick={fitAll} aria-label={t('vinnubord.board.fit')}>
+        <button type="button" onClick={() => fitAll(true)} aria-label={t('vinnubord.board.fit')}>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" />
           </svg>
