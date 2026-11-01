@@ -43,6 +43,8 @@ export function panStep(s: { slop: number; dragging: boolean; dist: number }): '
 // distance is straight line (the spec test has a 20 + 10 px pair that counts).
 export const DOUBLE_TAP_MS = 300
 export const DOUBLE_TAP_SLOP = 24
+// A double tap on the empty board zooms in by this around the tap.
+export const DOUBLE_TAP_FACTOR = 2
 
 export type Tap = { t: number; x: number; y: number }
 

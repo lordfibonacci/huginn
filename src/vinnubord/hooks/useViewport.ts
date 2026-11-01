@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
 import { fitAll, fitWidth as fitWidthView, pinchView, zoomAt, type Rect, type View } from '../lib/geometry'
-import { PAN_THRESHOLD, panStep, touchSlop, touchTracks, type TouchKind } from '../lib/gesture'
+import { FLING_WINDOW_MS, flingDone, flingStarts, flingStep, releaseVelocity, type Sample, type Velocity } from '../lib/fling'
+import {
+  DOUBLE_TAP_FACTOR,
+  PAN_THRESHOLD,
+  isDoubleTap,
+  panStep,
+  touchSlop,
+  touchTracks,
+  type Tap,
+  type TouchKind,
+} from '../lib/gesture'
 import { parseDuration } from '../lib/motion'
 
 // Pan and zoom for the board element in ref.
@@ -21,8 +31,9 @@ import { parseDuration } from '../lib/motion'
 // The view lives in viewRef and is written to the world element directly;
 // React state follows at gesture end. apply() writes the ref, the world
 // transform, --hg-z and the zoom label text. sync() copies the ref into the
-// `view` state: when the last pointer lifts, 120 ms after the last wheel step,
-// at the end of a glide (animateTo) and on setView. Anything that needs the
+// `view` state: when the last pointer lifts (or the fling after it stops),
+// 120 ms after the last wheel step, at the end of a glide (animateTo), when a
+// press stops a glide or fling, and on setView. Anything that needs the
 // view every frame reads viewRef, not `view`.
 //
 // Rules:
@@ -43,7 +54,17 @@ import { parseDuration } from '../lib/motion'
 //   lifts, the other pans if it did not start on a card, otherwise nothing
 //   moves.
 // - gestureRef.current.active is true from the first move of a pan or pinch
-//   until the last pointer lifts.
+//   until the last pointer lifts, or until the fling that follows it stops.
+// - Touch pan release above FLING_START px/ms flings the view (lib/fling), a
+//   new pointer stops it. While it runs, active and isPanning stay true and
+//   sync() runs when it stops. A gesture that had a pinch never flings.
+// - Two taps on the empty board within DOUBLE_TAP_MS and DOUBLE_TAP_SLOP zoom
+//   in by DOUBLE_TAP_FACTOR around the point; taps on cards, modules and pack
+//   titles never count. A tap whose press stopped a fling or a glide never
+//   counts either. Mouse gets neither.
+// - A pointer the board tracks that loses the board's capture without an up
+//   or cancel (lostpointercapture on the board element itself) ends like
+//   pointercancel. Capture lost by a child bubbles up and is ignored.
 // - Pointer capture for a pan is taken only once the pointer has moved past its
 //   slop, so a plain click or tap on a module or the board reaches its onClick.
 //   A pinch captures both fingers on the board element at once, which takes
@@ -58,7 +79,8 @@ import { parseDuration } from '../lib/motion'
 //   non passive listener on ref.current, and bind.onWheel is a no op kept so
 //   bind has the documented shape.
 // - Zoom buttons and fit glide over --hg-dur-view (animateTo). A pointerdown on
-//   the board or a wheel step stops a running glide where it is.
+//   the board, a wheel step, setView or a new glide stops a running glide or
+//   fling where it is.
 //
 // Contract for useCardDrag (Task 3):
 // - Do not stopPropagation on touch pointerdown, pointermove, pointerup or
@@ -89,7 +111,8 @@ const CARD = '[data-card]'
 
 type Pt = { x: number; y: number }
 type Tracked = { pt: Pt; touch: boolean; canPan: boolean; kind: TouchKind }
-type Pan = { id: number; last: Pt; moved: boolean; slop: number; kind: TouchKind }
+// samples: recent touch positions for the release velocity (touch only).
+type Pan = { id: number; last: Pt; moved: boolean; slop: number; kind: TouchKind; samples: Sample[] }
 
 // pinches counts pinch starts, so a press can tell whether one happened while
 // it was down. dragPointer is written by useCardDrag: the pointer that drags a
@@ -102,6 +125,7 @@ export type ViewportBind = {
   onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void
   onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void
   onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void
+  onLostPointerCapture: (e: ReactPointerEvent<HTMLElement>) => void
   onWheel: (e: ReactWheelEvent<HTMLElement>) => void
 }
 
@@ -165,8 +189,15 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   const gestureRef = useRef<Gesture>({ touchCount: 0, pinching: false, pinches: 0, dragPointer: null, active: false })
   const gestureMoved = useRef(false)
   const suppressClickUntil = useRef(0)
-  // The running glide's frame, and the timer that syncs after the last wheel step.
-  const animRaf = useRef(0)
+  // What the current gesture saw: a pinch, or a press that stopped a glide or
+  // fling. Neither may end as a tap. Cleared when a gesture starts and ends.
+  const gestureFlags = useRef({ pinched: false, stoppedMotion: false })
+  // The last touch tap on the empty board, for the double tap.
+  const lastTap = useRef<Tap | null>(null)
+  // The frame of the running glide or fling (only one runs at a time), whether
+  // it is a fling, and the timer that syncs after the last wheel step.
+  const motionRaf = useRef(0)
+  const flinging = useRef(false)
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const apply = useCallback((v: View) => {
@@ -177,28 +208,37 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       world.style.setProperty('--hg-z', String(v.z))
     }
     const label = zoomLabelRef.current
-    if (label) label.textContent = `${Math.round(v.z * 100)}%`
+    if (label) {
+      const text = `${Math.round(v.z * 100)}%`
+      if (label.textContent !== text) label.textContent = text
+    }
   }, [])
 
   const sync = useCallback(() => {
     setViewState(viewRef.current)
   }, [])
 
-  // Stops a running glide where it is. Returns whether one was running.
-  const stopAnim = useCallback(() => {
-    if (!animRaf.current) return false
-    cancelAnimationFrame(animRaf.current)
-    animRaf.current = 0
+  // Stops a running glide or fling where it is. Returns whether one was
+  // running. A stopped fling ends its gesture; the caller syncs.
+  const stopMotion = useCallback(() => {
+    if (!motionRaf.current) return false
+    cancelAnimationFrame(motionRaf.current)
+    motionRaf.current = 0
+    if (flinging.current) {
+      flinging.current = false
+      gestureRef.current.active = false
+      setIsPanning(false)
+    }
     return true
   }, [])
 
   const setView = useCallback(
     (v: View) => {
-      stopAnim()
+      stopMotion()
       apply(v)
       sync()
     },
-    [stopAnim, apply, sync],
+    [stopMotion, apply, sync],
   )
 
   // A world layer that mounts later (after a loader) gets the current view
@@ -212,7 +252,8 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
 
   const animateTo = useCallback(
     (target: View, ms = viewDurMs()) => {
-      stopAnim()
+      // The glide syncs when it ends.
+      stopMotion()
       if (ms <= 0) {
         setView(target)
         return
@@ -222,7 +263,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       const step = (now: number) => {
         const t = Math.min(1, Math.max(0, (now - start) / ms))
         if (t >= 1) {
-          animRaf.current = 0
+          motionRaf.current = 0
           setView(target)
           return
         }
@@ -232,11 +273,40 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
           y: from.y + (target.y - from.y) * p,
           z: from.z + (target.z - from.z) * p,
         })
-        animRaf.current = requestAnimationFrame(step)
+        motionRaf.current = requestAnimationFrame(step)
       }
-      animRaf.current = requestAnimationFrame(step)
+      motionRaf.current = requestAnimationFrame(step)
     },
-    [stopAnim, setView, apply],
+    [stopMotion, setView, apply],
+  )
+
+  // Momentum after a touch pan, from the release velocity in px/ms. The
+  // gesture stays active until it stops, then React gets the view.
+  const runFling = useCallback(
+    (v0: Velocity, releasedAt: number) => {
+      stopMotion()
+      let v = v0
+      let last = releasedAt
+      flinging.current = true
+      const step = (now: number) => {
+        const s = flingStep(v, now - last)
+        last = now
+        v = { vx: s.vx, vy: s.vy }
+        const cur = viewRef.current
+        apply({ ...cur, x: cur.x + s.dx, y: cur.y + s.dy })
+        if (flingDone(v)) {
+          motionRaf.current = 0
+          flinging.current = false
+          gestureRef.current.active = false
+          setIsPanning(false)
+          sync()
+          return
+        }
+        motionRaf.current = requestAnimationFrame(step)
+      }
+      motionRaf.current = requestAnimationFrame(step)
+    },
+    [stopMotion, apply, sync],
   )
 
   const local = useCallback(
@@ -291,7 +361,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   const onNativeWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault()
-      stopAnim()
+      stopMotion()
       const p = local(e.clientX, e.clientY)
       apply(zoomAt(viewRef.current, Math.exp(-e.deltaY * WHEEL_SPEED), p.x, p.y))
       if (wheelTimer.current) clearTimeout(wheelTimer.current)
@@ -300,7 +370,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         sync()
       }, WHEEL_SYNC_MS)
     },
-    [local, stopAnim, apply, sync],
+    [local, stopMotion, apply, sync],
   )
   const onNativeClick = useCallback((e: MouseEvent) => {
     if (performance.now() >= suppressClickUntil.current) return
@@ -342,11 +412,11 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     [onNativeWheel, onNativeClick, onNativeDown],
   )
 
-  // A glide or a pending wheel sync never outlives the board.
+  // A glide, a fling or a pending wheel sync never outlives the board.
   useEffect(
     () => () => {
-      if (animRaf.current) cancelAnimationFrame(animRaf.current)
-      animRaf.current = 0
+      if (motionRaf.current) cancelAnimationFrame(motionRaf.current)
+      motionRaf.current = 0
       if (wheelTimer.current) clearTimeout(wheelTimer.current)
       wheelTimer.current = null
     },
@@ -382,16 +452,19 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     pointers.current.clear()
     pan.current = null
     gestureMoved.current = false
+    gestureFlags.current = { pinched: false, stoppedMotion: false }
     gestureRef.current.touchCount = 0
     if (gestureRef.current.active) finish()
     if (gestureRef.current.pinching) setPinching(false)
     setIsPanning(false)
   }, [setPinching, finish])
 
+  // Up, cancel and lost capture all end a pointer; only an up can fling or tap.
   const endPointer = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
       const map = pointers.current
-      if (!map.has(e.pointerId)) return
+      const tracked = map.get(e.pointerId)
+      if (!tracked) return
       map.delete(e.pointerId)
       syncTouchCount()
       if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -401,23 +474,63 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       if (map.size === 1) {
         // A pinch lost a finger: the other one pans only if it did not start on a card.
         const [id, t] = map.entries().next().value as [number, Tracked]
-        pan.current = t.canPan ? { id, last: t.pt, moved: true, slop: PAN_THRESHOLD, kind: t.kind } : null
+        pan.current = t.canPan ? { id, last: t.pt, moved: true, slop: PAN_THRESHOLD, kind: t.kind, samples: [] } : null
         if (!t.canPan) setIsPanning(false)
       } else if (map.size === 0) {
-        if (gestureMoved.current) suppressClickUntil.current = performance.now() + CLICK_SUPPRESS_MS
+        const released = e.type === 'pointerup' && tracked.touch
+        const flags = gestureFlags.current
+        const p = pan.current
+        const moved = gestureMoved.current
+        if (moved) suppressClickUntil.current = performance.now() + CLICK_SUPPRESS_MS
         gestureMoved.current = false
+        gestureFlags.current = { pinched: false, stoppedMotion: false }
         pan.current = null
+
+        // Double tap: a still touch on the empty board, no pinch, no stopped motion.
+        if (released && !moved && !flags.pinched && !flags.stoppedMotion && tracked.kind === 'board') {
+          const pt = local(e.clientX, e.clientY)
+          const tap: Tap = { t: e.timeStamp, x: pt.x, y: pt.y }
+          if (isDoubleTap(lastTap.current, tap)) {
+            lastTap.current = null
+            animateTo(zoomAt(viewRef.current, DOUBLE_TAP_FACTOR, tap.x, tap.y))
+          } else {
+            lastTap.current = tap
+          }
+        } else {
+          lastTap.current = null
+        }
+
+        // Fling: a touch pan that moved, alone in its gesture.
+        if (released && !flags.pinched && p && p.id === e.pointerId && p.moved) {
+          const v = releaseVelocity(p.samples, e.timeStamp)
+          if (flingStarts(v)) {
+            runFling(v, e.timeStamp)
+            return
+          }
+        }
         setIsPanning(false)
         finish()
       }
     },
-    [syncTouchCount, setPinching, finish],
+    [syncTouchCount, setPinching, finish, local, animateTo, runFling],
+  )
+
+  // The board lost capture of a pointer it still tracks, without an up or a
+  // cancel: end it like a cancel. Capture lost by a child bubbles here too
+  // (a pinch takes it from a card), so only the board's own capture counts.
+  const onLostPointerCapture = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      if (e.target !== e.currentTarget) return
+      endPointer(e)
+    },
+    [endPointer],
   )
 
   const onPointerDown = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
-      // Any press stops a glide where it is.
-      if (stopAnim()) sync()
+      // Any press stops a glide or fling where it is, and its release is not a tap.
+      const stopped = stopMotion()
+      if (stopped) sync()
       if (e.pointerType === 'mouse' && e.button !== 0) return
       const target = e.target as Element
       const touch = e.pointerType === 'touch'
@@ -431,17 +544,20 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       }
 
       if (e.isPrimary) reset()
+      if (stopped) gestureFlags.current.stoppedMotion = true
       const pt = local(e.clientX, e.clientY)
       const map = pointers.current
       map.set(e.pointerId, { pt, touch, canPan: kind !== 'card', kind })
       syncTouchCount()
 
       if (map.size === 1) {
-        pan.current = { id: e.pointerId, last: pt, moved: false, slop: touch ? touchSlop(kind) : PAN_THRESHOLD, kind }
+        const slop = touch ? touchSlop(kind) : PAN_THRESHOLD
+        pan.current = { id: e.pointerId, last: pt, moved: false, slop, kind, samples: [] }
       } else if (map.size === 2) {
         // Second finger: pinch. Capture both so the pinch survives leaving the element.
         pan.current = null
         gestureMoved.current = true
+        gestureFlags.current.pinched = true
         for (const id of map.keys()) {
           if (!e.currentTarget.hasPointerCapture(id)) {
             try {
@@ -455,7 +571,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         setIsPanning(true)
       }
     },
-    [stopAnim, sync, local, reset, syncTouchCount, setPinching],
+    [stopMotion, sync, local, reset, syncTouchCount, setPinching],
   )
 
   const onPointerMove = useCallback(
@@ -480,6 +596,12 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       if (!p || p.id !== e.pointerId) return
       // A card being dragged by this finger is never a pan.
       if (p.kind === 'card' && gestureRef.current.dragPointer === e.pointerId) return
+      if (tracked.touch) {
+        // Recent positions for the release velocity, FLING_WINDOW_MS back from the newest.
+        const s = p.samples
+        s.push({ t: e.timeStamp, x: pt.x, y: pt.y })
+        while (s[0].t < e.timeStamp - FLING_WINDOW_MS) s.shift()
+      }
       if (!p.moved) {
         // p.last is still the down point here, so the first pan step includes
         // the distance travelled below the threshold.
@@ -518,6 +640,6 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     isPanning,
     isPinching,
     gestureRef,
-    bind: { onPointerDown, onPointerMove, onPointerUp: endPointer, onPointerCancel: endPointer, onWheel },
+    bind: { onPointerDown, onPointerMove, onPointerUp: endPointer, onPointerCancel: endPointer, onLostPointerCapture, onWheel },
   }
 }
