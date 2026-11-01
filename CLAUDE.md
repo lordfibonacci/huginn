@@ -15,7 +15,7 @@ Plans 1 to 4 are built (423 vitest tests, `npm run build` green; `npm run smoke:
 
 - Plan 3 (cli): the `huginn` command line tool in `cli/` (read, write, `pull --brief`, `sync` mirror to `docs/huginn/` with `STATUS.md`), the `/huginn` skill and SessionStart hook in metta2_new, and the first fill of metta (73 items, `cli/seed/`).
 
-- Plan 4 (skyndigreining): the edge function `hg-analyse` analyses new items with the Claude API (summary, body, tags, module, questions, status to waiting on Heimir). Built, reviewed and deployed, but the live tests (handpróf) have NOT run: the edge secrets and the two Vault entries are not set yet (as of 2026-11-01), and until both Vault entries exist the triggers do nothing. Branch `vinnubord-4` is not merged or pushed yet. Steps and the pending tests are in `docs/progress/04-vinnubord-skyndigreining.md`.
+- Plan 4 (skyndigreining): the edge function `hg-analyse` analyses new items with the Claude API (summary, body, tags, module, questions, status to waiting on Heimir). Built, deployed (version 10) and verified live on 2026-11-01: handpróf A to F all pass, at about 0.15 USD per analysis. Steps and results are in `docs/progress/04-vinnubord-skyndigreining.md`.
 
 Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress/02-vinnubord-bord.md`, `docs/progress/03-vinnubord-cli.md` and `docs/progress/04-vinnubord-skyndigreining.md`.
 
@@ -26,7 +26,7 @@ Open items are listed in `docs/progress/01-vinnubord-grunnur.md`, `docs/progress
 - **Backend:** Supabase (Postgres, Auth, RLS, Realtime, Storage)
 - **Routing:** React Router v7
 - **i18n:** `react-i18next`
-- **Tests:** vitest, `src/**/*.test.ts` (pure logic in `src/vinnubord/lib/`) `cli/**/*.test.mjs` (CLI pure logic and parity with the web) and `supabase/functions/**/*.test.ts` (`lib.ts` of the edge function, which stays import free and Deno free so vitest can load it). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
+- **Tests:** vitest, `src/**/*.test.ts` (pure logic in `src/vinnubord/lib/`), `cli/**/*.test.mjs` (CLI pure logic and parity with the web) and `supabase/functions/**/*.test.ts` (`lib.ts` of the edge function, which stays import free and Deno free so vitest can load it). `jsdom` is a dev dependency for the Markdown sanitizer test only (`// @vitest-environment jsdom`).
 - **PWA:** `vite-plugin-pwa` auto update service worker, manifest description "Vinnuborð Mettu"
 - **Markdown:** `marked` and `dompurify` render Markdown in the panel reader. Loaded lazily (`Markdown.tsx` is a lazy chunk), so the board bundle does not carry them. No other UI libraries, icons are inline SVG.
 - **Image pipeline:** `sharp` via `scripts/build-brand-assets.mjs`
@@ -127,7 +127,7 @@ Files live in `supabase/migrations/` (see the README there). Applied with the Su
 
 ### Edge function hg-analyse
 
-Quick analysis of new items (plan 4). Deployed with the MCP `deploy_edge_function` as two files (`index.ts`, `lib.ts`), `verify_jwt` false because it checks its own bearer (`HG_ANALYSE_SECRET`). Edge secrets by name: `HG_ANALYSE_SECRET`, `HG_SERVICE_EMAIL`, `HG_SERVICE_PASSWORD`, and `HG_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY` (the HG_ one wins when not empty; never change `ANTHROPIC_API_KEY`, other functions on the shared project may use it). Vault entries by name: `hg_analyse_secret` (same value as `HG_ANALYSE_SECRET`) and `hg_analyse_url`. Never write values in the repo. Flow: the `0007` triggers post `{ item_id }` through pg_net, the function answers 202 and works in `EdgeRuntime.waitUntil`: 20 s debounce, sign in as the service user, atomic 2 minute lock (`hg_claim_analysis`), gated write. The free plan has a 150 s wall clock per worker, which is why the Anthropic timeout is 90 s with no retries. Model `claude-opus-5-5`, effort medium.
+Quick analysis of new items (plan 4). Live since 2026-11-01 (version 10). Deployed with the MCP `deploy_edge_function` as two files (`index.ts`, `lib.ts`), `verify_jwt` false because it checks its own bearer (`HG_ANALYSE_SECRET`). Edge secrets by name: `HG_ANALYSE_SECRET`, `HG_SERVICE_EMAIL`, `HG_SERVICE_PASSWORD`, and `HG_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY` (the HG_ one wins when not empty; never change `ANTHROPIC_API_KEY`, other functions on the shared project may use it). Vault entries by name: `hg_analyse_secret` (same value as `HG_ANALYSE_SECRET`) and `hg_analyse_url`. Never write values in the repo. Flow: the `0007` triggers post `{ item_id }` through pg_net, the function answers 202 and works in `EdgeRuntime.waitUntil`: 20 s debounce, sign in as the service user, atomic 2 minute lock (`hg_claim_analysis`), gated write. The free plan has a 150 s wall clock per worker, which is why the Anthropic timeout is 90 s with no retries. Model `claude-opus-5-5`, effort medium.
 
 ### Auth
 

@@ -1,11 +1,11 @@
 # 04 Vinnuborð: skyndigreining (plan 4)
 
 Dagsetning: 2026-11-01
-Grein: `vinnubord-4` (HEAD `2ae5f43` þegar skráin var skrifuð, ekki sameinuð, ekki ýtt). metta2_new hliðin: grein `huginn-bundle` (`f705f82f`), ekki sameinuð.
+Grein: `vinnubord-4` (ekki sameinuð, ekki ýtt þegar þessi texti var skrifaður). metta2_new hliðin: grein `huginn-bundle` (`f705f82f`), ekki sameinuð.
 Plan: `docs/superpowers/plans/2026-10-31-vinnubord-4-skyndigreining.md`
 Spekk: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md` (kafli 7.3)
 
-Staða: kóðinn er búinn, yfirfarinn og edge function er í loftinu. **Lifandi prófin (handpróf) hafa ekki verið keyrð**, því Heimir hefur ekki sett secrets. Þar til bæði Vault gildin eru til gera triggerarnir ekkert.
+Staða: kóðinn er búinn, yfirfarinn, í loftinu og sannreyndur lifandi. Heimir setti secrets og báðar Vault færslurnar 2026-11-01 (um 07:53 UTC). Functionin er `hg-analyse` útgáfa 10, bæti fyrir bæti eins og skrárnar á þessari grein. Handpróf A til F standast öll (sjá neðar). Sameining og push fylgja handprófunum, strax eftir þennan commit.
 
 ## Hvað var gert
 
@@ -66,9 +66,9 @@ Vault (SQL editor):
 | `hg_analyse_secret` | sami strengur og `HG_ANALYSE_SECRET` |
 | `hg_analyse_url` | `https://czdjxtsjgughimlazdmu.supabase.co/functions/v1/hg-analyse` |
 
-**Staðan 2026-11-01: ekkert af þessu er sett.** MCP tengillinn neitaði að skrifa secrets, svo þetta er hjá Heimi. Triggerarnir gera ekkert fyrr en báðar Vault færslurnar eru til. Functionin er deployed (`verify_jwt` slökkt, hún sannreynir bearer sjálf): GET gefur 405 og POST án secret gefur 500 `HG_ANALYSE_SECRET is not set`.
+**Staðan 2026-11-01: allt þetta er sett hjá Heimi** (um 07:53 UTC). Functionin er deployed sem útgáfa 10 (`verify_jwt` slökkt, hún sannreynir bearer sjálf). Taflan og skrefin hér að neðan eru geymd svo hægt sé að endurtaka uppsetninguna.
 
-### Skref hjá Heimi
+### Skref hjá Heimi (framkvæmd 2026-11-01)
 
 1. Búðu til langan slembistreng. Hann er bæði `HG_ANALYSE_SECRET` og Vault gildið.
 2. Supabase Dashboard, Edge Functions, Secrets: bættu við `HG_ANALYSE_SECRET`, `HG_SERVICE_EMAIL`, `HG_SERVICE_PASSWORD` og API lykli (`HG_ANTHROPIC_API_KEY` er öruggasta nafnið).
@@ -79,30 +79,35 @@ select vault.create_secret('<sami strengur og HG_ANALYSE_SECRET>', 'hg_analyse_s
 select vault.create_secret('https://czdjxtsjgughimlazdmu.supabase.co/functions/v1/hg-analyse', 'hg_analyse_url');
 ```
 
-4. Segðu Claude að handprófin megi hefjast.
 
-## Handpróf (öll óunnin)
+## Handpróf (keyrð 2026-11-01, öll standast)
 
-Skilyrði: secrets og Vault eins og að ofan. Prófverk heita "Prófun: " og eru sett í `dropped` á eftir, engu er eytt. Fylgstu með Edge Function logs á `hg-analyse`.
+Prófverk heita "Prófun: " og voru öll sett í `dropped`, engu var eytt.
 
-- **A, vefverk með md spec:** stofna verk í vefnum með md skrá. Innan 90 s: samantekt, lýsing, merki, módúll, staðan Bíður hjá Heimi, spurningar og atburðurinn `analysis.done` í sögunni. Staðfesta líka línu í `net._http_response` með status 202.
-- **B, staða breytt strax:** stofna verk og strax `huginn item set <id> --status waiting`. Functionin sleppir (logs sýna skipped), engin greining og engar spurningar.
-- **C, vitlaus API lykill:** setja `HG_ANTHROPIC_API_KEY` á ógilt gildi og stofna verk. Búist við `analysis.failed` með ástæðu í sögunni og stöðunni áfram `new`. Setja svo `HG_ANTHROPIC_API_KEY` á tómt gildi, þá er `ANTHROPIC_API_KEY` notaður aftur. Ekki snerta `ANTHROPIC_API_KEY`.
-- **D, tvær skrár með 5 s millibili:** ein `analysis.done`, ekki tvær.
-- **E, tvö verk með 60 s millibili:** bæði greind. Skoða logs eftir `beforeunload` línunni (sýnir hvort worker var drepinn með keyrslu í gangi).
-- **F, breyta lýsingu 30 s eftir stofnun verks:** breytingin lifir undir `Upprunalegur texti` (hliðin á `updated_at` virkar).
-- **Verk 3 skref 3, búntið:** verk um módúl sem aðeins búntið þekkir, t.d. "Askur kælirennur". Greiningin á að nota búntið. Setja verkið í `dropped` á eftir.
+- **A, vefverk með md spec: PASS.** Verk `0a3ab577`, 58 s frá stofnun þar til staðan var Bíður hjá Heimi. Módúll `hitamaelingar`, 5 merki, 4 spurningar, búntið var notað. Texti Árna helst undir `Upprunalegur texti`.
+- **B, staða breytt strax: PASS.** Verk `795fa977` var sleppt með "status waiting", ekkert skrifað.
+- **C, bilun: PASS.** Verk `791750f1`. Keyrt með tímabundnu deploy og ekki til módelauðkenni í stað vitlauss lykils (R31), því API lykill Heimis sést aðeins einu sinni. Niðurstaða: `analysis.failed` með 404 textanum og `stage` `before_write`, staðan áfram `new`, lásinn hreinsaður. Nákvæm útgáfa úr repo var sett aftur í loftið og bætasamanburður gerður.
+- **D, tvær skrár: PASS.** Tvær skráarsendingar voru sleppt sem læstar, ein greining. Seinni skráin lenti 26 s á eftir verkinu og var ekki lesin, sem er skjalfest mörk (seinar skrár).
+- **E, tvö verk með 60 s millibili: PASS.** Verk `12322bff`, annað verkið 60 s síðar, greindist eðlilega.
+- **F, lýsingu breytt skömmu fyrir skrif: PASS.** Verk `f00b43a6`. Breyting Árna á texta 3 s fyrir skrifið lifði undir `Upprunalegur texti`.
+- **Task 3 skref 3, búntið: PASS.** Verkið úr E fann núverandi verk `6955e03c` "Askur: kælirennur" úr búntinu.
+
+### R31, bilunarprófið C
+
+Í stað ógilds API lykils var function sett tímabundið í loftið með módelauðkenni sem er ekki til. Sama bilunarleið (Anthropic svarar villu) og niðurstaðan var sú sem búist var við.
 
 ### Kostnaður per greiningu
 
-Mæla á þremur prófverkum úr `input_tokens` og `output_tokens` í `data` á `analysis.done`. Verð `claude-opus-5-5`: 4 USD á milljón inntakstákn, 20 USD á milljón úttakstákn.
+Mælt úr `input_tokens` og `output_tokens` í `data` á `analysis.done`. Verð `claude-opus-5-5`: 4 USD á milljón inntakstákn, 20 USD á milljón úttakstákn.
 
 | Prófverk | input_tokens | output_tokens | USD |
 |---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| Meðaltal | | | |
+| A | 27 350 | 2 483 | 0,159 |
+| F | 27 133 | 1 464 | 0,138 |
+| E | 27 130 | 2 136 | 0,151 |
+| Meðaltal | | | um 0,15 |
+
+Búntið (53 KB samhengi) er mestur hluti þessara um 27 þúsund inntakstákna. Prompt caching á kerfisfyrirmælum og búnti gæti sparað á síðari stigum.
 
 ## Úrskurðir sem skipta máli
 
@@ -136,16 +141,15 @@ Allir R1 til R30 eru í `.superpowers/sdd/2026-10-31-vinnubord-4-skyndigreining/
 
 ## Hvað bíður
 
-1. **Handprófin** hér að ofan, eftir að Heimir setur secrets.
-2. **Pro áskrift** fyrir vídeó.
-3. **Claude Code hjá Árna** (uppsetning í `03-vinnubord-cli.md`).
-4. **Útlitsumferðir Heimis.**
-5. **Eyðing `huginn_` taflna og `huginn-attachments` bucket** (handvirkt hjá Heimi, nema `huginn_profiles` sem verður að vera).
-6. **Sameining `vinnubord-4` í main og push** eftir að handprófin standast. Grein `huginn-bundle` í metta2_new sameinast með.
+1. **Pro áskrift** fyrir vídeó.
+2. **Claude Code hjá Árna** (uppsetning í `03-vinnubord-cli.md`).
+3. **Útlitsumferðir Heimis.**
+4. **Eyðing `huginn_` taflna og `huginn-attachments` bucket** (handvirkt hjá Heimi, nema `huginn_profiles` sem verður að vera).
+5. **Sameining `vinnubord-4` í main og push** fylgja handprófunum og gerast strax eftir þennan commit. Grein `huginn-bundle` í metta2_new sameinast með.
 
 ## Staðfesting
 
 - `npm run test`: 423 próf græn. `npm run build`: grænt.
 - `npx -y deno@2 check --no-lock --node-modules-dir=none supabase/functions/hg-analyse/index.ts`: grænt.
 - Yfirferðir: Task 2a (tveir lagfæringarhringir), heildaryfirferð á Fable ("Ready after fixes"), lagfæringaralda F1 til F7 og endurskoðun hennar kom hrein.
-- Lifandi: functionin svarar GET 405 og POST án secret 500. Engin handpróf ennþá.
+- Lifandi: `hg-analyse` útgáfa 10, handpróf A til F og Task 3 skref 3 standast (2026-11-01).
