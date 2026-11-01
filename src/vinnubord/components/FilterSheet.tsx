@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FilterApi } from '../hooks/useFilter'
 import type { FilterOption } from '../lib/filters'
@@ -39,7 +39,14 @@ export function FilterSheet({ open, onClose, picks, filter, tags, packages, view
 function Sheet({ onClose, picks, filter, tags, packages, viewMenu, onClearView }: Omit<Props, 'open'>) {
   const { t } = useTranslation()
   const headingId = useId()
+  const sheetRef = useRef<HTMLDivElement | null>(null)
   const f = filter.filter
+
+  // Focus moves into the sheet on open, like the new item sheet. The sheet
+  // itself takes it, not a chip, so nothing is lit by accident.
+  useEffect(() => {
+    sheetRef.current?.focus()
+  }, [])
 
   // Esc leaves a field first (the view editor's name), then closes. Caught in
   // the capture phase so the side panel behind the sheet does not close too.
@@ -66,7 +73,14 @@ function Sheet({ onClose, picks, filter, tags, packages, viewMenu, onClearView }
   return (
     <div className="hg-sheet-wrap" data-panel="">
       <div className="hg-sheet-backdrop" onClick={onClose} />
-      <div className="hg-modal-sheet hg-filter-sheet" role="dialog" aria-modal="true" aria-labelledby={headingId}>
+      <div
+        ref={sheetRef}
+        className="hg-modal-sheet hg-filter-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+        tabIndex={-1}
+      >
         <div className="hg-new-head hg-filter-head">
           <h2 id={headingId}>{t('vinnubord.filters.heading')}</h2>
           {picks > 0 && (

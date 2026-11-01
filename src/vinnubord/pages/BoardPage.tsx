@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useMediaQuery } from '../../shared/hooks/useMediaQuery'
 import { useViewer } from '../hooks/useViewer'
 import { useActiveView } from '../hooks/useActiveView'
 import { useBoardData } from '../hooks/useBoardData'
@@ -41,6 +42,12 @@ export function BoardPage() {
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  // The filter sheet belongs to the two row bar: past 1024 px (a tablet
+  // turned to landscape) its button is gone, so the sheet closes too.
+  const narrow = useMediaQuery('(max-width: 1023px)')
+  useEffect(() => {
+    if (!narrow) setFiltersOpen(false)
+  }, [narrow])
   const filterApi = useFilter(project?.id ?? '')
   const boardRef = useRef<BoardHandle | null>(null)
   const newItemToast = useNewItemToast(data, user?.id ?? '')

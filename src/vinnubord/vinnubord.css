@@ -1232,6 +1232,13 @@
    filter sheet (the group is not rendered here). The search field opens as a
    third row. */
 @media (max-width: 1023px) {
+  /* The side panel (768 to 1023 px) starts below both rows: two touch high
+     rows, two row gaps (the closed search row is an empty track that still
+     takes its gap), the paddings and the bottom border. An open search row may
+     sit under the panel. The phone sheet uses --hg-sheet-top. */
+  :root {
+    --hg-panel-top: calc(var(--hg-top-pad-top-phone) + 2 * var(--hg-touch) + 2 * var(--hg-top-gap-phone) + var(--hg-top-pad-bottom-phone) + 1px + var(--hg-safe-top) + 12px);
+  }
   .hg-top {
     height: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "a b" "f f" "s s"; gap: var(--hg-top-gap-phone);
@@ -1325,6 +1332,7 @@
 }
 /* The filter sheet: same frame, a head with "Hreinsa" at the end. Its view
    menu lays out its separator, hint, error and editor on rows of their own. */
+.hg-filter-sheet:focus { outline: none; }
 .hg-filter-head { display: flex; align-items: center; justify-content: space-between; gap: var(--hg-pill-gap); }
 .hg-filter-sheet .hg-view-chips > :is(.hg-menu-sep, .hg-menu-empty, .hg-pn-error, .hg-view-editor) { flex-basis: 100%; }
 @media (max-width: 767px) {
