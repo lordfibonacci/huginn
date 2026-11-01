@@ -1,6 +1,7 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, type Ref, type RefObject } from 'react'
 import { bezierControl, bezierPoint, bezierTail, wireEndpoints, type Rect, type View } from '../lib/geometry'
 import { canvasIdle, drawUpProgress } from '../lib/motion'
+import type { Gesture } from '../hooks/useViewport'
 import type { Tone, WireMode } from '../lib/status'
 
 // Glowing wires from each item card to its module, drawn on one canvas that
@@ -20,6 +21,12 @@ import type { Tone, WireMode } from '../lib/status'
 // WIRE.drawUp.ms, once; Board calls it for the first load.
 // prefers-reduced-motion: wires are drawn, sparks and the draw up are not,
 // and the canvas only redraws on change.
+//
+// Touch devices (pointer: coarse) draw cheaper: no shadow blur on wires or
+// sparks, the pixel ratio capped at WIRE.coarse.dpr, ambient sparks born only
+// on hot wires (so a still board has none and rests), and while a pan or pinch
+// moves the view (gestureRef.current.active) only the core line is drawn. The
+// first frame after the gesture draws the glow again. A mouse sees none of this.
 
 export type WireItem = { id: string; moduleId: string; tone: Tone; mode: WireMode }
 export type WiresHandle = {
@@ -33,6 +40,8 @@ type Props = {
   items: WireItem[]
   // The live view (useViewport), read every frame.
   viewRef: RefObject<View>
+  // The live gesture (useViewport): active while a pan or pinch moves the view.
+  gestureRef: RefObject<Gesture>
   // Items treated as active (selected or being dragged): they spark like pulse wires.
   hotIds: Set<string>
   // Runs at the start of every frame, before the rects are read (card
@@ -73,6 +82,7 @@ const WIRE = {
   },
   burst: { speedMin: 0.006, speedRange: 0.012, radiusMin: 1.2, radiusRange: 1.8 },
   drawUp: { ms: 1100 },
+  coarse: { dpr: 1.5 },
 } as const
 const TONES: Tone[] = ['gold', 'lilac', 'coral', 'teal', 'stone']
 
@@ -105,12 +115,12 @@ function relRect(el: Element, host: DOMRect): Rect {
   return { x: r.left - host.left, y: r.top - host.top, w: r.width, h: r.height }
 }
 
-export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
+export function Wires({ items, viewRef, gestureRef, hotIds, onFrame, ref }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const sparks = useRef(new Map<string, Spark[]>())
-  const live = useRef({ items, viewRef, hotIds, onFrame })
+  const live = useRef({ items, viewRef, gestureRef, hotIds, onFrame })
   useLayoutEffect(() => {
-    live.current = { items, viewRef, hotIds, onFrame }
+    live.current = { items, viewRef, gestureRef, hotIds, onFrame }
   })
   const reduced = useRef(false)
   // Draw up: requested by drawUp(), started on the next frame.
@@ -174,8 +184,11 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
     let dirty = true
     let w = 0
     let h = 0
+    // Touch device: the cheaper drawing rules above.
+    const coarseMq = window.matchMedia('(pointer: coarse)')
+    let coarse = coarseMq.matches
     const size = () => {
-      const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1)
+      const dpr = Math.min(coarse ? WIRE.coarse.dpr : MAX_DPR, window.devicePixelRatio || 1)
       w = canvas.clientWidth
       h = canvas.clientHeight
       canvas.width = Math.round(w * dpr)
@@ -186,6 +199,11 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
     size()
     const ro = new ResizeObserver(size)
     ro.observe(canvas)
+    const onCoarse = () => {
+      coarse = coarseMq.matches
+      size()
+    }
+    coarseMq.addEventListener('change', onCoarse)
 
     // Card and module elements per wire, looked up once instead of two
     // querySelector calls per wire per frame. Cleared when the wire list
@@ -215,14 +233,16 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
     let raf = 0
     let last = 0
     let drawUpStart: number | null = null
-    let drawn: { items: WireItem[]; view: View; hotIds: Set<string> } | null = null
+    // lean: drawn without the glow stroke, during a touch gesture.
+    let drawn: { items: WireItem[]; view: View; hotIds: Set<string>; lean: boolean } | null = null
 
     const frame = (ts: number) => {
       raf = requestAnimationFrame(frame)
       const dt = Math.min(MAX_DT, ts - last || FRAME_MS)
       last = ts
-      const { items: list, viewRef: vr, hotIds: hot, onFrame: step } = live.current
+      const { items: list, viewRef: vr, gestureRef: gr, hotIds: hot, onFrame: step } = live.current
       const v = vr.current
+      const lean = coarse && gr.current.active
       const moved = step?.() ?? false
       const motion = !reduced.current
 
@@ -248,8 +268,10 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
             own = []
             sparks.current.set(it.id, own)
           }
+          // Touch: ambient sparks only on hot wires, so a still board has none.
           const active = it.mode === 'pulse' || hot.has(it.id)
-          if (own.length < (active ? sp.maxActive : sp.maxCalm) && Math.random() < (active ? sp.chanceActive : sp.chanceCalm)) {
+          const births = !coarse || hot.has(it.id)
+          if (births && own.length < (active ? sp.maxActive : sp.maxCalm) && Math.random() < (active ? sp.chanceActive : sp.chanceCalm)) {
             own.push({ t: 0, v: sp.speedMin + Math.random() * sp.speedRange, r: sp.radius })
           }
           alive += own.length
@@ -267,7 +289,8 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
         drawn.view.x !== v.x ||
         drawn.view.y !== v.y ||
         drawn.view.z !== v.z ||
-        drawn.hotIds !== hot
+        drawn.hotIds !== hot ||
+        drawn.lean !== lean
       const idle = canvasIdle({
         changed,
         moving: moved,
@@ -278,7 +301,7 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
       if (idle) return
       dirty = false
       // A copy: the view is compared by its numbers, not by identity.
-      drawn = { items: list, view: { ...v }, hotIds: hot }
+      drawn = { items: list, view: { ...v }, hotIds: hot, lean }
 
       // Share of every wire drawn, grown from the module end.
       let reach = 1
@@ -310,15 +333,20 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
         ctx.beginPath()
         ctx.moveTo(part.e.x1, part.e.y1)
         ctx.bezierCurveTo(part.c[0], part.c[1], part.c[2], part.c[3], part.e.x2, part.e.y2)
-        // Glow, then the core line on the same path.
+        // Glow, then the core line on the same path. Touch: no shadow blur,
+        // and no glow at all while a gesture moves the view.
         const glow = parked ? WIRE.parkedGlow : WIRE.glow
         const core = parked ? WIRE.parkedCore : WIRE.core
-        ctx.strokeStyle = rgba(rgb, glow.alpha)
-        ctx.lineWidth = glow.width * zs
-        ctx.shadowBlur = parked ? 0 : WIRE.glow.blur * zs
-        ctx.shadowColor = rgba(rgb, WIRE.glow.shadowAlpha)
-        ctx.stroke()
-        ctx.shadowBlur = 0
+        if (!lean) {
+          ctx.strokeStyle = rgba(rgb, glow.alpha)
+          ctx.lineWidth = glow.width * zs
+          if (!coarse) {
+            ctx.shadowBlur = parked ? 0 : WIRE.glow.blur * zs
+            ctx.shadowColor = rgba(rgb, WIRE.glow.shadowAlpha)
+          }
+          ctx.stroke()
+          ctx.shadowBlur = 0
+        }
         ctx.strokeStyle = rgba(rgb, core.alpha)
         ctx.lineWidth = core.width * zs
         if (parked) ctx.setLineDash([WIRE.parkedCore.dash * zs, WIRE.parkedCore.gap * zs])
@@ -342,8 +370,10 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
           ctx.beginPath()
           ctx.arc(x, y, p.r * zs, 0, Math.PI * 2)
           ctx.fillStyle = colors.spark
-          ctx.shadowBlur = sp.blur
-          ctx.shadowColor = rgb
+          if (!coarse) {
+            ctx.shadowBlur = sp.blur
+            ctx.shadowColor = rgb
+          }
           ctx.fill()
           ctx.shadowBlur = 0
         }
@@ -356,6 +386,7 @@ export function Wires({ items, viewRef, hotIds, onFrame, ref }: Props) {
       cancelAnimationFrame(raf)
       ro.disconnect()
       sizeWatch.disconnect()
+      coarseMq.removeEventListener('change', onCoarse)
     }
   }, [])
 

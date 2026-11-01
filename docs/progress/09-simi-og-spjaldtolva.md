@@ -53,6 +53,25 @@ Til samanburðar gaf bygging task 3 (`f853367`) sama kvöld `pinch-out@min` gap 
 
 Í `perf` skriftunni fær `pan` ekki skrið: CDP sendir hreyfingarnar með um 47 ms millibili, svo innan 80 ms gluggans fyrir sleppingu er aðeins eitt sýni. Sér prófun með hraðara pani sýndi skrið sem næsta klípa stöðvar og að klípan breytir aðdrætti eðlilega, án villu í console.
 
+## Eftir task 6
+
+Ódýrari vírar á snertitækjum (`Wires`, `pointer: coarse`): enginn `shadowBlur`, pixlahlutfall í mesta lagi 1,5, sjálfkrafa neistar fæðast aðeins á heitum vírum (valið eða dregið kort) og glóðarstrokunni er sleppt meðan bending hreyfir borðið. Keyrt með `npm run build`, `vite preview` og `SITE=http://localhost:4173 npm run shots:hg perf`, sími með 4x hægari örgjörva:
+
+```
+pinch-out@min    gap  n=184 mean=46.8 p50=17 p90=117 max=133 >33ms=69
+                 work n=184 mean=5.3 p50=0 p90=5 max=50 >33ms=16
+pan              gap  n=187 mean=16.7 p50=17 p90=17 max=17 >33ms=0
+                 work n=187 mean=1.6 p50=0 p90=5 max=6 >33ms=0
+pinch-in         gap  n=185 mean=46.6 p50=17 p90=100 max=167 >33ms=73
+                 work n=185 mean=5.5 p50=0 p90=5 max=79 >33ms=17
+idle             gap  n=61 mean=16.7 p50=17 p90=17 max=17 >33ms=0
+                 work n=61 mean=0.1 p50=0 p90=0 max=0 >33ms=0
+```
+
+Miðað við task 4: í hvíld fer vinna í ramma úr mean 5.5 í 0.1 ms (p90 úr 6 í 0), svo kyrrt borð kostar ekkert lengur og bilið milli ramma er 17 ms í stað 33. Í klípu fer work mean úr 17.3 í 5.3 (`pinch-out@min`) og úr 12.7 í 5.5 (`pinch-in`), p90 úr 48 til 49 í 5, og gap mean úr 61.8 í 46.8 og úr 49.5 í 46.6. Pan fer úr work mean 5.8 í 1.6. Stöku þungir rammar eru eftir í klípu (max 50 og 79).
+
+Mús á 1440 x 900 (tímabundin skrifta utan repo, öllum skrifum í gagnagrunn hafnað): `pointer: coarse` er ósatt, vírarnir teikna um 230 ramma á 5 s með um 65 neista í hverjum ramma og `shadowBlur` 14 eins og áður. Á rólegum vír (ekki pulse, ekki parked) teiknuðust 0 neistar á 5 s áður en kortið var valið og 682 neistabogar á 5 s eftir að það var valið.
+
 ## Hvað bíður
 
 Tasks 2 og áfram í planinu. Þessi skrá fær sína kafla eftir því sem þeir klárast.

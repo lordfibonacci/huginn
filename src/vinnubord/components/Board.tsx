@@ -522,7 +522,7 @@ export function Board({
         {...vp.bind}
         onClick={onBoardClick}
       >
-        <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} hotIds={hotIds} onFrame={stepFrame} />
+        <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} gestureRef={vp.gestureRef} hotIds={hotIds} onFrame={stepFrame} />
         <div ref={vp.worldRef} className="hg-world" {...drag.bind}>
           {rows.map(({ pkg, modules }) => (
             <PackColumn
