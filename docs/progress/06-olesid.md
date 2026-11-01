@@ -1,7 +1,7 @@
 # 06 Vinnuborð: ólesið (plan 6)
 
 Dagsetning: 2026-11-01
-Grein: `main` (commits 4c551f7 til d09c5d3 í Huginn ofan á d8dc7a8, ekki ýtt þegar þessi texti var skrifaður).
+Grein: `main` (commits 4c551f7 til 7a9842a í Huginn ofan á d8dc7a8, auk lagfæringarinnar 0010b í síðasta commit lokayfirferðar, ekki ýtt þegar þessi texti var skrifaður).
 Plan: `docs/superpowers/plans/2026-11-01-olesid.md`
 Spekk: `docs/superpowers/specs/2026-11-01-olesid-og-synir-design.md`
 
@@ -25,7 +25,8 @@ Staða: kóðinn er búinn og yfirfarinn task fyrir task. Ólesið kemur nú úr
 
 - `npm run build`: grænt.
 - `npm run test`: 27 skrár, 435 próf græn.
-- `npm run smoke:hg`: `ok 8/8` (keyrt í task 1, lifandi gagnagrunnur).
+- `npm run smoke:hg`: `ok 8/8` (keyrt í task 1 og aftur eftir 0010b, lifandi gagnagrunnur).
+- Migrations: `0010_hg_unread` og `0010b_hg_unread_open_only`, báðar beittar.
 - Yfirferð eftir hvern task. Lokayfirferð allrar greinarinnar á Fable er eftir og gerist áður en ýtt er.
 
 ## Hvað bíður
@@ -40,7 +41,7 @@ Staða: kóðinn er búinn og yfirfarinn task fyrir task. Ólesið kemur nú úr
 
 ### Opin atriði sem fundust í byggingunni
 
-1. `hg_unread` skilar líka flokkum fyrir verk í `done` og `dropped`, sem `hg_mark_all_read` hreinsar aldrei. Þeim fjölgar með tímanum (179 flokkar hjá Heimi 2026-11-01) og sjálfgefið 1000 raða þak PostgREST myndi einn daginn skera listann þegjandi. Síðari migration getur takmarkað við opin verk.
+1. Lagað í lokayfirferð: migration `0010b_hg_unread_open_only` (beitt gegnum MCP 2026-11-01) takmarkar `hg_unread` við opin verk, svo flokkar fyrir `done` og `dropped` safnast ekki upp að 1000 raða þaki PostgREST (hjá Heimi fór talan úr 175 flokkum í 72, enginn lokaður).
 2. Ferska línan bætir hæð á spjaldið sem `estimateCardHeight` í CLI telur ekki með (samþykkt í spekk 4.3).
 3. Í 390 px breidd helst stimpill handtaks á línu textans í stað þess að brotna undir hann. Textadálkurinn mjókkar, ekkert flæðir yfir.
 4. Ferskar sögulínur fá aukalegt padding svo þær sitji innrykkaðar.
