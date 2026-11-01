@@ -338,7 +338,8 @@ const base = {
 export const BOARD_SIZES = {
   ...base,
   // Pack padding, title line and title gap: where the first module starts.
-  packHead: Math.round(base.packPadTop + base.packTitleSize * LH_NORMAL + base.packTitleGap),
+  // The title is a button at least --hg-touch tall, which beats its text line.
+  packHead: Math.round(base.packPadTop + Math.max(base.touch, base.packTitleSize * LH_NORMAL) + base.packTitleGap),
 }
 
 const S = BOARD_SIZES

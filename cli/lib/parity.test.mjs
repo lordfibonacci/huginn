@@ -145,8 +145,14 @@ describe('write helpers parity with the web', () => {
     expect([BOARD_SIZES.cardPadY, BOARD_SIZES.cardPadX]).toEqual([box('card-pad').y, box('card-pad').x])
     expect([BOARD_SIZES.chipPadY, BOARD_SIZES.chipPadX]).toEqual([box('card-chip-pad').y, box('card-chip-pad').x])
     expect(BOARD_SIZES.gap).toBe(webPlacement.NEW_CARD_GAP)
-    // The pack head (padding, title, gap) is where the rail starts.
-    expect(BOARD_SIZES.packHead).toBe(px('pack-rail-top'))
+    // The pack head is padding, the title button (at least --hg-touch tall,
+    // the same token the CLI reads as touch) and the title gap.
+    expect(BOARD_SIZES.touch, 'touch = --hg-touch').toBe(px('touch'))
+    expect(BOARD_SIZES.packHead).toBe(
+      Math.round(px('pack-pad-top') + Math.max(px('touch'), px('pack-title-size') * 1.37) + px('pack-title-gap')),
+    )
+    // The rail starts at or above the first module.
+    expect(px('pack-rail-top')).toBeLessThanOrEqual(BOARD_SIZES.packHead)
 
     const board = readFileSync(new URL('../../src/vinnubord/components/Board.tsx', import.meta.url), 'utf8')
     const m = board.match(/const NEW_CARD_SIZE = \{ w: (\d+), h: (\d+) \}/)
