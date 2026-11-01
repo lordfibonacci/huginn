@@ -89,6 +89,19 @@ idle             gap  n=60 mean=16.7 p50=17 p90=17 max=17 >33ms=0
 
 Miðað við task 6: gap mean í klípu fer úr 46.8 í 42.1 (`pinch-out@min`) og úr 46.6 í 40.4 (`pinch-in`), work er í raun óbreytt. Pan og hvíld eru óbreytt innan skekkju. Munurinn er lítill í hermi því hermirinn teiknar ekki með GPU eins og sími. Mús á 1440 x 900: sama útlit og áður, blur sést á kortum yfir norðurljósunum.
 
+## Eftir task 11
+
+Spjaldið á síma (undir 768 px) opnast í fullri hæð, er fast í hæð `calc(100dvh - var(--hg-sheet-top))` og færist með `transform` eftir `--hg-sheet-offset` (px). Það er dregið frá handfangi, haus og efni (efnið aðeins með snertingu sem byrjar efst og fer niður). Keyrt gegn `vite preview` á port 4173 með `SITE=http://localhost:4173 npm run shots:hg phone`: `phone-5-panel.png` sýnir spjaldið í fullri hæð með 48 px rönd efst, og `phone-5b-panel-half.png` sýnir það í hálfri stöðu eftir drátt í handfangi. Skriftan hliðrar nú borðinu með CDP snertingu þegar ekkert kort er á skjánum, svo myndirnar af spjaldinu eru teknar aftur.
+
+Tímabundnar athuganir (afrit af skriftunni utan git, öllum skrifum í gagnagrunn öðrum en lesmerkjum hafnað):
+
+- (a) Efnið skrunað niður um 200 px með músarhjóli, svo snertidráttur niður um 200 px inni í efninu: `scrollTop` fór úr 200 í 15 og spjaldið hreyfðist ekki (efri brún áfram 48 px, `--hg-sheet-offset` 0). Efnið skrunar, spjaldið stendur kyrrt.
+- Til samanburðar: efnið efst og hægur snertidráttur niður um 250 px inni í efninu færði spjaldið í hálfa stöðu (`--hg-sheet-offset` 358,2, sem er 0,45 af 796).
+- (b) Spjaldið í fullri hæð og viewport sett á 844 x 390: breiddin er yfir 767 px, svo spjaldið verður hliðarspjald og er áfram opið. Aftur í 390 x 844: spjaldið er aftur neðst, opið, í fullri hæð með `--hg-sheet-offset` 0 og hæð 796. Í hálfri stöðu og hæð breytt í 390 x 600 fylgir offset nýju hæðinni (248,4, sem er 0,45 af 552) og spjaldið er 552 px hátt, svo staðan helst.
+- Tap á handfang skiptir milli fullrar og hálfrar stöðu, tap á haus gerir ekkert, hægur dráttur í haus niður um 280 px setur spjaldið í hálfa stöðu.
+- Mús á 390 x 844: dráttur í handfang niður um 300 px setur spjaldið í hálfa stöðu, dráttur í haus upp setur það aftur í fulla hæð án þess að texti veljist. Í fullri hæð er 48 px röndin efst öll undir stikunni, svo þar er enginn blettur af borðinu til að smella á. Í hálfri stöðu lokar smellur á borðið fyrir ofan spjaldið því.
+- Mús á 1440 x 900: hliðarspjaldið er óbreytt (efri brún 76 px, hæð 808, engin `--hg-sheet-offset`).
+
 ## Hvað bíður
 
 Tasks 2 og áfram í planinu. Þessi skrá fær sína kafla eftir því sem þeir klárast.

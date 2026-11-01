@@ -115,6 +115,28 @@ const cardOnScreen = (page) =>
     return null
   })
 
+// A card on screen, panning the board with one finger until one shows: up
+// first, then left. Each pan waits for the fling to settle before looking.
+async function findCard(page, cdp) {
+  const pans = [
+    [0, -300],
+    [0, -300],
+    [-250, 0],
+    [0, -300],
+    [-250, 0],
+    [0, -300],
+  ]
+  let box = await cardOnScreen(page)
+  for (const [dx, dy] of pans) {
+    if (box) break
+    const from = { x: dx ? 320 : 195, y: dy ? 650 : 500 }
+    await touchSeq(cdp, [{ from, to: { x: from.x + dx, y: from.y + dy } }], 20, 400)
+    await page.waitForTimeout(1500)
+    box = await cardOnScreen(page)
+  }
+  return box
+}
+
 async function shots(browser, name, dev) {
   const { ctx, page, cdp, errors } = await open(browser, dev)
   const shot = (n) => page.screenshot({ path: `${OUT}/${name}-${n}.png` })
@@ -148,7 +170,7 @@ async function shots(browser, name, dev) {
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForSelector('.hg-card')
   await page.waitForTimeout(2000)
-  const box = await cardOnScreen(page)
+  const box = await findCard(page, cdp)
   if (box) {
     await tap(cdp, box.x, box.y)
     await page.waitForTimeout(1000)
@@ -157,7 +179,7 @@ async function shots(browser, name, dev) {
     const handle = (await handleEl.count()) ? await handleEl.boundingBox() : null
     if (handle) {
       const hx = handle.x + handle.width / 2
-      await touchSeq(cdp, [{ from: { x: hx, y: handle.y + 10 }, to: { x: hx, y: handle.y + 380 } }], 20, 300)
+      await touchSeq(cdp, [{ from: { x: hx, y: handle.y + 10 }, to: { x: hx, y: handle.y + 300 } }], 20, 300)
       await page.waitForTimeout(900)
       await shot('5b-panel-half')
     }
