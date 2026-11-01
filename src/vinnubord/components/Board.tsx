@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent,
   type ReactNode,
   type Ref,
@@ -467,7 +468,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
         <Wires ref={wiresRef} items={wireItems} view={view} hotIds={hotIds} onFrame={stepFrame} />
         <div
           className="hg-world"
-          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}
+          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})`, '--hg-z': view.z } as CSSProperties}
           {...drag.bind}
         >
           {rows.map(({ pkg, modules }) => (

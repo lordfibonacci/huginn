@@ -23,7 +23,7 @@
 
   --hg-radius-card: 20px;
   --hg-radius-panel: 24px;
-  --hg-radius-module: 18px;
+  --hg-radius-module: 20px;
 
   /* Touch target, and the field font size that keeps iOS from zooming in. */
   --hg-touch: 44px;
@@ -31,31 +31,31 @@
   --hg-fs-field-wide: 13.5px;
 
   /* ---------- Pack columns ---------- */
-  --hg-pack-w: 300px;
+  --hg-pack-w: 380px;
   --hg-pack-z: 3;
   --hg-pack-pad-top: 14px;
-  --hg-pack-title-gap: 12px;
+  --hg-pack-title-gap: 14px;
   --hg-pack-title-indent: 14px;
-  --hg-pack-title-size: 13px;
-  --hg-pack-rail-top: 44px;
+  --hg-pack-title-size: 22px;
+  --hg-pack-rail-top: 58px;
 
   /* ---------- Module cards ---------- */
   --hg-module-bg: rgba(22, 30, 43, 0.72);
   --hg-module-bg-hover: rgba(29, 40, 56, 0.85);
   --hg-module-border: rgba(255, 255, 255, 0.04);
-  --hg-module-pad: 13px 16px 13px 20px;
-  --hg-module-gap: 8px;
+  --hg-module-pad: 18px 20px 18px 26px;
+  --hg-module-gap: 10px;
   --hg-module-indent: 8px;
   --hg-module-blur: blur(8px);
-  --hg-module-bar-inset: 16px;
-  --hg-module-bar-w: 3px;
+  --hg-module-bar-inset: 18px;
+  --hg-module-bar-w: 4px;
   --hg-module-bar-radius: 2px;
   --hg-module-glow: 12px;
   --hg-module-hot-lift: 0 20px 50px -30px;
   --hg-module-row-gap: 10px;
-  --hg-module-name-size: 15.5px;
-  --hg-module-count-size: 12px;
-  --hg-module-line-size: 12.5px;
+  --hg-module-name-size: 20px;
+  --hg-module-count-size: 14px;
+  --hg-module-line-size: 14px;
   --hg-module-line-gap: 3px;
 
   /* ---------- Board surface and zoom controls ---------- */
@@ -88,6 +88,14 @@
   --hg-card-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   /* Geometry only: the color mixes the card's own --hg-c, which :root does not have. */
   --hg-card-lift-shadow: 0 40px 80px -30px;
+  /* Hover magnifies a card like a local zoom: scale is peek-k divided by the
+     board zoom (--hg-z, set on the world layer), kept between min and max,
+     so a far zoomed out card grows the most. */
+  --hg-card-peek-k: 0.95;
+  --hg-card-peek-min: 1.2;
+  --hg-card-peek-max: 2.4;
+  --hg-card-peek-rise: -6px;
+  --hg-card-peek-z: 7;
   --hg-card-parked-opacity: 0.6;
   --hg-card-focus-ring: 2px;
   --hg-card-focus-offset: 3px;
@@ -534,12 +542,20 @@
   z-index: var(--hg-card-z);
   background: var(--hg-card-bg); border: 1px solid var(--hg-line); backdrop-filter: var(--hg-blur-card); box-shadow: var(--hg-card-shadow);
   transition: border-color var(--hg-dur-fast) var(--hg-ease), box-shadow var(--hg-dur-fast) var(--hg-ease),
-    opacity var(--hg-dur-fast) var(--hg-ease);
+    opacity var(--hg-dur-fast) var(--hg-ease), scale var(--hg-dur-fast) var(--hg-spring), translate var(--hg-dur-fast) var(--hg-ease);
 }
 .hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) backwards; }
 @keyframes hg-pop { from { opacity: 0; transform: scale(var(--hg-card-enter-scale)); } }
 .hg-card.hg-card-parked { border-style: dashed; opacity: var(--hg-card-parked-opacity); }
 .hg-card:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
+@media (hover: hover) {
+  .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim):hover {
+    z-index: var(--hg-card-peek-z);
+    scale: clamp(var(--hg-card-peek-min), calc(var(--hg-card-peek-k) / var(--hg-z, 1)), var(--hg-card-peek-max));
+    translate: 0 var(--hg-card-peek-rise);
+    box-shadow: var(--hg-card-lift-shadow) color-mix(in oklab, var(--hg-c) 45%, rgba(0, 0, 0, 0.9));
+  }
+}
 .hg-card.hg-card-lift {
   cursor: grabbing; z-index: var(--hg-card-lift-z);
   box-shadow: var(--hg-card-lift-shadow) color-mix(in oklab, var(--hg-c) 60%, rgba(0, 0, 0, 0.9));
