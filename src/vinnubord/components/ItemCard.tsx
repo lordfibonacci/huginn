@@ -2,6 +2,7 @@ import { memo, useCallback, useState, type AnimationEvent, type CSSProperties, t
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { planProgress } from '../lib/layout'
+import { freshChips, type UnreadSummary } from '../lib/reads'
 import type { Tone } from '../lib/status'
 import type { Item, Plan } from '../lib/types'
 
@@ -16,7 +17,8 @@ type Props = {
   fileCount: number
   // Who changed the item last (updated_by, else created_by).
   mover: { short: string; name: string } | null
-  unread: boolean
+  // What others did since the viewer last opened the card, null when nothing
+  fresh: UnreadSummary | null
   parked: boolean
   pulse: boolean
   selected: boolean
@@ -40,7 +42,7 @@ export const ItemCard = memo(function ItemCard({
   actionsMine,
   fileCount,
   mover,
-  unread,
+  fresh,
   parked,
   pulse,
   selected,
@@ -99,7 +101,7 @@ export const ItemCard = memo(function ItemCard({
       onKeyDown={onKeyDown}
       onAnimationEnd={onAnimationEnd}
     >
-      {unread && <span className="hg-card-ring" role="img" aria-label={t('vinnubord.card.unread')} />}
+      {fresh !== null && <span className="hg-card-ring" role="img" aria-label={t('vinnubord.card.unread')} />}
       <div className="hg-card-st">
         <i className="hg-card-dot" aria-hidden="true" />
         {label}
@@ -138,6 +140,28 @@ export const ItemCard = memo(function ItemCard({
           </small>
         </>
       )}
+      {fresh && <FreshLine summary={fresh} />}
     </div>
   )
 })
+
+function FreshLine({ summary }: { summary: UnreadSummary }) {
+  const { t } = useTranslation()
+  const chips = freshChips(summary)
+  if (chips.created) {
+    return (
+      <div className="hg-card-fresh">
+        <b>{t('vinnubord.card.fresh.created')}</b>
+      </div>
+    )
+  }
+  return (
+    <div className="hg-card-fresh">
+      <b>{t('vinnubord.card.fresh.since')}</b>
+      {chips.shown.map(({ kind, n }) => (
+        <span key={kind}>{t(`vinnubord.card.fresh.kinds.${kind}`, { count: n })}</span>
+      ))}
+      {chips.more > 0 && <span>{t('vinnubord.card.fresh.more', { count: chips.more })}</span>}
+    </div>
+  )
+}

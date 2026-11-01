@@ -96,6 +96,30 @@
       "actions_other": "{{count}} opin handtök",
       "files_one": "{{count}} skjal",
       "files_other": "{{count}} skjöl",
+      "fresh": {
+        "created": "Nýtt spjald",
+        "kinds": {
+          "actionDone": "handtak lokið",
+          "action_one": "+{{count}} handtak",
+          "action_other": "+{{count}} handtök",
+          "analysis": "greind",
+          "analysisFailed": "greining mistókst",
+          "answer_one": "+{{count}} svar",
+          "answer_other": "+{{count}} svör",
+          "comment_one": "+{{count}} athugasemd",
+          "comment_other": "+{{count}} athugasemdir",
+          "file_one": "+{{count}} skjal",
+          "file_other": "+{{count}} skjöl",
+          "plan": "plan",
+          "question_one": "+{{count}} spurning",
+          "question_other": "+{{count}} spurningar",
+          "ruling": "úrskurður",
+          "status": "staða",
+          "text": "texti"
+        },
+        "more": "+{{count}}",
+        "since": "Síðan síðast:"
+      },
       "movedBy": "Síðast hreyft af {{name}}",
       "planOf": "Plan {{current}} af {{total}}",
       "unread": "Nýtt hjá þér"

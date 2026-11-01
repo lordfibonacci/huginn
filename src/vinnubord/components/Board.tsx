@@ -111,16 +111,16 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   const mineByItem = useMemo(() => mineActionsByItem(data.actions, viewerId), [data.actions, viewerId])
 
   const filterOn = isActive(filter)
+  const unreadByItem = useMemo(() => summarizeUnread(data.unread), [data.unread])
   const cards = useMemo(
     () => {
-      const unreadIds = summarizeUnread(data.unread)
       return onBoard.map((item) => {
         const tone = itemTone(item, viewerId, data.participants)
         const bucket = countBucket(item, data.actions, viewerId)
         const packageId = item.module_id ? (packageOfModule.get(item.module_id) ?? null) : null
-        const unread = unreadIds.has(item.id)
+        const fresh = unreadByItem.get(item.id) ?? null
         const visible =
-          !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread }, filter))
+          !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: fresh !== null }, filter))
         const moverId = item.updated_by ?? item.created_by
         const mover = data.participants.find((p) => p.user_id === moverId)
         return {
@@ -129,12 +129,12 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
           label: itemStatusLabel(item, viewerId, data.participants),
           mode: wireMode(item, tone),
           visible,
-          unread,
+          fresh,
           mover: mover ? { short: mover.short, name: mover.display_name } : null,
         }
       })
     },
-    [onBoard, viewerId, data.participants, data.actions, data.unread, packageOfModule, filterOn, filter],
+    [onBoard, viewerId, data.participants, data.actions, unreadByItem, packageOfModule, filterOn, filter],
   )
 
   const wireItems = useMemo<WireItem[]>(
@@ -496,7 +496,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
               actionsMine={mineByItem.get(c.item.id) ?? 0}
               fileCount={filesByItem.get(c.item.id) ?? 0}
               mover={c.mover}
-              unread={c.unread}
+              fresh={c.fresh}
               parked={c.item.status === 'parked'}
               pulse={c.mode === 'pulse'}
               selected={c.item.id === selectedId}

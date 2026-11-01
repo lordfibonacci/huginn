@@ -635,6 +635,17 @@
   border: var(--hg-ring-border) solid var(--hg-board); box-shadow: 0 0 var(--hg-ring-glow) var(--hg-c);
 }
 
+/* "Síðan síðast": what others did since the viewer last opened the card. */
+.hg-card-fresh {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-card-chip-gap); margin-top: var(--hg-card-plans-gap);
+  padding-top: var(--hg-card-plan-label-gap); border-top: 1px dashed var(--hg-line); font-size: var(--hg-chip-size); color: var(--hg-gold);
+}
+.hg-card-fresh b { font-weight: 800; }
+.hg-card-fresh span {
+  padding: var(--hg-card-chip-pad); border-radius: var(--hg-radius-chip);
+  background: color-mix(in oklab, var(--hg-gold) 15%, transparent);
+}
+
 /* Non blocking notice, for example a failed refresh while the board stays.
    Bottom left, never wider than half the board so it cannot reach the zoom
    controls; on phones it sits above the control row instead. */

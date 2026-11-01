@@ -171,6 +171,30 @@
       "actions_other": "{{count}} open actions",
       "files_one": "{{count}} file",
       "files_other": "{{count}} files",
+      "fresh": {
+        "created": "New item",
+        "since": "Since last time:",
+        "more": "+{{count}}",
+        "kinds": {
+          "action_one": "+{{count}} action",
+          "action_other": "+{{count}} actions",
+          "actionDone": "action done",
+          "question_one": "+{{count}} question",
+          "question_other": "+{{count}} questions",
+          "answer_one": "+{{count}} answer",
+          "answer_other": "+{{count}} answers",
+          "file_one": "+{{count}} file",
+          "file_other": "+{{count}} files",
+          "comment_one": "+{{count}} comment",
+          "comment_other": "+{{count}} comments",
+          "status": "status",
+          "plan": "plan",
+          "ruling": "ruling",
+          "analysis": "analysed",
+          "analysisFailed": "analysis failed",
+          "text": "text"
+        }
+      },
       "planOf": "Plan {{current}} of {{total}}",
       "unread": "New for you",
       "movedBy": "Last moved by {{name}}"
