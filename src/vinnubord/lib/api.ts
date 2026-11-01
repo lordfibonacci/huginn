@@ -24,6 +24,9 @@ import type {
   Read,
   Ruling,
   UnreadRow,
+  View,
+  ViewFilterJson,
+  ViewPosition,
 } from './types'
 
 // Data layer for the vinnubord. Every function throws an Error with a short
@@ -64,6 +67,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     events,
     reads,
     unread,
+    views,
+    viewPositions,
   ] = await Promise.all([
     supabase.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
     byProject('hg_participants').order('created_at'),
@@ -83,6 +88,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
     byProject('hg_reads'),
     supabase.rpc('hg_unread', { p_project: projectId }),
+    byProject('hg_views').order('position').order('created_at'),
+    byProject('hg_view_positions'),
   ])
 
   const results = [
@@ -100,6 +107,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     events,
     reads,
     unread,
+    views,
+    viewPositions,
   ]
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið.', failed.error)
@@ -120,8 +129,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     events: ((events.data ?? []) as Event[]).reverse(),
     reads: (reads.data ?? []) as Read[],
     unread: (unread.data ?? []) as UnreadRow[],
-    views: [],
-    viewPositions: [],
+    views: (views.data ?? []) as View[],
+    viewPositions: (viewPositions.data ?? []) as ViewPosition[],
   }
 }
 
@@ -160,6 +169,50 @@ export async function updateItemPosition(id: string, x: number, y: number): Prom
     .update({ pos_x: Math.round(x), pos_y: Math.round(y) })
     .eq('id', id)
   if (error) fail('Gat ekki fært verkið.', error)
+}
+
+export async function createView(projectId: string, name: string, filter: ViewFilterJson): Promise<View> {
+  const { count, error: countError } = await supabase
+    .from('hg_views')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+  if (countError) fail('Gat ekki stofnað sýnina.', countError)
+  const { data, error } = await supabase
+    .from('hg_views')
+    .insert({ project_id: projectId, name: name.trim(), filter, position: count ?? 0 })
+    .select('*')
+    .single()
+  if (error || !data) fail('Gat ekki stofnað sýnina.', error)
+  return data as View
+}
+
+export async function updateView(id: string, patch: { name?: string; filter?: ViewFilterJson }): Promise<void> {
+  const update: { name?: string; filter?: ViewFilterJson } = {}
+  if (patch.name !== undefined) update.name = patch.name.trim()
+  if (patch.filter !== undefined) update.filter = patch.filter
+  const { error } = await supabase.from('hg_views').update(update).eq('id', id)
+  if (error) fail('Gat ekki vistað sýnina.', error)
+}
+
+export async function deleteView(id: string): Promise<void> {
+  const { error } = await supabase.from('hg_views').delete().eq('id', id)
+  if (error) fail('Gat ekki eytt sýninni.', error)
+}
+
+export async function upsertViewPosition(
+  projectId: string,
+  viewId: string,
+  itemId: string,
+  x: number,
+  y: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('hg_view_positions')
+    .upsert(
+      { project_id: projectId, view_id: viewId, item_id: itemId, pos_x: Math.round(x), pos_y: Math.round(y) },
+      { onConflict: 'view_id,item_id' },
+    )
+  if (error) fail('Gat ekki fært verkið í sýninni.', error)
 }
 
 export async function createItem(input: {
