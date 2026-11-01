@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-const TOTAL = 8
+const TOTAL = 9
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -372,6 +372,27 @@ try {
     must(await sb.rpc('hg_mark_all_read', { p_project: projectId }), 'hg_mark_all_read again')
     const mark = must(await sb.from('hg_reads').select('read_at').eq('item_id', itemId).eq('user_id', me).single(), 'read mark 8')
     expect(Date.now() - Date.parse(mark.read_at) < 60_000, `read_at ${mark.read_at} is not fresh`)
+    passed++
+    scenario = '9 views'
+    const posBefore = must(await sb.from('hg_items').select('pos_x, pos_y').eq('id', itemId).single(), 'item pos')
+    const view = must(
+      await sb
+        .from('hg_views')
+        .insert({ project_id: projectId, name: 'smoke view', filter: { tones: ['gold'], packages: [], tags: [] }, created_by: heimir.user_id })
+        .select('id, created_by')
+        .single(),
+      'insert view',
+    )
+    expect(view.created_by === me, `view created_by is ${view.created_by}, expected signed in user`)
+    must(
+      await sb.from('hg_view_positions').upsert({ project_id: projectId, view_id: view.id, item_id: itemId, pos_x: 999, pos_y: 888 }, { onConflict: 'view_id,item_id' }),
+      'upsert view position',
+    )
+    const posAfter = must(await sb.from('hg_items').select('pos_x, pos_y').eq('id', itemId).single(), 'item pos after')
+    expect(posAfter.pos_x === posBefore.pos_x && posAfter.pos_y === posBefore.pos_y, 'a view position changed the item position')
+    must(await sb.from('hg_views').delete().eq('id', view.id), 'delete view')
+    const left = must(await sb.from('hg_view_positions').select('item_id').eq('view_id', view.id), 'positions after delete')
+    expect(left.length === 0, `${left.length} view positions survived the view delete`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind

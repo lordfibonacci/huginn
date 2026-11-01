@@ -114,6 +114,7 @@ Every table except `hg_projects` carries `project_id`. RLS on all of them goes t
 - `hg_plans` (todo, building, done), `hg_rulings` (on a plan), `hg_files`, `hg_questions`, `hg_actions`, `hg_comments` (on item or module).
 - `hg_events` : timeline, written only by security definer triggers (migration 0003), select only for participants.
 - `hg_reads` : read marks per (item_id, user_id).
+- `hg_views`, `hg_view_positions` (migration 0011): saved board views, filter as `{ tones, packages, tags }` json (empty means all), and card positions per view keyed `(view_id, item_id)`. Realtime on both.
 
 Helpers: `hg_is_participant(p_project)`, `hg_service_user(p_project)`. Realtime publication includes all hg_ tables except projects and participants.
 
@@ -133,6 +134,7 @@ Files live in `supabase/migrations/` (see the README there). Applied with the Su
 - `0010_hg_unread` : applied through MCP 2026-11-01. `hg_actions.created_by` stamped from `auth.uid()` on insert (null on old rows, null counts as someone else). `hg_unread(p_project)` (security invoker, stable) returns the viewer's unread events per item and kind: actor is not the viewer (null included) and the event is newer than the viewer's read mark, or there is none. `hg_mark_all_read(p_project)` upserts a read mark on every open item for the viewer. Index `hg_events_project_created_idx`. `npm run smoke:hg` scenario 8 covers it.
 - `0010b_hg_unread_open_only` : applied through MCP 2026-11-01. `hg_unread` joins `hg_items` and returns groups for open items only (not done or dropped), so closed items never pile up toward the PostgREST row cap. Named 0010b because 0011 and 0012 are taken by the views and action edits plans.
 
+- `0011_hg_views` : applied through MCP 2026-11-01. The two view tables with participant RLS, `created_by` stamp trigger, realtime. `npm run smoke:hg` scenario 9 covers it.
 ### Edge function hg-analyse
 
 Quick analysis of new items (plan 4). Live since 2026-11-01 (version 10). Deployed with the MCP `deploy_edge_function` as two files (`index.ts`, `lib.ts`), `verify_jwt` false because it checks its own bearer (`HG_ANALYSE_SECRET`). Edge secrets by name: `HG_ANALYSE_SECRET`, `HG_SERVICE_EMAIL`, `HG_SERVICE_PASSWORD`, and `HG_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY` (the HG_ one wins when not empty; never change `ANTHROPIC_API_KEY`, other functions on the shared project may use it). Vault entries by name: `hg_analyse_secret` (same value as `HG_ANALYSE_SECRET`) and `hg_analyse_url`. Never write values in the repo. Flow: the `0007` triggers post `{ item_id }` through pg_net, the function answers 202 and works in `EdgeRuntime.waitUntil`: 20 s debounce, sign in as the service user, atomic 2 minute lock (`hg_claim_analysis`), gated write. The free plan has a 150 s wall clock per worker, which is why the Anthropic timeout is 90 s with no retries. Model `claude-opus-5-5`, effort medium.

@@ -21,3 +21,4 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0009_hg_plan_done_clears_next: a plan entering done also clears next_step and next_prompt of the item whenever it moves the item.
 - 0010_hg_unread: created_by on hg_actions, hg_unread (the viewer's unread events per item and kind) and hg_mark_all_read.
 - 0010b_hg_unread_open_only: hg_unread returns groups for open items only.
+- 0011_hg_views: hg_views (name, filter json, position) and hg_view_positions (card positions per view), participant RLS, realtime.
