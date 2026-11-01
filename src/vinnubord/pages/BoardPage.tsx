@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useViewer } from '../hooks/useViewer'
+import { useActiveView } from '../hooks/useActiveView'
 import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { packageCounts, tagCounts } from '../lib/filters'
 import { summarizeUnread } from '../lib/reads'
 import { countsFor } from '../lib/status'
-import type { Item } from '../lib/types'
+import type { Item, View } from '../lib/types'
+import { itemsInView } from '../lib/views'
 import { Board, type BoardHandle } from '../components/Board'
 import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
@@ -19,6 +21,10 @@ import { TopBar } from '../components/TopBar'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
 import { NoAccessPage } from './NoAccessPage'
+
+// Stable empty list for useActiveView before the board has loaded, so a stored
+// view key is never cleared against a placeholder.
+const NO_VIEWS: View[] = []
 
 // The whiteboard of one project: the top bar with counters and filters, the
 // board with all the remaining height, the side panel (bottom sheet on narrow
@@ -50,14 +56,24 @@ export function BoardPage() {
 
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
-  const counts = useMemo(
-    () => (loaded ? countsFor(data.items, data.actions, viewerId, new Set(summarizeUnread(data.unread).keys())) : null),
-    [loaded, data, viewerId],
+  const activeView = useActiveView(project?.id ?? '', loaded ? data.views : NO_VIEWS)
+  // The items the active view draws. Counters, menus and the board all read
+  // these; the panel still finds its item in data.items, hidden or not.
+  const visibleItems = useMemo(
+    () => (loaded ? itemsInView(data.items, data.modules, data.actions, viewerId, activeView.view) : []),
+    [loaded, data, viewerId, activeView.view],
   )
-  const tags = useMemo(() => (loaded ? tagCounts(data.items, filterApi.filter.tags) : []), [loaded, data, filterApi.filter.tags])
+  const counts = useMemo(
+    () => (loaded ? countsFor(visibleItems, data.actions, viewerId, new Set(summarizeUnread(data.unread).keys())) : null),
+    [loaded, data, visibleItems, viewerId],
+  )
+  const tags = useMemo(
+    () => (loaded ? tagCounts(visibleItems, filterApi.filter.tags) : []),
+    [loaded, visibleItems, filterApi.filter.tags],
+  )
   const packages = useMemo(
-    () => (loaded ? packageCounts(data.packages, data.modules, data.items) : []),
-    [loaded, data],
+    () => (loaded ? packageCounts(data.packages, data.modules, visibleItems) : []),
+    [loaded, data, visibleItems],
   )
 
   // A package deleted while it is in the filter would keep the board dim with
@@ -117,6 +133,8 @@ export function BoardPage() {
         key={project.id}
         ref={boardRef}
         data={data}
+        items={visibleItems}
+        view={activeView.view}
         viewerId={user.id}
         filter={filterApi.filter}
         selectedId={selectedId}

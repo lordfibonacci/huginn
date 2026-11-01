@@ -14,7 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag } from '../hooks/useCardDrag'
-import { updateItemPosition } from '../lib/api'
+import { updateItemPosition, upsertViewPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
 import { screenToWorld, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
@@ -24,7 +24,8 @@ import { fileCountsByItem } from '../lib/panel'
 import { summarizeUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
-import type { BoardData, Item, Plan } from '../lib/types'
+import type { BoardData, Item, Plan, View } from '../lib/types'
+import { positionOf, positionsOf } from '../lib/views'
 import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
 import { PackColumn } from './PackColumn'
@@ -35,9 +36,14 @@ import { Wires, type WireItem, type WiresHandle } from './Wires'
 // (through Wires' animation loop) and writes straight to the card's style, so
 // a drag never re-renders React. Data decides where a card rests, except while
 // it is dragged here or its own drop is still on the way to the database.
+// Inside a view a card rests at its place in that view (hg_view_positions),
+// else at its own place, and a drop is saved to the view, never to the item.
 
 type Props = {
   data: BoardData
+  // The items the active view draws (itemsInView), all on board items without one.
+  items: Item[]
+  view: View | null
   viewerId: string
   filter: Filter
   selectedId: string | null
@@ -55,10 +61,14 @@ export type BoardHandle = { placeNew: (moduleId: string | null) => { x: number; 
 // A dropped position waiting for the database. base is the data position the
 // drag started from: data still showing base is stale and ignored, data at pos
 // means the save landed, anything else means someone else moved the card.
-type Pending = { x: number; y: number; baseX: number; baseY: number }
+// viewId is the view it was dropped in (null for the main board): switching
+// views drops the pending, the card then rests where the new view has it.
+type Pending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null }
 type CardSpring = Spring & { pending: Pending | null }
-// A debounced position save that has not been sent yet.
-type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number }
+// A debounced position save that has not been sent yet. It keeps the view it
+// was dropped in, so a view switch during the debounce cannot redirect it.
+type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number; viewId: string | null }
+type Point = { x: number; y: number }
 
 const SAVE_DEBOUNCE_MS = 300
 const ENTRY_START_MS = 150
@@ -86,7 +96,18 @@ function popMs(): number {
   return parseDuration(getComputedStyle(document.documentElement).getPropertyValue('--hg-dur-pop'))
 }
 
-export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModule, children, ref }: Props) {
+export function Board({
+  data,
+  items,
+  view: activeView,
+  viewerId,
+  filter,
+  selectedId,
+  onSelect,
+  onOpenModule,
+  children,
+  ref,
+}: Props) {
   const { t } = useTranslation()
   const boardRef = useRef<HTMLDivElement | null>(null)
   const wiresRef = useRef<WiresHandle | null>(null)
@@ -94,7 +115,9 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   const { fit, view } = vp
 
   // ---------- derived board ----------
-  const onBoard = useMemo(() => boardOrder(data.items.filter(isOnBoard)), [data.items])
+  const onBoard = useMemo(() => boardOrder(items), [items])
+  const viewId = activeView?.id ?? null
+  const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
   const packageOfModule = useMemo(() => new Map(data.modules.map((m) => [m.id, m.package_id])), [data.modules])
   const plansByItem = useMemo(() => {
@@ -154,7 +177,8 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   // ---------- springs ----------
   const springs = useRef(new Map<string, CardSpring>())
   const els = useRef(new Map<string, HTMLElement>())
-  const itemsById = useRef(new Map<string, Item>())
+  // Where data has each drawn card: its place in the active view, else its own.
+  const posById = useRef(new Map<string, Point>())
   const draggingRef = useRef<string | null>(null)
   const reduced = useRef(prefersReducedMotion())
 
@@ -178,20 +202,22 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   }, [])
 
   // Data to springs. Runs before paint, after the cards' refs are attached.
+  // A view switch retargets every card that stays drawn, so it slides to its
+  // place in the new view.
   useLayoutEffect(() => {
     const seen = new Set<string>()
-    itemsById.current = new Map(onBoard.map((i) => [i.id, i]))
+    posById.current = new Map(onBoard.map((i) => [i.id, positionOf(i, positions)]))
     for (const item of onBoard) {
       seen.add(item.id)
-      const px = item.pos_x
-      const py = item.pos_y
+      const { x: px, y: py } = posById.current.get(item.id) as Point
       let s = springs.current.get(item.id)
       if (!s) {
         s = { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
         springs.current.set(item.id, s)
       } else if (draggingRef.current !== item.id) {
         const p = s.pending
-        if (p && px === p.x && py === p.y) s.pending = null
+        if (p && p.viewId !== viewId) s.pending = null
+        else if (p && px === p.x && py === p.y) s.pending = null
         else if (p && !(px === p.baseX && py === p.baseY)) s.pending = null
         if (!s.pending) {
           s.tx = px
@@ -202,7 +228,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
       if (el) place(el, s)
     }
     for (const id of springs.current.keys()) if (!seen.has(id)) springs.current.delete(id)
-  }, [onBoard])
+  }, [onBoard, positions, viewId])
 
   // One frame of every moving spring, called by Wires before it reads rects.
   // Returns whether any card moved, so Wires can rest when none did.
@@ -227,24 +253,30 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
   const saveJobs = useRef(new Map<string, SaveJob>())
   const [moveFailed, setMoveFailed] = useState(false)
 
-  // Sends one position. A failed save springs the card back to where the data
-  // has it and says so, unless a newer drop of the same card took its place.
-  const savePosition = useCallback((id: string, x: number, y: number) => {
-    updateItemPosition(id, x, y).catch((err: unknown) => {
-      console.error(err)
-      const s = springs.current.get(id)
-      const p = s?.pending
-      if (s && p && p.x === x && p.y === y) {
-        s.pending = null
-        const item = itemsById.current.get(id)
-        if (item && draggingRef.current !== id) {
-          s.tx = item.pos_x
-          s.ty = item.pos_y
+  // Sends one position, to the view it was dropped in or to the item itself on
+  // the main board. A failed save springs the card back to where the data has
+  // it and says so, unless a newer drop of the same card took its place.
+  const projectId = data.project.id
+  const savePosition = useCallback(
+    (id: string, x: number, y: number, inView: string | null) => {
+      const save = inView ? upsertViewPosition(projectId, inView, id, x, y) : updateItemPosition(id, x, y)
+      save.catch((err: unknown) => {
+        console.error(err)
+        const s = springs.current.get(id)
+        const p = s?.pending
+        if (s && p && p.x === x && p.y === y && p.viewId === inView) {
+          s.pending = null
+          const pos = posById.current.get(id)
+          if (pos && draggingRef.current !== id) {
+            s.tx = pos.x
+            s.ty = pos.y
+          }
         }
-      }
-      setMoveFailed(true)
-    })
-  }, [])
+        setMoveFailed(true)
+      })
+    },
+    [projectId],
+  )
 
   // Saves still waiting out the debounce go now when the page is hidden or
   // closed (pagehide) and when the board unmounts, so a quick drop is not lost.
@@ -252,7 +284,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     const jobs = saveJobs.current
     for (const [id, job] of jobs) {
       clearTimeout(job.timer)
-      savePosition(id, job.x, job.y)
+      savePosition(id, job.x, job.y, job.viewId)
     }
     jobs.clear()
   }, [savePosition])
@@ -277,30 +309,34 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
     s.ty = y
   }, [])
 
-  const onDrop = useCallback((id: string, x: number, y: number) => {
-    const s = springs.current.get(id)
-    const item = itemsById.current.get(id)
-    if (!s || !item) return
-    const rx = Math.round(x)
-    const ry = Math.round(y)
-    s.tx = rx
-    s.ty = ry
-    s.pending = {
-      x: rx,
-      y: ry,
-      baseX: s.pending?.baseX ?? item.pos_x,
-      baseY: s.pending?.baseY ?? item.pos_y,
-    }
-    wiresRef.current?.burst(id, DROP_BURST)
-    const jobs = saveJobs.current
-    const old = jobs.get(id)
-    if (old) clearTimeout(old.timer)
-    const timer = setTimeout(() => {
-      jobs.delete(id)
-      savePosition(id, rx, ry)
-    }, SAVE_DEBOUNCE_MS)
-    jobs.set(id, { timer, x: rx, y: ry })
-  }, [savePosition])
+  const onDrop = useCallback(
+    (id: string, x: number, y: number) => {
+      const s = springs.current.get(id)
+      const pos = posById.current.get(id)
+      if (!s || !pos) return
+      const rx = Math.round(x)
+      const ry = Math.round(y)
+      s.tx = rx
+      s.ty = ry
+      s.pending = {
+        x: rx,
+        y: ry,
+        baseX: s.pending?.baseX ?? pos.x,
+        baseY: s.pending?.baseY ?? pos.y,
+        viewId,
+      }
+      wiresRef.current?.burst(id, DROP_BURST)
+      const jobs = saveJobs.current
+      const old = jobs.get(id)
+      if (old) clearTimeout(old.timer)
+      const timer = setTimeout(() => {
+        jobs.delete(id)
+        savePosition(id, rx, ry, viewId)
+      }, SAVE_DEBOUNCE_MS)
+      jobs.set(id, { timer, x: rx, y: ry, viewId })
+    },
+    [savePosition, viewId],
+  )
 
   const onCancel = useCallback((id: string, x: number, y: number) => {
     const s = springs.current.get(id)
@@ -427,6 +463,14 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
           if (s) obstacles.push({ x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight })
           w = el.offsetWidth || w
         }
+        // Cards the view hides keep their own place on the main board, so a
+        // new card does not land on one of them either.
+        if (activeView) {
+          for (const item of data.items) {
+            if (!isOnBoard(item) || els.current.has(item.id)) continue
+            obstacles.push({ x: item.pos_x, y: item.pos_y, w: NEW_CARD_SIZE.w, h: NEW_CARD_SIZE.h })
+          }
+        }
         host?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
           obstacles.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
         })
@@ -446,7 +490,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
         return placeNewCard({ anchor, center: { x: cx, y: cy }, size: { ...NEW_CARD_SIZE, w }, obstacles })
       },
     }),
-    [view],
+    [view, activeView, data.items],
   )
 
   const onBoardClick = useCallback(
@@ -477,7 +521,7 @@ export function Board({ data, viewerId, filter, selectedId, onSelect, onOpenModu
               key={pkg.id}
               pkg={pkg}
               modules={modules}
-              items={data.items}
+              items={items}
               viewerId={viewerId}
               participants={data.participants}
               hotModuleIds={hotModuleIds}
