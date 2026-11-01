@@ -60,7 +60,10 @@ function subLines(item, data, participants) {
   const actions = (data.actions ?? [])
     .filter((a) => a.item_id === item.id && a.done_at === null)
     .sort(byCreated)
-    .map((a) => `  - Handtak, ${shortOf(a.owner, participants)}: ${oneLine(a.body)} #${shortId(a.id)}`)
+    .map((a) => {
+      const edited = a.updated_at ? `, breytt ${iso(a.updated_at)} af ${shortOf(a.updated_by, participants)}` : ''
+      return `  - Handtak, ${shortOf(a.owner, participants)}: ${oneLine(a.body)}${edited} #${shortId(a.id)}`
+    })
   const questions = (data.questions ?? [])
     .filter((q) => q.item_id === item.id && q.answered_at === null)
     .sort(byCreated)

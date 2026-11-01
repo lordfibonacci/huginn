@@ -467,6 +467,24 @@ describe('renderItemMd', () => {
     expect(md.indexOf('#d2000000')).toBeLessThan(md.indexOf('#d1000000'))
   })
 
+  it('shows a cancelled action with who and why, and an edited action after Stofnað', () => {
+    const data = fullBoard()
+    data.actions.push(
+      { id: 'c3000000-gone', item_id: ITEM_ID, body: 'Hætt við', owner: 'u-h', payload: null, done_at: '2026-10-09T00:00:00Z', done_by: 'u-c', cancelled: true, cancel_reason: 'planið\nbreyttist', created_at: '2026-10-05T00:00:00Z' },
+      { id: 'c4000000-nore', item_id: ITEM_ID, body: 'Án ástæðu', owner: 'u-h', payload: null, done_at: '2026-10-09T00:00:00Z', done_by: 'u-c', cancelled: true, cancel_reason: null, created_at: '2026-10-05T01:00:00Z' },
+    )
+    data.actions[1].updated_at = '2026-10-08T00:00:00Z'
+    data.actions[1].updated_by = 'u-c'
+    const md = renderFull(data).md
+    expect(md).toContain('### Handtak #c3000000, fellt niður')
+    expect(md).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C), ástæða: planið breyttist')
+    expect(md).not.toContain('- Lokið: 2026-10-09')
+    expect(md).toContain('### Handtak #c4000000, fellt niður')
+    expect(md).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C)\n')
+    expect(md).toContain('### Handtak #c1000000, opið\n\n- Eigandi: Heimir (H)\n- Stofnað: 2026-10-04T00:00:00.000Z\n- Breytt: 2026-10-08T00:00:00.000Z, af Claude (C)\n')
+    expect(md).toContain('- Lokið: 2026-10-06T00:00:00.000Z, af Heimir (H)')
+  })
+
   it('fences the next prompt and payloads with a fence longer than any backtick run inside', () => {
     const md = renderFull(fullBoard()).md
     expect(md).toContain('````text\nLestu docs/huginn og ```haltu áfram```\n````')

@@ -253,10 +253,16 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
   if (ordered.length) {
     lines.push('## Handtök', '')
     for (const a of ordered) {
-      lines.push(`### Handtak #${shortId(a.id)}, ${a.done_at ? 'lokið' : 'opið'}`, '')
+      lines.push(`### Handtak #${shortId(a.id)}, ${a.cancelled ? 'fellt niður' : a.done_at ? 'lokið' : 'opið'}`, '')
       lines.push(`- Eigandi: ${person(a.owner, participants)}`)
       if (a.created_at) lines.push(`- Stofnað: ${iso(a.created_at)}`)
-      if (a.done_at) lines.push(`- Lokið: ${iso(a.done_at)}, af ${person(a.done_by, participants)}`)
+      if (a.updated_at) lines.push(`- Breytt: ${iso(a.updated_at)}, af ${person(a.updated_by, participants)}`)
+      if (a.cancelled) {
+        const reason = oneLine(a.cancel_reason)
+        lines.push(`- Fellt niður: ${iso(a.done_at)}, af ${person(a.done_by, participants)}${reason ? `, ástæða: ${reason}` : ''}`)
+      } else if (a.done_at) {
+        lines.push(`- Lokið: ${iso(a.done_at)}, af ${person(a.done_by, participants)}`)
+      }
       lines.push('')
       if (multiLine(a.body)) lines.push(multiLine(a.body), '')
       if (multiLine(a.payload)) lines.push(fenced(a.payload), '')

@@ -149,6 +149,18 @@ describe('statusMarkdown', () => {
     )
   })
 
+  it('marks an edited open action and leaves out a cancelled one', () => {
+    const edited = { ...actions[0], updated_at: '2026-11-01T10:00:00+00:00', updated_by: 'u-c' }
+    const cancelled = {
+      id: 'a3', item_id: 'i02', owner: 'u-h', body: 'Fellt', done_at: '2026-11-01T11:00:00+00:00', done_by: 'u-c',
+      cancelled: true, cancel_reason: 'breyttist', created_at: '2026-10-31T09:10:00+00:00',
+    }
+    const md = statusMarkdown(board(items, { actions: [edited, actions[1], cancelled], questions }), participants)
+    expect(md).toContain('  - Handtak, H: Keyra SQL í ritli, breytt 2026-11-01T10:00:00.000Z af C #a1')
+    expect(md).not.toContain('Fellt')
+    expect(md).not.toContain('Búið handtak')
+  })
+
   it('leaves out done and dropped items and says so on an empty board', () => {
     const closed = board([items[8], items[9]])
     expect(statusMarkdown(closed, participants)).toBe('# Staða: Metta\n\nEkkert opið verk.\n')
