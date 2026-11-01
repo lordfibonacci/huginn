@@ -120,6 +120,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     events: ((events.data ?? []) as Event[]).reverse(),
     reads: (reads.data ?? []) as Read[],
     unread: (unread.data ?? []) as UnreadRow[],
+    views: [],
+    viewPositions: [],
   }
 }
 

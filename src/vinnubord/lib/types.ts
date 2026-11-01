@@ -163,6 +163,28 @@ export type Read = {
 // One row of the hg_unread rpc: unread events of one kind on one item.
 export type UnreadRow = { item_id: string; kind: string; n: number; latest: string }
 
+// A saved shared view: a filter plus its own card positions (hg_views).
+export type ViewFilterJson = { tones?: string[]; packages?: string[]; tags?: string[] }
+
+export type View = {
+  id: string
+  created_at: string | null
+  project_id: string
+  name: string
+  filter: ViewFilterJson
+  position: number
+  created_by: string | null
+}
+
+// Where one item sits inside one view (hg_view_positions).
+export type ViewPosition = {
+  project_id: string
+  view_id: string
+  item_id: string
+  pos_x: number
+  pos_y: number
+}
+
 export type BoardData = {
   project: Project
   participants: Participant[]
@@ -178,4 +200,6 @@ export type BoardData = {
   events: Event[]
   reads: Read[]
   unread: UnreadRow[]
+  views: View[]
+  viewPositions: ViewPosition[]
 }
