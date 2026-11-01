@@ -111,6 +111,7 @@ Sniðið nefnir Huginn berum orðum með fullri slóð tólsins, svo lotan þarf
 - Greining Claude í lýsingunni telur ekki upp "Eftir hjá Heimi" eða "Eftir hjá Árna". Hvert slíkt atriði er handtak.
 - Prompt og næsta skref vísa í handtök með orðum þeirra, ekki með því að endurtaka hvað er eftir.
 - `action done` kallar ekki á neina aðra uppfærslu, því enginn texti endurtekur handtakið.
+- Nýtt framhaldsatriði sem lota stofnar fer inn í bið eftir Heimi með summary: `item create --title ... --body-file ... --module ... --waiting-on H` og svo `item set <id> --summary "..."`. Aldrei `--status parked` nema Heimir hafi sjálfur ákveðið að það bíði. Skyndigreiningin sleppir verkum sem Claude stofnar (viljandi, lotan veit meira en greinirinn), svo summary og staða verða að koma frá lotunni; annars er kortið bæði ógreint og falið. Dæmið 1. nóv: "Póstsniðmát fyrir kynningar og söluferli" (800c8265) kom inn sem Í bið án summary.
 
 **Þegar plan er skrifað**, viðbætur: `huginn file add <id> <slóð spec> --repo-path <slóð spec>` um leið og planið er skráð, svo hönnunarskjalið sé á verkinu. Planið sjálft fer ekki í `file add`, Skjöl flipinn sýnir það af planskráningunni.
 
