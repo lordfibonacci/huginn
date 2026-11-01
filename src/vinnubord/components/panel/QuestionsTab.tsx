@@ -9,11 +9,14 @@ import type { Participant, Question } from '../../lib/types'
 type Props = {
   questions: Question[]
   participants: Participant[]
+  fresh: (createdAt: string | null, author: string | null) => boolean
 }
 
 // "Spurningar": unanswered ones first with an answer field, answered ones
-// read only with their answer (ruling R6).
-export function QuestionsTab({ questions, participants }: Props) {
+// read only with their answer (ruling R6). A question someone else asked since
+// the viewer last opened the item is marked new; when its answer is the new
+// part, the mark sits on the answer instead.
+export function QuestionsTab({ questions, participants, fresh }: Props) {
   const { t } = useTranslation()
   const { open, answered } = splitQuestions(questions)
   const who = (id: string | null) => participants.find((p) => p.user_id === id) ?? null
@@ -26,12 +29,15 @@ export function QuestionsTab({ questions, participants }: Props) {
         <section className="hg-pn-sec">
           <h3>{t('vinnubord.panel.questions.open')}</h3>
           <ul className="hg-pn-list">
-            {open.map((q) => (
-              <li key={q.id} className="hg-q hg-q-open">
-                <QuestionHead question={q} asker={who(q.asked_by)} askedTo={who(q.asked_to)} />
-                <AnswerBox questionId={q.id} />
-              </li>
-            ))}
+            {open.map((q) => {
+              const isNew = fresh(q.created_at, q.asked_by)
+              return (
+                <li key={q.id} className={`hg-q hg-q-open${isNew ? ' hg-fresh' : ''}`}>
+                  <QuestionHead question={q} asker={who(q.asked_by)} askedTo={who(q.asked_to)} isNew={isNew} />
+                  <AnswerBox questionId={q.id} />
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}
@@ -41,14 +47,22 @@ export function QuestionsTab({ questions, participants }: Props) {
           <ul className="hg-pn-list">
             {answered.map((q) => {
               const by = who(q.answered_by)
+              const newAnswer = fresh(q.answered_at, q.answered_by)
+              const newQuestion = fresh(q.created_at, q.asked_by)
               return (
-                <li key={q.id} className="hg-q">
-                  <QuestionHead question={q} asker={who(q.asked_by)} askedTo={who(q.asked_to)} />
+                <li key={q.id} className={`hg-q${newAnswer || newQuestion ? ' hg-fresh' : ''}`}>
+                  <QuestionHead
+                    question={q}
+                    asker={who(q.asked_by)}
+                    askedTo={who(q.asked_to)}
+                    isNew={newQuestion && !newAnswer}
+                  />
                   <p className="hg-q-answer">{q.answer}</p>
                   <p className="hg-pn-meta">
                     <span className="hg-av" aria-hidden="true">
                       {by?.short ?? '?'}
                     </span>
+                    {newAnswer && <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')}</span>}
                     {t('vinnubord.panel.questions.answerBy', {
                       name: by?.display_name ?? '?',
                       when: q.answered_at ? formatStamp(q.answered_at) : '',
@@ -64,7 +78,9 @@ export function QuestionsTab({ questions, participants }: Props) {
   )
 }
 
-function QuestionHead({ question, asker, askedTo }: { question: Question; asker: Participant | null; askedTo: Participant | null }) {
+type HeadProps = { question: Question; asker: Participant | null; askedTo: Participant | null; isNew: boolean }
+
+function QuestionHead({ question, asker, askedTo, isNew }: HeadProps) {
   const { t } = useTranslation()
   return (
     <>
@@ -72,6 +88,7 @@ function QuestionHead({ question, asker, askedTo }: { question: Question; asker:
         <span className="hg-av" aria-hidden="true">
           {asker?.short ?? '?'}
         </span>
+        {isNew && <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')}</span>}
         {t('vinnubord.panel.questions.asked', { name: asker?.display_name ?? '?' })}
         {askedTo && <> {t('vinnubord.panel.questions.to', { name: askedTo.display_name })}</>}
       </p>

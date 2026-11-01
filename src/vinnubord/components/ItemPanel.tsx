@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
 import { fileCountsByItem } from '../lib/panel'
-import { latestForeignAt } from '../lib/reads'
+import { isFresh, latestForeignAt, readAtOf } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
 import { CommentBox } from './panel/CommentBox'
@@ -26,6 +26,15 @@ const TABS: Tab[] = ['status', 'files', 'questions', 'history']
 // keys this component by item id and a realtime refetch keeps them. All tab
 // bodies stay mounted, so switching tabs keeps them too.
 export function ItemPanel({ data, item, viewerId }: Props) {
+  // The viewer's read mark as it was when the panel opened. First hook, so it
+  // reads before the mark effect writes; the parent keys the panel by item id,
+  // so it runs once per opened item and the fresh marks survive the panel's
+  // own markRead and realtime refetches.
+  const [readAtOnOpen] = useState(() => readAtOf(data.reads, item.id, viewerId))
+  const fresh = useCallback(
+    (at: string | null, by: string | null) => isFresh(at, by, readAtOnOpen, viewerId),
+    [readAtOnOpen, viewerId],
+  )
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('status')
   const bodyRef = useRef<HTMLDivElement | null>(null)
@@ -51,6 +60,9 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const fileCount = fileCountsByItem(data.files, data.plans).get(item.id) ?? 0
   const questions = data.questions.filter((q) => q.item_id === item.id)
   const openQuestions = questions.filter((q) => q.answer === null).length
+  const freshActions = data.actions.filter(
+    (a) => a.item_id === item.id && a.done_at === null && fresh(a.created_at, a.created_by),
+  ).length
   const moverId = item.updated_by ?? item.created_by
   const mover = data.participants.find((p) => p.user_id === moverId)
   const moduleName = module ? module.name : t('vinnubord.panel.noModule')
@@ -102,16 +114,30 @@ export function ItemPanel({ data, item, viewerId }: Props) {
           open file and a touched status control survive switching tabs. */}
       <div ref={bodyRef} className="hg-pn-body">
         <div role="tabpanel" id="hg-tabpanel-status" aria-labelledby="hg-tab-status" hidden={tab !== 'status'}>
-          <StatusTab data={data} item={item} module={module} tone={tone} label={label} />
+          <StatusTab
+            data={data}
+            item={item}
+            module={module}
+            tone={tone}
+            label={label}
+            fresh={fresh}
+            freshActions={freshActions}
+          />
         </div>
         <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
-          <FilesTab files={files} plans={plans} participants={data.participants} />
+          <FilesTab files={files} plans={plans} participants={data.participants} fresh={fresh} />
         </div>
         <div role="tabpanel" id="hg-tabpanel-questions" aria-labelledby="hg-tab-questions" hidden={tab !== 'questions'}>
-          <QuestionsTab questions={questions} participants={data.participants} />
+          <QuestionsTab questions={questions} participants={data.participants} fresh={fresh} />
         </div>
         <div role="tabpanel" id="hg-tabpanel-history" aria-labelledby="hg-tab-history" hidden={tab !== 'history'}>
-          <HistoryTab itemId={item.id} events={data.events} comments={data.comments} participants={data.participants} />
+          <HistoryTab
+            itemId={item.id}
+            events={data.events}
+            comments={data.comments}
+            participants={data.participants}
+            fresh={fresh}
+          />
         </div>
       </div>
       <CommentBox onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })} />

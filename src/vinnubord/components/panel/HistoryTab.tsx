@@ -8,11 +8,13 @@ type Props = {
   events: Event[]
   comments: Comment[]
   participants: Participant[]
+  fresh: (createdAt: string | null, author: string | null) => boolean
 }
 
 // "Saga": events and comments of the item together, oldest first, each with
-// the actor's short name.
-export function HistoryTab({ itemId, events, comments, participants }: Props) {
+// the actor's short name. Entries by someone else since the viewer last opened
+// the item are marked new.
+export function HistoryTab({ itemId, events, comments, participants, fresh }: Props) {
   const { t } = useTranslation()
   const entries = itemHistory(events, comments, itemId)
   if (entries.length === 0) return <p className="hg-pn-muted">{t('vinnubord.panel.history.empty')}</p>
@@ -23,14 +25,21 @@ export function HistoryTab({ itemId, events, comments, participants }: Props) {
     <ol className="hg-history">
       {entries.map((entry) => {
         const actor = who(entry.actor)
+        const isNew = fresh(entry.at, entry.actor)
         return (
-          <li key={`${entry.type}:${entry.id}`} className={`hg-hist hg-hist-${entry.type}`}>
+          <li key={`${entry.type}:${entry.id}`} className={`hg-hist hg-hist-${entry.type}${isNew ? ' hg-fresh' : ''}`}>
             <span className="hg-av" title={actor?.display_name}>
               {actor?.short ?? '?'}
             </span>
             <div className="hg-hist-main">
               <p className="hg-hist-line">
                 <b>{actor?.display_name ?? t('vinnubord.history.someone')}</b> {lineOf(entry, nameOf, t)}
+                {isNew && (
+                  <>
+                    {' '}
+                    <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')}</span>
+                  </>
+                )}
                 {entry.at && <span className="hg-hist-when"> {formatStamp(entry.at)}</span>}
               </p>
               {entry.type === 'comment' && <p className="hg-hist-comment">{entry.comment.body}</p>}

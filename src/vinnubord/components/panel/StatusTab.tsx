@@ -17,13 +17,15 @@ type Props = {
   module: Module | null
   tone: Tone
   label: string
+  fresh: (createdAt: string | null, author: string | null) => boolean
+  freshActions: number
 }
 
 const STATUSES = Object.keys(STATUS_NAMES) as ItemStatus[]
 
 // "Staða": where we are, actions, the next step with its prompt, "Halda áfram",
 // plans with rulings, the description, the status control and the source.
-export function StatusTab({ data, item, module, tone, label }: Props) {
+export function StatusTab({ data, item, module, tone, label, fresh, freshActions }: Props) {
   const { t } = useTranslation()
   const plans = data.plans.filter((p) => p.item_id === item.id)
   const planIds = new Set(plans.map((p) => p.id))
@@ -46,8 +48,12 @@ export function StatusTab({ data, item, module, tone, label }: Props) {
 
       {actions.length > 0 && (
         <section className="hg-pn-sec">
-          <h3>{t('vinnubord.panel.actions')}</h3>
-          <ActionList actions={actions} participants={data.participants} />
+          <h3>
+            {freshActions > 0
+              ? t('vinnubord.panel.actionsWithNew', { count: freshActions })
+              : t('vinnubord.panel.actions')}
+          </h3>
+          <ActionList actions={actions} participants={data.participants} fresh={fresh} />
         </section>
       )}
 

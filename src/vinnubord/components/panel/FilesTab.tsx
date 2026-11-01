@@ -11,6 +11,7 @@ type Props = {
   files: FileRow[]
   plans: Plan[]
   participants: Participant[]
+  fresh: (createdAt: string | null, author: string | null) => boolean
 }
 
 type Reader = { file: FileRow; text: string | null; error: string | null }
@@ -18,8 +19,9 @@ type Reader = { file: FileRow; text: string | null; error: string | null }
 // "Skjöl": plans with a repo path come first (path only, no open), then who
 // added what and when, the repo path to copy. A tap opens the file: md and txt
 // in the reader inside the panel, anything else in a new tab through a signed
-// url.
-export function FilesTab({ files, plans, participants }: Props) {
+// url. A file someone else added since the viewer last opened the item is
+// marked new; plan rows never are.
+export function FilesTab({ files, plans, participants, fresh }: Props) {
   const { t } = useTranslation()
   const [reader, setReader] = useState<Reader | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -117,8 +119,9 @@ export function FilesTab({ files, plans, participants }: Props) {
         ))}
         {files.map((f) => {
           const by = participants.find((p) => p.user_id === f.uploaded_by)
+          const isNew = fresh(f.created_at, f.uploaded_by)
           return (
-            <li key={f.id} className="hg-file">
+            <li key={f.id} className={`hg-file${isNew ? ' hg-fresh' : ''}`}>
               <button
                 type="button"
                 className="hg-file-open"
@@ -132,6 +135,7 @@ export function FilesTab({ files, plans, participants }: Props) {
                 <span className="hg-av" aria-hidden="true">
                   {by?.short ?? '?'}
                 </span>
+                {isNew && <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')}</span>}
                 {t('vinnubord.panel.files.by', {
                   name: by?.display_name ?? '?',
                   when: f.created_at ? formatStamp(f.created_at) : '',

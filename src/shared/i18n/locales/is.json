@@ -193,6 +193,7 @@
       "actionDone": "Lokið: {{body}}",
       "actions": "Handtök",
       "actionsDone": "Afgreitt ({{count}})",
+      "actionsWithNew": "Handtök ({{count}} ný)",
       "body": "Lýsing",
       "changeStatus": "Breyta stöðu",
       "choose": "Velja",
@@ -223,6 +224,7 @@
         "openLink": "Smelltu til að opna {{name}}",
         "planKind": "Plan"
       },
+      "fresh": "nýtt",
       "history": {
         "empty": "Ekkert hefur gerst ennþá."
       },

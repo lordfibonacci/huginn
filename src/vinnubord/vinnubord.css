@@ -885,6 +885,13 @@
 .hg-act .hg-av { margin-top: var(--hg-av-nudge); }
 .hg-act-body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .hg-act.hg-act-done .hg-act-body { color: var(--hg-ink-3); text-decoration: line-through; }
+/* Fresh rows: added by someone else since the viewer last opened the item. */
+.hg-fresh { background: color-mix(in oklab, var(--hg-gold) 8%, var(--hg-chip-bg)); }
+.hg-fresh-mark { color: var(--hg-gold); font-weight: 700; }
+.hg-act-when {
+  margin-left: auto; padding-left: var(--hg-pill-gap); font-size: var(--hg-hist-when-size); color: var(--hg-ink-3); white-space: nowrap;
+}
+.hg-hist.hg-fresh { padding: var(--hg-hist-comment-pad); border-radius: var(--hg-radius-code); }
 .hg-resume { margin-top: var(--hg-pn-sec-gap); display: flex; align-items: center; gap: var(--hg-resume-gap); flex-wrap: wrap; }
 .hg-resume-btn { min-width: var(--hg-resume-btn-w); }
 .hg-resume .hg-pn-muted { font-size: var(--hg-pn-small-size); flex: 1; min-width: var(--hg-resume-note-w); }
@@ -914,6 +921,8 @@
 }
 .hg-q { padding: var(--hg-pn-item-pad); border-radius: var(--hg-radius-code); background: var(--hg-chip-bg); }
 .hg-q.hg-q-open { border-left: var(--hg-q-mark) solid var(--hg-lilac); }
+/* .hg-file and .hg-q set their background after .hg-fresh, so the tint is repeated here. */
+.hg-file.hg-fresh, .hg-q.hg-fresh { background: color-mix(in oklab, var(--hg-gold) 8%, var(--hg-chip-bg)); }
 .hg-q-body { color: var(--hg-ink); font-weight: 600; white-space: pre-line; }
 .hg-q-answer { color: var(--hg-ink-2); white-space: pre-line; }
 .hg-answer {
