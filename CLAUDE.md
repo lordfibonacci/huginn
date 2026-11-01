@@ -138,6 +138,7 @@ Files live in `supabase/migrations/` (see the README there). Applied with the Su
 - `0010b_hg_unread_open_only` : applied through MCP 2026-11-01. `hg_unread` joins `hg_items` and returns groups for open items only (not done or dropped), so closed items never pile up toward the PostgREST row cap. Named 0010b because 0011 and 0012 are taken by the views and action edits plans.
 - `0011_hg_views` : applied through MCP 2026-11-01. The two view tables with participant RLS, `created_by` stamp trigger, realtime. `npm run smoke:hg` scenario 9 covers it.
 - `0011b_hg_views_project_keys` : applied through MCP 2026-11-01. Composite keys so a view position's view and item are in its own project, like 0002.
+- `0012_hg_action_edits` : applied through MCP 2026-11-01. `hg_actions` gets `updated_at`, `updated_by` (stamped when body, owner or payload changes), `cancelled` and `cancel_reason`. A cancelled action has `done_at` set, so every `done_at` rule is unchanged; `done_at` set together with `cancelled` logs `action.cancelled` instead of `action.done`; an edit logs `action.updated` with `fields`. Flags on a closed action cannot be flipped. `npm run smoke:hg` scenario 10 covers it.
 
 ### Edge function hg-analyse
 

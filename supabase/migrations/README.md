@@ -23,3 +23,4 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0010b_hg_unread_open_only: hg_unread returns groups for open items only.
 - 0011_hg_views: hg_views (name, filter json, position) and hg_view_positions (card positions per view), participant RLS, realtime.
 - 0011b_hg_views_project_keys: composite (id, project_id) keys so a view position's view and item are in its own project.
+- 0012_hg_action_edits: updated_at, updated_by, cancelled and cancel_reason on hg_actions, edit stamps, action.updated and action.cancelled events.

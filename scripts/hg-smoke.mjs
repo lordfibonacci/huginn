@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-const TOTAL = 9
+const TOTAL = 10
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -397,6 +397,54 @@ try {
     viewId = null
     const left = must(await sb.from('hg_view_positions').select('item_id').eq('view_id', view.id), 'positions after delete')
     expect(left.length === 0, `${left.length} view positions survived the view delete`)
+    passed++
+    scenario = '10 action edits'
+    // a: a new action has no edit stamp
+    const a10 = must(
+      await sb.from('hg_actions').insert({ project_id: projectId, item_id: itemId, body: 'first text', owner: heimir.user_id }).select('id, updated_at, updated_by').single(),
+      'insert action 10',
+    )
+    expect(a10.updated_at === null && a10.updated_by === null, 'new action carries an edit stamp')
+    // b: changing body stamps updated_at and updated_by and logs action.updated with fields
+    must(await sb.from('hg_actions').update({ body: 'second text', owner: arni.user_id }).eq('id', a10.id), 'edit action')
+    const e10 = must(await sb.from('hg_actions').select('updated_at, updated_by, done_at').eq('id', a10.id).single(), 'read edited')
+    expect(e10.updated_by === me && e10.updated_at !== null && e10.done_at === null, 'edit stamp missing or done_at touched')
+    const upd = (await readEvents()).filter((e) => e.kind === 'action.updated')
+    expect(upd.length === 1 && JSON.stringify(upd[0].data.fields) === JSON.stringify(['body', 'owner']), `action.updated events ${JSON.stringify(upd)}`)
+    // c: marking done after an edit works and logs action.done, not action.updated
+    must(await sb.from('hg_actions').update({ done_at: new Date().toISOString() }).eq('id', a10.id).is('done_at', null), 'done after edit')
+    const afterDone = await readEvents()
+    expect(afterDone.filter((e) => e.kind === 'action.updated').length === 1, 'done_at change logged action.updated')
+    expect(afterDone.filter((e) => e.kind === 'action.done').length >= 3, 'action.done missing after edit')
+    // d: cancelling an open action sets done_at, cancelled, reason and logs action.cancelled
+    const c10 = must(
+      await sb.from('hg_actions').insert({ project_id: projectId, item_id: itemId, body: 'to cancel', owner: heimir.user_id }).select('id').single(),
+      'insert cancel target',
+    )
+    must(
+      await sb.from('hg_actions').update({ done_at: new Date().toISOString(), cancelled: true, cancel_reason: 'planið breyttist' }).eq('id', c10.id).is('done_at', null),
+      'cancel action',
+    )
+    const cRow = must(await sb.from('hg_actions').select('done_at, done_by, cancelled, cancel_reason').eq('id', c10.id).single(), 'read cancelled')
+    expect(cRow.done_at && cRow.done_by === me && cRow.cancelled === true && cRow.cancel_reason === 'planið breyttist', `cancel row ${JSON.stringify(cRow)}`)
+    const canc = (await readEvents()).filter((e) => e.kind === 'action.cancelled')
+    expect(canc.length === 1 && canc[0].data.reason === 'planið breyttist', `action.cancelled events ${JSON.stringify(canc)}`)
+    // e: cancelled cannot be flipped back by an update that keeps done_at
+    must(await sb.from('hg_actions').update({ cancelled: false, cancel_reason: null }).eq('id', c10.id), 'flip cancelled')
+    const kept10 = must(await sb.from('hg_actions').select('cancelled, cancel_reason').eq('id', c10.id).single(), 'read flipped')
+    expect(kept10.cancelled === true && kept10.cancel_reason === 'planið breyttist', 'cancelled was flipped on a closed action')
+    // f: a plan going done with only a cancelled action left closes the item (cancelled is closed)
+    const fItem = must(
+      await sb.from('hg_items').insert({ project_id: projectId, title: 'smoke 10 f', status: 'waiting', waiting_on: heimir.user_id, created_by: me }).select('id').single(),
+      'insert item f',
+    )
+    extraItems.push(fItem.id)
+    const fAct = must(await sb.from('hg_actions').insert({ project_id: projectId, item_id: fItem.id, body: 'gone', owner: heimir.user_id }).select('id').single(), 'insert action f')
+    must(await sb.from('hg_actions').update({ done_at: new Date().toISOString(), cancelled: true }).eq('id', fAct.id), 'cancel action f')
+    const fPlan = must(await sb.from('hg_plans').insert({ project_id: projectId, item_id: fItem.id, name: 'p', status: 'building' }).select('id').single(), 'insert plan f')
+    must(await sb.from('hg_plans').update({ status: 'done' }).eq('id', fPlan.id), 'plan f done')
+    const fRow = must(await sb.from('hg_items').select('status, closed_at').eq('id', fItem.id).single(), 'read item f')
+    expect(fRow.status === 'done' && fRow.closed_at !== null, `item f is ${fRow.status}, expected done`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind
