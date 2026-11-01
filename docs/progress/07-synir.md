@@ -54,9 +54,7 @@ Fannst í yfirferð og er ekki lagað. Ekkert af því brýtur neitt.
 4. Hreinsunarskilyrði `useActiveView` hefur ekki próf. `choose(X)` á þegar leystu X skilur eftir `unseen=X`, og ef X er eytt eftir það lifir dauði lykillinn til næsta vals eða endurhleðslu.
 5. Í sýn horfir `placeNew` ekki á aðalstaðsetningar teiknaðra spjalda, svo nýtt spjald getur lent ofan á spjaldi á aðalborðinu (spekk 5.3.6).
 6. `onDrop` endurnýtir `s.pending.baseX` án þess að athuga `pending.viewId` við sýnaskipti í miðju drag. Í versta falli einn snemmbúinn smellur.
-7. Spjöld sem snúa aftur í sýn mounta með fyrstu `enterDelay` gildunum og geta raðast upp aftur í allt að 3 sekúndur við skipti til baka á aðalborðið.
-8. Tögg í `NewItemSheet` koma úr `visibleItems`, svo í sýn eru bara tögg sýnarinnar boðin.
-9. `.hg-view-ddb em` takmarkast við `--hg-menu-w` í stað eigin tákns.
-10. Á meðan sýn er eytt er hægt að smella á flísar í listanum, og `onChoose(null)` yfirskrifar val sem var gert á meðan.
-11. Villa í listanum hreinsast ekki þegar farið er í ritilinn og hætt við.
-12. Á símum er sýnaheitið falið og `title` á földu `em` gagnslaust. Hnappurinn ætti að fá `aria-label` með heitinu.
+7. `.hg-view-ddb em` takmarkast við `--hg-menu-w` í stað eigin tákns.
+8. Á meðan sýn er eytt er hægt að smella á flísar í listanum, og `onChoose(null)` yfirskrifar val sem var gert á meðan.
+9. Villa í listanum hreinsast ekki þegar farið er í ritilinn og hætt við.
+10. Á símum er sýnaheitið falið og `title` á földu `em` gagnslaust. Hnappurinn ætti að fá `aria-label` með heitinu.

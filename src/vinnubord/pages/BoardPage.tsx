@@ -191,7 +191,7 @@ export function BoardPage() {
           />
         ) : null}
       </PanelShell>
-      <NewItemSheet open={newOpen} data={data} tags={tags} place={place} onClose={closeNew} onCreated={onCreated} />
+      <NewItemSheet open={newOpen} data={data} tags={allTags} place={place} onClose={closeNew} onCreated={onCreated} />
       {error && (
         <div className="hg-notice" role="status">
           <span>{t('vinnubord.board.refreshError')}</span>

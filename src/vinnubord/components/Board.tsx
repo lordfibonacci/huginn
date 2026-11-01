@@ -227,7 +227,13 @@ export function Board({
       const el = els.current.get(item.id)
       if (el) place(el, s)
     }
-    for (const id of springs.current.keys()) if (!seen.has(id)) springs.current.delete(id)
+    // A card that leaves the board forgets its entry delay too, so when a view
+    // switch brings it back it pops in at once instead of waiting its load turn.
+    for (const id of springs.current.keys()) {
+      if (seen.has(id)) continue
+      springs.current.delete(id)
+      delays.current.set(id, 0)
+    }
   }, [onBoard, positions, viewId])
 
   // One frame of every moving spring, called by Wires before it reads rects.
