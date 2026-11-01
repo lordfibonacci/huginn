@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SHEET_HALF, sheetFraction, snapSheet } from './sheet'
+import { OPEN_STOP, SHEET_HALF, sheetFraction, snapSheet } from './sheet'
 
 describe('sheetFraction', () => {
   it('maps each stop to how far down the sheet sits', () => {
@@ -37,3 +37,5 @@ describe('snapSheet', () => {
     expect(snapSheet(0, 0, 0)).toBe('full')
   })
 })
+
+it('opens full', () => expect(OPEN_STOP).toBe('full'))

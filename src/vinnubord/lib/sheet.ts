@@ -8,6 +8,9 @@ export const SHEET_HALF = 0.45
 // Release speed in px per ms past which a release counts as a flick.
 export const FLICK_SPEED = 0.5
 
+// Where the bottom sheet opens. Full, so the whole item shows without a drag.
+export const OPEN_STOP: SheetStop = 'full'
+
 export function sheetFraction(stop: SheetStop): number {
   return stop === 'full' ? 0 : stop === 'half' ? SHEET_HALF : 1
 }

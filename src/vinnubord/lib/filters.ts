@@ -90,6 +90,13 @@ export function withQuery(f: Filter, q: string): Filter {
   return { ...f, q }
 }
 
+// The filter without its package and tag picks, keeping tones, query and
+// unread. The same object when there are no picks.
+export function withoutPicks(f: Filter): Filter {
+  if (f.packages.size === 0 && f.tags.size === 0) return f
+  return { ...f, packages: new Set(), tags: new Set() }
+}
+
 // The filter without package ids that are no longer on the board (a deleted
 // package would otherwise keep the board dim with nothing to switch off).
 // The same object when nothing changes.

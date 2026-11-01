@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import {
   zoomAt,
   fitAll,
+  fitWidth,
+  startAtPack,
+  FIT_MAX_ZOOM,
   screenToWorld,
   wireEndpoints,
   bezierControl,
@@ -213,5 +216,30 @@ describe('pinchView', () => {
   it('never zooms in when pinching out from a view below the floor', () => {
     const next = pinchView({ x: 0, y: 0, z: 0.1 }, { cx: 0, cy: 0, d: 100 }, { cx: 0, cy: 0, d: 50 })
     expect(next.z).toBe(0.1)
+  })
+})
+
+describe('fitWidth', () => {
+  const vp = { w: 390, h: 800 }
+  const pad = { top: 90, sides: 40, bottom: 60 }
+  it('zooms the rect to the padded width and puts its top at the top padding', () => {
+    const v = fitWidth({ x: 1102, y: 60, w: 440, h: 2000 }, vp, pad)
+    expect(v.z).toBeCloseTo(310 / 440)
+    expect(v.x + 1102 * v.z).toBeCloseTo(40)
+    expect(v.y + 60 * v.z).toBeCloseTo(90)
+  })
+  it('never zooms past maxZoom and centres a narrow rect', () => {
+    const v = fitWidth({ x: 0, y: 0, w: 100, h: 100 }, vp, pad)
+    expect(v.z).toBe(FIT_MAX_ZOOM)
+    expect(v.x).toBeCloseTo(40 + (310 - 100 * FIT_MAX_ZOOM) / 2)
+  })
+})
+
+describe('startAtPack', () => {
+  it('puts the pack corner at the padding in zoom 0.8', () => {
+    const v = startAtPack({ x: 1102, y: 60 })
+    expect(v.z).toBe(0.8)
+    expect(v.x + 1102 * v.z).toBeCloseTo(16)
+    expect(v.y + 60 * v.z).toBeCloseTo(16)
   })
 })

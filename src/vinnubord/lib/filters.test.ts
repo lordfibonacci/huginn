@@ -12,8 +12,10 @@ import {
   toggleFilter,
   toggleUnread,
   withQuery,
+  withoutPicks,
 } from './filters'
 import type { Item } from './types'
+import type { Tone } from './status'
 
 function item(over: Partial<Item> = {}): Item {
   return {
@@ -189,5 +191,19 @@ describe('prunePackages', () => {
     expect(prunePackages(f, new Set(['pk1']))).toBe(f)
     const empty = emptyFilter()
     expect(prunePackages(empty, new Set())).toBe(empty)
+  })
+})
+
+describe('withoutPicks', () => {
+  it('drops packages and tags and keeps the rest', () => {
+    const f = { tones: new Set<Tone>(['gold']), packages: new Set(['p']), tags: new Set(['t']), q: 'x', unread: true }
+    const r = withoutPicks(f)
+    expect([...r.packages]).toEqual([])
+    expect([...r.tags]).toEqual([])
+    expect([...r.tones]).toEqual(['gold'])
+    expect(r.q).toBe('x')
+    expect(r.unread).toBe(true)
+    const e = emptyFilter()
+    expect(withoutPicks(e)).toBe(e)
   })
 })

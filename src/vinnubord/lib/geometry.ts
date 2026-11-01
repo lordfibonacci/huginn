@@ -70,6 +70,32 @@ export function fitAll(
   }
 }
 
+// The view that fits a rect to the padded viewport width, centred when it is
+// narrower than the width, with its top at the top padding. Capped at maxZoom.
+// For a tall column on a phone, where fitting the height would be tiny.
+export function fitWidth(
+  rect: Rect,
+  viewport: { w: number; h: number },
+  padding: { top: number; sides: number; bottom: number },
+  maxZoom = FIT_MAX_ZOOM,
+): View {
+  const W = Math.max(1, viewport.w - 2 * padding.sides)
+  const z = Math.min(maxZoom, W / rect.w)
+  return {
+    x: padding.sides + (W - rect.w * z) / 2 - rect.x * z,
+    y: padding.top - rect.y * z,
+    z,
+  }
+}
+
+// The opening view on a phone: the pack's top left corner at pad px from the
+// board's top left, at a readable zoom.
+export const START_ZOOM = 0.8
+export const START_PAD = 16
+export function startAtPack(pack: { x: number; y: number }, z = START_ZOOM, pad = START_PAD): View {
+  return { x: pad - pack.x * z, y: pad - pack.y * z, z }
+}
+
 // Wire from card a to module b. It leaves the card on the side facing the
 // module: the right side when the card's centre is left of the module's
 // centre, else the left side. It lands 2 px inside the module's near edge.
