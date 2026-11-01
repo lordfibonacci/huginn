@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-const TOTAL = 6
+const TOTAL = 7
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -15,6 +15,7 @@ const expect = (cond, msg) => {
 let passed = 0
 let scenario = 'setup'
 let itemId = null
+let extraItems = []
 let projectId = null
 let failure = null
 let sb = null
@@ -212,12 +213,127 @@ try {
       expect(at > Date.parse('2020-01-01T00:00:00Z'), `upsert read ${n + 1} kept the client read_at ${rows[0]?.read_at}`)
     }
     passed++
+    scenario = '7 plan moves item'
+    const newItem = async (over = {}) => {
+      const row = must(
+        await sb
+          .from('hg_items')
+          .insert({ project_id: projectId, title: 'smoke plan item', created_by: me, ...over })
+          .select('id')
+          .single(),
+        'insert plan item',
+      )
+      extraItems.push(row.id)
+      return row.id
+    }
+    const readOne = async (id) =>
+      must(await sb.from('hg_items').select('status, waiting_on, closed_at').eq('id', id).single(), 'read plan item')
+    const addPlan = async (id, status = 'todo') =>
+      must(
+        await sb.from('hg_plans').insert({ project_id: projectId, item_id: id, name: 'p', status }).select('id').single(),
+        'insert plan',
+      ).id
+    const setPlan = async (pid, status) => must(await sb.from('hg_plans').update({ status }).eq('id', pid), `plan ${status}`)
+    const statusEvents = async (id) =>
+      must(await sb.from('hg_events').select('data').eq('item_id', id).eq('kind', 'item.status').order('created_at'), 'status events')
+
+    // a. a plan in todo moves nothing
+    const pItem = await newItem({ status: 'parked' })
+    const p1 = await addPlan(pItem)
+    let s = await readOne(pItem)
+    expect(s.status === 'parked', `after todo plan status is ${s.status}, expected parked`)
+
+    // b. plan building moves a parked item to building
+    await setPlan(p1, 'building')
+    s = await readOne(pItem)
+    expect(s.status === 'building' && s.waiting_on === null, `after plan building: ${s.status}, ${s.waiting_on}`)
+
+    // c. plan done while another plan is todo puts the item in ready
+    const p2 = await addPlan(pItem)
+    await setPlan(p1, 'done')
+    s = await readOne(pItem)
+    expect(s.status === 'ready', `after first plan done with a todo plan: ${s.status}, expected ready`)
+
+    // d. plan done while another plan is building moves nothing
+    await setPlan(p2, 'building')
+    await setPlan(p1, 'todo')
+    await setPlan(p1, 'done')
+    s = await readOne(pItem)
+    expect(s.status === 'building', `plan done beside a building plan: ${s.status}, expected building`)
+
+    // e. last plan done with an open action waits on its owner
+    const act7 = must(
+      await sb
+        .from('hg_actions')
+        .insert({ project_id: projectId, item_id: pItem, body: 'verify', owner: heimir.user_id })
+        .select('id')
+        .single(),
+      'insert action 7',
+    )
+    await setPlan(p2, 'done')
+    s = await readOne(pItem)
+    expect(s.status === 'waiting' && s.waiting_on === heimir.user_id, `last plan done with open action: ${s.status}, ${s.waiting_on}`)
+
+    // f. with the action done and a question open, waits on the question's recipient
+    must(await sb.from('hg_actions').update({ done_at: new Date().toISOString() }).eq('id', act7.id), 'done action 7')
+    const q7 = must(
+      await sb
+        .from('hg_questions')
+        .insert({ project_id: projectId, item_id: pItem, body: 'q7', asked_by: me, asked_to: arni.user_id })
+        .select('id')
+        .single(),
+      'ask q7',
+    )
+    await setPlan(p2, 'todo')
+    s = await readOne(pItem)
+    expect(s.status === 'waiting' && s.waiting_on === heimir.user_id, `plan back to todo moved the item: ${s.status}, ${s.waiting_on}`)
+    await setPlan(p2, 'done')
+    s = await readOne(pItem)
+    expect(s.status === 'waiting' && s.waiting_on === arni.user_id, `last plan done with open question: ${s.status}, ${s.waiting_on}`)
+
+    // g. nothing open: the item is done with closed_at
+    must(await sb.from('hg_questions').update({ answer: 'ok' }).eq('id', q7.id), 'answer q7')
+    await setPlan(p2, 'todo')
+    await setPlan(p2, 'done')
+    s = await readOne(pItem)
+    expect(s.status === 'done' && s.closed_at !== null, `last plan done with nothing open: ${s.status}, closed_at ${s.closed_at}`)
+
+    // h. a done item is never touched
+    await setPlan(p2, 'building')
+    s = await readOne(pItem)
+    expect(s.status === 'done', `plan building on a done item: ${s.status}, expected done`)
+
+    // i. a no change update writes no event
+    const nBefore = (await statusEvents(pItem)).length
+    await setPlan(p2, 'building')
+    expect((await statusEvents(pItem)).length === nBefore, 'a no change plan update wrote an item.status event')
+
+    // j. a plan inserted directly as building moves a new item
+    const iItem = await newItem()
+    await addPlan(iItem, 'building')
+    s = await readOne(iItem)
+    expect(s.status === 'building', `plan inserted as building: ${s.status}, expected building`)
+
+    // k. the history carries the moves with the signed in user as actor
+    const evs7 = must(
+      await sb.from('hg_events').select('kind, actor, data').eq('item_id', pItem).eq('kind', 'item.status').order('created_at'),
+      'events 7',
+    )
+    expect(evs7.length >= 6, `item.status events ${evs7.length}, expected at least 6`)
+    expect(evs7.every((e) => e.actor === me), 'an item.status event has another actor than the signed in user')
+    expect(evs7[0].data.from === 'parked' && evs7[0].data.to === 'building', `first move is ${JSON.stringify(evs7[0].data)}`)
+    passed++
   } finally {
     // runs even on failure so nothing is left behind
     if (itemId) {
       const d = await sb.from('hg_items').delete().eq('id', itemId).select('id')
       if (d.error) console.error(`cleanup failed, leaked hg_items id ${itemId}: ${d.error.message}`)
       else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_items id ${itemId}`)
+    }
+    for (const id of extraItems) {
+      const d = await sb.from('hg_items').delete().eq('id', id).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_items id ${id}: ${d.error.message}`)
+      else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_items id ${id}`)
     }
   }
 
