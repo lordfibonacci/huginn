@@ -1,6 +1,6 @@
 import type { ItemPatch } from './api'
 import { isOnBoard } from './status'
-import type { Item, ItemStatus, Question } from './types'
+import type { FileRow, Item, ItemStatus, Plan, Question } from './types'
 
 // Pure helpers behind the item and module panels.
 
@@ -38,4 +38,15 @@ function createdTime(q: Question): number {
 export function splitQuestions(questions: Question[]): { open: Question[]; answered: Question[] } {
   const sorted = [...questions].sort((a, b) => createdTime(a) - createdTime(b))
   return { open: sorted.filter((q) => q.answer === null), answered: sorted.filter((q) => q.answer !== null) }
+}
+
+// Files plus plans with a path per item, for the card badge. Items with
+// zero are absent from the map.
+export function fileCountsByItem(files: FileRow[], plans: Plan[]): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const f of files) map.set(f.item_id, (map.get(f.item_id) ?? 0) + 1)
+  for (const p of plans) {
+    if (typeof p.path === 'string' && p.path !== '') map.set(p.item_id, (map.get(p.item_id) ?? 0) + 1)
+  }
+  return map
 }

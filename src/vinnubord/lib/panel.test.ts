@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { moduleItems, splitQuestions, statusPatch } from './panel'
-import type { Item, Question } from './types'
+import { fileCountsByItem, moduleItems, splitQuestions, statusPatch } from './panel'
+import type { FileRow, Item, Plan, Question } from './types'
 
 function item(id: string, over: Partial<Item> = {}): Item {
   return {
@@ -93,5 +93,18 @@ describe('splitQuestions', () => {
     ])
     expect(out.open.map((x) => x.id)).toEqual(['o1', 'o2'])
     expect(out.answered.map((x) => x.id)).toEqual(['a1', 'a2'])
+  })
+})
+
+describe('fileCountsByItem', () => {
+  const file = (id: string, item_id: string): FileRow => ({ id, item_id }) as FileRow
+  const plan = (id: string, item_id: string, path: string | null): Plan =>
+    ({ id, item_id, name: 'p', path, status: 'todo', position: 0 }) as Plan
+  it('counts files plus plans with a path', () => {
+    const map = fileCountsByItem([file('f1', 'a'), file('f2', 'a'), file('f3', 'b')], [plan('p1', 'a', 'docs/p.md'), plan('p2', 'b', null), plan('p3', 'b', ''), plan('p4', 'c', 'docs/c.md')])
+    expect(map.get('a')).toBe(3)
+    expect(map.get('b')).toBe(1)
+    expect(map.get('c')).toBe(1)
+    expect(map.has('d')).toBe(false)
   })
 })

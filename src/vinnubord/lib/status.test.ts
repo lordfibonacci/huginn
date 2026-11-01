@@ -6,6 +6,7 @@ import {
   isOnBoard,
   itemStatusLabel,
   itemTone,
+  mineActionsByItem,
   waitsFor,
   wireMode,
 } from './status'
@@ -145,5 +146,22 @@ describe('wireMode', () => {
   it('calm for teal, parked for parked items', () => {
     expect(wireMode(item({ status: 'building' }), 'teal')).toBe('calm')
     expect(wireMode(item({ status: 'parked' }), 'stone')).toBe('parked')
+  })
+})
+
+describe('mineActionsByItem', () => {
+  const a = (id: string, item_id: string, owner: string, done: boolean): Action =>
+    ({ id, created_at: null, project_id: 'pr', item_id, body: 'b', owner, payload: null, done_at: done ? '2026-01-01T00:00:00Z' : null, done_by: null }) as Action
+  it('counts only open actions owned by the viewer', () => {
+    const map = mineActionsByItem([a('a1', 'i1', ME, false), a('a2', 'i1', ME, true), a('a3', 'i1', OTHER, false), a('a4', 'i2', ME, false)], ME)
+    expect(map.get('i1')).toBe(1)
+    expect(map.get('i2')).toBe(1)
+    expect(map.has('i3')).toBe(false)
+  })
+})
+
+describe('itemStatusLabel without someone to wait on', () => {
+  it('reads Bíður ákvörðunar', () => {
+    expect(itemStatusLabel(item({ status: 'waiting', waiting_on: null }), ME, participants)).toBe('Bíður ákvörðunar')
   })
 })

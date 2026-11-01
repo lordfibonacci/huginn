@@ -49,6 +49,8 @@ export function itemTone(item: Item, viewerId: string, participants: Participant
 }
 
 // Status labels are hard coded Icelandic (ruling R5), not routed through i18n.
+// A waiting item with nobody to wait on reads 'Bíður ákvörðunar', the same
+// heading the CLI prints in cli/lib/format.mjs.
 export function itemStatusLabel(item: Item, viewerId: string, participants: Participant[]): string {
   switch (item.status) {
     case 'new': {
@@ -56,6 +58,7 @@ export function itemStatusLabel(item: Item, viewerId: string, participants: Part
       return `Nýtt frá ${creator ? creator.short : '?'}`
     }
     case 'waiting': {
+      if (item.waiting_on === null) return 'Bíður ákvörðunar'
       if (item.waiting_on === viewerId) return 'Bíður þín'
       if (isServiceUser(item.waiting_on, participants)) return 'Svarað, bíður Claude'
       const who = participants.find((p) => p.user_id === item.waiting_on)
@@ -78,9 +81,23 @@ export function isOnBoard(item: Item): boolean {
   return item.status !== 'done' && item.status !== 'dropped'
 }
 
+function isOpenMine(a: Action, viewerId: string): boolean {
+  return a.owner === viewerId && a.done_at === null
+}
+
 export function waitsFor(item: Item, actions: Action[], viewerId: string): boolean {
   if (item.waiting_on === viewerId) return true
-  return actions.some((a) => a.item_id === item.id && a.owner === viewerId && a.done_at === null)
+  return actions.some((a) => a.item_id === item.id && isOpenMine(a, viewerId))
+}
+
+// Open actions owned by the viewer per item, the same rule waitsFor uses.
+// Items without one are absent from the map.
+export function mineActionsByItem(actions: Action[], viewerId: string): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const a of actions) {
+    if (isOpenMine(a, viewerId)) map.set(a.item_id, (map.get(a.item_id) ?? 0) + 1)
+  }
+  return map
 }
 
 export type Counts = { new: number; mine: number; others: number; build: number; parked: number }
