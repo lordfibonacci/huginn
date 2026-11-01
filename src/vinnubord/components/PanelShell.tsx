@@ -49,12 +49,18 @@ type BodyTouch = {
   v: number
 }
 
-// Full sheet height in px, from the CSS token on :root so the two never
-// disagree. Works before the panel has mounted.
-function sheetMax(): number {
+// Full sheet height in px before the sheet has been measured, from the CSS
+// token on :root. It leaves out the safe top, which getPropertyValue cannot
+// resolve (it returns the raw env() text). Once the aside is laid out as a
+// sheet its own offsetHeight is used instead.
+function sheetMaxFallback(): number {
   const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hg-sheet-top')) || 0
   return Math.max(0, window.innerHeight - top)
 }
+
+// The close button in the handle row. Presses on it are never a drag or a
+// handle tap.
+const CLOSE = '.hg-sheet-close'
 
 // The panel frame. From 768 px a fixed layer on the right that slides in;
 // below that a bottom sheet at full height with three stops (closed, half,
@@ -117,13 +123,27 @@ export function PanelShell({ open, onClose, label, children }: Props) {
 
   // A resize (rotation, the address bar, the keyboard) renders again, so the
   // offset is worked out from the new height and the sheet keeps its stop.
-  const [, setResizeTick] = useState(0)
+  const [resizeTick, setResizeTick] = useState(0)
   useEffect(() => {
     if (!narrow) return
     const onResize = () => setResizeTick((n) => n + 1)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [narrow])
+
+  // The full sheet height is the aside's own height, measured after it is laid
+  // out as a sheet (it keeps its fixed height while hidden), so the safe top in
+  // the CSS is counted. Measured on entering narrow and on every resize, before
+  // paint; the drag handlers read it through maxRef, never per move.
+  const [sheetH, setSheetH] = useState(0)
+  useLayoutEffect(() => {
+    if (!narrow) return
+    const h = ref.current?.offsetHeight ?? 0
+    if (h > 0) setSheetH(h)
+  }, [narrow, resizeTick])
+  const max = narrow ? (sheetH > 0 ? sheetH : sheetMaxFallback()) : 0
+  const maxRef = useRef(max)
+  maxRef.current = max
 
   // A drag writes the transform straight to the element. Clearing it hands
   // the position back to the stop in CSS, which the transition animates to.
@@ -148,9 +168,11 @@ export function PanelShell({ open, onClose, label, children }: Props) {
   const onPointerDown = useCallback(
     (e: PointerEvent<HTMLElement>) => {
       if (!narrow || !open || (e.pointerType === 'mouse' && e.button !== 0)) return
-      const zone = (e.target as Element).closest?.('.hg-sheet-handle, .hg-pn-head')
+      const target = e.target as Element
+      if (target.closest?.(CLOSE)) return
+      const zone = target.closest?.('.hg-sheet-handle, .hg-pn-head')
       if (!zone) return
-      const max = sheetMax()
+      const max = maxRef.current
       const offset = sheetFraction(stop) * max
       drag.current = {
         pointerId: e.pointerId,
@@ -247,11 +269,11 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       cancel()
       if (e.touches.length !== 1) return
       const target = e.target as Element | null
-      if (!target?.closest || target.closest('.hg-sheet-handle, .hg-pn-head, input, textarea, select')) return
+      if (!target?.closest || target.closest(`${CLOSE}, .hg-sheet-handle, .hg-pn-head, input, textarea, select`)) return
       const body = target.closest('.hg-pn-body')
       if (!body) return
       const p = e.touches[0]
-      const max = sheetMax()
+      const max = maxRef.current
       const offset = sheetFraction(stopRef.current) * max
       touch = {
         y0: p.clientY,
@@ -338,7 +360,6 @@ export function PanelShell({ open, onClose, label, children }: Props) {
     .join(' ')
   let style: CSSProperties | undefined
   if (narrow) {
-    const max = sheetMax()
     style = { '--hg-sheet-offset': open ? sheetFraction(stop) * max : max } as CSSProperties
   }
 
@@ -357,8 +378,15 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       onPointerCancel={onPointerCancel}
     >
       {narrow && (
-        <div className="hg-sheet-handle" role="separator" aria-label={t('vinnubord.panel.sheetHandle')}>
-          <i aria-hidden="true" />
+        // The grip carries the separator role, so the close button beside it
+        // is not hidden as a presentational child of the separator.
+        <div className="hg-sheet-handle">
+          <i role="separator" aria-label={t('vinnubord.panel.sheetHandle')} />
+          <button type="button" className="hg-sheet-close" aria-label={t('common.close')} onClick={onClose}>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
         </div>
       )}
       {content}
