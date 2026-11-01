@@ -18,6 +18,9 @@ type Props = {
   filter: Filter
   onChoose: (id: string | null) => void
   onReload: () => Promise<void>
+  // Renders only the list or the editor in a group div, with no button and no
+  // dropdown, for the filter sheet. Never listens for outside clicks or Esc.
+  inline?: boolean
 }
 
 // The counter buckets in top bar order, without unread: a view never keeps it.
@@ -40,7 +43,7 @@ function errorText(e: unknown): string {
 // The "Sýn" menu: the list of shared views with Aðalborð first, choosing one
 // closes the menu. "Ný sýn" and "Breyta sýn" open the editor in the same menu,
 // "Eyða sýn" asks first and returns to Aðalborð.
-export function ViewMenu({ projectId, views, active, counts, boardCount, packages, tags, filter, onChoose, onReload }: Props) {
+export function ViewMenu({ projectId, views, active, counts, boardCount, packages, tags, filter, onChoose, onReload, inline = false }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('list')
@@ -53,7 +56,7 @@ export function ViewMenu({ projectId, views, active, counts, boardCount, package
     setMode('list')
     setError(null)
   }, [])
-  useDismiss(root, open, close)
+  useDismiss(root, open && !inline, close)
 
   function choose(id: string | null) {
     onChoose(id)
@@ -75,6 +78,79 @@ export function ViewMenu({ projectId, views, active, counts, boardCount, package
     }
   }
 
+  const content = (
+    mode === 'list' ? (
+      <>
+        <button
+          type="button"
+          className={`hg-chip${active === null ? ' hg-on' : ''}`}
+          aria-pressed={active === null}
+          onClick={() => choose(null)}
+        >
+          <span className="hg-chip-label">{t('vinnubord.views.main')}</span>
+          <span className="hg-chip-count">{boardCount}</span>
+        </button>
+        {views.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            className={`hg-chip${active?.id === v.id ? ' hg-on' : ''}`}
+            aria-pressed={active?.id === v.id}
+            onClick={() => choose(v.id)}
+          >
+            <span className="hg-chip-label">{v.name}</span>
+            <span className="hg-chip-count">{counts.get(v.id) ?? 0}</span>
+          </button>
+        ))}
+        <div className="hg-menu-sep" aria-hidden="true" />
+        <button type="button" className="hg-chip" disabled={busy} onClick={() => setMode({ mode: 'edit', view: null })}>
+          {t('vinnubord.views.new')}
+        </button>
+        {active && (
+          <>
+            <button
+              type="button"
+              className="hg-chip"
+              disabled={busy}
+              onClick={() => setMode({ mode: 'edit', view: active })}
+            >
+              {t('vinnubord.views.edit')}
+            </button>
+            <button type="button" className="hg-chip" disabled={busy} onClick={() => void remove(active)}>
+              {t('vinnubord.views.delete')}
+            </button>
+          </>
+        )}
+        {error && (
+          <p className="hg-pn-error" role="alert">
+            {error}
+          </p>
+        )}
+        <p className="hg-menu-empty">{t('vinnubord.views.sharedHint')}</p>
+      </>
+    ) : (
+      <ViewEditor
+        key={mode.view?.id ?? 'new'}
+        projectId={projectId}
+        view={mode.view}
+        packages={packages}
+        tags={tags}
+        filter={filter}
+        onChoose={onChoose}
+        onReload={onReload}
+        onDone={() => setMode('list')}
+      />
+    )
+  )
+
+  if (inline) {
+    return (
+      <div role="group" aria-label={t('vinnubord.views.menu')} className="hg-view-chips">
+        {content}
+      </div>
+    )
+  }
+
   return (
     <div ref={root} className="hg-dd">
       <button
@@ -92,68 +168,7 @@ export function ViewMenu({ projectId, views, active, counts, boardCount, package
       </button>
       {open && (
         <div id={menuId} className="hg-menu hg-view-menu" role="group" aria-label={t('vinnubord.views.menu')}>
-          {mode === 'list' ? (
-            <>
-              <button
-                type="button"
-                className={`hg-chip${active === null ? ' hg-on' : ''}`}
-                aria-pressed={active === null}
-                onClick={() => choose(null)}
-              >
-                <span className="hg-chip-label">{t('vinnubord.views.main')}</span>
-                <span className="hg-chip-count">{boardCount}</span>
-              </button>
-              {views.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  className={`hg-chip${active?.id === v.id ? ' hg-on' : ''}`}
-                  aria-pressed={active?.id === v.id}
-                  onClick={() => choose(v.id)}
-                >
-                  <span className="hg-chip-label">{v.name}</span>
-                  <span className="hg-chip-count">{counts.get(v.id) ?? 0}</span>
-                </button>
-              ))}
-              <div className="hg-menu-sep" aria-hidden="true" />
-              <button type="button" className="hg-chip" disabled={busy} onClick={() => setMode({ mode: 'edit', view: null })}>
-                {t('vinnubord.views.new')}
-              </button>
-              {active && (
-                <>
-                  <button
-                    type="button"
-                    className="hg-chip"
-                    disabled={busy}
-                    onClick={() => setMode({ mode: 'edit', view: active })}
-                  >
-                    {t('vinnubord.views.edit')}
-                  </button>
-                  <button type="button" className="hg-chip" disabled={busy} onClick={() => void remove(active)}>
-                    {t('vinnubord.views.delete')}
-                  </button>
-                </>
-              )}
-              {error && (
-                <p className="hg-pn-error" role="alert">
-                  {error}
-                </p>
-              )}
-              <p className="hg-menu-empty">{t('vinnubord.views.sharedHint')}</p>
-            </>
-          ) : (
-            <ViewEditor
-              key={mode.view?.id ?? 'new'}
-              projectId={projectId}
-              view={mode.view}
-              packages={packages}
-              tags={tags}
-              filter={filter}
-              onChoose={onChoose}
-              onReload={onReload}
-              onDone={() => setMode('list')}
-            />
-          )}
+          {content}
         </div>
       )}
     </div>

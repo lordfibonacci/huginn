@@ -31,18 +31,47 @@ type Props = {
   selected: Set<string>
   onToggle: (key: string) => void
   empty: string
+  // Renders only the chips in a group div, with no button and no dropdown, for
+  // the filter sheet.
+  inline?: boolean
 }
 
 // A top bar filter dropdown ("Pakki", "Tögg"): the button shows how many are
 // chosen, the menu lists every option with its open item count and toggles
 // it. The menu stays open while toggling so several can be chosen.
-export function FilterMenu({ label, options, selected, onToggle, empty }: Props) {
+export function FilterMenu({ label, options, selected, onToggle, empty, inline = false }: Props) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement | null>(null)
   const menuId = useId()
   const close = useCallback(() => setOpen(false), [])
-  useDismiss(root, open, close)
+  useDismiss(root, open && !inline, close)
   const chosen = options.filter((o) => selected.has(o.key)).length
+
+  const content =
+    options.length === 0 ? (
+      <p className="hg-menu-empty">{empty}</p>
+    ) : (
+      options.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          className={`hg-chip${selected.has(o.key) ? ' hg-on' : ''}`}
+          aria-pressed={selected.has(o.key)}
+          onClick={() => onToggle(o.key)}
+        >
+          <span className="hg-chip-label">{o.label}</span>
+          <span className="hg-chip-count">{o.count}</span>
+        </button>
+      ))
+    )
+
+  if (inline) {
+    return (
+      <div role="group" aria-label={label} className="hg-view-chips">
+        {content}
+      </div>
+    )
+  }
 
   return (
     <div ref={root} className="hg-dd">
@@ -61,22 +90,7 @@ export function FilterMenu({ label, options, selected, onToggle, empty }: Props)
       </button>
       {open && (
         <div id={menuId} className="hg-menu" role="group" aria-label={label}>
-          {options.length === 0 ? (
-            <p className="hg-menu-empty">{empty}</p>
-          ) : (
-            options.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                className={`hg-chip${selected.has(o.key) ? ' hg-on' : ''}`}
-                aria-pressed={selected.has(o.key)}
-                onClick={() => onToggle(o.key)}
-              >
-                <span className="hg-chip-label">{o.label}</span>
-                <span className="hg-chip-count">{o.count}</span>
-              </button>
-            ))
-          )}
+          {content}
         </div>
       )}
     </div>
