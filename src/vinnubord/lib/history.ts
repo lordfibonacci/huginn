@@ -42,7 +42,6 @@ const SIMPLE: Record<string, string> = {
   'ruling.added': 'rulingAdded',
   'comment.added': 'commentAdded',
   'analysis.done': 'analysisDone',
-  'analysis.failed': 'analysisFailed',
 }
 
 function str(v: unknown): string | null {
@@ -83,6 +82,11 @@ export function describeEvent(event: Event, nameOf: (userId: string | null) => s
       return line('planStatus', { to: planStatusName(data.to) })
     case 'file.added':
       return line('fileAdded', { name: str(data.name) ?? '?' })
+    case 'analysis.failed': {
+      // The reason shows after a colon. Without one the bare line has none.
+      const error = str(data.error)?.trim() ?? ''
+      return error === '' ? line('analysisFailedBare') : line('analysisFailed', { error })
+    }
     default: {
       const key = SIMPLE[event.kind]
       return key ? line(key) : line('other', { kind: event.kind })

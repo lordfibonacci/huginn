@@ -271,7 +271,8 @@
       "rulingAdded": "added a ruling",
       "commentAdded": "commented",
       "analysisDone": "analysed the item",
-      "analysisFailed": "analysis failed",
+      "analysisFailed": "analysis failed: {{error}}",
+      "analysisFailedBare": "analysis failed",
       "other": "{{kind}}",
       "someone": "System",
       "fields": {

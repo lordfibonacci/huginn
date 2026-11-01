@@ -66,12 +66,26 @@ describe('describeEvent', () => {
     })
   })
 
+  it('passes the reason of a failed analysis, and uses the bare line without one', () => {
+    expect(describeEvent(ev('e', null, 'analysis.failed', { error: ' API 529 ', stage: 'before_write' }), nameOf)).toEqual({
+      key: 'analysisFailed',
+      params: { error: 'API 529' },
+      fields: [],
+    })
+    for (const data of [{}, { error: '' }, { error: '   ' }, { error: 42 }]) {
+      expect(describeEvent(ev('e', null, 'analysis.failed', data), nameOf)).toEqual({
+        key: 'analysisFailedBare',
+        params: {},
+        fields: [],
+      })
+    }
+  })
+
   it('maps the simple kinds and falls back for unknown ones', () => {
     expect(describeEvent(ev('e', null, 'question.answered'), nameOf).key).toBe('questionAnswered')
     expect(describeEvent(ev('e', null, 'action.done'), nameOf).key).toBe('actionDone')
     expect(describeEvent(ev('e', null, 'ruling.added'), nameOf).key).toBe('rulingAdded')
     expect(describeEvent(ev('e', null, 'analysis.done', { model: 'm' }), nameOf).key).toBe('analysisDone')
-    expect(describeEvent(ev('e', null, 'analysis.failed', { error: 'x' }), nameOf).key).toBe('analysisFailed')
     expect(describeEvent(ev('e', null, 'something.new'), nameOf)).toEqual({
       key: 'other',
       params: { kind: 'something.new' },
