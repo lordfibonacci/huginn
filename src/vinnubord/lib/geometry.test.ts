@@ -265,7 +265,7 @@ describe('freeRect', () => {
     expect(freeRect({ w: 1440, h: 900 }, { list: 0, panel: 0, sheet: false }, base)).toEqual(base)
   })
   it('reserves the half sheet at the bottom on a phone', () => {
-    expect(freeRect({ w: 390, h: 800 }, { list: 0, panel: 0, sheet: true }, base).bottom).toBe(360)
+    expect(freeRect({ w: 390, h: 800 }, { list: 0, panel: 0, sheet: true }, base).bottom).toBe(440)
   })
 })
 

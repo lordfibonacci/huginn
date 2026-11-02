@@ -141,14 +141,6 @@ export function BoardPage() {
   const closeFilters = useCallback(() => setFiltersOpen(false), [])
   const { choose: chooseView } = activeView
   const clearView = useCallback(() => chooseView(null), [chooseView])
-  // A row or a module panel item: open the panel and glide the board to the card.
-  const pick = useCallback(
-    (id: string) => {
-      select(id)
-      boardRef.current?.reveal(id)
-    },
-    [select],
-  )
   const peek = useCallback((id: string | null) => boardRef.current?.peek(id), [])
   // Closing the list also puts out a card a hovered row lit.
   const { setOpen: setListOpen, toggle: toggleListPrefs } = listPrefs
@@ -156,6 +148,16 @@ export function BoardPage() {
     setListOpen(false)
     boardRef.current?.peek(null)
   }, [setListOpen])
+  // A row or a module panel item: open the panel and glide the board to the card.
+  // On a narrow board the list covers the board, so it closes first.
+  const pick = useCallback(
+    (id: string) => {
+      if (narrow) closeList()
+      select(id)
+      boardRef.current?.reveal(id)
+    },
+    [narrow, closeList, select],
+  )
   const toggleList = useCallback(() => {
     if (listPrefs.open) boardRef.current?.peek(null)
     toggleListPrefs()

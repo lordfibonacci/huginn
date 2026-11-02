@@ -1399,6 +1399,11 @@
   /* 16 px keeps iOS from zooming into a focused field or select. */
   .hg-top .hg-search, .hg-top .hg-proj-select select { font-size: var(--hg-fs-field); }
   .hg-search { width: 100%; }
+  /* The list takes the whole board under the two row bar, opaque, no blur. */
+  .hg-list { left: var(--hg-safe-left); right: var(--hg-safe-right); width: auto; background: var(--hg-board); backdrop-filter: none; -webkit-backdrop-filter: none; border-right: none; }
+  .hg-list-row { min-height: var(--hg-touch); }
+  /* 16 px keeps iOS from zooming into the sort field. */
+  .hg-list-sort select { font-size: var(--hg-fs-field); }
   .hg-search-btn, .hg-filter-btn { display: grid; }
   .hg-brand svg { width: var(--hg-brand-mark-phone); height: var(--hg-brand-mark-phone); }
   .hg-proj { min-width: 0; padding: var(--hg-proj-pad-phone); }

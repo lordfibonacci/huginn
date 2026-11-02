@@ -102,8 +102,10 @@ export function parsePx(raw: string): number {
 }
 
 // The padding that leaves out what covers the board: the list drawer on the
-// left, the side panel on the right, and on a phone the half sheet, which
-// covers the bottom SHEET_HALF of the board.
+// left, the side panel on the right, and on a phone the half sheet. SHEET_HALF
+// is how far the sheet is pushed down at the half stop, so it covers the bottom
+// 1 minus SHEET_HALF of the board and the free area is the upper SHEET_HALF.
+// Written as h minus h times SHEET_HALF, which stays a whole pixel (800 gives 440).
 export function freeRect(
   size: { w: number; h: number },
   cover: { list: number; panel: number; sheet: boolean },
@@ -113,7 +115,7 @@ export function freeRect(
     top: base.top,
     left: base.left + cover.list,
     right: base.right + cover.panel,
-    bottom: cover.sheet ? Math.max(base.bottom, size.h * SHEET_HALF) : base.bottom,
+    bottom: cover.sheet ? Math.max(base.bottom, size.h - size.h * SHEET_HALF) : base.bottom,
   }
 }
 
