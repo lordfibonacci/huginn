@@ -11,6 +11,9 @@ import {
   bezierPoint,
   bezierTail,
   pinchView,
+  parsePx,
+  freeRect,
+  revealView,
   type View,
   type Rect,
 } from './geometry'
@@ -62,7 +65,7 @@ describe('zoomAt', () => {
   })
 
   it('a fitted view of a huge board stays put on zoom out', () => {
-    const fitted = fitAll([{ x: 0, y: 0, w: 20000, h: 100 }], { w: 1200, h: 800 }, { top: 90, sides: 40, bottom: 60 })
+    const fitted = fitAll([{ x: 0, y: 0, w: 20000, h: 100 }], { w: 1200, h: 800 }, { top: 90, left: 40, right: 40, bottom: 60 })
     expect(fitted.z).toBeLessThan(0.2)
     expect(zoomAt(fitted, 0.8, 600, 400).z).toBe(fitted.z)
   })
@@ -75,7 +78,7 @@ describe('zoomAt', () => {
 
 describe('fitAll', () => {
   const vp = { w: 1200, h: 800 }
-  const pad = { top: 90, sides: 40, bottom: 60 }
+  const pad = { top: 90, left: 40, right: 40, bottom: 60 }
 
   function onScreen(view: View, r: Rect) {
     return {
@@ -95,8 +98,8 @@ describe('fitAll', () => {
     const view = fitAll(rects, vp, pad)
     for (const r of rects) {
       const s = onScreen(view, r)
-      expect(s.left).toBeGreaterThanOrEqual(pad.sides - 1e-6)
-      expect(s.right).toBeLessThanOrEqual(vp.w - pad.sides + 1e-6)
+      expect(s.left).toBeGreaterThanOrEqual(pad.left - 1e-6)
+      expect(s.right).toBeLessThanOrEqual(vp.w - pad.right + 1e-6)
       expect(s.top).toBeGreaterThanOrEqual(pad.top - 1e-6)
       expect(s.bottom).toBeLessThanOrEqual(vp.h - pad.bottom + 1e-6)
     }
@@ -106,7 +109,7 @@ describe('fitAll', () => {
     const view = fitAll([{ x: 0, y: 0, w: 100, h: 50 }], vp, pad)
     expect(view.z).toBe(1.6)
     const s = onScreen(view, { x: 0, y: 0, w: 100, h: 50 })
-    expect((s.left + s.right) / 2).toBeCloseTo(pad.sides + (vp.w - 2 * pad.sides) / 2)
+    expect((s.left + s.right) / 2).toBeCloseTo(pad.left + (vp.w - pad.left - pad.right) / 2)
     expect((s.top + s.bottom) / 2).toBeCloseTo(pad.top + (vp.h - pad.top - pad.bottom) / 2)
   })
 
@@ -221,7 +224,7 @@ describe('pinchView', () => {
 
 describe('fitWidth', () => {
   const vp = { w: 390, h: 800 }
-  const pad = { top: 90, sides: 40, bottom: 60 }
+  const pad = { top: 90, left: 40, right: 40, bottom: 60 }
   it('zooms the rect to the padded width and puts its top at the top padding', () => {
     const v = fitWidth({ x: 1102, y: 60, w: 440, h: 2000 }, vp, pad)
     expect(v.z).toBeCloseTo(310 / 440)
@@ -241,5 +244,46 @@ describe('startAtPack', () => {
     expect(v.z).toBe(0.8)
     expect(v.x + 1102 * v.z).toBeCloseTo(16)
     expect(v.y + 60 * v.z).toBeCloseTo(16)
+  })
+})
+
+describe('parsePx', () => {
+  it('reads a px value and gives 0 for anything else', () => {
+    expect(parsePx('460px')).toBe(460)
+    expect(parsePx(' 16px ')).toBe(16)
+    expect(parsePx('')).toBe(0)
+    expect(parsePx('auto')).toBe(0)
+  })
+})
+
+describe('freeRect', () => {
+  const base = { top: 90, left: 40, right: 40, bottom: 60 }
+  it('adds the list on the left and the panel on the right', () => {
+    expect(freeRect({ w: 1440, h: 900 }, { list: 320, panel: 476, sheet: false }, base)).toEqual({ top: 90, left: 360, right: 516, bottom: 60 })
+  })
+  it('keeps the base when nothing covers the board', () => {
+    expect(freeRect({ w: 1440, h: 900 }, { list: 0, panel: 0, sheet: false }, base)).toEqual(base)
+  })
+  it('reserves the half sheet at the bottom on a phone', () => {
+    expect(freeRect({ w: 390, h: 800 }, { list: 0, panel: 0, sheet: true }, base).bottom).toBe(360)
+  })
+})
+
+describe('revealView', () => {
+  const size = { w: 1440, h: 900 }
+  const pad = { top: 90, left: 360, right: 516, bottom: 60 }
+  const card: Rect = { x: 1000, y: 500, w: 250, h: 120 }
+  it('keeps a zoom between 0.8 and 2.5', () => {
+    expect(revealView(card, { x: 0, y: 0, z: 1.2 }, size, pad).z).toBe(1.2)
+    expect(revealView(card, { x: 0, y: 0, z: 2.5 }, size, pad).z).toBe(2.5)
+  })
+  it('goes to 0.8 from a zoom outside that range', () => {
+    expect(revealView(card, { x: 0, y: 0, z: 0.3 }, size, pad).z).toBe(0.8)
+  })
+  it('puts the card centre in the centre of the free area', () => {
+    const v = revealView(card, { x: 0, y: 0, z: 1 }, size, pad)
+    const [wx, wy] = screenToWorld(v, 360 + (1440 - 360 - 516) / 2, 90 + (900 - 90 - 60) / 2)
+    expect(wx).toBeCloseTo(1125)
+    expect(wy).toBeCloseTo(560)
   })
 })

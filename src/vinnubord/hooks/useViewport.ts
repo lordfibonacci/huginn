@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
-import { fitAll, fitWidth as fitWidthView, pinchView, zoomAt, type Rect, type View } from '../lib/geometry'
+import { DEFAULT_PADDING, fitAll, fitWidth as fitWidthView, pinchView, zoomAt, type Padding, type Rect, type View } from '../lib/geometry'
 import { FLING_WINDOW_MS, flingDone, flingStarts, flingStep, releaseVelocity, type Sample, type Velocity } from '../lib/fling'
 import {
   DOUBLE_TAP_FACTOR,
@@ -114,7 +114,6 @@ const WHEEL_SPEED = 0.0016
 const WHEEL_SYNC_MS = 120
 const BUTTON_STEP = 1.25
 const CLICK_SUPPRESS_MS = 500
-const DEFAULT_PADDING = { top: 90, sides: 40, bottom: 60 }
 const NO_PAN = '[data-no-pan], button, a, input, textarea, select, label'
 const FIELD = 'input, textarea, select'
 // Targets useCardDrag moves: item cards and pack title grips.
@@ -137,7 +136,7 @@ export type Gesture = {
   active: boolean
   stoppedMotion: boolean
 }
-export type Padding = { top: number; sides: number; bottom: number }
+export type { Padding } from '../lib/geometry'
 
 export type ViewportBind = {
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void

@@ -3,10 +3,17 @@
 // the board element's top left corner, world coordinates are the board's own.
 // A world point (wx, wy) is drawn at (x + wx * z, y + wy * z).
 
+import { SHEET_HALF } from './sheet'
+
 export type View = { x: number; y: number; z: number }
 export type Rect = { x: number; y: number; w: number; h: number }
 export type WireEnds = { x1: number; y1: number; x2: number; y2: number; dir: 1 | -1 }
 export type PinchPoint = { cx: number; cy: number; d: number }
+
+// Free area around the board content: what the toolbar, the list drawer and the
+// panel leave uncovered. fitAll, fitWidth and revealView centre inside it.
+export type Padding = { top: number; left: number; right: number; bottom: number }
+export const DEFAULT_PADDING: Padding = { top: 90, left: 40, right: 40, bottom: 60 }
 
 export const MIN_ZOOM = 0.2
 export const MAX_ZOOM = 2.5
@@ -45,7 +52,7 @@ export function zoomAt(
 export function fitAll(
   rects: Rect[],
   viewport: { w: number; h: number },
-  padding: { top: number; sides: number; bottom: number },
+  padding: Padding,
 ): View {
   if (rects.length === 0) return { x: 0, y: 0, z: 1 }
   let minx = Infinity
@@ -58,13 +65,13 @@ export function fitAll(
     maxx = Math.max(maxx, r.x + r.w)
     maxy = Math.max(maxy, r.y + r.h)
   }
-  const W = Math.max(1, viewport.w - 2 * padding.sides)
+  const W = Math.max(1, viewport.w - padding.left - padding.right)
   const H = Math.max(1, viewport.h - padding.top - padding.bottom)
   const bw = maxx - minx
   const bh = maxy - miny
   const z = Math.min(FIT_MAX_ZOOM, bw > 0 ? W / bw : Infinity, bh > 0 ? H / bh : Infinity)
   return {
-    x: padding.sides + (W - bw * z) / 2 - minx * z,
+    x: padding.left + (W - bw * z) / 2 - minx * z,
     y: padding.top + (H - bh * z) / 2 - miny * z,
     z,
   }
@@ -76,16 +83,53 @@ export function fitAll(
 export function fitWidth(
   rect: Rect,
   viewport: { w: number; h: number },
-  padding: { top: number; sides: number; bottom: number },
+  padding: Padding,
   maxZoom = FIT_MAX_ZOOM,
 ): View {
-  const W = Math.max(1, viewport.w - 2 * padding.sides)
+  const W = Math.max(1, viewport.w - padding.left - padding.right)
   const z = Math.min(maxZoom, W / rect.w)
   return {
-    x: padding.sides + (W - rect.w * z) / 2 - rect.x * z,
+    x: padding.left + (W - rect.w * z) / 2 - rect.x * z,
     y: padding.top - rect.y * z,
     z,
   }
+}
+
+// A CSS length such as "460px" as a number, 0 for anything else.
+export function parsePx(raw: string): number {
+  const n = Number.parseFloat(raw)
+  return Number.isFinite(n) ? n : 0
+}
+
+// The padding that leaves out what covers the board: the list drawer on the
+// left, the side panel on the right, and on a phone the half sheet, which
+// covers the bottom SHEET_HALF of the board.
+export function freeRect(
+  size: { w: number; h: number },
+  cover: { list: number; panel: number; sheet: boolean },
+  base: Padding = DEFAULT_PADDING,
+): Padding {
+  return {
+    top: base.top,
+    left: base.left + cover.list,
+    right: base.right + cover.panel,
+    bottom: cover.sheet ? Math.max(base.bottom, size.h * SHEET_HALF) : base.bottom,
+  }
+}
+
+// The view that brings a card into the centre of the free area. A zoom already
+// readable (REVEAL_MIN_ZOOM to MAX_ZOOM) is kept, else it goes to the minimum.
+export const REVEAL_MIN_ZOOM = 0.8
+export function revealView(
+  card: Rect,
+  current: View,
+  size: { w: number; h: number },
+  padding: Padding,
+): View {
+  const z = current.z >= REVEAL_MIN_ZOOM && current.z <= MAX_ZOOM ? current.z : REVEAL_MIN_ZOOM
+  const fx = padding.left + (size.w - padding.left - padding.right) / 2
+  const fy = padding.top + (size.h - padding.top - padding.bottom) / 2
+  return { x: fx - (card.x + card.w / 2) * z, y: fy - (card.y + card.h / 2) * z, z }
 }
 
 // The opening view on a phone: the pack's top left corner at pad px from the
