@@ -4,13 +4,18 @@ import type { View } from '../lib/geometry'
 import { CARD_PAN_SLOP, PAN_THRESHOLD, pressOutcome } from '../lib/gesture'
 import type { Gesture } from './useViewport'
 
-// Card drag and tap. Spread bind on the world layer (inside the board element
-// that carries useViewport's bind), so these handlers run before the board's.
+// Card and pack drag and tap. Spread bind on the world layer (inside the
+// board element that carries useViewport's bind), so these handlers run
+// before the board's. Two kinds of target: an item card ([data-card], the
+// whole card is the grip) and a pack column ([data-grip="pack"] inside
+// [data-pack], the title button is the grip and the column moves with its
+// modules). Both follow the same press rules below.
 //
-// Mouse and pen: pointerdown on [data-card] takes the card at once (capture,
+// Mouse and pen: pointerdown on a grip takes the target at once (capture,
 // no board pan), but it shows as lifted only once the press moves more than
 // 3 px and drags it, so a plain click does not flash the lift shadow. Letting
-// go under that is a tap.
+// go under that is a tap. The click that follows a drop is swallowed (window,
+// capture phase), so a dragged pack title does not also fit its column.
 // Touch: holding 350 ms lifts the card (haptic tick when the device has one),
 // then the finger drags it. The drag is measured from where the finger is at
 // the lift, so the small move allowed while waiting does not make the card
@@ -33,9 +38,25 @@ import type { Gesture } from './useViewport'
 
 const LONG_PRESS_MS = 350
 const HAPTIC_MS = 10
-const CARD = '[data-card]'
+const CLICK_SWALLOW_MS = 500
+const GRIP = '[data-card], [data-grip]'
+
+export type DragKind = 'card' | 'pack'
+export type DragTarget = { kind: DragKind; id: string }
+
+// The target a grip element belongs to, null when it is not a grip.
+export function dragTargetOf(el: HTMLElement): DragTarget | null {
+  const card = el.dataset.card
+  if (card) return { kind: 'card', id: card }
+  if (el.dataset.grip === 'pack') {
+    const id = el.closest<HTMLElement>('[data-pack]')?.dataset.pack
+    if (id) return { kind: 'pack', id }
+  }
+  return null
+}
 
 type Press = {
+  kind: DragKind
   id: string
   pointerId: number
   touch: boolean
@@ -61,12 +82,13 @@ type Press = {
 export type CardDragOptions = {
   viewRef: RefObject<View>
   gestureRef: RefObject<Gesture>
-  // Current world position of a card, null if it is unknown.
-  getPos: (id: string) => { x: number; y: number } | null
-  onMove: (id: string, x: number, y: number) => void
-  onDrop: (id: string, x: number, y: number) => void
-  onCancel: (id: string, x: number, y: number) => void
-  onTap: (id: string) => void
+  // Current world position of a target, null if it is unknown.
+  getPos: (t: DragTarget) => { x: number; y: number } | null
+  onMove: (t: DragTarget, x: number, y: number) => void
+  onDrop: (t: DragTarget, x: number, y: number) => void
+  onCancel: (t: DragTarget, x: number, y: number) => void
+  // A press that did not drag. A pack title tap also reaches its own onClick.
+  onTap: (t: DragTarget) => void
 }
 
 type Handler = (e: ReactPointerEvent<HTMLElement>) => void
@@ -78,9 +100,11 @@ export type CardDragBind = {
   onContextMenu: (e: ReactMouseEvent<HTMLElement>) => void
 }
 
-export function useCardDrag(opts: CardDragOptions): { draggingId: string | null; bind: CardDragBind } {
-  const [draggingId, setDraggingId] = useState<string | null>(null)
+export function useCardDrag(opts: CardDragOptions): { dragging: DragTarget | null; bind: CardDragBind } {
+  const [dragging, setDragging] = useState<DragTarget | null>(null)
   const press = useRef<Press | null>(null)
+  // The click that ends a drop is swallowed until this time, 0 when none is.
+  const swallowClickUntil = useRef(0)
   // Latest options, so the handlers stay stable across renders.
   const o = useRef(opts)
   useLayoutEffect(() => {
@@ -92,7 +116,7 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     p.timer = null
     if (press.current === p) press.current = null
     if (p.dragging) {
-      setDraggingId(null)
+      setDragging(null)
       const g = o.current.gestureRef.current
       if (g && g.dragPointer === p.pointerId) g.dragPointer = null
     }
@@ -109,7 +133,7 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
           // Already released, ignore.
         }
       }
-      if (wasDragging && p.moved) o.current.onCancel(p.id, p.ox, p.oy)
+      if (wasDragging && p.moved) o.current.onCancel(target(p), p.ox, p.oy)
     },
     [clear],
   )
@@ -129,12 +153,12 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     // Re-anchor to the finger and the card as they are now.
     p.sx = p.lx
     p.sy = p.ly
-    const pos = o.current.getPos(p.id)
+    const pos = o.current.getPos(target(p))
     if (pos) {
       p.ox = p.x = pos.x
       p.oy = p.y = pos.y
     }
-    setDraggingId(p.id)
+    setDragging(target(p))
   }, [])
 
   const onPointerDown = useCallback<Handler>(
@@ -149,18 +173,19 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         return
       }
       if (e.pointerType === 'mouse' && e.button !== 0) return
-      const el = (e.target as Element).closest<HTMLElement>(CARD)
+      const el = (e.target as Element).closest<HTMLElement>(GRIP)
       if (!el) return
       const touch = e.pointerType === 'touch'
       // A second finger is a pinch for the viewport, never a drag.
       if (touch && !e.isPrimary) return
-      const id = el.dataset.card
-      if (!id) return
-      const pos = o.current.getPos(id)
+      const t = dragTargetOf(el)
+      if (!t) return
+      const pos = o.current.getPos(t)
       if (!pos) return
 
       const p: Press = {
-        id,
+        kind: t.kind,
+        id: t.id,
         pointerId: e.pointerId,
         touch,
         el,
@@ -225,12 +250,12 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
         if (dist <= PAN_THRESHOLD) return
         p.moved = true
         // A mouse press shows as lifted from here, touch did at the lift.
-        if (!p.touch) setDraggingId(p.id)
+        if (!p.touch) setDragging(target(p))
       }
       const z = o.current.viewRef.current.z
       p.x = p.ox + dx / z
       p.y = p.oy + dy / z
-      o.current.onMove(p.id, p.x, p.y)
+      o.current.onMove(target(p), p.x, p.y)
     },
     [cancel],
   )
@@ -245,18 +270,29 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
       if (g && (g.touchCount > 1 || g.pinches !== p.pinchesAtDown)) p.sawPinch = true
       const outcome = pressOutcome(p)
       clear(p)
-      if (outcome === 'drop') o.current.onDrop(p.id, p.x, p.y)
-      else if (outcome === 'tap' && !g?.stoppedMotion) o.current.onTap(p.id)
+      if (outcome === 'drop') {
+        swallowClickUntil.current = performance.now() + CLICK_SWALLOW_MS
+        o.current.onDrop(target(p), p.x, p.y)
+      } else if (outcome === 'tap' && !g?.stoppedMotion) o.current.onTap(target(p))
     }
     const onCancel = (e: PointerEvent) => {
       const p = press.current
       if (p && e.pointerId === p.pointerId) cancel(p)
     }
+    // The click a drop leaves behind (a button grip gets one) is no click.
+    const onClick = (e: Event) => {
+      if (performance.now() >= swallowClickUntil.current) return
+      swallowClickUntil.current = 0
+      e.stopPropagation()
+      e.preventDefault()
+    }
     window.addEventListener('pointerup', onUp, true)
     window.addEventListener('pointercancel', onCancel, true)
+    window.addEventListener('click', onClick, true)
     return () => {
       window.removeEventListener('pointerup', onUp, true)
       window.removeEventListener('pointercancel', onCancel, true)
+      window.removeEventListener('click', onClick, true)
     }
   }, [clear, cancel])
 
@@ -271,9 +307,9 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
     [cancel],
   )
 
-  // No long press menu or callout on cards.
+  // No long press menu or callout on cards and pack titles.
   const onContextMenu = useCallback((e: ReactMouseEvent<HTMLElement>) => {
-    if ((e.target as Element).closest(CARD)) e.preventDefault()
+    if ((e.target as Element).closest(GRIP)) e.preventDefault()
   }, [])
 
   useEffect(
@@ -286,7 +322,11 @@ export function useCardDrag(opts: CardDragOptions): { draggingId: string | null;
   )
 
   return {
-    draggingId,
+    dragging,
     bind: { onPointerDown, onPointerMove, onLostPointerCapture, onContextMenu },
   }
+}
+
+function target(p: Press): DragTarget {
+  return { kind: p.kind, id: p.id }
 }

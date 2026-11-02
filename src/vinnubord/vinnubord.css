@@ -473,8 +473,12 @@
   margin: 0 0 var(--hg-pack-title-gap) var(--hg-pack-title-indent); font-size: var(--hg-pack-title-size); font-weight: 800;
   color: var(--hg-ink); letter-spacing: -0.01em; display: flex; align-items: center; gap: var(--hg-pack-title-gap);
   width: calc(100% - var(--hg-pack-title-indent)); min-height: var(--hg-touch); padding: 0; border: none; background: none;
-  font: inherit; font-size: var(--hg-pack-title-size); font-weight: 800; text-align: left; cursor: pointer;
+  font: inherit; font-size: var(--hg-pack-title-size); font-weight: 800; text-align: left; cursor: grab;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
+/* Dragged by its title: above the cards while it moves, the modules ride along. */
+.hg-pack.hg-pack-lift { z-index: var(--hg-card-lift-z); }
+.hg-pack.hg-pack-lift .hg-pack-title { cursor: grabbing; }
 .hg-pack-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-line); outline-offset: var(--hg-card-focus-offset); }
 .hg-pack-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--hg-line), transparent); }
 .hg-pack-rail {

@@ -12,8 +12,8 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
-import { useCardDrag } from '../hooks/useCardDrag'
-import { updateItemPosition, upsertViewPosition } from '../lib/api'
+import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
+import { updateItemPosition, updatePackagePosition, upsertViewPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
 import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
@@ -37,6 +37,9 @@ import { Wires, type WireItem, type WiresHandle } from './Wires'
 // it is dragged here or its own drop is still on the way to the database.
 // Inside a view a card rests at its place in that view (hg_view_positions),
 // else at its own place, and a drop is saved to the view, never to the item.
+// A pack column is dragged by its title and moves with its modules (they are
+// its children); its drop is saved to hg_packages at once, in every view the
+// same, and until the data shows it the column rests at the dropped place.
 // The pan and zoom view is written to the world layer by useViewport (worldRef);
 // nothing here writes its transform or --hg-z, so a re-render in the middle of
 // a gesture never moves the world. Anything that needs the live view reads
@@ -72,6 +75,10 @@ type CardSpring = Spring & { pending: Pending | null }
 // was dropped in, so a view switch during the debounce cannot redirect it.
 type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number; viewId: string | null }
 type Point = { x: number; y: number }
+// A dropped pack position waiting for the database, same reading as Pending.
+type PackPending = { x: number; y: number; baseX: number; baseY: number }
+// Wires stay awake this long after each pack move, so they follow the modules.
+const PACK_MOVE_WAKE_MS = 100
 
 const SAVE_DEBOUNCE_MS = 300
 const ENTRY_START_MS = 150
@@ -356,8 +363,127 @@ export function Board({
 
   const onTap = useCallback((id: string) => onSelect(id), [onSelect])
 
-  const drag = useCardDrag({ viewRef, gestureRef: vp.gestureRef, getPos, onMove, onDrop, onCancel, onTap })
-  const draggingId = drag.draggingId
+  // ---------- pack drag ----------
+  // Pack columns have no spring: a move writes the column's left and top
+  // straight away, and a re-render in the middle reads the same place from
+  // packPending (or the live drag position in packLive).
+  const packEls = useRef(new Map<string, HTMLElement>())
+  const packPending = useRef(new Map<string, PackPending>())
+  const packLive = useRef(new Map<string, Point>())
+  const [, setPackTick] = useState(0)
+  const packPos = useCallback(
+    (id: string, fallback: Point): Point => packLive.current.get(id) ?? packPending.current.get(id) ?? fallback,
+    [],
+  )
+  const setPackEl = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) packEls.current.set(id, el)
+    else packEls.current.delete(id)
+  }, [])
+  const placePack = useCallback((id: string, p: Point) => {
+    const el = packEls.current.get(id)
+    if (!el) return
+    el.style.left = `${p.x}px`
+    el.style.top = `${p.y}px`
+  }, [])
+  // Data arrived: a pending that the data shows, or that someone else moved
+  // off its base, is spent. Same reading as the card springs above.
+  useLayoutEffect(() => {
+    let changed = false
+    for (const pkg of data.packages) {
+      const p = packPending.current.get(pkg.id)
+      if (!p) continue
+      if ((pkg.pos_x === p.x && pkg.pos_y === p.y) || !(pkg.pos_x === p.baseX && pkg.pos_y === p.baseY)) {
+        packPending.current.delete(pkg.id)
+        changed = true
+      }
+    }
+    if (changed) setPackTick((t) => t + 1)
+  }, [data.packages])
+  const packDataPos = useCallback(
+    (id: string): Point | null => {
+      const pkg = data.packages.find((p) => p.id === id)
+      return pkg ? { x: pkg.pos_x, y: pkg.pos_y } : null
+    },
+    [data.packages],
+  )
+  const savePackPosition = useCallback(
+    (id: string, x: number, y: number) => {
+      updatePackagePosition(id, x, y).catch((err: unknown) => {
+        console.error(err)
+        const p = packPending.current.get(id)
+        if (p && p.x === x && p.y === y) {
+          packPending.current.delete(id)
+          const pos = packDataPos(id)
+          if (pos && !packLive.current.has(id)) placePack(id, pos)
+          setPackTick((t) => t + 1)
+        }
+        setMoveFailed(true)
+      })
+    },
+    [packDataPos, placePack],
+  )
+
+  const getTargetPos = useCallback(
+    (t: DragTarget) => {
+      if (t.kind === 'card') return getPos(t.id)
+      const pos = packDataPos(t.id)
+      return pos ? packPos(t.id, pos) : null
+    },
+    [getPos, packDataPos, packPos],
+  )
+  const onTargetMove = useCallback(
+    (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'card') return onMove(t.id, x, y)
+      packLive.current.set(t.id, { x, y })
+      placePack(t.id, { x, y })
+      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    },
+    [onMove, placePack],
+  )
+  const onTargetDrop = useCallback(
+    (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'card') return onDrop(t.id, x, y)
+      const base = packDataPos(t.id)
+      packLive.current.delete(t.id)
+      if (!base) return
+      const rx = Math.round(x)
+      const ry = Math.round(y)
+      const old = packPending.current.get(t.id)
+      packPending.current.set(t.id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y })
+      placePack(t.id, { x: rx, y: ry })
+      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+      savePackPosition(t.id, rx, ry)
+    },
+    [onDrop, packDataPos, placePack, savePackPosition],
+  )
+  const onTargetCancel = useCallback(
+    (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'card') return onCancel(t.id, x, y)
+      packLive.current.delete(t.id)
+      placePack(t.id, { x, y })
+      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    },
+    [onCancel, placePack],
+  )
+  // A pack title tap reaches the button's own onClick (fit), nothing to do here.
+  const onTargetTap = useCallback(
+    (t: DragTarget) => {
+      if (t.kind === 'card') onTap(t.id)
+    },
+    [onTap],
+  )
+
+  const drag = useCardDrag({
+    viewRef,
+    gestureRef: vp.gestureRef,
+    getPos: getTargetPos,
+    onMove: onTargetMove,
+    onDrop: onTargetDrop,
+    onCancel: onTargetCancel,
+    onTap: onTargetTap,
+  })
+  const draggingId = drag.dragging?.kind === 'card' ? drag.dragging.id : null
+  const draggingPackId = drag.dragging?.kind === 'pack' ? drag.dragging.id : null
   useLayoutEffect(() => {
     draggingRef.current = draggingId
   }, [draggingId])
@@ -528,6 +654,9 @@ export function Board({
             <PackColumn
               key={pkg.id}
               pkg={pkg}
+              pos={packPos(pkg.id, { x: pkg.pos_x, y: pkg.pos_y })}
+              lifted={pkg.id === draggingPackId}
+              setEl={setPackEl}
               modules={modules}
               items={items}
               viewerId={viewerId}

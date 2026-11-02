@@ -171,6 +171,16 @@ export async function updateItemPosition(id: string, x: number, y: number): Prom
   if (error) fail('Gat ekki fært verkið.', error)
 }
 
+// A pack column dragged on the board. Its modules have no position of their
+// own, they follow the column.
+export async function updatePackagePosition(id: string, x: number, y: number): Promise<void> {
+  const { error } = await supabase
+    .from('hg_packages')
+    .update({ pos_x: Math.round(x), pos_y: Math.round(y) })
+    .eq('id', id)
+  if (error) fail('Gat ekki fært flokkinn.', error)
+}
+
 export async function createView(projectId: string, name: string, filter: ViewFilterJson): Promise<View> {
   const { count, error: countError } = await supabase
     .from('hg_views')

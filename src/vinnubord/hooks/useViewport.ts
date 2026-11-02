@@ -39,17 +39,18 @@ import { parseDuration } from '../lib/motion'
 // Rules:
 // - Mouse and pen: pointers that start on a form control, button, link, label
 //   or [data-no-pan] are ignored completely. A pointer that starts inside
-//   [data-card] is ignored, card drag lives in useCardDrag. Anything else
-//   (empty board, pack columns) pans with the primary button.
+//   [data-card] or on a [data-grip] (a pack title) is ignored, card and pack
+//   drag live in useCardDrag. Anything else (empty board, pack columns) pans
+//   with the primary button.
 // - Touch: a touch that starts on a form control or [data-no-pan] is ignored
 //   completely. Every other touch pointer is tracked, also those that start on
-//   a card. Touch on a button, link or label inside the board (module cards,
-//   pack titles) pans past CARD_PAN_SLOP and pinches like a card; only fields
-//   and [data-no-pan] are ignored. A finger that starts on the board pans past
-//   PAN_THRESHOLD. A finger that starts on a card pans past CARD_PAN_SLOP
-//   (lib/gesture), unless that pointer is dragging the card
-//   (gestureRef.current.dragPointer). When two fingers are down a pinch
-//   starts, even if one or both are on cards.
+//   a card. Touch on a button, link or label inside the board (module cards)
+//   pans past CARD_PAN_SLOP and pinches like a card; only fields and
+//   [data-no-pan] are ignored. A finger that starts on the board pans past
+//   PAN_THRESHOLD. A finger that starts on a card or a pack title grip pans
+//   past CARD_PAN_SLOP (lib/gesture), unless that pointer is dragging the card
+//   or the pack (gestureRef.current.dragPointer). When two fingers are down a
+//   pinch starts, even if one or both are on cards.
 // - A pinch zooms around the finger centre and pans with it. When one finger
 //   lifts, the other pans if it did not start on a card, otherwise nothing
 //   moves.
@@ -116,7 +117,8 @@ const CLICK_SUPPRESS_MS = 500
 const DEFAULT_PADDING = { top: 90, sides: 40, bottom: 60 }
 const NO_PAN = '[data-no-pan], button, a, input, textarea, select, label'
 const FIELD = 'input, textarea, select'
-const CARD = '[data-card]'
+// Targets useCardDrag moves: item cards and pack title grips.
+const CARD = '[data-card], [data-grip]'
 
 type Pt = { x: number; y: number }
 type Tracked = { pt: Pt; touch: boolean; canPan: boolean; kind: TouchKind }
