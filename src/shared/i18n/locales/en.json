@@ -331,12 +331,26 @@
         "payload": "the block"
       }
     },
+    "list": {
+      "title": "List",
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items",
+      "sort": "Sort",
+      "sorts": {
+        "pack": "By package",
+        "status": "By status",
+        "updated": "Last changed"
+      },
+      "noModule": "No module",
+      "empty": "No item matches"
+    },
     "top": {
       "project": "Project",
       "counters": "Status filter",
       "search": "Search",
       "openSearch": "Search",
       "filters": "Filters",
+      "list": "List",
       "package": "Package",
       "tags": "Tags",
       "noPackages": "No packages yet",

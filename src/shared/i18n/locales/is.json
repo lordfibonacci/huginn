@@ -167,6 +167,19 @@
       "rulingAdded": "skráði úrskurð",
       "someone": "Kerfið"
     },
+    "list": {
+      "count_one": "{{count}} verk",
+      "count_other": "{{count}} verk",
+      "empty": "Ekkert verk sést",
+      "noModule": "Án módúls",
+      "sort": "Röðun",
+      "sorts": {
+        "pack": "Eftir pakka",
+        "status": "Eftir stöðu",
+        "updated": "Síðast breytt"
+      },
+      "title": "Listi"
+    },
     "loading": "Hleður",
     "newItem": {
       "body": "Texti",
@@ -372,6 +385,7 @@
       "counters": "Stöðusía",
       "filters": "Síur",
       "language": "Tungumál",
+      "list": "Listi",
       "live": "Lifandi",
       "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
       "markAllRead": "Merkja allt lesið",

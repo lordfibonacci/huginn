@@ -208,6 +208,37 @@
   --hg-sheet-close-inset: 8px;
   --hg-radius-sheet: 22px;
 
+  /* ---------- List drawer ---------- */
+  --hg-list-w: 320px;
+  /* Under the toast (25), so "nýtt verk" shows over a full screen list on a
+     phone, and under the panel (30). */
+  --hg-list-z: 24;
+  --hg-list-bg: var(--hg-panel-bg);
+  --hg-list-blur: var(--hg-panel-blur);
+  --hg-list-pad-x: 12px;
+  --hg-list-pad-y: 6px;
+  --hg-list-head-h: 52px;
+  --hg-list-head-gap: 8px;
+  --hg-list-row-pad: 8px 10px;
+  --hg-list-row-gap: 10px;
+  --hg-list-row-radius: 12px;
+  --hg-list-row-hover: rgba(255, 255, 255, 0.05);
+  --hg-list-row-open: rgba(255, 255, 255, 0.08);
+  --hg-list-dot: 8px;
+  --hg-list-dot-top: 5px;
+  --hg-list-dot-ring: 2px;
+  --hg-list-title-size: 13px;
+  --hg-list-meta-size: 11px;
+  --hg-list-meta-gap: 6px;
+  --hg-list-pack-size: 10.5px;
+  --hg-list-pack-pad: 12px 10px 4px;
+  --hg-list-module-size: 12.5px;
+  --hg-list-module-pad: 8px 10px 4px;
+  --hg-list-module-bar-w: 3px;
+  --hg-list-module-bar-h: 14px;
+  --hg-list-sort-h: 28px;
+  --hg-list-sort-pad: 0 10px;
+
   /* Panel content */
   --hg-pn-title-size: 21px;
   --hg-pn-title-margin: 8px 0 4px;
@@ -461,6 +492,8 @@
     --hg-module-bg: rgba(22, 30, 43, 0.96);
     --hg-module-bg-hover: rgba(29, 40, 56, 0.98);
     --hg-panel-bg: rgba(22, 30, 43, 0.98);
+    --hg-list-blur: none;
+    --hg-list-bg: var(--hg-board);
     --hg-menu-bg: rgba(22, 30, 43, 0.99);
     --hg-control-bg: rgba(22, 30, 43, 0.96);
     --hg-card-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -1070,6 +1103,77 @@
 .hg-markdown th, .hg-markdown td { padding: var(--hg-md-cell-pad); border: 1px solid var(--hg-line); text-align: left; }
 .hg-markdown hr { border: none; border-top: 1px solid var(--hg-line); margin: var(--hg-md-hr-gap) 0; }
 .hg-markdown img { max-width: 100%; }
+
+/* ---------- List drawer: the item list beside the board ----------
+   Lies over the board inside .hg-board-wrap, outside .hg-board, so the
+   viewport never sees its pointers or its wheel. Below 1024 px it takes the
+   whole board. Opening slides it in over --hg-dur-view; closed it is not in
+   the DOM. */
+.hg-list {
+  position: absolute; left: var(--hg-safe-left); top: 0; bottom: 0; width: var(--hg-list-w); z-index: var(--hg-list-z);
+  display: flex; flex-direction: column; color: var(--hg-ink); font-family: var(--hg-font);
+  background: var(--hg-list-bg); backdrop-filter: var(--hg-list-blur); -webkit-backdrop-filter: var(--hg-list-blur);
+  border-right: 1px solid var(--hg-line);
+  animation: hg-list-in var(--hg-dur-view) var(--hg-ease);
+}
+@keyframes hg-list-in { from { translate: -100% 0; } }
+.hg-list-head {
+  flex: none; display: flex; align-items: center; gap: var(--hg-list-head-gap); min-height: var(--hg-list-head-h);
+  padding: 0 0 0 var(--hg-list-pad-x); border-bottom: 1px solid var(--hg-line);
+}
+.hg-list-title { flex: 1; min-width: 0; margin: 0; font-size: var(--hg-list-title-size); font-weight: 800; }
+.hg-list-count { margin-left: var(--hg-list-meta-gap); font-size: var(--hg-list-meta-size); font-weight: 500; color: var(--hg-ink-3); }
+.hg-list-sort select {
+  appearance: none; -webkit-appearance: none; height: var(--hg-list-sort-h); padding: var(--hg-list-sort-pad); border-radius: 999px;
+  background: var(--hg-pill-bg); border: 1px solid var(--hg-line); color: var(--hg-ink-2); font: inherit; font-size: var(--hg-list-meta-size); cursor: pointer;
+}
+.hg-list-sort select:hover, .hg-list-sort select:focus-visible { color: var(--hg-ink); border-color: var(--hg-pill-hover); outline: none; }
+.hg-list-close {
+  width: var(--hg-touch); height: var(--hg-touch); display: grid; place-items: center; flex: none; padding: 0; border: none;
+  background: none; color: var(--hg-ink-3); cursor: pointer; border-radius: var(--hg-radius-control-inner);
+}
+.hg-list-close:hover, .hg-list-close:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
+.hg-list-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.hg-list-body {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--hg-list-pad-y) var(--hg-list-pad-x) calc(var(--hg-list-pad-y) + var(--hg-safe-bottom));
+}
+.hg-list-pack, .hg-list-bucket {
+  padding: var(--hg-list-pack-pad); font-size: var(--hg-list-pack-size); font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--hg-ink-3);
+}
+.hg-list-pack b, .hg-list-bucket b, .hg-list-module b { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; font-size: var(--hg-list-meta-size); color: var(--hg-ink-3); }
+.hg-list-bucket, .hg-list-module { display: flex; align-items: center; gap: var(--hg-list-head-gap); }
+.hg-list-module { padding: var(--hg-list-module-pad); font-size: var(--hg-list-module-size); font-weight: 700; color: var(--hg-ink-2); }
+.hg-list-module i { width: var(--hg-list-module-bar-w); height: var(--hg-list-module-bar-h); border-radius: 2px; background: var(--hg-c); flex: none; }
+.hg-list-row {
+  width: 100%; display: grid; grid-template-columns: var(--hg-list-dot) minmax(0, 1fr) auto; column-gap: var(--hg-list-row-gap); align-items: start;
+  padding: var(--hg-list-row-pad); border: none; border-radius: var(--hg-list-row-radius); background: none; color: var(--hg-ink);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.hg-list-row:hover, .hg-list-row:focus-visible { background: var(--hg-list-row-hover); outline: none; }
+.hg-list-row:focus-visible { box-shadow: inset 0 0 0 var(--hg-sel-ring) var(--hg-sel-color); }
+.hg-list-row.hg-list-row-open { background: var(--hg-list-row-open); box-shadow: inset 0 0 0 1px var(--hg-c); }
+.hg-list-dot {
+  width: var(--hg-list-dot); height: var(--hg-list-dot); margin-top: var(--hg-list-dot-top); border-radius: 50%;
+  background: var(--hg-c); box-shadow: 0 0 var(--hg-mod-item-glow) var(--hg-c);
+}
+.hg-list-dot.hg-list-dot-unread { box-shadow: 0 0 0 var(--hg-list-dot-ring) var(--hg-board), 0 0 0 calc(2 * var(--hg-list-dot-ring)) var(--hg-gold); }
+.hg-list-main { min-width: 0; }
+.hg-list-row-title {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: var(--hg-list-title-size); font-weight: 600; line-height: 1.3; overflow-wrap: anywhere;
+}
+.hg-list-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-list-meta-gap); margin-top: 3px;
+  font-size: var(--hg-list-meta-size); color: var(--hg-ink-3);
+}
+.hg-list-meta .hg-chip-mine { color: var(--hg-c); font-weight: 700; }
+.hg-list-when { padding-top: 2px; font-size: var(--hg-list-meta-size); color: var(--hg-ink-3); white-space: nowrap; }
+.hg-list-empty {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--hg-list-row-gap); padding: var(--hg-list-pad-x);
+  font-size: var(--hg-list-title-size); color: var(--hg-ink-3);
+}
 
 /* ---------- Top bar ----------
    No z-index on purpose: the bar must not be a stacking context, so its menus
