@@ -10,6 +10,9 @@ import { dragTargetOf } from './useCardDrag'
 // inside the board (boxRef) in screen space, written directly while the
 // pointer moves, never through React state.
 //
+// While the box is drawn every move calls onPreview with the rectangle in
+// world units and whether Shift is held, so the board can light what the
+// release would select; the release calls onPreview(null) first.
 // Release past MARQUEE_MIN: onSelect with the rectangle in world units and
 // whether Shift was held (add to the selection). Release under it on a card
 // or a pack title: onToggle for that target. Under it elsewhere: onClear.
@@ -26,6 +29,7 @@ export type MarqueeOptions = {
   boardRef: RefObject<HTMLElement | null>
   viewRef: RefObject<View>
   onSelect: (rect: Rect, additive: boolean) => void
+  onPreview: (rect: Rect | null, additive: boolean) => void
   onToggle: (t: SelTarget) => void
   onClear: () => void
 }
@@ -45,6 +49,14 @@ export function useMarquee(opts: MarqueeOptions): { bind: MarqueeBind; boxRef: R
   const local = useCallback((clientX: number, clientY: number) => {
     const r = o.current.boardRef.current?.getBoundingClientRect()
     return { x: clientX - (r?.left ?? 0), y: clientY - (r?.top ?? 0) }
+  }, [])
+
+  // The box in world units, for the preview and the selection.
+  const worldRect = useCallback((p: Press): Rect => {
+    const v = o.current.viewRef.current
+    const [ax, ay] = screenToWorld(v, p.sx, p.sy)
+    const [bx, by] = screenToWorld(v, p.x, p.y)
+    return marqueeRect({ x: ax, y: ay }, { x: bx, y: by })
   }, [])
 
   const draw = useCallback((p: Press) => {
@@ -84,20 +96,20 @@ export function useMarquee(opts: MarqueeOptions): { bind: MarqueeBind; boxRef: R
       p.x = at.x
       p.y = at.y
       if (!p.moved && Math.abs(p.x - p.sx) + Math.abs(p.y - p.sy) > MARQUEE_MIN) p.moved = true
-      if (p.moved) draw(p)
+      if (!p.moved) return
+      draw(p)
+      o.current.onPreview(worldRect(p), e.shiftKey)
     }
     const end = (e: PointerEvent, cancelled: boolean) => {
       const p = press.current
       if (!p || e.pointerId !== p.pointerId) return
       press.current = null
       boxRef.current?.classList.remove('hg-on')
+      if (p.moved) o.current.onPreview(null, false)
       if (cancelled) return
       swallowClickUntil.current = performance.now() + CLICK_SWALLOW_MS
       if (p.moved) {
-        const v = o.current.viewRef.current
-        const [ax, ay] = screenToWorld(v, p.sx, p.sy)
-        const [bx, by] = screenToWorld(v, p.x, p.y)
-        o.current.onSelect(marqueeRect({ x: ax, y: ay }, { x: bx, y: by }), e.shiftKey)
+        o.current.onSelect(worldRect(p), e.shiftKey)
       } else if (p.target) {
         o.current.onToggle(p.target)
       } else {
@@ -122,7 +134,7 @@ export function useMarquee(opts: MarqueeOptions): { bind: MarqueeBind; boxRef: R
       window.removeEventListener('pointercancel', onCancel, true)
       window.removeEventListener('click', onClick, true)
     }
-  }, [local, draw])
+  }, [local, draw, worldRect])
 
   return { bind: { onPointerDownCapture }, boxRef }
 }

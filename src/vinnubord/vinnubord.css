@@ -115,6 +115,8 @@
   /* Ctrl marquee selection: the ring on chosen cards and pack titles, the box while it is drawn. */
   --hg-sel-ring: 2px;
   --hg-sel-color: var(--hg-teal);
+  /* The lighter ring on what the box would take while it is still drawn. */
+  --hg-sel-pre-color: color-mix(in oklab, var(--hg-teal) 55%, transparent);
   --hg-marquee-fill: color-mix(in oklab, var(--hg-teal) 12%, transparent);
   --hg-marquee-z: 8;
   --hg-chip-bg: rgba(255, 255, 255, 0.05);
@@ -484,6 +486,7 @@
 /* Dragged by its title: above the cards while it moves, the modules ride along. */
 .hg-pack.hg-pack-lift { z-index: var(--hg-card-lift-z); }
 .hg-pack.hg-pack-sel .hg-pack-title { outline: var(--hg-sel-ring) dashed var(--hg-sel-color); outline-offset: var(--hg-card-focus-offset); }
+.hg-pack.hg-pack-pre .hg-pack-title { outline: var(--hg-sel-ring) dashed var(--hg-sel-pre-color); outline-offset: var(--hg-card-focus-offset); }
 .hg-pack.hg-pack-lift .hg-pack-title { cursor: grabbing; }
 .hg-pack-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-line); outline-offset: var(--hg-card-focus-offset); }
 .hg-pack-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--hg-line), transparent); }
@@ -634,6 +637,7 @@
 }
 .hg-card.hg-card-dim { opacity: var(--hg-dim-card) !important; pointer-events: none; }
 .hg-card.hg-card-sel { outline: var(--hg-sel-ring) dashed var(--hg-sel-color); outline-offset: var(--hg-card-focus-offset); }
+.hg-card.hg-card-pre { outline: var(--hg-sel-ring) dashed var(--hg-sel-pre-color); outline-offset: var(--hg-card-focus-offset); }
 /* The marquee box, screen space inside the board, shown by useMarquee while it is drawn. */
 .hg-marquee {
   position: absolute; display: none; z-index: var(--hg-marquee-z); pointer-events: none;

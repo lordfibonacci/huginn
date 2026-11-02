@@ -490,28 +490,51 @@ export function Board({
   const clearSelection = useCallback(() => {
     if (selectionSize(selectionRef.current) > 0) setSelection(EMPTY_SELECTION)
   }, [])
-  const onMarqueeSelect = useCallback(
-    (rect: Rect, additive: boolean) => {
-      const cardBoxes: Boxed[] = []
-      for (const [id, el] of els.current) {
-        const s = springs.current.get(id)
-        if (s) cardBoxes.push({ id, rect: { x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight } })
-      }
-      const titleBoxes: Boxed[] = []
-      for (const [id, el] of packEls.current) {
-        const title = el.querySelector<HTMLElement>('.hg-pack-title')
-        if (!title) continue
-        titleBoxes.push({
-          id,
-          rect: { x: el.offsetLeft + title.offsetLeft, y: el.offsetTop + title.offsetTop, w: title.offsetWidth, h: title.offsetHeight },
-        })
-      }
-      setSelection(selectInRect(rect, cardBoxes, titleBoxes, additive ? selectionRef.current : EMPTY_SELECTION))
+  // What a marquee rectangle (world units) selects right now: the drawn
+  // cards at their spring targets and the pack titles.
+  const selectionIn = useCallback((rect: Rect, additive: boolean): Selection => {
+    const cardBoxes: Boxed[] = []
+    for (const [id, el] of els.current) {
+      const s = springs.current.get(id)
+      if (s) cardBoxes.push({ id, rect: { x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight } })
+    }
+    const titleBoxes: Boxed[] = []
+    for (const [id, el] of packEls.current) {
+      const title = el.querySelector<HTMLElement>('.hg-pack-title')
+      if (!title) continue
+      titleBoxes.push({
+        id,
+        rect: { x: el.offsetLeft + title.offsetLeft, y: el.offsetTop + title.offsetTop, w: title.offsetWidth, h: title.offsetHeight },
+      })
+    }
+    return selectInRect(rect, cardBoxes, titleBoxes, additive ? selectionRef.current : EMPTY_SELECTION)
+  }, [])
+  const onMarqueeSelect = useCallback((rect: Rect, additive: boolean) => setSelection(selectionIn(rect, additive)), [selectionIn])
+  // While the box is drawn the cards and titles it would take light up
+  // through a class written straight on their elements, no render. null
+  // clears it (the release, before the real selection lands in state).
+  const previewed = useRef<Selection>(EMPTY_SELECTION)
+  const onMarqueePreview = useCallback(
+    (rect: Rect | null, additive: boolean) => {
+      const next = rect ? selectionIn(rect, additive) : EMPTY_SELECTION
+      const prev = previewed.current
+      for (const id of prev.cards) if (!next.cards.has(id)) els.current.get(id)?.classList.remove('hg-card-pre')
+      for (const id of next.cards) if (!prev.cards.has(id)) els.current.get(id)?.classList.add('hg-card-pre')
+      for (const id of prev.packs) if (!next.packs.has(id)) packEls.current.get(id)?.classList.remove('hg-pack-pre')
+      for (const id of next.packs) if (!prev.packs.has(id)) packEls.current.get(id)?.classList.add('hg-pack-pre')
+      previewed.current = next
     },
-    [],
+    [selectionIn],
   )
   const onMarqueeToggle = useCallback((t: SelTarget) => setSelection((s) => toggleMember(s, t)), [])
-  const marquee = useMarquee({ boardRef, viewRef, onSelect: onMarqueeSelect, onToggle: onMarqueeToggle, onClear: clearSelection })
+  const marquee = useMarquee({
+    boardRef,
+    viewRef,
+    onSelect: onMarqueeSelect,
+    onPreview: onMarqueePreview,
+    onToggle: onMarqueeToggle,
+    onClear: clearSelection,
+  })
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') clearSelection()
