@@ -238,6 +238,13 @@
   --hg-list-module-bar-h: 14px;
   --hg-list-sort-h: 28px;
   --hg-list-sort-pad: 0 10px;
+  --hg-list-sort-radius: 999px;
+  --hg-list-module-bar-radius: 2px;
+  --hg-list-meta-top: 3px;
+  --hg-list-when-top: 2px;
+  --hg-list-close-icon: 16px;
+  --hg-list-title-lh: 1.3;
+  --hg-list-heading-ls: 0.08em;
 
   /* Panel content */
   --hg-pn-title-size: 21px;
@@ -1128,7 +1135,7 @@
 .hg-list-title { flex: 1; min-width: 0; margin: 0; font-size: var(--hg-list-title-size); font-weight: 800; }
 .hg-list-count { margin-left: var(--hg-list-meta-gap); font-size: var(--hg-list-meta-size); font-weight: 500; color: var(--hg-ink-3); }
 .hg-list-sort select {
-  appearance: none; -webkit-appearance: none; height: var(--hg-list-sort-h); padding: var(--hg-list-sort-pad); border-radius: 999px;
+  appearance: none; -webkit-appearance: none; height: var(--hg-list-sort-h); padding: var(--hg-list-sort-pad); border-radius: var(--hg-list-sort-radius);
   background: var(--hg-pill-bg); border: 1px solid var(--hg-line); color: var(--hg-ink-2); font: inherit; font-size: var(--hg-list-meta-size); cursor: pointer;
 }
 .hg-list-sort select:hover, .hg-list-sort select:focus-visible { color: var(--hg-ink); border-color: var(--hg-pill-hover); outline: none; }
@@ -1137,19 +1144,19 @@
   background: none; color: var(--hg-ink-3); cursor: pointer; border-radius: var(--hg-radius-control-inner);
 }
 .hg-list-close:hover, .hg-list-close:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
-.hg-list-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.hg-list-close svg { width: var(--hg-list-close-icon); height: var(--hg-list-close-icon); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .hg-list-body {
   flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
   padding: var(--hg-list-pad-y) var(--hg-list-pad-x) calc(var(--hg-list-pad-y) + var(--hg-safe-bottom));
 }
 .hg-list-pack, .hg-list-bucket {
-  padding: var(--hg-list-pack-pad); font-size: var(--hg-list-pack-size); font-weight: 700; letter-spacing: 0.08em;
+  padding: var(--hg-list-pack-pad); font-size: var(--hg-list-pack-size); font-weight: 700; letter-spacing: var(--hg-list-heading-ls);
   text-transform: uppercase; color: var(--hg-ink-3);
 }
 .hg-list-pack b, .hg-list-bucket b, .hg-list-module b { margin-left: auto; font-weight: 500; letter-spacing: 0; text-transform: none; font-size: var(--hg-list-meta-size); color: var(--hg-ink-3); }
 .hg-list-bucket, .hg-list-module { display: flex; align-items: center; gap: var(--hg-list-head-gap); }
 .hg-list-module { padding: var(--hg-list-module-pad); font-size: var(--hg-list-module-size); font-weight: 700; color: var(--hg-ink-2); }
-.hg-list-module i { width: var(--hg-list-module-bar-w); height: var(--hg-list-module-bar-h); border-radius: 2px; background: var(--hg-c); flex: none; }
+.hg-list-module i { width: var(--hg-list-module-bar-w); height: var(--hg-list-module-bar-h); border-radius: var(--hg-list-module-bar-radius); background: var(--hg-c); flex: none; }
 .hg-list-row {
   width: 100%; display: grid; grid-template-columns: var(--hg-list-dot) minmax(0, 1fr) auto; column-gap: var(--hg-list-row-gap); align-items: start;
   padding: var(--hg-list-row-pad); border: none; border-radius: var(--hg-list-row-radius); background: none; color: var(--hg-ink);
@@ -1166,14 +1173,14 @@
 .hg-list-main { min-width: 0; }
 .hg-list-row-title {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  font-size: var(--hg-list-title-size); font-weight: 600; line-height: 1.3; overflow-wrap: anywhere;
+  font-size: var(--hg-list-title-size); font-weight: 600; line-height: var(--hg-list-title-lh); overflow-wrap: anywhere;
 }
 .hg-list-meta {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-list-meta-gap); margin-top: 3px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-list-meta-gap); margin-top: var(--hg-list-meta-top);
   font-size: var(--hg-list-meta-size); color: var(--hg-ink-3);
 }
 .hg-list-meta .hg-chip-mine { color: var(--hg-c); font-weight: 700; }
-.hg-list-when { padding-top: 2px; font-size: var(--hg-list-meta-size); color: var(--hg-ink-3); white-space: nowrap; }
+.hg-list-when { padding-top: var(--hg-list-when-top); font-size: var(--hg-list-meta-size); color: var(--hg-ink-3); white-space: nowrap; }
 .hg-list-empty {
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--hg-list-row-gap); padding: var(--hg-list-pad-x);
   font-size: var(--hg-list-title-size); color: var(--hg-ink-3);

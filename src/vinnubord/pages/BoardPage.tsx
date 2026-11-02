@@ -34,6 +34,14 @@ import { NoAccessPage } from './NoAccessPage'
 // view key is never cleared against a placeholder.
 const NO_VIEWS: View[] = []
 
+// When focus is inside the list drawer, move it to the top bar list button
+// before the drawer closes.
+function focusListButton() {
+  const active = document.activeElement
+  if (!(active instanceof Element) || !active.closest('.hg-list')) return
+  document.querySelector<HTMLElement>('.hg-list-btn')?.focus()
+}
+
 // The whiteboard of one project: the top bar with counters and filters, the
 // board with all the remaining height, the side panel (bottom sheet on narrow
 // screens) for the selected item or the opened module, and the new item sheet.
@@ -144,24 +152,49 @@ export function BoardPage() {
   const peek = useCallback((id: string | null) => boardRef.current?.peek(id), [])
   // Closing the list also puts out a card a hovered row lit.
   const { setOpen: setListOpen, toggle: toggleListPrefs } = listPrefs
-  const closeList = useCallback(() => {
+  const hideList = useCallback(() => {
     setListOpen(false)
     boardRef.current?.peek(null)
   }, [setListOpen])
+  // The close button and Escape: focus inside the drawer goes back to the top
+  // bar list button, so it does not fall to the page when the drawer unmounts.
+  const closeList = useCallback(() => {
+    focusListButton()
+    hideList()
+  }, [hideList])
   // A row or a module panel item: open the panel and glide the board to the card.
-  // On a narrow board the list covers the board, so it closes first.
+  // On a narrow board the list covers the board, so it closes first; focus
+  // then belongs with the opening panel and is left alone.
   const pick = useCallback(
     (id: string) => {
-      if (narrow) closeList()
+      if (narrow) hideList()
       select(id)
       boardRef.current?.reveal(id)
     },
-    [narrow, closeList, select],
+    [narrow, hideList, select],
   )
   const toggleList = useCallback(() => {
-    if (listPrefs.open) boardRef.current?.peek(null)
+    if (listPrefs.open) {
+      focusListButton()
+      boardRef.current?.peek(null)
+    }
     toggleListPrefs()
   }, [listPrefs.open, toggleListPrefs])
+  // An item or module deleted while its panel is open drops its id, so
+  // panelOpen never stays true for a panel that is gone. An item is dropped
+  // only once the data has shown it: a new item is selected before the
+  // reload brings it (onCreated), and that id must wait for it.
+  const itemList = loaded ? data.items : null
+  const moduleList = loaded ? data.modules : null
+  const seenSelected = useRef<string | null>(null)
+  useEffect(() => {
+    if (!itemList || !selectedId) return
+    if (itemList.some((i) => i.id === selectedId)) seenSelected.current = selectedId
+    else if (seenSelected.current === selectedId) setSelectedId(null)
+  }, [itemList, selectedId])
+  useEffect(() => {
+    if (moduleList && openModuleId && !moduleList.some((m) => m.id === openModuleId)) setOpenModuleId(null)
+  }, [moduleList, openModuleId])
   // From the ids, not selectedItem: this and the Escape effect sit above the early returns.
   const panelOpen = selectedId !== null || openModuleId !== null
   // Esc closes the list only when nothing above it takes Esc first: a field,

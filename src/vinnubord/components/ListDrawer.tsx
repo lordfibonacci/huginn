@@ -60,9 +60,10 @@ export function ListDrawer({
         key={card.item.id}
         type="button"
         className={`hg-list-row hg-tone-${card.tone}${selected ? ' hg-list-row-open' : ''}`}
-        aria-pressed={selected}
+        aria-current={selected ? 'true' : undefined}
         onClick={() => onPick(card.item.id)}
         onMouseEnter={() => onPeek(card.item.id)}
+        onFocus={() => onPeek(card.item.id)}
       >
         <i className={`hg-list-dot${card.fresh ? ' hg-list-dot-unread' : ''}`} aria-hidden="true" />
         <span className="hg-list-main">
@@ -96,7 +97,15 @@ export function ListDrawer({
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
         </button>
       </div>
-      <div className="hg-list-body" onMouseLeave={() => onPeek(null)}>
+      <div
+        className="hg-list-body"
+        onMouseLeave={() => onPeek(null)}
+        onBlur={(e) => {
+          // Focus left the list body (not just moved to another row): put the card out.
+          const next = e.relatedTarget
+          if (!(next instanceof Node) || !e.currentTarget.contains(next)) onPeek(null)
+        }}
+      >
         {rows.length === 0 ? (
           <p className="hg-list-empty">
             <span>{t('vinnubord.list.empty')}</span>
