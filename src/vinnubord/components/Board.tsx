@@ -17,7 +17,16 @@ import { useMarquee } from '../hooks/useMarquee'
 import { updateItemPosition, updatePackagePosition, upsertViewPackPosition, upsertViewPosition } from '../lib/api'
 import type { CardModel } from '../lib/cards'
 import { isActive, type Filter } from '../lib/filters'
-import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
+import {
+  DEFAULT_PADDING,
+  freeRect,
+  parsePx,
+  revealView,
+  screenToWorld,
+  startAtPack,
+  type Padding,
+  type Rect,
+} from '../lib/geometry'
 import { packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
@@ -73,14 +82,24 @@ type Props = {
   selectedId: string | null
   onSelect: (id: string | null) => void
   onOpenModule: (moduleId: string) => void
+  // The wide list drawer is open on the left of the board.
+  listOpen: boolean
+  // An item or module panel is open on the right (a sheet on a phone).
+  panelOpen: boolean
   // Drawn over the board inside its area (the new item toast).
   children?: ReactNode
   ref?: Ref<BoardHandle>
 }
 
-// placeNew: a free world position for a new card beside its module, or on
-// the centre of the current view when it has none.
-export type BoardHandle = { placeNew: (moduleId: string | null) => { x: number; y: number } }
+export type BoardHandle = {
+  // A free world position for a new card beside its module, or on the centre
+  // of the current view when it has none.
+  placeNew: (moduleId: string | null) => { x: number; y: number }
+  // Glide so the card sits in the centre of the free area, with the panel counted as open. false when the card is not drawn.
+  reveal: (itemId: string) => boolean
+  // Light one card like a hover (null clears). Written on the element, no render.
+  peek: (itemId: string | null) => void
+}
 
 // A dropped position waiting for the database. base is the data position the
 // drag started from: data still showing base is stale and ignored, data at pos
@@ -135,6 +154,8 @@ export function Board({
   selectedId,
   onSelect,
   onOpenModule,
+  listOpen,
+  panelOpen,
   children,
   ref,
 }: Props) {
@@ -681,6 +702,22 @@ export function Board({
   }, [onBoard])
 
   // ---------- fit ----------
+  // Padding of the free area: the list drawer on the left, the side panel on
+  // the right (from 768 px), the half sheet at the bottom (below). The CSS
+  // tokens are read, so a restyle moves the free area with the surfaces.
+  const padding = useCallback(
+    (panel: boolean): Padding => {
+      const el = boardRef.current
+      const size = { w: el?.clientWidth ?? 0, h: el?.clientHeight ?? 0 }
+      const root = getComputedStyle(document.documentElement)
+      const phone = window.matchMedia('(max-width: 767px)').matches
+      const list = listOpen ? parsePx(root.getPropertyValue('--hg-list-w')) : 0
+      const panelW = panel && !phone ? parsePx(root.getPropertyValue('--hg-panel-w')) + parsePx(root.getPropertyValue('--hg-panel-inset')) : 0
+      return freeRect(size, { list, panel: panelW, sheet: panel && phone }, DEFAULT_PADDING)
+    },
+    [listOpen],
+  )
+
   // animate: glide over --hg-dur-view (the fit button), or jump (first load).
   const fitAll = useCallback((animate: boolean) => {
     const rects: Rect[] = []
@@ -691,8 +728,8 @@ export function Board({
     boardRef.current?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
       rects.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
     })
-    fit(rects, undefined, animate)
-  }, [fit])
+    fit(rects, padding(panelOpen), animate)
+  }, [fit, padding, panelOpen])
 
   // Open once per load, as soon as the board has a size. Narrow and touch
   // boards start readable on the first pack, the rest fit the whole board.
@@ -716,12 +753,15 @@ export function Board({
   const onFitPack = useCallback(
     (id: string) => {
       const p = boardRef.current?.querySelector<HTMLElement>(`[data-pack="${CSS.escape(id)}"]`)
-      if (p) fitWidth({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
+      if (p) fitWidth({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight }, padding(panelOpen))
     },
-    [fitWidth],
+    [fitWidth, padding, panelOpen],
   )
 
-  // ---------- new card placement ----------
+  // ---------- handle: new card placement, reveal and peek ----------
+  // The card a list row lights right now (hg-card-peek on its element).
+  const peeked = useRef<string | null>(null)
+  const { animateTo } = vp
   useImperativeHandle(
     ref,
     () => ({
@@ -761,8 +801,23 @@ export function Board({
         // outside its own column, so the column never pushes its card away.
         return placeNewCard({ anchor, center: { x: cx, y: cy }, size: { ...NEW_CARD_SIZE, w }, obstacles })
       },
+      reveal: (itemId) => {
+        const el = els.current.get(itemId)
+        const s = springs.current.get(itemId)
+        const host = boardRef.current
+        if (!el || !s || !host) return false
+        const size = { w: host.clientWidth, h: host.clientHeight }
+        animateTo(revealView({ x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight }, viewRef.current, size, padding(true)))
+        return true
+      },
+      peek: (itemId) => {
+        const prev = peeked.current
+        if (prev && prev !== itemId) els.current.get(prev)?.classList.remove('hg-card-peek')
+        peeked.current = itemId
+        if (itemId) els.current.get(itemId)?.classList.add('hg-card-peek')
+      },
     }),
-    [viewRef, activeView, data.items],
+    [viewRef, activeView, data.items, animateTo, padding],
   )
 
   const onBoardClick = useCallback(

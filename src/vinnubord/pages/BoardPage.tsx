@@ -205,6 +205,8 @@ export function BoardPage() {
         selectedId={selectedId}
         onSelect={select}
         onOpenModule={openModule}
+        listOpen={false}
+        panelOpen={selectedItem !== null || openModuleRow !== null}
       >
         <Toast
           toast={newItemToast.toast}

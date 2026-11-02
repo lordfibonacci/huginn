@@ -646,7 +646,8 @@
 .hg-card.hg-card-parked { border-style: dashed; opacity: var(--hg-card-parked-opacity); }
 .hg-card:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
 @media (hover: hover) {
-  .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim):hover {
+  .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim):hover,
+  .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim).hg-card-peek {
     z-index: var(--hg-card-peek-z);
     scale: clamp(var(--hg-card-peek-min), calc(var(--hg-card-peek-k) / var(--hg-z, 1)), var(--hg-card-peek-max));
     translate: 0 var(--hg-card-peek-rise);
@@ -658,6 +659,9 @@
       translate var(--hg-card-peek-dur) var(--hg-card-peek-ease) var(--hg-card-peek-delay), z-index 0s;
     box-shadow: var(--hg-card-lift-shadow) color-mix(in oklab, var(--hg-c) 45%, rgba(0, 0, 0, 0.9));
   }
+  /* A row in the list drawer lights its card at once: no peek delay. The
+     selector matches the rule above, so it wins over its transition shorthand. */
+  .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim).hg-card-peek { transition-delay: 0s; }
 }
 .hg-card.hg-card-lift {
   cursor: grabbing; z-index: var(--hg-card-lift-z);
