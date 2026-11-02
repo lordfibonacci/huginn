@@ -7,7 +7,9 @@ import { useActiveView } from '../hooks/useActiveView'
 import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
+import { cardModels } from '../lib/cards'
 import { packageCounts, tagCounts } from '../lib/filters'
+import { boardOrder } from '../lib/layout'
 import { summarizeUnread } from '../lib/reads'
 import { countsFor, isOnBoard } from '../lib/status'
 import type { Item, View } from '../lib/types'
@@ -73,9 +75,26 @@ export function BoardPage() {
     () => (loaded ? itemsInView(data.items, data.modules, data.actions, viewerId, activeView.view) : []),
     [loaded, data, viewerId, activeView.view],
   )
+  const unread = loaded ? data.unread : null
+  const unreadByItem = useMemo(() => summarizeUnread(unread ?? []), [unread])
   const counts = useMemo(
-    () => (loaded ? countsFor(visibleItems, data.actions, viewerId, new Set(summarizeUnread(data.unread).keys())) : null),
-    [loaded, data, visibleItems, viewerId],
+    () => (loaded ? countsFor(visibleItems, data.actions, viewerId, new Set(unreadByItem.keys())) : null),
+    [loaded, data, visibleItems, viewerId, unreadByItem],
+  )
+  // One model per drawn card, computed once so the board and the list agree.
+  const cards = useMemo(
+    () =>
+      loaded
+        ? cardModels(boardOrder(visibleItems), {
+            viewerId,
+            participants: data.participants,
+            actions: data.actions,
+            modules: data.modules,
+            unread: unreadByItem,
+            filter: filterApi.filter,
+          })
+        : [],
+    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter],
   )
   const tags = useMemo(
     () => (loaded ? tagCounts(visibleItems, filterApi.filter.tags) : []),
@@ -179,6 +198,7 @@ export function BoardPage() {
         ref={boardRef}
         data={data}
         items={visibleItems}
+        cards={cards}
         view={activeView.view}
         viewerId={user.id}
         filter={filterApi.filter}

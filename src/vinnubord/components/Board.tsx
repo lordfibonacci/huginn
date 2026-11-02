@@ -15,13 +15,13 @@ import { useViewport } from '../hooks/useViewport'
 import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
 import { useMarquee } from '../hooks/useMarquee'
 import { updateItemPosition, updatePackagePosition, upsertViewPackPosition, upsertViewPosition } from '../lib/api'
-import { isActive, matches, type Filter } from '../lib/filters'
+import type { CardModel } from '../lib/cards'
+import { isActive, type Filter } from '../lib/filters'
 import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
-import { boardOrder, packLayout } from '../lib/layout'
+import { packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
 import { fileCountsByItem } from '../lib/panel'
-import { summarizeUnread } from '../lib/reads'
 import {
   EMPTY_SELECTION,
   groupMoves,
@@ -36,7 +36,7 @@ import {
   type Selection,
 } from '../lib/selection'
 import { settled, stepSpring, type Spring } from '../lib/spring'
-import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
+import { isOnBoard, mineActionsByItem } from '../lib/status'
 import type { BoardData, Item, Plan, View } from '../lib/types'
 import { packPositionsOf, positionOf, positionsOf } from '../lib/views'
 import { Aurora } from './Aurora'
@@ -65,6 +65,8 @@ type Props = {
   data: BoardData
   // The items the active view draws (itemsInView), all on board items without one.
   items: Item[]
+  // One model per drawn item in board order (cardModels), shared with the list.
+  cards: CardModel[]
   view: View | null
   viewerId: string
   filter: Filter
@@ -126,6 +128,7 @@ function popMs(): number {
 export function Board({
   data,
   items,
+  cards,
   view: activeView,
   viewerId,
   filter,
@@ -142,12 +145,11 @@ export function Board({
   const { fit, view, viewRef } = vp
 
   // ---------- derived board ----------
-  const onBoard = useMemo(() => boardOrder(items), [items])
+  const onBoard = useMemo(() => cards.map((c) => c.item), [cards])
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
-  const packageOfModule = useMemo(() => new Map(data.modules.map((m) => [m.id, m.package_id])), [data.modules])
   const plansByItem = useMemo(() => {
     const map = new Map<string, Plan[]>()
     for (const p of data.plans) map.set(p.item_id, [...(map.get(p.item_id) ?? []), p])
@@ -162,31 +164,6 @@ export function Board({
   const mineByItem = useMemo(() => mineActionsByItem(data.actions, viewerId), [data.actions, viewerId])
 
   const filterOn = isActive(filter)
-  const unreadByItem = useMemo(() => summarizeUnread(data.unread), [data.unread])
-  const cards = useMemo(
-    () => {
-      return onBoard.map((item) => {
-        const tone = itemTone(item, viewerId, data.participants)
-        const bucket = countBucket(item, data.actions, viewerId)
-        const packageId = item.module_id ? (packageOfModule.get(item.module_id) ?? null) : null
-        const fresh = unreadByItem.get(item.id) ?? null
-        const visible =
-          !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: fresh !== null }, filter))
-        const moverId = item.updated_by ?? item.created_by
-        const mover = data.participants.find((p) => p.user_id === moverId)
-        return {
-          item,
-          tone,
-          label: itemStatusLabel(item, viewerId, data.participants),
-          mode: wireMode(item, tone),
-          visible,
-          fresh,
-          mover: mover ? { short: mover.short, name: mover.display_name } : null,
-        }
-      })
-    },
-    [onBoard, viewerId, data.participants, data.actions, unreadByItem, packageOfModule, filterOn, filter],
-  )
 
   const wireItems = useMemo<WireItem[]>(
     () =>
