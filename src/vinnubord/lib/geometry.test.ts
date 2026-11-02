@@ -245,6 +245,12 @@ describe('startAtPack', () => {
     expect(v.x + 1102 * v.z).toBeCloseTo(16)
     expect(v.y + 60 * v.z).toBeCloseTo(16)
   })
+  it('starts right of a left cover such as an open list drawer', () => {
+    const v = startAtPack({ x: 1102, y: 60 }, 0.8, 16, 320)
+    expect(v.z).toBe(0.8)
+    expect(v.x + 1102 * v.z).toBeCloseTo(336)
+    expect(v.y + 60 * v.z).toBeCloseTo(16)
+  })
 })
 
 describe('parsePx', () => {

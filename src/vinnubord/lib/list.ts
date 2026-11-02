@@ -84,8 +84,11 @@ export function listRows(cards: CardModel[], packages: Package[], modules: Modul
   }
 
   const rows: ListRow[] = []
-  const known = new Set(modules.map((m) => m.id))
-  for (const { pkg, modules: mods } of packLayout(packages, modules)) {
+  // Only the modules a pack column draws: one with no package, or a missing
+  // one, lists its items under the null module row with the moduleless ones.
+  const layout = packLayout(packages, modules)
+  const known = new Set(layout.flatMap((r) => r.modules.map((m) => m.id)))
+  for (const { pkg, modules: mods } of layout) {
     const modRows: ListRow[] = []
     for (const m of mods) {
       const group = shown.filter((c) => c.item.module_id === m.id).sort(byBucketThenTitle)

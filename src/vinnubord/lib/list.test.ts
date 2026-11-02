@@ -88,6 +88,17 @@ describe('listRows by pack', () => {
     expect(rows.map((r) => (r.kind === 'item' ? r.card.item.id : `${r.kind}:${r.id}`))).toEqual(['pack:p2', 'module:m3', 'z', 'module:null', 'x', 'y'])
     expect(rows[3]).toMatchObject({ kind: 'module', id: null, name: null, color: null, count: 2 })
   })
+  it('puts items of a module with no package, or a missing one, under the null module row', () => {
+    const mods = [
+      ...modules,
+      module({ id: 'm4', name: 'Laus', package_id: null }),
+      module({ id: 'm5', name: 'Munaðarlaus', package_id: 'gone' }),
+    ]
+    const cards = [card({ item: item({ id: 'u', module_id: 'm4' }) }), card({ item: item({ id: 'v', module_id: 'm5' }) }), card({ item: item({ id: 'z', module_id: 'm3' }) })]
+    const out = listRows(cards, packages, mods, 'pack')
+    expect(out.rows.map((r) => (r.kind === 'item' ? r.card.item.id : `${r.kind}:${r.id}`))).toEqual(['pack:p2', 'module:m3', 'z', 'module:null', 'u', 'v'])
+    expect(out.count).toBe(3)
+  })
   it('is empty with count 0 when nothing is visible', () => {
     expect(listRows([card({ visible: false })], packages, modules, 'pack')).toEqual({ rows: [], count: 0 })
   })

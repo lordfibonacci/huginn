@@ -23,11 +23,13 @@ import {
   parsePx,
   revealView,
   screenToWorld,
+  START_PAD,
+  START_ZOOM,
   startAtPack,
   type Padding,
   type Rect,
 } from '../lib/geometry'
-import { packLayout } from '../lib/layout'
+import { boardOrder, packLayout } from '../lib/layout'
 import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
 import { fileCountsByItem } from '../lib/panel'
@@ -166,7 +168,10 @@ export function Board({
   const { fit, view, viewRef } = vp
 
   // ---------- derived board ----------
-  const onBoard = useMemo(() => cards.map((c) => c.item), [cards])
+  // From items, not cards: cards change on every filter keystroke, and a new
+  // onBoard would rerun the springs, the entry delays and the bursts. Same
+  // order as the cards (BoardPage builds them from boardOrder of these items).
+  const onBoard = useMemo(() => boardOrder(items), [items])
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
@@ -733,6 +738,8 @@ export function Board({
 
   // Open once per load, as soon as the board has a size. Narrow and touch
   // boards start readable on the first pack, the rest fit the whole board.
+  // Both leave out the free area's covers: a remembered open list on a wide
+  // touch board (an iPad in landscape) pushes the first pack right of it.
   // Rotating or resizing later keeps the view where it is.
   const fitted = useRef(false)
   useLayoutEffect(() => {
@@ -741,7 +748,8 @@ export function Board({
     if (!el || el.clientWidth === 0 || el.clientHeight === 0) return
     const coarse = window.matchMedia('(pointer: coarse)').matches
     if ((el.clientWidth < START_PACK_MAX_W || coarse) && rows.length > 0) {
-      vp.setView(startAtPack({ x: rows[0].pkg.pos_x, y: rows[0].pkg.pos_y }))
+      const cover = padding(panelOpen).left - DEFAULT_PADDING.left
+      vp.setView(startAtPack({ x: rows[0].pkg.pos_x, y: rows[0].pkg.pos_y }, START_ZOOM, START_PAD, cover))
     } else {
       fitAll(false)
     }

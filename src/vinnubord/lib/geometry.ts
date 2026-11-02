@@ -134,12 +134,13 @@ export function revealView(
   return { x: fx - (card.x + card.w / 2) * z, y: fy - (card.y + card.h / 2) * z, z }
 }
 
-// The opening view on a phone: the pack's top left corner at pad px from the
-// board's top left, at a readable zoom.
+// The opening view on a phone or a touch board: the pack's top left corner at
+// pad px from the board's top left, at a readable zoom. left is what covers the
+// board's left edge (an open list drawer), the corner starts right of it.
 export const START_ZOOM = 0.8
 export const START_PAD = 16
-export function startAtPack(pack: { x: number; y: number }, z = START_ZOOM, pad = START_PAD): View {
-  return { x: pad - pack.x * z, y: pad - pack.y * z, z }
+export function startAtPack(pack: { x: number; y: number }, z = START_ZOOM, pad = START_PAD, left = 0): View {
+  return { x: left + pad - pack.x * z, y: pad - pack.y * z, z }
 }
 
 // Wire from card a to module b. It leaves the card on the side facing the
