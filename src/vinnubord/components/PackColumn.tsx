@@ -10,6 +10,8 @@ type Props = {
   // way to the database. Board writes left and top directly while it drags.
   pos: { x: number; y: number }
   lifted: boolean
+  // Part of the Ctrl marquee selection (moves with the group).
+  chosen: boolean
   setEl: (id: string, el: HTMLElement | null) => void
   modules: Module[]
   items: Item[]
@@ -27,6 +29,7 @@ export function PackColumn({
   pkg,
   pos,
   lifted,
+  chosen,
   setEl,
   modules,
   items,
@@ -43,7 +46,12 @@ export function PackColumn({
   // The title is the grip: a drag (useCardDrag on the world layer) moves the
   // column with its modules, a plain click or tap still fits it.
   return (
-    <section ref={ref} className={`hg-pack${lifted ? ' hg-pack-lift' : ''}`} data-pack={id} style={{ left: pos.x, top: pos.y }}>
+    <section
+      ref={ref}
+      className={`hg-pack${lifted ? ' hg-pack-lift' : ''}${chosen ? ' hg-pack-sel' : ''}`}
+      data-pack={id}
+      style={{ left: pos.x, top: pos.y }}
+    >
       <button
         type="button"
         className="hg-pack-title"

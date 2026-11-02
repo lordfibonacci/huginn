@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
+import { useMarquee } from '../hooks/useMarquee'
 import { updateItemPosition, updatePackagePosition, upsertViewPackPosition, upsertViewPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
 import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
@@ -21,6 +22,19 @@ import { placeNewCard } from '../lib/placement'
 import { parseDuration } from '../lib/motion'
 import { fileCountsByItem } from '../lib/panel'
 import { summarizeUnread } from '../lib/reads'
+import {
+  EMPTY_SELECTION,
+  groupMoves,
+  isMember,
+  parseSelKey,
+  selKey,
+  selectInRect,
+  selectionSize,
+  toggleMember,
+  type Boxed,
+  type SelTarget,
+  type Selection,
+} from '../lib/selection'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
 import type { BoardData, Item, Plan, View } from '../lib/types'
@@ -79,7 +93,8 @@ type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number; vie
 type Point = { x: number; y: number }
 // A dropped pack position waiting for the database, same reading as Pending.
 type PackPending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null }
-// Wires stay awake this long after each pack move, so they follow the modules.
+// Wires stay awake this long after each pack or group move, so they follow
+// the modules and the cards that moved outside the spring loop's notice.
 const PACK_MOVE_WAKE_MS = 100
 
 const SAVE_DEBOUNCE_MS = 300
@@ -192,7 +207,8 @@ export function Board({
   const els = useRef(new Map<string, HTMLElement>())
   // Where data has each drawn card: its place in the active view, else its own.
   const posById = useRef(new Map<string, Point>())
-  const draggingRef = useRef<string | null>(null)
+  // Cards being dragged right now: data never retargets their springs.
+  const draggingRef = useRef<ReadonlySet<string>>(new Set())
   const reduced = useRef(prefersReducedMotion())
 
   useEffect(() => {
@@ -227,7 +243,7 @@ export function Board({
       if (!s) {
         s = { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
         springs.current.set(item.id, s)
-      } else if (draggingRef.current !== item.id) {
+      } else if (!draggingRef.current.has(item.id)) {
         const p = s.pending
         if (p && p.viewId !== viewId) s.pending = null
         else if (p && px === p.x && py === p.y) s.pending = null
@@ -286,7 +302,7 @@ export function Board({
         if (s && p && p.x === x && p.y === y && p.viewId === inView) {
           s.pending = null
           const pos = posById.current.get(id)
-          if (pos && draggingRef.current !== id) {
+          if (pos && !draggingRef.current.has(id)) {
             s.tx = pos.x
             s.ty = pos.y
           }
@@ -430,48 +446,154 @@ export function Board({
     },
     [projectId, packDataPos, placePack],
   )
-
-  const getTargetPos = useCallback(
-    (t: DragTarget) => {
-      if (t.kind === 'card') return getPos(t.id)
-      const pos = packDataPos(t.id)
-      return pos ? packPos(t.id, pos) : null
+  const movePack = useCallback(
+    (id: string, x: number, y: number) => {
+      packLive.current.set(id, { x, y })
+      placePack(id, { x, y })
     },
-    [getPos, packDataPos, packPos],
+    [placePack],
   )
-  const onTargetMove = useCallback(
-    (t: DragTarget, x: number, y: number) => {
-      if (t.kind === 'card') return onMove(t.id, x, y)
-      packLive.current.set(t.id, { x, y })
-      placePack(t.id, { x, y })
-      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
-    },
-    [onMove, placePack],
-  )
-  const onTargetDrop = useCallback(
-    (t: DragTarget, x: number, y: number) => {
-      if (t.kind === 'card') return onDrop(t.id, x, y)
-      const base = packDataPos(t.id)
-      packLive.current.delete(t.id)
+  const dropPack = useCallback(
+    (id: string, x: number, y: number) => {
+      const base = packDataPos(id)
+      packLive.current.delete(id)
       if (!base) return
       const rx = Math.round(x)
       const ry = Math.round(y)
-      const old = packPending.current.get(t.id)
-      packPending.current.set(t.id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y, viewId })
-      placePack(t.id, { x: rx, y: ry })
-      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
-      savePackPosition(t.id, rx, ry, viewId)
+      const old = packPending.current.get(id)
+      packPending.current.set(id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y, viewId })
+      placePack(id, { x: rx, y: ry })
+      savePackPosition(id, rx, ry, viewId)
     },
-    [onDrop, packDataPos, placePack, savePackPosition, viewId],
+    [packDataPos, placePack, savePackPosition, viewId],
+  )
+  const cancelPack = useCallback(
+    (id: string, x: number, y: number) => {
+      packLive.current.delete(id)
+      placePack(id, { x, y })
+    },
+    [placePack],
+  )
+
+  // ---------- selection ----------
+  // Ctrl (Cmd) marquee or Ctrl click picks cards and packs; a drag on any
+  // member moves them all by the same delta (lib/selection). Mouse only.
+  const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION)
+  const selectionRef = useRef(selection)
+  useLayoutEffect(() => {
+    selectionRef.current = selection
+  }, [selection])
+  // Start positions of every member at the press that drags the group,
+  // keyed by selKey, null while a single target drags.
+  const groupStart = useRef<Map<string, Point> | null>(null)
+
+  const clearSelection = useCallback(() => {
+    if (selectionSize(selectionRef.current) > 0) setSelection(EMPTY_SELECTION)
+  }, [])
+  const onMarqueeSelect = useCallback(
+    (rect: Rect, additive: boolean) => {
+      const cardBoxes: Boxed[] = []
+      for (const [id, el] of els.current) {
+        const s = springs.current.get(id)
+        if (s) cardBoxes.push({ id, rect: { x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight } })
+      }
+      const titleBoxes: Boxed[] = []
+      for (const [id, el] of packEls.current) {
+        const title = el.querySelector<HTMLElement>('.hg-pack-title')
+        if (!title) continue
+        titleBoxes.push({
+          id,
+          rect: { x: el.offsetLeft + title.offsetLeft, y: el.offsetTop + title.offsetTop, w: title.offsetWidth, h: title.offsetHeight },
+        })
+      }
+      setSelection(selectInRect(rect, cardBoxes, titleBoxes, additive ? selectionRef.current : EMPTY_SELECTION))
+    },
+    [],
+  )
+  const onMarqueeToggle = useCallback((t: SelTarget) => setSelection((s) => toggleMember(s, t)), [])
+  const marquee = useMarquee({ boardRef, viewRef, onSelect: onMarqueeSelect, onToggle: onMarqueeToggle, onClear: clearSelection })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') clearSelection()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [clearSelection])
+
+  const getTargetPos = useCallback(
+    (t: DragTarget) => {
+      const own = t.kind === 'card' ? getPos(t.id) : (() => {
+        const pos = packDataPos(t.id)
+        return pos ? packPos(t.id, pos) : null
+      })()
+      if (!own) return null
+      const sel = selectionRef.current
+      if (!isMember(sel, t)) {
+        // A press outside the selection drags alone and drops the selection.
+        groupStart.current = null
+        clearSelection()
+        return own
+      }
+      const start = new Map<string, Point>()
+      for (const id of sel.cards) {
+        const p = getPos(id)
+        if (p) start.set(selKey({ kind: 'card', id }), p)
+      }
+      for (const id of sel.packs) {
+        const p = packDataPos(id)
+        if (p) start.set(selKey({ kind: 'pack', id }), packPos(id, p))
+      }
+      groupStart.current = start
+      return own
+    },
+    [getPos, packDataPos, packPos, clearSelection],
+  )
+  const onTargetMove = useCallback(
+    (t: DragTarget, x: number, y: number) => {
+      const group = groupStart.current
+      if (group) {
+        for (const [key, p] of groupMoves(group, t, x, y)) {
+          const m = parseSelKey(key)
+          if (m.kind === 'card') onMove(m.id, p.x, p.y)
+          else movePack(m.id, p.x, p.y)
+        }
+      } else if (t.kind === 'card') onMove(t.id, x, y)
+      else movePack(t.id, x, y)
+      if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    },
+    [onMove, movePack],
+  )
+  const onTargetDrop = useCallback(
+    (t: DragTarget, x: number, y: number) => {
+      const group = groupStart.current
+      groupStart.current = null
+      if (group) {
+        for (const [key, p] of groupMoves(group, t, x, y)) {
+          const m = parseSelKey(key)
+          if (m.kind === 'card') onDrop(m.id, p.x, p.y)
+          else dropPack(m.id, p.x, p.y)
+        }
+      } else if (t.kind === 'card') onDrop(t.id, x, y)
+      else dropPack(t.id, x, y)
+      if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    },
+    [onDrop, dropPack],
   )
   const onTargetCancel = useCallback(
     (t: DragTarget, x: number, y: number) => {
-      if (t.kind === 'card') return onCancel(t.id, x, y)
-      packLive.current.delete(t.id)
-      placePack(t.id, { x, y })
-      wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+      const group = groupStart.current
+      groupStart.current = null
+      if (group) {
+        for (const [key, p] of group) {
+          const m = parseSelKey(key)
+          if (m.kind === 'card') onCancel(m.id, p.x, p.y)
+          else cancelPack(m.id, p.x, p.y)
+        }
+      } else if (t.kind === 'card') onCancel(t.id, x, y)
+      else cancelPack(t.id, x, y)
+      if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
     },
-    [onCancel, placePack],
+    [onCancel, cancelPack],
   )
   // A pack title tap reaches the button's own onClick (fit), nothing to do here.
   const onTargetTap = useCallback(
@@ -490,18 +612,22 @@ export function Board({
     onCancel: onTargetCancel,
     onTap: onTargetTap,
   })
-  const draggingId = drag.dragging?.kind === 'card' ? drag.dragging.id : null
-  const draggingPackId = drag.dragging?.kind === 'pack' ? drag.dragging.id : null
+  // Everything lifted: the dragged target, or the whole selection when it is a member.
+  const lifted = useMemo<Selection>(() => {
+    const d = drag.dragging
+    if (!d) return EMPTY_SELECTION
+    if (isMember(selection, d)) return selection
+    return d.kind === 'card' ? { cards: new Set([d.id]), packs: new Set() } : { cards: new Set(), packs: new Set([d.id]) }
+  }, [drag.dragging, selection])
   useLayoutEffect(() => {
-    draggingRef.current = draggingId
-  }, [draggingId])
+    draggingRef.current = lifted.cards
+  }, [lifted])
 
   const hotIds = useMemo(() => {
-    const set = new Set<string>()
+    const set = new Set<string>(lifted.cards)
     if (selectedId) set.add(selectedId)
-    if (draggingId) set.add(draggingId)
     return set
-  }, [selectedId, draggingId])
+  }, [selectedId, lifted])
 
   const hotModuleIds = useMemo(() => {
     const set = new Set<string>()
@@ -643,8 +769,9 @@ export function Board({
     (e: MouseEvent<HTMLDivElement>) => {
       if ((e.target as Element).closest(NO_DESELECT)) return
       onSelect(null)
+      clearSelection()
     },
-    [onSelect],
+    [onSelect, clearSelection],
   )
 
   return (
@@ -654,6 +781,7 @@ export function Board({
         ref={boardRef}
         className={`hg-board${vp.isPanning ? ' hg-board-panning' : ''}`}
         {...vp.bind}
+        {...marquee.bind}
         onClick={onBoardClick}
       >
         <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} gestureRef={vp.gestureRef} hotIds={hotIds} onFrame={stepFrame} />
@@ -663,7 +791,8 @@ export function Board({
               key={pkg.id}
               pkg={pkg}
               pos={packPos(pkg.id, packPositions.get(pkg.id) ?? { x: pkg.pos_x, y: pkg.pos_y })}
-              lifted={pkg.id === draggingPackId}
+              lifted={lifted.packs.has(pkg.id)}
+              chosen={selection.packs.has(pkg.id)}
               setEl={setPackEl}
               modules={modules}
               items={items}
@@ -690,7 +819,8 @@ export function Board({
               parked={c.item.status === 'parked'}
               pulse={c.mode === 'pulse'}
               selected={c.item.id === selectedId}
-              lifted={c.item.id === draggingId}
+              lifted={lifted.cards.has(c.item.id)}
+              chosen={selection.cards.has(c.item.id)}
               dim={!c.visible}
               enterDelay={enterDelays.get(c.item.id) ?? 0}
               setEl={setEl}
@@ -698,6 +828,7 @@ export function Board({
             />
           ))}
         </div>
+        <div ref={marquee.boxRef} className="hg-marquee" aria-hidden="true" />
       </div>
       <div className="hg-zoom">
         <button type="button" onClick={vp.zoomOut} aria-label={t('vinnubord.board.zoomOut')}>

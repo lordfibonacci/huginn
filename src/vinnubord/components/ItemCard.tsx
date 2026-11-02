@@ -23,6 +23,8 @@ type Props = {
   pulse: boolean
   selected: boolean
   lifted: boolean
+  // Part of the Ctrl marquee selection (moves with the group).
+  chosen: boolean
   dim: boolean
   // Entry animation delay in ms. Pointer taps come through useCardDrag on the
   // world layer, onTap here serves the keyboard.
@@ -47,6 +49,7 @@ export const ItemCard = memo(function ItemCard({
   pulse,
   selected,
   lifted,
+  chosen,
   dim,
   enterDelay,
   setEl,
@@ -81,6 +84,7 @@ export const ItemCard = memo(function ItemCard({
     pulse ? 'hg-card-pulse' : '',
     selected ? 'hg-card-open' : '',
     lifted ? 'hg-card-lift' : '',
+    chosen ? 'hg-card-sel' : '',
     dim ? 'hg-card-dim' : '',
   ]
     .filter(Boolean)
