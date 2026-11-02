@@ -5,7 +5,7 @@ Grein: `vinnubord-10` (commits 2cf5c79 til 7192859 ofan á main 2d8d01f, auk þe
 Plan: `docs/superpowers/plans/2026-11-02-listi.md`
 Spekk: `docs/superpowers/specs/2026-11-02-listi-design.md`
 
-Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis á síma og iPad. Engin migration og enginn gagnagrunnskóði. Enginn commit er ýttur.
+Staða: lokið, lokayfirferð allrar greinarinnar keyrð og niðurstöður hennar lagaðar (sjá "Lokayfirferð"), lagfæringarnar bíða yfirferðar og prófunar Heimis á síma og iPad. Engin migration og enginn gagnagrunnskóði. Enginn commit er ýttur.
 
 ## Hvað var gert
 
@@ -23,12 +23,24 @@ Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis 
 
 **Task 7, þröngur skjár** (7192859). Undir 1024 px tekur listinn allan skjáinn, byrjar lokaður og er aðeins til í minni (`narrowOpen`), aldrei geymdur. Röð lokar listanum áður en hún velur. Hann notar `--hg-safe-left` og `--hg-safe-right`. `freeRect` á síma tekur frá `h * (1 - SHEET_HALF)` neðst, svo valið kort miðjast í efri 45% borðsins fyrir ofan hálft botnspjald. Skrif í `localStorage` færð út úr `setState` falli.
 
+**Lokayfirferð.** Fable fór yfir alla greinina (2d8d01f til 8b1e8cb) og eftirfarandi var lagað:
+
+- Fyrsta hleðsla á breiðu snertiborði (iPad í landslagi) með listann opinn úr fyrri heimsókn byrjar á fyrsta pakka hægra megin við listann, ekki undir honum. `startAtPack` fær `left` (breidd opna listans).
+- Spil í módúl sem enginn pakkadálkur teiknar (enginn pakki, eða pakki sem er horfinn) birtast undir "Án módúls" í röðun eftir pakka í stað þess að hverfa úr listanum.
+- `onBoard` í `Board` er aftur reiknað úr `items`, svo leit eða pilla endurræsa ekki gormana, innkomutöfina og neistana.
+- Valið verk eða opinn módúll sem hverfur úr gögnunum hreinsar auðkennið, svo borðið bætir ekki bili fyrir spjald sem er farið og Esc lokar listanum.
+- Fókus inni í listanum fer á listahnappinn þegar listanum er lokað (loka hnappur, Esc, listahnappur). Ýting á röð á síma skilur fókus eftir hjá spjaldinu.
+- Raðir segja `aria-current` í stað `aria-pressed`, og fókus á röð kveikir á kortinu eins og hover (slokknar þegar fókus fer úr listanum).
+- Föstu gildin sem eftir voru í reglum listans eru orðin tákn (`--hg-list-sort-radius`, `--hg-list-module-bar-radius`, `--hg-list-meta-top`, `--hg-list-when-top`, `--hg-list-close-icon`, `--hg-list-title-lh`, `--hg-list-heading-ls`), með sömu gildum.
+- CLAUDE.md lýsir rétt hvaða `--hg-list-*` tákn eru yfirskrifuð.
+
 **Úrskurðir sem breyta hegðun.** Heiti `listOpen` og `peek(itemId | null)` eru úr planinu, ekki spekki (`listState` og `peek(itemId, on)`). `Board` tekur `listOpen` sem boolean og les breiddina úr `--hg-list-w`. Þröngi listinn notar `left` og `right` með öruggu svæði í stað `--hg-list-w: 100%`. Tvær skjámyndir (`8-list` og `9-list-pick`) í stað einnar.
 
 ## Staðfesting
 
 - `npm run build`: grænt.
-- `npm run test`: 32 skrár, 508 próf græn (474 fyrir planið, 34 ný).
+- `npm run test`: 32 skrár, 510 próf græn (474 fyrir planið, 36 ný, þar af 2 úr lokayfirferðinni).
+- Lokayfirferð: headless Chromium á 1180 x 820 með snertingu (`pointer: coarse` satt) og `hg.list.<projectId>` opið, móti `vite preview`: listinn endar í 320 px og fyrsti pakkinn byrjar í 336 px.
 - `cli/lib/parity.test.mjs`: grænt, engin stærðartákn (`--hg-pack-*`, `--hg-module-*`, `--hg-card-*`) breytt.
 - `npm run smoke:hg` var ekki keyrt: engin migration og enginn gagnagrunnskóði.
 - Skjámyndir: `vite preview` á port 4173 af production build, `SITE=http://localhost:4173 npm run shots:hg phone`, 69 spil, preview stöðvað á eftir. `.playwright-mcp/shots/phone-8-list.png` sýnir listann í fullum skjá (haus "Listi 69 verk", röðun "Eftir pakka", pakkar, módúlar og raðir með punkti, bíður hjá og dagsetningu). `phone-9-list-pick.png` sýnir spjaldið opið eftir ýtingu á fyrstu röð (listinn lokaður). Skriftan ýtir nú tvisvar á Esc eftir `7-new`, því fyrra Esc yfirgefur aðeins reitinn í nýtt verk blaðinu.
@@ -42,6 +54,7 @@ Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis 
 - Ýting á röð lokar listanum á síma, líður borðinu að réttu korti og opnar spjaldið. Kortið er í efri hluta borðsins, ekki undir hálfu botnspjaldi.
 - Á síma byrjar listinn alltaf lokaður, líka þótt hann hafi verið opinn á skjáborði.
 - Á iPad í landslagi situr listinn við hlið borðsins og "Sýna allt" passar í lausa flötinn.
+- Á iPad í landslagi: opna listann, endurhlaða síðuna. Fyrsti pakkinn á að byrja hægra megin við listann, ekki undir honum.
 - Í landslagi á iPhone fara raðir ekki undir hakið.
 - Röðunin (eftir pakka, stöðu, síðast breytt) og "Hreinsa" þegar sía eða leit felur öll verk.
 
@@ -50,7 +63,6 @@ Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis 
 Smáatriði úr yfirferðum sem notandi gæti tekið eftir, ekkert þeirra hindrar:
 
 - Klasinn `hg-card-peek` hverfur ef React endurskrifar `className` kortsins (val, púls, dimming) meðan bendillinn er yfir röð. Næsta `peek` á sama kort setur hann aftur.
-- Fókus fer á `body` þegar listinn lokast með fókus inni í honum.
-- Eftir að valið verk er eytt (gamalt `selectedId`) getur listinn bætt bili fyrir spjald sem er ekki sýnilegt og Esc lokar þá ekki listanum.
 - Í röðun eftir pakka lenda spil án flokks (`bucket` null) á undan "nýtt". Óskilgreint í spekki og ekki prófað.
-- Engin yfirferð allrar greinarinnar er gerð enn, lokayfirferð Fable á allri greininni er eftir.
+- Fókus fer ekki inn í listann þegar hann opnast (framhald, utan verksviðs).
+- Lagfæringar lokayfirferðarinnar bíða yfirferðar.
