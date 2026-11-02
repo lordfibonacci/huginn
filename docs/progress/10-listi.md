@@ -1,7 +1,7 @@
 # 10 Vinnuborð: listi (plan 10)
 
 Dagsetning: 2026-11-02
-Grein: `vinnubord-10` (commits 2cf5c79 til 7192859 ofan á main 2d8d01f, auk þessa skjals, skjámynda í skriftunni og CLAUDE.md)
+Grein: `vinnubord-10` (commits 2cf5c79 til 307ed2f ofan á main 2d8d01f, auk þessa skjals, skjámynda í skriftunni og CLAUDE.md)
 Plan: `docs/superpowers/plans/2026-11-02-listi.md`
 Spekk: `docs/superpowers/specs/2026-11-02-listi-design.md`
 

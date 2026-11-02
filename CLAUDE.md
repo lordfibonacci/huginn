@@ -8,7 +8,7 @@ Design spec: `docs/superpowers/specs/2026-10-31-huginn-vinnubord-design.md`; pla
 
 ## Current state
 
-Plans 1 to 10 are built (508 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 10/10` against the live DB at the end of plan 8, plans 9 and 10 touch no database code).
+Plans 1 to 10 are built (510 vitest tests, `npm run build` green; `npm run smoke:hg` printed `ok 10/10` against the live DB at the end of plan 8, plans 9 and 10 touch no database code).
 
 - Plan 1 (grunnur): the `hg_` schema, API layer, realtime board data hook, pure status, filter, upload and continuation logic, the app shell, routes and the participant gate.
 - Plan 2 (bord): the whiteboard. Pack columns and module cards, item cards with spring drag and wires with sparks on a canvas, pan and zoom with touch (pinch, two finger pan, 350 ms long press to drag), side panel and bottom sheet for items and modules (status, files, questions, history, comments, copy buttons, Markdown reader), top bar with counter pills, filters, search and a viewer menu, new item sheet with file upload, aurora and entry motion, new item toast, project settings. The live project metta is seeded with 5 packages and 28 modules.
