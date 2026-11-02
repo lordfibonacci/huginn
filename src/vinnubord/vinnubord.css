@@ -1268,6 +1268,7 @@
   border-radius: var(--hg-radius-badge); background: var(--hg-ink); color: var(--hg-board); font-size: var(--hg-ddb-badge-size);
   font-style: normal; font-weight: 800; display: grid; place-items: center;
 }
+.hg-list-btn circle { fill: currentColor; stroke: none; }
 
 /* Package and tag menus, the viewer menu */
 .hg-dd { position: relative; flex: none; }

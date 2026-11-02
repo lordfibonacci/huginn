@@ -7,15 +7,18 @@ import { useActiveView } from '../hooks/useActiveView'
 import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
+import { useListPrefs } from '../hooks/useListPrefs'
 import { cardModels } from '../lib/cards'
 import { packageCounts, tagCounts } from '../lib/filters'
 import { boardOrder } from '../lib/layout'
+import { listRows } from '../lib/list'
 import { summarizeUnread } from '../lib/reads'
-import { countsFor, isOnBoard } from '../lib/status'
+import { countsFor, isOnBoard, mineActionsByItem } from '../lib/status'
 import type { Item, View } from '../lib/types'
 import { itemsInView, viewCounts } from '../lib/views'
 import { Board, type BoardHandle } from '../components/Board'
 import { FilterSheet } from '../components/FilterSheet'
+import { ListDrawer } from '../components/ListDrawer'
 import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
 import { NewItemSheet } from '../components/NewItemSheet'
@@ -65,6 +68,7 @@ export function BoardPage() {
     setSelectedId(null)
   }, [])
   const closePanel = useCallback(() => select(null), [select])
+  const listPrefs = useListPrefs(project?.id ?? '', narrow)
 
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
@@ -95,6 +99,14 @@ export function BoardPage() {
           })
         : [],
     [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter],
+  )
+  const mineByItem = useMemo(
+    () => (loaded ? mineActionsByItem(data.actions, viewerId) : new Map<string, number>()),
+    [loaded, data, viewerId],
+  )
+  const list = useMemo(
+    () => (loaded ? listRows(cards, data.packages, data.modules, listPrefs.sort) : { rows: [], count: 0 }),
+    [loaded, cards, data, listPrefs.sort],
   )
   const tags = useMemo(
     () => (loaded ? tagCounts(visibleItems, filterApi.filter.tags) : []),
@@ -129,6 +141,41 @@ export function BoardPage() {
   const closeFilters = useCallback(() => setFiltersOpen(false), [])
   const { choose: chooseView } = activeView
   const clearView = useCallback(() => chooseView(null), [chooseView])
+  // A row or a module panel item: open the panel and glide the board to the card.
+  const pick = useCallback(
+    (id: string) => {
+      select(id)
+      boardRef.current?.reveal(id)
+    },
+    [select],
+  )
+  const peek = useCallback((id: string | null) => boardRef.current?.peek(id), [])
+  // Closing the list also puts out a card a hovered row lit.
+  const { setOpen: setListOpen, toggle: toggleListPrefs } = listPrefs
+  const closeList = useCallback(() => {
+    setListOpen(false)
+    boardRef.current?.peek(null)
+  }, [setListOpen])
+  const toggleList = useCallback(() => {
+    if (listPrefs.open) boardRef.current?.peek(null)
+    toggleListPrefs()
+  }, [listPrefs.open, toggleListPrefs])
+  // From the ids, not selectedItem: this and the Escape effect sit above the early returns.
+  const panelOpen = selectedId !== null || openModuleId !== null
+  // Esc closes the list only when nothing above it takes Esc first: a field,
+  // the side panel, the new item sheet, the filter sheet or an open dropdown.
+  const listIsOpen = listPrefs.open
+  useEffect(() => {
+    if (!listIsOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (e.target instanceof Element && e.target.closest('input, textarea, select')) return
+      if (panelOpen || newOpen || filtersOpen || document.querySelector('.hg-menu') !== null) return
+      closeList()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [listIsOpen, panelOpen, newOpen, filtersOpen, closeList])
   const onCreated = useCallback(
     (item: Item) => {
       setNewOpen(false)
@@ -192,6 +239,8 @@ export function BoardPage() {
         onOpenFilters={() => setFiltersOpen(true)}
         picks={picks}
         onNewItem={() => setNewOpen(true)}
+        listOpen={listPrefs.open}
+        onToggleList={toggleList}
       />
       <Board
         key={project.id}
@@ -205,9 +254,24 @@ export function BoardPage() {
         selectedId={selectedId}
         onSelect={select}
         onOpenModule={openModule}
-        listOpen={false}
-        panelOpen={selectedItem !== null || openModuleRow !== null}
+        listOpen={listPrefs.open && !narrow}
+        panelOpen={panelOpen}
       >
+        {listPrefs.open && (
+          <ListDrawer
+            rows={list.rows}
+            count={list.count}
+            sort={listPrefs.sort}
+            selectedId={selectedId}
+            mineByItem={mineByItem}
+            filterActive={filterApi.active}
+            onSort={listPrefs.setSort}
+            onPick={pick}
+            onPeek={peek}
+            onClear={filterApi.clear}
+            onClose={closeList}
+          />
+        )}
         <Toast
           toast={newItemToast.toast}
           panelOpen={selectedItem !== null || openModuleRow !== null}
@@ -228,7 +292,7 @@ export function BoardPage() {
             data={data}
             module={openModuleRow}
             viewerId={user.id}
-            onSelectItem={select}
+            onSelectItem={pick}
           />
         ) : null}
       </PanelShell>

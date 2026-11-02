@@ -27,6 +27,8 @@ type Props = {
   // Chosen packages and tags, plus one when a view is active.
   picks: number
   onNewItem: () => void
+  listOpen: boolean
+  onToggleList: () => void
 }
 
 // Pill order follows the mockup: unread first, then new, waiting on you, waiting on others, in build, on hold.
@@ -55,6 +57,8 @@ export function TopBar({
   onOpenFilters,
   picks,
   onNewItem,
+  listOpen,
+  onToggleList,
 }: Props) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -175,6 +179,22 @@ export function TopBar({
       )}
 
       <div className="hg-top-b">
+        <button
+          type="button"
+          className={`hg-icon-btn hg-list-btn${listOpen ? ' hg-on' : ''}`}
+          aria-label={t('vinnubord.top.list')}
+          aria-pressed={listOpen}
+          onClick={onToggleList}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="3" cy="4" r="1.2" />
+            <path d="M6.5 4H14" />
+            <circle cx="3" cy="8" r="1.2" />
+            <path d="M6.5 8H14" />
+            <circle cx="3" cy="12" r="1.2" />
+            <path d="M6.5 12H14" />
+          </svg>
+        </button>
         <span
           className={`hg-live${live ? '' : ' hg-live-off'}`}
           role="status"
