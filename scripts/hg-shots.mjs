@@ -197,6 +197,15 @@ async function shots(browser, name, dev) {
   await page.waitForTimeout(600)
   await shot('7-new')
   await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape') // the first one leaves the focused field
+  await page.waitForTimeout(300)
+  await page.locator('.hg-list-btn').click()
+  await page.waitForTimeout(500)
+  await shot('8-list')
+  await page.locator('.hg-list-row').first().click()
+  await page.waitForTimeout(1000)
+  await shot('9-list-pick')
+  await page.keyboard.press('Escape')
   if (errors.length) console.log(name, 'console:', errors.slice(0, 10))
   await ctx.close()
 }
