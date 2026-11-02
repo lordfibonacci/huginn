@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
-import { updateItemPosition, updatePackagePosition, upsertViewPosition } from '../lib/api'
+import { updateItemPosition, updatePackagePosition, upsertViewPackPosition, upsertViewPosition } from '../lib/api'
 import { isActive, matches, type Filter } from '../lib/filters'
 import { screenToWorld, startAtPack, type Rect } from '../lib/geometry'
 import { boardOrder, packLayout } from '../lib/layout'
@@ -24,7 +24,7 @@ import { summarizeUnread } from '../lib/reads'
 import { settled, stepSpring, type Spring } from '../lib/spring'
 import { BUCKET_TONE, countBucket, isOnBoard, itemStatusLabel, itemTone, mineActionsByItem, wireMode } from '../lib/status'
 import type { BoardData, Item, Plan, View } from '../lib/types'
-import { positionOf, positionsOf } from '../lib/views'
+import { packPositionsOf, positionOf, positionsOf } from '../lib/views'
 import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
 import { PackColumn } from './PackColumn'
@@ -38,8 +38,10 @@ import { Wires, type WireItem, type WiresHandle } from './Wires'
 // Inside a view a card rests at its place in that view (hg_view_positions),
 // else at its own place, and a drop is saved to the view, never to the item.
 // A pack column is dragged by its title and moves with its modules (they are
-// its children); its drop is saved to hg_packages at once, in every view the
-// same, and until the data shows it the column rests at the dropped place.
+// its children). It follows the same view rule as a card: inside a view it
+// rests at its place in that view (hg_view_pack_positions), else at its own,
+// and a drop is saved to the view, never to the package. The save goes at
+// once, and until the data shows it the column rests at the dropped place.
 // The pan and zoom view is written to the world layer by useViewport (worldRef);
 // nothing here writes its transform or --hg-z, so a re-render in the middle of
 // a gesture never moves the world. Anything that needs the live view reads
@@ -76,7 +78,7 @@ type CardSpring = Spring & { pending: Pending | null }
 type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number; viewId: string | null }
 type Point = { x: number; y: number }
 // A dropped pack position waiting for the database, same reading as Pending.
-type PackPending = { x: number; y: number; baseX: number; baseY: number }
+type PackPending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null }
 // Wires stay awake this long after each pack move, so they follow the modules.
 const PACK_MOVE_WAKE_MS = 100
 
@@ -128,6 +130,7 @@ export function Board({
   const onBoard = useMemo(() => boardOrder(items), [items])
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
+  const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
   const packageOfModule = useMemo(() => new Map(data.modules.map((m) => [m.id, m.package_id])), [data.modules])
   const plansByItem = useMemo(() => {
@@ -385,33 +388,38 @@ export function Board({
     el.style.left = `${p.x}px`
     el.style.top = `${p.y}px`
   }, [])
-  // Data arrived: a pending that the data shows, or that someone else moved
-  // off its base, is spent. Same reading as the card springs above.
+  // Where the data has a pack: its place in the active view, else its own.
+  const packDataPos = useCallback(
+    (id: string): Point | null => {
+      const pkg = data.packages.find((p) => p.id === id)
+      if (!pkg) return null
+      return packPositions.get(id) ?? { x: pkg.pos_x, y: pkg.pos_y }
+    },
+    [data.packages, packPositions],
+  )
+  // Data arrived or the view switched: a pending dropped in another view,
+  // one the data shows, or one someone else moved off its base, is spent.
+  // Same reading as the card springs above.
   useLayoutEffect(() => {
     let changed = false
     for (const pkg of data.packages) {
       const p = packPending.current.get(pkg.id)
       if (!p) continue
-      if ((pkg.pos_x === p.x && pkg.pos_y === p.y) || !(pkg.pos_x === p.baseX && pkg.pos_y === p.baseY)) {
+      const d = packDataPos(pkg.id) as Point
+      if (p.viewId !== viewId || (d.x === p.x && d.y === p.y) || !(d.x === p.baseX && d.y === p.baseY)) {
         packPending.current.delete(pkg.id)
         changed = true
       }
     }
     if (changed) setPackTick((t) => t + 1)
-  }, [data.packages])
-  const packDataPos = useCallback(
-    (id: string): Point | null => {
-      const pkg = data.packages.find((p) => p.id === id)
-      return pkg ? { x: pkg.pos_x, y: pkg.pos_y } : null
-    },
-    [data.packages],
-  )
+  }, [data.packages, packDataPos, viewId])
   const savePackPosition = useCallback(
-    (id: string, x: number, y: number) => {
-      updatePackagePosition(id, x, y).catch((err: unknown) => {
+    (id: string, x: number, y: number, inView: string | null) => {
+      const save = inView ? upsertViewPackPosition(projectId, inView, id, x, y) : updatePackagePosition(id, x, y)
+      save.catch((err: unknown) => {
         console.error(err)
         const p = packPending.current.get(id)
-        if (p && p.x === x && p.y === y) {
+        if (p && p.x === x && p.y === y && p.viewId === inView) {
           packPending.current.delete(id)
           const pos = packDataPos(id)
           if (pos && !packLive.current.has(id)) placePack(id, pos)
@@ -420,7 +428,7 @@ export function Board({
         setMoveFailed(true)
       })
     },
-    [packDataPos, placePack],
+    [projectId, packDataPos, placePack],
   )
 
   const getTargetPos = useCallback(
@@ -449,12 +457,12 @@ export function Board({
       const rx = Math.round(x)
       const ry = Math.round(y)
       const old = packPending.current.get(t.id)
-      packPending.current.set(t.id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y })
+      packPending.current.set(t.id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y, viewId })
       placePack(t.id, { x: rx, y: ry })
       wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
-      savePackPosition(t.id, rx, ry)
+      savePackPosition(t.id, rx, ry, viewId)
     },
-    [onDrop, packDataPos, placePack, savePackPosition],
+    [onDrop, packDataPos, placePack, savePackPosition, viewId],
   )
   const onTargetCancel = useCallback(
     (t: DragTarget, x: number, y: number) => {
@@ -654,7 +662,7 @@ export function Board({
             <PackColumn
               key={pkg.id}
               pkg={pkg}
-              pos={packPos(pkg.id, { x: pkg.pos_x, y: pkg.pos_y })}
+              pos={packPos(pkg.id, packPositions.get(pkg.id) ?? { x: pkg.pos_x, y: pkg.pos_y })}
               lifted={pkg.id === draggingPackId}
               setEl={setPackEl}
               modules={modules}

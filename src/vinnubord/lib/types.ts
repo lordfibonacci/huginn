@@ -189,6 +189,15 @@ export type ViewPosition = {
   pos_y: number
 }
 
+// Where one pack column sits inside one view (hg_view_pack_positions).
+export type ViewPackPosition = {
+  project_id: string
+  view_id: string
+  package_id: string
+  pos_x: number
+  pos_y: number
+}
+
 export type BoardData = {
   project: Project
   participants: Participant[]
@@ -206,4 +215,5 @@ export type BoardData = {
   unread: UnreadRow[]
   views: View[]
   viewPositions: ViewPosition[]
+  viewPackPositions: ViewPackPosition[]
 }

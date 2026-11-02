@@ -20,6 +20,7 @@ const REALTIME_TABLES = [
   'hg_packages',
   'hg_views',
   'hg_view_positions',
+  'hg_view_pack_positions',
 ] as const
 
 const RELOAD_DEBOUNCE_MS = 150

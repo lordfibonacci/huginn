@@ -26,6 +26,7 @@ import type {
   UnreadRow,
   View,
   ViewFilterJson,
+  ViewPackPosition,
   ViewPosition,
 } from './types'
 
@@ -69,6 +70,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     unread,
     views,
     viewPositions,
+    viewPackPositions,
   ] = await Promise.all([
     supabase.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
     byProject('hg_participants').order('created_at'),
@@ -90,6 +92,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     supabase.rpc('hg_unread', { p_project: projectId }),
     byProject('hg_views').order('position').order('created_at'),
     byProject('hg_view_positions'),
+    byProject('hg_view_pack_positions'),
   ])
 
   const results = [
@@ -109,6 +112,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     unread,
     views,
     viewPositions,
+    viewPackPositions,
   ]
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið.', failed.error)
@@ -131,6 +135,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     unread: (unread.data ?? []) as UnreadRow[],
     views: (views.data ?? []) as View[],
     viewPositions: (viewPositions.data ?? []) as ViewPosition[],
+    viewPackPositions: (viewPackPositions.data ?? []) as ViewPackPosition[],
   }
 }
 
@@ -171,14 +176,31 @@ export async function updateItemPosition(id: string, x: number, y: number): Prom
   if (error) fail('Gat ekki fært verkið.', error)
 }
 
-// A pack column dragged on the board. Its modules have no position of their
-// own, they follow the column.
+// A pack column dragged on the main board. Its modules have no position of
+// their own, they follow the column.
 export async function updatePackagePosition(id: string, x: number, y: number): Promise<void> {
   const { error } = await supabase
     .from('hg_packages')
     .update({ pos_x: Math.round(x), pos_y: Math.round(y) })
     .eq('id', id)
   if (error) fail('Gat ekki fært flokkinn.', error)
+}
+
+// A pack column dragged inside a view, same rule as upsertViewPosition.
+export async function upsertViewPackPosition(
+  projectId: string,
+  viewId: string,
+  packageId: string,
+  x: number,
+  y: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('hg_view_pack_positions')
+    .upsert(
+      { project_id: projectId, view_id: viewId, package_id: packageId, pos_x: Math.round(x), pos_y: Math.round(y) },
+      { onConflict: 'view_id,package_id' },
+    )
+  if (error) fail('Gat ekki fært flokkinn í sýninni.', error)
 }
 
 export async function createView(projectId: string, name: string, filter: ViewFilterJson): Promise<View> {

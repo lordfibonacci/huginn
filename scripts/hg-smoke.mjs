@@ -393,10 +393,20 @@ try {
     const posAfter = must(await sb.from('hg_items').select('pos_x, pos_y, updated_at').eq('id', itemId).single(), 'item pos after')
     expect(posAfter.pos_x === posBefore.pos_x && posAfter.pos_y === posBefore.pos_y, 'a view position changed the item position')
     expect(posAfter.updated_at === posBefore.updated_at, 'a view position touched the item updated_at')
+    // a pack column position in the view (0013) leaves hg_packages alone and goes with the view
+    const pack = must(await sb.from('hg_packages').select('id, pos_x, pos_y').eq('project_id', projectId).order('position').limit(1).single(), 'first package')
+    must(
+      await sb.from('hg_view_pack_positions').upsert({ project_id: projectId, view_id: view.id, package_id: pack.id, pos_x: 777, pos_y: 666 }, { onConflict: 'view_id,package_id' }),
+      'upsert view pack position',
+    )
+    const packAfter = must(await sb.from('hg_packages').select('pos_x, pos_y').eq('id', pack.id).single(), 'package pos after')
+    expect(packAfter.pos_x === pack.pos_x && packAfter.pos_y === pack.pos_y, 'a view pack position changed the package position')
     must(await sb.from('hg_views').delete().eq('id', view.id), 'delete view')
     viewId = null
     const left = must(await sb.from('hg_view_positions').select('item_id').eq('view_id', view.id), 'positions after delete')
     expect(left.length === 0, `${left.length} view positions survived the view delete`)
+    const packLeft = must(await sb.from('hg_view_pack_positions').select('package_id').eq('view_id', view.id), 'pack positions after delete')
+    expect(packLeft.length === 0, `${packLeft.length} view pack positions survived the view delete`)
     passed++
     scenario = '10 action edits'
     // a: a new action has no edit stamp

@@ -3,7 +3,7 @@
 
 import { matches, parseFilter, prunePackages, type Filter } from './filters'
 import { BUCKET_TONE, TONES, countBucket, isOnBoard } from './status'
-import type { Action, Item, Module, View, ViewFilterJson, ViewPosition } from './types'
+import type { Action, Item, Module, View, ViewFilterJson, ViewPackPosition, ViewPosition } from './types'
 
 type Point = { x: number; y: number }
 
@@ -68,6 +68,15 @@ export function positionsOf(rows: ViewPosition[], viewId: string | null): Map<st
 // Where an item sits: its place in the view, else its own place on the board.
 export function positionOf(item: Item, positions: Map<string, Point>): Point {
   return positions.get(item.id) ?? { x: item.pos_x, y: item.pos_y }
+}
+
+// Pack column positions of one view by package id, same rule as positionsOf:
+// empty for the main board, and a pack without a row rests at its own place.
+export function packPositionsOf(rows: ViewPackPosition[], viewId: string | null): Map<string, Point> {
+  const map = new Map<string, Point>()
+  if (viewId === null) return map
+  for (const r of rows) if (r.view_id === viewId) map.set(r.package_id, { x: r.pos_x, y: r.pos_y })
+  return map
 }
 
 // localStorage key of one project's active view.

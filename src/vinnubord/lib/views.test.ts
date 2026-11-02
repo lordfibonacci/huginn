@@ -3,6 +3,7 @@ import {
   activeViewKey,
   itemsInView,
   normalizeViewFilter,
+  packPositionsOf,
   positionOf,
   positionsOf,
   resolveActiveView,
@@ -105,6 +106,16 @@ describe('positions', () => {
     expect(positionOf(item({ id: 'i2', pos_x: 1, pos_y: 2 }), positionsOf(rows, 'v1'))).toEqual({ x: 1, y: 2 })
     expect(positionsOf(rows, null).size).toBe(0)
     expect(positionsOf(rows, 'v2').get('i1')).toEqual({ x: 7, y: 8 })
+  })
+  it('packPositionsOf keeps only the view rows by package', () => {
+    const rows = [
+      { project_id: 'p', view_id: 'v1', package_id: 'k1', pos_x: 5, pos_y: 6 },
+      { project_id: 'p', view_id: 'v2', package_id: 'k1', pos_x: 7, pos_y: 8 },
+    ]
+    expect(packPositionsOf(rows, 'v1').get('k1')).toEqual({ x: 5, y: 6 })
+    expect(packPositionsOf(rows, 'v2').get('k1')).toEqual({ x: 7, y: 8 })
+    expect(packPositionsOf(rows, 'v1').has('k2')).toBe(false)
+    expect(packPositionsOf(rows, null).size).toBe(0)
   })
 })
 
