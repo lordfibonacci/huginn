@@ -515,14 +515,19 @@ try {
     const b12 = await putN('v2', undefined)
     smokeObjects.push(b12.file.storage_path)
     expect(b12.outcome === 'replaced' && b12.file.note === 'Fyrsta lýsing', 'replace lost the note')
+    // b2: replace with another note writes it
+    const r12 = await putN('v3', 'Ný lýsing')
+    smokeObjects.push(r12.file.storage_path)
+    expect(r12.outcome === 'replaced' && r12.file.note === 'Ný lýsing' && r12.noteUpdated === true, `replace with note ${JSON.stringify(r12)}`)
+    expect(r12.file.updated_at !== b12.file.updated_at, 'replace with a note did not move the stamp')
     // c: unchanged bytes with a new note write the note and nothing else
-    const c12 = await putN('v2', 'Önnur lýsing')
+    const c12 = await putN('v3', 'Önnur lýsing')
     expect(c12.outcome === 'unchanged' && c12.noteUpdated === true && c12.file.note === 'Önnur lýsing', `unchanged note ${JSON.stringify(c12)}`)
-    expect(c12.file.updated_at === b12.file.updated_at && c12.file.storage_path === b12.file.storage_path, 'a note write moved the stamp or the object')
+    expect(c12.file.updated_at === r12.file.updated_at && c12.file.storage_path === r12.file.storage_path, 'a note write moved the stamp or the object')
     // d: setFileNote writes, no event, no stamp
     const ev12Before = (await readEvents()).filter((e) => e.data?.file_id === a12.file.id).length
     const d12 = await setFileNote(sb, a12.file.id, 'Þriðja lýsing')
-    expect(d12.note === 'Þriðja lýsing' && d12.updated_at === b12.file.updated_at, 'setFileNote changed more than the note')
+    expect(d12.note === 'Þriðja lýsing' && d12.updated_at === r12.file.updated_at && d12.storage_path === r12.file.storage_path, 'setFileNote changed more than the note')
     const ev12After = (await readEvents()).filter((e) => e.data?.file_id === a12.file.id).length
     expect(ev12After === ev12Before, `a note write logged ${ev12After - ev12Before} events`)
     passed++

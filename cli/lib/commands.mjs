@@ -390,9 +390,10 @@ const WRITE = {
       async run(flags, [itemId, path]) {
         const local = readLocal(path)
         const repoPath = flags['repo-path'] !== undefined ? normalizeRepoPath(flags['repo-path']) : null
-        // No --note leaves a replaced file's note as it is; --note "" clears it.
+        // No --note leaves a replaced file's note as it is; a blank --note is refused.
         const n = flags.note !== undefined ? normalizeNote(flags.note) : { ok: true, note: undefined }
         if (!n.ok) throw new Error(n.reason)
+        if (n.note === null) throw new Error('--note vantar.')
         const { client, user, project } = await context(flags)
         const item = await findById(client, 'item', project.id, itemId)
         const { file: f, outcome, noteUpdated } = await putFile(client, {
@@ -404,12 +405,11 @@ const WRITE = {
           ...local,
         })
         const at = `#${shortId(f.id)} á verk #${shortId(item.id)}`
-        const noted = noteUpdated ? ', lýsing uppfærð' : ''
         const text =
           outcome === 'replaced'
-            ? `Skjal ${oneLine(f.name)} uppfært ${at}${noted}.`
+            ? `Skjal ${oneLine(f.name)} uppfært ${at}${noteUpdated ? ', lýsing uppfærð' : ''}.`
             : outcome === 'unchanged'
-              ? `Skjal ${oneLine(f.name)} óbreytt ${at}, ekkert skrifað${noted}.`
+              ? `Skjal ${oneLine(f.name)} óbreytt ${at}, ${noteUpdated ? 'lýsing uppfærð' : 'ekkert skrifað'}.`
               : `Skrá ${oneLine(f.name)} hlaðið upp ${at}.`
         return {
           json: { ok: true, id: f.id, outcome, replaced: outcome === 'replaced', unchanged: outcome === 'unchanged', noteUpdated },
