@@ -25,7 +25,7 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 
 **Task 8, lýsing í nýju verki** (6048b8f, lagfæring cbb100f). Lýsingarreitur á hverri skrá í nýju verki (`.hg-new-file-note`, hámark 200), lokaður meðan upphleðsla gengur. Lagfæringin þrengir reglurnar svo reiturinn sé strik en ekki rammi.
 
-**Task 9, lýsing í `item.md` og greiningunni** (eaac87c). `fileLine` í `cli/lib/mirror.mjs` skrifar `- nafn #<stutt auðkenni>(lýsing), stærð bæti: ...`. hg-analyse fær lýsinguna í skráarlínuna í skilaboðunum, útgáfa 11 er sett í loftið (`verify_jwt` false, tvær skrár, íslenskir stafir sem `\u` í sendingunni) og borin saman við repo: eins. metta2_new commit 6dd545c7: skillið segir að skrár séu sóttar með `#auðkenni` og lýsingu og að nýjar skrár fái `--note`.
+**Task 9, lýsing í `item.md` og greiningunni** (eaac87c). `fileLine` í `cli/lib/mirror.mjs` skrifar `- plan.md #1a2b3c4d (Hönnunarskjal lesarans, fyrir Heimi), 1234 bæti: í repoinu, docs/plan.md`. hg-analyse fær lýsinguna í skráarlínuna í skilaboðunum, útgáfa 11 er sett í loftið (`verify_jwt` false, tvær skrár, íslenskir stafir sem `\u` í sendingunni) og borin saman við repo: eins. metta2_new commit 6dd545c7: skillið segir að skrár séu sóttar með `#auðkenni` og lýsingu og að nýjar skrár fái `--note`.
 
 **Task 10, skot, skjal, CLAUDE.md** (þetta commit). `scripts/hg-shots.mjs` tekur `11-reader` og `11b-reader-back`. Ef spjaldið sem listinn valdi hefur enga md skrá reynir skriftan næstu raðir listans (upp í 12), og á síma er spjaldið lokað með Esc áður en listinn er opnaður aftur. CLAUDE.md og þetta skjal.
 
@@ -33,6 +33,7 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 
 - Nafnaprófið í Task 3 var keyrt sem node skripta (undirrituð slóð með `download` nafni) en ekki í vafra, sama sönnun.
 - Hrá px og em gildi úr plan CSS (táknstærð, bil á rofa, bil á efnishaus, rými á síma) urðu tokens í lesarahlutanum, því reglur lesa aðeins tokens.
+- UI athuganir í byggingu voru gerðar með Playwright þar sem hægt var, það sem ekki er hægt að sjálfvirkja er í listanum hér fyrir neðan.
 - Task 8 notar `--hg-fs-field`, því `--hg-field-font` er ekki til.
 - Skipti á skrá skilar `noteUpdated` þegar `--note` er gefin og er ólík, svo texti skipanna geti sagt "lýsing uppfærð".
 - Tóm `file set --note` segir `--note vantar.`, sama orðalag og þegar flagg vantar.
@@ -68,6 +69,7 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 - Lesarinn breikkar og borðið sést vinstra megin við hann. Listinn hverfur meðan lesari er opinn og kemur aftur með Til baka.
 - Efnisyfirlit: smellur skrollar á fyrirsögnina, virka línan fylgir skrollinu. Md rofinn sýnir hráan texta og bútur sem er valinn afritast sem markdown. Afrita allt.
 - Esc tvisvar: fyrst lokar lesaranum, svo spjaldinu. Til baka lendir í Skjöl flipanum. Tafla í skjali skrollar til hliðar.
+- Skrollstaða á Skjöl flipanum lifir að opna og loka lesaranum, á alvöru tæki.
 - Sími: fullt blað, efnisyfirlit sem fellilisti, drag niður af lesarastikunni dregur blaðið (ekki prófað á alvöru síma).
 - Alvöru txt skrá á opnu verki (metta á enga í dag, aðeins `profun.txt` á föllnu verki).
 - Rauntími: þegar Claude keyrir `file add` á sömu repo slóð meðan lesari er opinn hleður lesarinn nýja textanum.

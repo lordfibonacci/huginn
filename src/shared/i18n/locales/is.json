@@ -253,7 +253,6 @@
       "copyWhat": "Afrita {{what}}",
       "cost": "Kostar ef rangt: {{cost}}",
       "files": {
-        "back": "Aftur í skjöl",
         "by": "{{name}}, {{when}}",
         "download": "Sækja {{name}}",
         "empty": "Engin skjöl ennþá.",
