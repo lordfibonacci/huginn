@@ -7,9 +7,11 @@ import { LanguageToggle } from '../../shared/components/LanguageToggle'
 import type { FilterApi } from '../hooks/useFilter'
 import { markAllRead } from '../lib/api'
 import type { FilterOption } from '../lib/filters'
-import { BUCKET_TONE, type Counts } from '../lib/status'
+import { BUCKET_TONE, type Counts, type Tone } from '../lib/status'
 import type { Participant, Project } from '../lib/types'
 import { FilterMenu, useDismiss } from './FilterMenu'
+
+const LEGEND: [Tone, string][] = [['gold', 'gold'], ['coral', 'coral'], ['lilac', 'lilac'], ['teal', 'teal'], ['stone', 'stone']]
 
 type Props = {
   project: Project
@@ -316,6 +318,13 @@ function ViewerMenu({ slug, projectId, viewer }: { slug: string; projectId: stri
           <button type="button" className="hg-chip" disabled={marking} onClick={() => void handleMarkAll()}>
             {t('vinnubord.top.markAllRead')}
           </button>
+          <div className="hg-menu-sep" />
+          <ul className="hg-legend" aria-label={t('vinnubord.top.legend.title')}>
+            {LEGEND.map(([tone, key]) => (
+              <li key={tone} className={`hg-tone-${tone}`}><i className="hg-legend-dot" aria-hidden="true" />{t(`vinnubord.top.legend.${key}`)}</li>
+            ))}
+          </ul>
+          <div className="hg-menu-sep" />
           <div className="hg-menu-row">
             <span>{t('vinnubord.top.language')}</span>
             <LanguageToggle className="hg-lang" />

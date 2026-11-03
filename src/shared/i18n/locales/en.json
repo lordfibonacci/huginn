@@ -374,6 +374,14 @@
       "settings": "Project settings",
       "markAllRead": "Mark everything read",
       "language": "Language",
+      "legend": {
+        "title": "Colours",
+        "gold": "New, or waiting for Claude",
+        "coral": "Waiting for you",
+        "lilac": "Waiting for others",
+        "teal": "Ready or building",
+        "stone": "Parked or done"
+      },
       "signOut": "Sign out",
       "newItem": "New item"
     },

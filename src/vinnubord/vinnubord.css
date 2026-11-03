@@ -1361,6 +1361,9 @@
 /* The view menu and its editor */
 .hg-view-menu { min-width: var(--hg-menu-w); }
 .hg-menu-sep { height: 1px; margin: var(--hg-control-gap) 0; background: var(--hg-line); }
+.hg-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); font-size: var(--hg-chip-size); color: var(--hg-ink-2); }
+.hg-legend li { display: flex; align-items: center; gap: var(--hg-card-row-gap); }
+.hg-legend-dot { width: var(--hg-card-dot); height: var(--hg-card-dot); border-radius: 50%; background: var(--hg-c); box-shadow: 0 0 var(--hg-card-glow) var(--hg-c); flex: none; }
 .hg-view-editor { display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); padding: var(--hg-menu-item-pad); padding-bottom: var(--hg-menu-pad); }
 .hg-view-group { margin: 0; font-size: var(--hg-menu-who-size); color: var(--hg-ink-3); }
 .hg-view-chips { display: flex; flex-wrap: wrap; gap: var(--hg-control-gap); }

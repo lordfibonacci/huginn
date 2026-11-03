@@ -394,6 +394,14 @@
       "counters": "Stöðusía",
       "filters": "Síur",
       "language": "Tungumál",
+      "legend": {
+        "coral": "Bíður þín",
+        "gold": "Nýtt, eða bíður Claude",
+        "lilac": "Bíður annarra",
+        "stone": "Parkerað eða lokið",
+        "teal": "Tilbúið eða í smíðum",
+        "title": "Litir"
+      },
       "list": "Listi",
       "live": "Lifandi",
       "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
