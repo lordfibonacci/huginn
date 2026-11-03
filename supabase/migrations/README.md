@@ -25,3 +25,4 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0011b_hg_views_project_keys: composite (id, project_id) keys so a view position's view and item are in its own project.
 - 0012_hg_action_edits: updated_at, updated_by, cancelled and cancel_reason on hg_actions, edit stamps, action.updated and action.cancelled events.
 - 0013_hg_view_pack_positions: hg_view_pack_positions (pack column positions per view, composite project keys), participant RLS, realtime.
+- 0014_hg_file_replace: updated_at and updated_by on hg_files, stamped and logged as file.updated when storage_path changes, file_id in both file events, hg_unread counts one file once, unique (item_id, repo_path) where repo_path is not null. Heimir runs the duplicate cleanup from the spec before it is applied.
