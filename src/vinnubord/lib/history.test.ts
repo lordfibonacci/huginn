@@ -66,6 +66,7 @@ describe('describeEvent', () => {
 
   it('names the added file and the plan status', () => {
     expect(describeEvent(ev('e', null, 'file.added', { name: 'spec.md' }), nameOf).params).toEqual({ name: 'spec.md' })
+    expect(describeEvent(ev('e2', null, 'file.updated', { name: 'spec.md', file_id: 'f1' }), nameOf)).toMatchObject({ key: 'fileUpdated', params: { name: 'spec.md' } })
     expect(describeEvent(ev('e', null, 'plan.status', { from: 'todo', to: 'done' }), nameOf)).toEqual({
       key: 'planStatus',
       params: { to: 'Lokið' },

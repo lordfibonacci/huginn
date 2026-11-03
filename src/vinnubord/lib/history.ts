@@ -88,6 +88,8 @@ export function describeEvent(event: Event, nameOf: (userId: string | null) => s
       return line('planStatus', { to: planStatusName(data.to) })
     case 'file.added':
       return line('fileAdded', { name: str(data.name) ?? '?' })
+    case 'file.updated':
+      return line('fileUpdated', { name: str(data.name) ?? '?' })
     case 'analysis.failed': {
       // The reason shows after a colon. Without one the bare line has none.
       const error = str(data.error)?.trim() ?? ''

@@ -44,6 +44,10 @@ describe('summarizeUnread', () => {
     ]
     expect(summarizeUnread(rows).get('i1')?.kinds.map((k) => k.kind)).toEqual(['action', 'actionDone', 'actionEdited', 'actionCancelled', 'question'])
   })
+  it('file.updated counts as a file', () => {
+    const m = summarizeUnread([{ item_id: 'i1', kind: 'file.updated', n: 1, latest: '2026-11-03T07:55:00Z' }])
+    expect(m.get('i1')?.kinds).toEqual([{ kind: 'file', n: 1 }])
+  })
   it('compares latest as instants, not strings', () => {
     const m = summarizeUnread([
       { item_id: 'i1', kind: 'file.added', n: 1, latest: '2026-11-01T10:00:00.5+00:00' },

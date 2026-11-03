@@ -92,6 +92,8 @@ export type FileRow = {
   mime: string | null
   repo_path: string | null
   uploaded_by: string
+  updated_at: string | null
+  updated_by: string | null
 }
 
 export type Question = {

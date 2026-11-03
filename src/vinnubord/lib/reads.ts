@@ -25,6 +25,7 @@ const KIND_OF: Record<string, UnreadKind> = {
   'question.asked': 'question',
   'question.answered': 'answer',
   'file.added': 'file',
+  'file.updated': 'file',
   'comment.added': 'comment',
   'item.status': 'status',
   'plan.added': 'plan',
