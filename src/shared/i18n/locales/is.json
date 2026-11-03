@@ -292,6 +292,17 @@
         "send": "Svara",
         "to": "til {{name}}"
       },
+      "reader": {
+        "back": "Til baka í skjöl",
+        "contents": "Efni",
+        "contentsAt": "Efni: {{heading}}",
+        "copied": "Afritað",
+        "copyAll": "Afrita allt",
+        "download": "Sækja",
+        "md": "Md",
+        "modeLabel": "Birting",
+        "read": "Lesa"
+      },
       "resume": "Halda áfram",
       "resumeHint": "Afritar samhengisprompt fyrir nýtt spjall.",
       "resumeRunIn": "í",

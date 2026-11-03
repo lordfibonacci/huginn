@@ -1,31 +1,30 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
-import { downloadFile, fileText, fileUrl } from '../../lib/api'
+import { downloadFile, fileUrl } from '../../lib/api'
 import { fileStamp, sortFiles } from '../../lib/files'
+import { readerKind } from '../../lib/reader'
 import { fileKindLabel } from '../../lib/upload'
 import type { FileRow, Participant, Plan } from '../../lib/types'
 import { CopyButton } from '../CopyButton'
-import { Markdown } from '../Markdown'
 
 type Props = {
   files: FileRow[]
   plans: Plan[]
   participants: Participant[]
   fresh: (at: string | null, author: string | null) => boolean
+  // Opens an md or txt file in the reader, which takes the panel's place.
+  onRead: (file: FileRow) => void
 }
-
-type Reader = { file: FileRow; text: string | null; error: string | null }
 
 // "Skjöl": plans with a repo path come first (path only, no open), then who
 // added what and when (a replaced file shows its last replace), the repo path
-// to copy, and the file's note. A tap opens the file: md and txt in the reader inside the panel,
+// to copy, and the file's note. A tap opens the file: md and txt in the reader (onRead),
 // anything else in a new tab through a signed url; the arrow saves it. A file someone else
 // added since the viewer last opened the item is marked new; plan rows
 // never are.
-export function FilesTab({ files, plans, participants, fresh }: Props) {
+export function FilesTab({ files, plans, participants, fresh, onRead }: Props) {
   const { t } = useTranslation()
-  const [reader, setReader] = useState<Reader | null>(null)
   const [error, setError] = useState<string | null>(null)
   // Signed urls of files whose new tab was blocked, shown as a link to tap.
   const [links, setLinks] = useState<Record<string, string>>({})
@@ -34,17 +33,8 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
 
   const open = async (file: FileRow) => {
     setError(null)
-    const kind = fileKindLabel(file.name)
-    if (kind === 'MD' || kind === 'TXT') {
-      setReader({ file, text: null, error: null })
-      try {
-        const text = await fileText(file.storage_path)
-        setReader((r) => (r?.file.id === file.id ? { ...r, text } : r))
-      } catch (e) {
-        console.error(e)
-        const message = e instanceof Error ? e.message : String(e)
-        setReader((r) => (r?.file.id === file.id ? { ...r, error: message } : r))
-      }
+    if (readerKind(file.name)) {
+      onRead(file)
       return
     }
     if (opening.current.has(file.id)) return
@@ -83,29 +73,6 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
     } finally {
       opening.current.delete(file.id)
     }
-  }
-
-  if (reader) {
-    const kind = fileKindLabel(reader.file.name)
-    return (
-      <div className="hg-reader">
-        <button type="button" className="hg-btn hg-btn-ghost" onClick={() => setReader(null)}>
-          {t('vinnubord.panel.files.back')}
-        </button>
-        <h3 className="hg-reader-name">{reader.file.name}</h3>
-        {reader.error ? (
-          <p className="hg-pn-error" role="alert">
-            {reader.error}
-          </p>
-        ) : reader.text === null ? (
-          <p className="hg-pn-muted">{t('vinnubord.panel.files.loading')}</p>
-        ) : kind === 'MD' ? (
-          <Markdown source={reader.text} />
-        ) : (
-          <pre className="hg-reader-text">{reader.text}</pre>
-        )}
-      </div>
-    )
   }
 
   const withPath = [...plans].filter((p) => p.path).sort((a, b) => a.position - b.position)

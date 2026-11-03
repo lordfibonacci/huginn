@@ -267,6 +267,17 @@
         "openLink": "Tap to open {{name}}",
         "planKind": "Plan"
       },
+      "reader": {
+        "back": "Back to files",
+        "download": "Download",
+        "copyAll": "Copy all",
+        "copied": "Copied",
+        "read": "Read",
+        "md": "Md",
+        "contents": "Contents",
+        "contentsAt": "Contents: {{heading}}",
+        "modeLabel": "View"
+      },
       "questions": {
         "empty": "No questions.",
         "open": "Unanswered",

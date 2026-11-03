@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
 import { latestForeignCommentAt } from '../lib/chat'
 import { fileCountsByItem } from '../lib/panel'
 import { isActionFresh, isFresh, latestForeignAt, readAtOf } from '../lib/reads'
+import type { ReaderMode } from '../lib/reader'
 import { itemStatusLabel, itemTone } from '../lib/status'
-import type { BoardData, Item } from '../lib/types'
+import type { BoardData, FileRow, Item } from '../lib/types'
 import { ChatTab } from './panel/ChatTab'
 import { CommentBox } from './panel/CommentBox'
 import { FilesTab } from './panel/FilesTab'
@@ -14,10 +15,17 @@ import { HistoryTab } from './panel/HistoryTab'
 import { QuestionsTab } from './panel/QuestionsTab'
 import { StatusTab } from './panel/StatusTab'
 
+// Its own chunk, with marked: the board bundle never carries the reader.
+const FileReader = lazy(() => import('./panel/FileReader'))
+
 type Props = {
   data: BoardData
   item: Item
   viewerId: string
+  // The md or txt file open in the reader, looked up live by the parent, or null.
+  readerFile: FileRow | null
+  // Opens the reader on a file id, or closes it with null.
+  onReader: (fileId: string | null) => void
 }
 
 type Tab = 'status' | 'chat' | 'files' | 'questions' | 'history'
@@ -27,7 +35,7 @@ const TABS: Tab[] = ['status', 'chat', 'files', 'questions', 'history']
 // render; the tab, drafts and scroll position are local state, so the parent
 // keys this component by item id and a realtime refetch keeps them. All tab
 // bodies stay mounted, so switching tabs keeps them too.
-export function ItemPanel({ data, item, viewerId }: Props) {
+export function ItemPanel({ data, item, viewerId, readerFile, onReader }: Props) {
   // The viewer's read mark as it was when the panel opened. First hook, so it
   // reads before the mark effect writes; the parent keys the panel by item id,
   // so it runs once per opened item and the fresh marks survive the panel's
@@ -41,6 +49,8 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   const [tab, setTab] = useState<Tab>('status')
   // Stamp of the last send, so the chat goes to the bottom from any tab.
   const [sentAt, setSentAt] = useState(0)
+  // Lesa or Md in the file reader, kept while the panel is open.
+  const [readerMode, setReaderMode] = useState<ReaderMode>('read')
   const bodyRef = useRef<HTMLDivElement | null>(null)
 
   // Read on open, and again whenever someone else adds an event to the item
@@ -74,6 +84,12 @@ export function ItemPanel({ data, item, viewerId }: Props) {
     if (bodyRef.current) bodyRef.current.scrollTop = 0
   }
 
+  // Til baka from the reader lands on the Skjöl tab.
+  const openReader = (file: FileRow) => {
+    setTab('files')
+    onReader(file.id)
+  }
+
   const tone = itemTone(item, viewerId, data.participants)
   const label = itemStatusLabel(item, viewerId, data.participants)
   const module = data.modules.find((m) => m.id === item.module_id) ?? null
@@ -95,94 +111,109 @@ export function ItemPanel({ data, item, viewerId }: Props) {
     return t(`vinnubord.panel.tabs.${k}`)
   }
 
+  // While a file is open the reader takes the panel's place; the panel stays
+  // mounted under it (hidden), so tabs, drafts and scroll survive Til baka.
   return (
-    <div className={`hg-pn hg-tone-${tone}`}>
-      <header className="hg-pn-head">
-        <div className="hg-pn-st">
-          <i aria-hidden="true" />
-          {label}
-        </div>
-        <h2 className="hg-pn-title">{item.title}</h2>
-        <p className="hg-pn-sub">
-          {mover
-            ? t('vinnubord.panel.sub', { module: moduleName, name: mover.display_name, when: formatStamp(item.updated_at) })
-            : t('vinnubord.panel.subNoMover', { module: moduleName })}
-        </p>
-        {item.tags.length > 0 && (
-          <div className="hg-pn-tags">
-            {item.tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+    <>
+      <div className={`hg-pn hg-tone-${tone}`} hidden={readerFile !== null}>
+        <header className="hg-pn-head">
+          <div className="hg-pn-st">
+            <i aria-hidden="true" />
+            {label}
           </div>
-        )}
-      </header>
-      <div className="hg-pn-tabs" role="tablist">
-        {TABS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            id={`hg-tab-${k}`}
-            aria-selected={tab === k}
-            aria-controls={`hg-tabpanel-${k}`}
-            className={`hg-pn-tab${tab === k ? ' hg-pn-tab-on' : ''}`}
-            aria-label={k === 'chat' && chatDot ? t('vinnubord.chat.unreadTab') : undefined}
-            onClick={() => choose(k)}
-          >
-            {tabLabel(k)}
-            {k === 'chat' && chatDot && <i className="hg-pn-tab-dot" aria-hidden="true" />}
-          </button>
-        ))}
+          <h2 className="hg-pn-title">{item.title}</h2>
+          <p className="hg-pn-sub">
+            {mover
+              ? t('vinnubord.panel.sub', { module: moduleName, name: mover.display_name, when: formatStamp(item.updated_at) })
+              : t('vinnubord.panel.subNoMover', { module: moduleName })}
+          </p>
+          {item.tags.length > 0 && (
+            <div className="hg-pn-tags">
+              {item.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          )}
+        </header>
+        <div className="hg-pn-tabs" role="tablist">
+          {TABS.map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              id={`hg-tab-${k}`}
+              aria-selected={tab === k}
+              aria-controls={`hg-tabpanel-${k}`}
+              className={`hg-pn-tab${tab === k ? ' hg-pn-tab-on' : ''}`}
+              aria-label={k === 'chat' && chatDot ? t('vinnubord.chat.unreadTab') : undefined}
+              onClick={() => choose(k)}
+            >
+              {tabLabel(k)}
+              {k === 'chat' && chatDot && <i className="hg-pn-tab-dot" aria-hidden="true" />}
+            </button>
+          ))}
+        </div>
+        {/* Every tab stays mounted and inactive ones are hidden, so drafts and
+            a touched status control survive switching tabs. */}
+        <div ref={bodyRef} className="hg-pn-body">
+          <div role="tabpanel" id="hg-tabpanel-status" aria-labelledby="hg-tab-status" hidden={tab !== 'status'}>
+            <StatusTab
+              data={data}
+              item={item}
+              module={module}
+              tone={tone}
+              label={label}
+              fresh={fresh}
+              freshActions={freshActions}
+            />
+          </div>
+          <div role="tabpanel" id="hg-tabpanel-chat" aria-labelledby="hg-tab-chat" hidden={tab !== 'chat'}>
+            <ChatTab
+              itemId={item.id}
+              comments={data.comments}
+              participants={data.participants}
+              viewerId={viewerId}
+              fresh={fresh}
+              active={tab === 'chat'}
+              sentAt={sentAt}
+              bodyRef={bodyRef}
+            />
+          </div>
+          <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
+            <FilesTab files={files} plans={plans} participants={data.participants} fresh={fresh} onRead={openReader} />
+          </div>
+          <div role="tabpanel" id="hg-tabpanel-questions" aria-labelledby="hg-tab-questions" hidden={tab !== 'questions'}>
+            <QuestionsTab questions={questions} participants={data.participants} fresh={fresh} />
+          </div>
+          <div role="tabpanel" id="hg-tabpanel-history" aria-labelledby="hg-tab-history" hidden={tab !== 'history'}>
+            <HistoryTab
+              itemId={item.id}
+              events={data.events}
+              comments={data.comments}
+              participants={data.participants}
+              fresh={fresh}
+            />
+          </div>
+        </div>
+        <CommentBox
+          onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })}
+          onSent={() => {
+            choose('chat')
+            setSentAt(Date.now())
+          }}
+        />
       </div>
-      {/* Every tab stays mounted and inactive ones are hidden, so drafts, an
-          open file and a touched status control survive switching tabs. */}
-      <div ref={bodyRef} className="hg-pn-body">
-        <div role="tabpanel" id="hg-tabpanel-status" aria-labelledby="hg-tab-status" hidden={tab !== 'status'}>
-          <StatusTab
-            data={data}
-            item={item}
-            module={module}
-            tone={tone}
-            label={label}
-            fresh={fresh}
-            freshActions={freshActions}
+      {readerFile && (
+        <Suspense fallback={<p className="hg-pn-muted">{t('vinnubord.loading')}</p>}>
+          <FileReader
+            key={readerFile.storage_path}
+            file={readerFile}
+            mode={readerMode}
+            onMode={setReaderMode}
+            onBack={() => onReader(null)}
           />
-        </div>
-        <div role="tabpanel" id="hg-tabpanel-chat" aria-labelledby="hg-tab-chat" hidden={tab !== 'chat'}>
-          <ChatTab
-            itemId={item.id}
-            comments={data.comments}
-            participants={data.participants}
-            viewerId={viewerId}
-            fresh={fresh}
-            active={tab === 'chat'}
-            sentAt={sentAt}
-            bodyRef={bodyRef}
-          />
-        </div>
-        <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
-          <FilesTab files={files} plans={plans} participants={data.participants} fresh={fresh} />
-        </div>
-        <div role="tabpanel" id="hg-tabpanel-questions" aria-labelledby="hg-tab-questions" hidden={tab !== 'questions'}>
-          <QuestionsTab questions={questions} participants={data.participants} fresh={fresh} />
-        </div>
-        <div role="tabpanel" id="hg-tabpanel-history" aria-labelledby="hg-tab-history" hidden={tab !== 'history'}>
-          <HistoryTab
-            itemId={item.id}
-            events={data.events}
-            comments={data.comments}
-            participants={data.participants}
-            fresh={fresh}
-          />
-        </div>
-      </div>
-      <CommentBox
-        onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })}
-        onSent={() => {
-          choose('chat')
-          setSentAt(Date.now())
-        }}
-      />
-    </div>
+        </Suspense>
+      )}
+    </>
   )
 }

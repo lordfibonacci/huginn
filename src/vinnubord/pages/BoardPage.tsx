@@ -323,7 +323,14 @@ export function BoardPage() {
         label={openModuleRow ? t('vinnubord.panel.moduleLabel') : t('vinnubord.panel.label')}
       >
         {selectedItem ? (
-          <ItemPanel key={`item:${selectedItem.id}`} data={data} item={selectedItem} viewerId={user.id} />
+          <ItemPanel
+            key={`item:${selectedItem.id}`}
+            data={data}
+            item={selectedItem}
+            viewerId={user.id}
+            readerFile={null}
+            onReader={() => {}}
+          />
         ) : openModuleRow ? (
           <ModulePanel
             key={`module:${openModuleRow.id}`}

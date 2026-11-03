@@ -318,7 +318,6 @@
   --hg-file-pad: 4px 14px 10px;
   --hg-file-note-gap: 2px;
   --hg-file-dl-icon: 16px;
-  --hg-reader-name-margin: 12px 0;
   --hg-q-mark: 3px;
   --hg-answer-gap: 8px;
   --hg-history-gap: 12px;
@@ -369,6 +368,22 @@
   --hg-md-quote-bar: 3px;
   --hg-md-cell-pad: 6px 10px;
   --hg-md-hr-gap: 14px;
+
+  /* Reader (a wide panel while an md or txt file is open) */
+  --hg-panel-w-reader: 920px;
+  --hg-reader-toc-w: 180px;
+  --hg-reader-toc-indent: 12px;
+  --hg-reader-measure: 68ch;
+  --hg-reader-bar-gap: 10px;
+  --hg-reader-bar-pad: 12px 16px;
+  --hg-reader-toc-pad: 16px 12px;
+  --hg-reader-toc-size: 12.5px;
+  --hg-reader-toc-line: 1.9;
+  --hg-reader-body-pad: 18px 24px 24px;
+  --hg-reader-mode-pad: 0 12px;
+  --hg-reader-toc-head-gap: 6px;
+  --hg-reader-toc-head-track: 0.06em;
+  --hg-reader-toc-pad-phone: 0 0 12px;
 
   /* ---------- Top bar and filter menus ---------- */
   --hg-top-h: 64px;
@@ -1067,9 +1082,6 @@
   display: flex; align-items: center; min-height: var(--hg-touch); color: var(--hg-link); font-weight: 700;
   text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere;
 }
-.hg-reader-name {
-  margin: var(--hg-reader-name-margin); font-size: var(--hg-pn-lead-size); font-weight: 800; color: var(--hg-ink); overflow-wrap: anywhere;
-}
 .hg-reader-text {
   margin: 0; font-family: var(--hg-code-font); font-size: var(--hg-code-size); white-space: pre-wrap; overflow-wrap: anywhere;
   color: var(--hg-ink);
@@ -1170,6 +1182,50 @@
 .hg-markdown th, .hg-markdown td { padding: var(--hg-md-cell-pad); border: 1px solid var(--hg-line); text-align: left; }
 .hg-markdown hr { border: none; border-top: 1px solid var(--hg-line); margin: var(--hg-md-hr-gap) 0; }
 .hg-markdown img { max-width: 100%; }
+
+/* ---------- Reader: replaces the panel content while an md or txt file is open ---------- */
+.hg-reader { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.hg-reader-bar {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-reader-bar-gap); padding: var(--hg-reader-bar-pad);
+  border-bottom: 1px solid var(--hg-line);
+}
+.hg-reader-name {
+  flex: 1; min-width: 0; margin: 0; font-size: var(--hg-pn-lead-size); font-weight: 800; color: var(--hg-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hg-reader-tools { display: flex; align-items: center; gap: var(--hg-reader-bar-gap); flex: none; }
+.hg-reader-mode { display: inline-flex; border: 1px solid var(--hg-line); border-radius: var(--hg-radius-chip); overflow: hidden; }
+.hg-reader-mode button {
+  min-height: var(--hg-touch); padding: var(--hg-reader-mode-pad); border: none; background: none; color: var(--hg-ink-3); font: inherit;
+  font-weight: 700; cursor: pointer;
+}
+.hg-reader-mode button[aria-pressed="true"] { color: var(--hg-ink); background: var(--hg-chip-bg); }
+.hg-reader-mode button:focus-visible { outline: none; color: var(--hg-ink); }
+.hg-reader-main { flex: 1; min-height: 0; display: flex; }
+.hg-reader-toc {
+  flex: none; width: var(--hg-reader-toc-w); overflow: auto; padding: var(--hg-reader-toc-pad); border-right: 1px solid var(--hg-line);
+  font-size: var(--hg-reader-toc-size); line-height: var(--hg-reader-toc-line); color: var(--hg-ink-3);
+}
+.hg-reader-toc b {
+  display: block; color: var(--hg-ink-2); font-size: var(--hg-reader-toc-size); letter-spacing: var(--hg-reader-toc-head-track);
+  text-transform: uppercase; margin-bottom: var(--hg-reader-toc-head-gap);
+}
+.hg-reader-toc button {
+  display: block; width: 100%; padding: 0; padding-left: calc(var(--hg-reader-toc-indent) * var(--hg-toc-depth, 0)); border: none; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere;
+}
+.hg-reader-toc button:hover, .hg-reader-toc button:focus-visible { color: var(--hg-ink-2); outline: none; }
+.hg-reader-toc button.hg-on { color: var(--hg-ink); font-weight: 800; }
+.hg-reader-body { flex: 1; min-width: 0; overflow: auto; overscroll-behavior: contain; padding: var(--hg-reader-body-pad); color: var(--hg-ink-2); }
+.hg-reader-body > .hg-markdown, .hg-reader-body > .hg-reader-text { max-width: var(--hg-reader-measure); }
+.hg-reader-toc-dd { display: none; }
+@media (max-width: 767px) {
+  .hg-reader-toc { display: none; }
+  .hg-reader-toc-dd { display: block; flex: none; border-bottom: 1px solid var(--hg-line); padding: 0 var(--hg-panel-gap); }
+  .hg-reader-toc-dd summary { min-height: var(--hg-touch); display: flex; align-items: center; cursor: pointer; color: var(--hg-ink-2); font-weight: 700; }
+  .hg-reader-toc-dd .hg-reader-toc { display: block; width: auto; border-right: none; padding: var(--hg-reader-toc-pad-phone); }
+  .hg-reader-main { flex-direction: column; }
+}
 
 /* ---------- List drawer: the item list beside the board ----------
    Lies over the board inside .hg-board-wrap, outside .hg-board, so the
