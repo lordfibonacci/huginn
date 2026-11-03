@@ -98,6 +98,7 @@ describe('showStamp', () => {
   const now = Date.parse('2026-11-03T12:00:00Z')
   it('shows within 7 days and hides after', () => {
     expect(showStamp('2026-10-27T13:00:00Z', now)).toBe(true)   // 6 days 23 h
+    expect(showStamp('2026-10-27T12:00:00Z', now)).toBe(true)   // exactly 7 days
     expect(showStamp('2026-10-27T11:00:00Z', now)).toBe(false)  // 7 days 1 h
     expect(showStamp(null, now)).toBe(false)
     expect(showStamp('not a date', now)).toBe(false)

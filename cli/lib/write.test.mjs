@@ -344,6 +344,19 @@ describe('estimateCardHeight', () => {
 })
 
 describe('placeItem', () => {
+  it('reserves room for the stamp and module rows of the new card', () => {
+    const TITLE = 'Mjög langur titill '.repeat(4)
+    const old = '2026-10-01T00:00:00Z'
+    const plain = estimateCardHeight({ id: 'x', title: TITLE, tags: [], updated_at: old })
+    const b0 = board()
+    const m2 = boardRects(b0).modules.get('m2')
+    const spot = { x: m2.x - S.gap - S.cardW, y: m2.y }
+    // An open card just under the short estimate: only the taller card hits it.
+    const blocker = card('blk', spot.x, spot.y + plain, { title: TITLE, updated_at: old })
+    const b = board({ items: [blocker] })
+    expect(placeItem(b, 'm2', { title: TITLE, tags: [] })).not.toEqual(spot)
+  })
+
   it('puts a card for a module left of the module, top aligned, on an empty board', () => {
     const b = board()
     const m2 = boardRects(b).modules.get('m2')

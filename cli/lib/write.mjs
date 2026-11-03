@@ -375,8 +375,8 @@ export function estimateModuleHeight(module) {
 }
 
 // Estimated height of an item card: status row, title, module line, mover row
-// (recent changes only), chips and plan bars as ItemCard draws them. Never less than the size the web assumes
-// for a card it has not drawn yet. A new card (no id) may carry fileCount.
+// (recent changes only), chips and plan bars as ItemCard draws them. Never
+// less than the size the web assumes for a card it has not drawn yet. A new card (no id) may carry fileCount.
 export function estimateCardHeight(item, board = {}, now = Date.now()) {
   const inner = S.cardW - S.cardPadX - BORDER
   const mine = (rows) => (item.id ? (rows ?? []).filter((r) => r.item_id === item.id) : [])
@@ -439,7 +439,10 @@ export function placeItem(board, moduleId, card = { title: '', tags: [] }) {
     .filter(isOnBoard)
     .map((i) => ({ x: i.pos_x, y: i.pos_y, w: S.cardW, h: estimateCardHeight(i, board) }))
   const obstacles = [...packs, ...cards]
-  const size = { w: S.cardW, h: estimateCardHeight(card, board) }
+  // A new card is just changed and sits in its module, so it gets the stamp
+  // row and the module line, as on the web.
+  const fresh = { ...card, module_id: card.module_id ?? moduleId ?? null, updated_at: card.updated_at ?? new Date().toISOString() }
+  const size = { w: S.cardW, h: estimateCardHeight(fresh, board) }
   const anchor = (moduleId && modules.get(moduleId)) || null
 
   let origin = { x: 0, y: 0 }
