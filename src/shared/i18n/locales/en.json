@@ -202,12 +202,19 @@
       "planOf": "Plan {{current}} of {{total}}",
       "movedBy": "Last moved by {{name}}"
     },
+    "chat": {
+      "you": "You",
+      "new": "new",
+      "empty": "No messages yet",
+      "unreadTab": "Chat, unread messages"
+    },
     "panel": {
       "label": "Item panel",
       "moduleLabel": "Module panel",
       "sheetHandle": "Drag up or down, drag down to close",
       "tabs": {
         "status": "Status",
+        "chat": "Chat",
         "files": "Files",
         "filesCount": "Files ({{count}})",
         "questions": "Questions",
@@ -273,9 +280,10 @@
         "empty": "Nothing has happened yet."
       },
       "comment": {
-        "placeholder": "Write a comment",
+        "placeholder": "Write a message",
         "send": "Send",
-        "hint": "Ctrl and Enter sends"
+        "hintFine": "Enter sends, Shift and Enter for a new line",
+        "hintCoarse": "Send with the button"
       },
       "modulePanel": {
         "kind": "Module",
@@ -311,7 +319,7 @@
       "actionUpdated": "changed an action: {{fields}}",
       "actionCancelled": "cancelled an action",
       "rulingAdded": "added a ruling",
-      "commentAdded": "commented",
+      "commentAdded": "wrote in the chat",
       "analysisDone": "analysed the item",
       "analysisFailed": "analysis failed: {{error}}",
       "analysisFailedBare": "analysis failed",

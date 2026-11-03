@@ -127,6 +127,12 @@
       "movedBy": "Síðast hreyft af {{name}}",
       "planOf": "Plan {{current}} af {{total}}"
     },
+    "chat": {
+      "empty": "Engin skilaboð enn",
+      "new": "nýtt",
+      "unreadTab": "Spjall, ólesin skilaboð",
+      "you": "Þú"
+    },
     "filters": {
       "heading": "Síur"
     },
@@ -143,7 +149,7 @@
       "analysisDone": "greindi verkið",
       "analysisFailed": "greining mistókst: {{error}}",
       "analysisFailedBare": "greining mistókst",
-      "commentAdded": "skrifaði athugasemd",
+      "commentAdded": "skrifaði í spjallið",
       "fields": {
         "body": "lýsinguna",
         "module_id": "módulinn",
@@ -227,8 +233,9 @@
       "changeStatus": "Breyta stöðu",
       "choose": "Velja",
       "comment": {
-        "hint": "Ctrl og Enter sendir",
-        "placeholder": "Skrifa athugasemd",
+        "hintCoarse": "Senda með hnappnum",
+        "hintFine": "Enter sendir, Shift og Enter fyrir nýja línu",
+        "placeholder": "Skrifa skilaboð",
         "send": "Senda"
       },
       "copied": "Afritað",
@@ -298,6 +305,7 @@
       "sub": "{{module}}. Síðast hreyft: {{name}}, {{when}}.",
       "subNoMover": "{{module}}.",
       "tabs": {
+        "chat": "Spjall",
         "files": "Skjöl",
         "filesCount": "Skjöl ({{count}})",
         "history": "Saga",

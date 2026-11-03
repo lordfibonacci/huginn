@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { addComment, markRead } from '../lib/api'
+import { latestForeignCommentAt } from '../lib/chat'
 import { fileCountsByItem } from '../lib/panel'
 import { isActionFresh, isFresh, latestForeignAt, readAtOf } from '../lib/reads'
 import { itemStatusLabel, itemTone } from '../lib/status'
 import type { BoardData, Item } from '../lib/types'
+import { ChatTab } from './panel/ChatTab'
 import { CommentBox } from './panel/CommentBox'
 import { FilesTab } from './panel/FilesTab'
 import { HistoryTab } from './panel/HistoryTab'
@@ -18,8 +20,8 @@ type Props = {
   viewerId: string
 }
 
-type Tab = 'status' | 'files' | 'questions' | 'history'
-const TABS: Tab[] = ['status', 'files', 'questions', 'history']
+type Tab = 'status' | 'chat' | 'files' | 'questions' | 'history'
+const TABS: Tab[] = ['status', 'chat', 'files', 'questions', 'history']
 
 // The panel of one item. Everything shown is derived from data on each
 // render; the tab, drafts and scroll position are local state, so the parent
@@ -47,8 +49,26 @@ export function ItemPanel({ data, item, viewerId }: Props) {
     markRead(itemId).catch((e: unknown) => console.error(e))
   }, [itemId, foreignAt, viewerId])
 
+  // The chat tab dot: lit while a message on the item is fresh and the chat
+  // has not been opened since the panel opened. A message by someone else
+  // that arrives while another tab is open lights it again; one that arrives
+  // while the chat is open does not.
+  const [chatSeen, setChatSeen] = useState(false)
+  const comments = data.comments.filter((c) => c.item_id === itemId)
+  const foreignCommentAt = latestForeignCommentAt(data.comments, itemId, viewerId)
+  useEffect(() => {
+    if (tab !== 'chat' && fresh(foreignCommentAt, null)) setChatSeen(false)
+    // Only a new foreign message moves it, not a tab change.
+  }, [foreignCommentAt])
+  const chatDot = !chatSeen && comments.some((c) => fresh(c.created_at, c.user_id))
+
   const choose = (next: Tab) => {
     setTab(next)
+    if (next === 'chat') {
+      // ChatTab sets the scroll itself once it is visible.
+      setChatSeen(true)
+      return
+    }
     if (bodyRef.current) bodyRef.current.scrollTop = 0
   }
 
@@ -104,9 +124,11 @@ export function ItemPanel({ data, item, viewerId }: Props) {
             aria-selected={tab === k}
             aria-controls={`hg-tabpanel-${k}`}
             className={`hg-pn-tab${tab === k ? ' hg-pn-tab-on' : ''}`}
+            aria-label={k === 'chat' && chatDot ? t('vinnubord.chat.unreadTab') : undefined}
             onClick={() => choose(k)}
           >
             {tabLabel(k)}
+            {k === 'chat' && chatDot && <i className="hg-pn-tab-dot" aria-hidden="true" />}
           </button>
         ))}
       </div>
@@ -122,6 +144,17 @@ export function ItemPanel({ data, item, viewerId }: Props) {
             label={label}
             fresh={fresh}
             freshActions={freshActions}
+          />
+        </div>
+        <div role="tabpanel" id="hg-tabpanel-chat" aria-labelledby="hg-tab-chat" hidden={tab !== 'chat'}>
+          <ChatTab
+            itemId={item.id}
+            comments={data.comments}
+            participants={data.participants}
+            viewerId={viewerId}
+            fresh={fresh}
+            active={tab === 'chat'}
+            bodyRef={bodyRef}
           />
         </div>
         <div role="tabpanel" id="hg-tabpanel-files" aria-labelledby="hg-tab-files" hidden={tab !== 'files'}>
@@ -140,7 +173,10 @@ export function ItemPanel({ data, item, viewerId }: Props) {
           />
         </div>
       </div>
-      <CommentBox onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })} />
+      <CommentBox
+        onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })}
+        onSent={() => choose('chat')}
+      />
     </div>
   )
 }
