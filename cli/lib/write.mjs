@@ -191,6 +191,15 @@ export function storagePath(projectId, itemId, uuid, name) {
   return `${projectId}/${itemId}/${uuid}_${storageSafeName(name)}`
 }
 
+// The key of "same path is the same file" (0014): variants of one repo path
+// (backslashes, a leading ./, doubled slashes, spaces around it) are one key.
+export function normalizeRepoPath(input) {
+  let path = String(input).trim().replace(/\\/g, '/').replace(/\/{2,}/g, '/')
+  while (path.startsWith('./')) path = path.slice(2)
+  if (path === '') throw new Error('Slóðin er tóm.')
+  return path
+}
+
 // The browser fills File.type for the web; the CLI guesses from the extension.
 const MIME = {
   md: 'text/markdown',

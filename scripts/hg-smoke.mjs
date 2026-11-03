@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
+import { putFile } from '../cli/lib/ops.mjs'
 
-const TOTAL = 10
+const TOTAL = 11
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -17,6 +18,7 @@ let scenario = 'setup'
 let itemId = null
 let viewId = null
 let extraItems = []
+let smokeObjects = []
 let projectId = null
 let failure = null
 let sb = null
@@ -456,6 +458,51 @@ try {
     const fRow = must(await sb.from('hg_items').select('status, closed_at').eq('id', fItem.id).single(), 'read item f')
     expect(fRow.status === 'done' && fRow.closed_at !== null, `item f is ${fRow.status}, expected done`)
     passed++
+    scenario = '11 file replace'
+    const put = (bytes, repoPath, id = itemId) =>
+      putFile(sb, { projectId, itemId: id, userId: me, name: 'plan.md', bytes: Buffer.from(bytes), mime: 'text/markdown', repoPath })
+    // a: first add, path normalised by the caller (the CLI), stored as given
+    const a11 = await put('v1', 'docs/plan.md')
+    smokeObjects.push(a11.file.storage_path)
+    expect(a11.outcome === 'added' && a11.file.updated_at === null && a11.file.updated_by === null, `first add ${JSON.stringify(a11)}`)
+    // b: other bytes replace in place: same id, new object, stamp, old object gone
+    const b11 = await put('v2', 'docs/plan.md')
+    smokeObjects.push(b11.file.storage_path)
+    expect(b11.outcome === 'replaced' && b11.file.id === a11.file.id && b11.file.storage_path !== a11.file.storage_path, `replace ${JSON.stringify(b11)}`)
+    expect(b11.file.updated_by === me && b11.file.updated_at !== null, 'replace stamp missing')
+    const gone = await sb.storage.from('hg-files').download(a11.file.storage_path)
+    expect(gone.error !== null, 'old object still in storage')
+    // c: same bytes again write nothing
+    const c11 = await put('v2', 'docs/plan.md')
+    expect(c11.outcome === 'unchanged' && c11.file.storage_path === b11.file.storage_path, `unchanged ${JSON.stringify(c11)}`)
+    // d: same size, other bytes: the compare reads bytes, not size
+    const d11 = await put('v3', 'docs/plan.md')
+    smokeObjects.push(d11.file.storage_path)
+    expect(d11.outcome === 'replaced' && d11.file.storage_path !== b11.file.storage_path, 'same size other bytes was not replaced')
+    // e: old object already gone by hand: the row is still updated
+    must(await sb.storage.from('hg-files').remove([d11.file.storage_path]), 'remove by hand')
+    const e11 = await put('v4', 'docs/plan.md')
+    smokeObjects.push(e11.file.storage_path)
+    expect(e11.outcome === 'replaced' && e11.file.id === a11.file.id, 'replace after a missing old object failed')
+    // f: events: one file.added and three file.updated, all with this file_id
+    const fe = (await readEvents()).filter((e) => e.data?.file_id === a11.file.id)
+    expect(fe.filter((e) => e.kind === 'file.added').length === 1 && fe.filter((e) => e.kind === 'file.updated').length === 3, `file events ${JSON.stringify(countKinds(fe))}`)
+    expect(fe.every((e) => e.data.name === 'plan.md'), 'file event without name')
+    // g: a second row at the same path is refused by the index
+    const dup = await sb.from('hg_files').insert({ project_id: projectId, item_id: itemId, name: 'plan.md', storage_path: `${projectId}/${itemId}/dup_plan.md`, size: 2, repo_path: 'docs/plan.md', uploaded_by: me })
+    expect(dup.error?.code === '23505', `duplicate insert gave ${JSON.stringify(dup.error)}`)
+    // h: the same path on another item is its own file, and files without a path still pile up
+    const hItem = must(await sb.from('hg_items').insert({ project_id: projectId, title: 'smoke 11 h', status: 'parked', created_by: me }).select('id').single(), 'insert item h')
+    extraItems.push(hItem.id)
+    const h11 = await put('v1', 'docs/plan.md', hItem.id)
+    smokeObjects.push(h11.file.storage_path)
+    expect(h11.outcome === 'added' && h11.file.id !== a11.file.id, 'same path on another item was treated as the same file')
+    const n1 = await put('x', null)
+    smokeObjects.push(n1.file.storage_path)
+    const n2 = await put('x', null)
+    smokeObjects.push(n2.file.storage_path)
+    expect(n1.outcome === 'added' && n2.outcome === 'added' && n1.file.id !== n2.file.id, 'files without a path were merged')
+    passed++
   } finally {
     // runs even on failure so nothing is left behind
     if (viewId) {
@@ -472,6 +519,10 @@ try {
       const d = await sb.from('hg_items').delete().eq('id', id).select('id')
       if (d.error) console.error(`cleanup failed, leaked hg_items id ${id}: ${d.error.message}`)
       else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_items id ${id}`)
+    }
+    if (smokeObjects.length) {
+      const r = await sb.storage.from('hg-files').remove(smokeObjects)
+      if (r.error) console.error(`cleanup failed, leaked hg-files objects ${smokeObjects.join(', ')}: ${r.error.message}`)
     }
   }
 

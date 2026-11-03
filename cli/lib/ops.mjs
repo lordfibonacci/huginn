@@ -246,9 +246,64 @@ export async function uploadFile(client, { projectId, itemId, userId, name, byte
     .single()
   if (error || !data) {
     await client.storage.from(FILES_BUCKET).remove([path])
+    if (error?.code === '23505') fail('Skjalið er þegar til, keyrðu skipunina aftur')
     fail(`Gat ekki skráð ${name}`, error)
   }
   return data
+}
+
+// file add with --repo-path (0014): the same repo path on the same item is the
+// same file. No path, or no row at that path: uploadFile. Same bytes as the
+// stored object: nothing is written. Otherwise the new object goes up under a
+// new key, the row is updated (the triggers stamp updated_at and log
+// file.updated) and the old object is removed; a failed update removes the
+// new object again, a failed remove of the old one only warns.
+export async function putFile(client, input) {
+  const { projectId, itemId, name, bytes, mime, repoPath } = input
+  if (!repoPath) return { file: await uploadFile(client, input), outcome: 'added' }
+
+  const { data: row, error: findError } = await client
+    .from('hg_files')
+    .select('*')
+    .eq('item_id', itemId)
+    .eq('repo_path', repoPath)
+    .maybeSingle()
+  if (findError) fail(`Gat ekki flett upp ${repoPath}`, findError)
+  if (!row) return { file: await uploadFile(client, input), outcome: 'added' }
+
+  if (Number(row.size) === bytes.length) {
+    let old = null
+    try {
+      old = await downloadFile(client, row.storage_path)
+    } catch {
+      // A missing or unreadable old object counts as different bytes.
+    }
+    if (old && Buffer.compare(old, bytes) === 0) return { file: row, outcome: 'unchanged' }
+  }
+
+  const check = validateUpload({ name, size: bytes.length })
+  if (!check.ok) throw new Error(`${name}: ${check.reason}`)
+
+  const path = storagePath(projectId, itemId, randomUUID(), name)
+  const { error: uploadError } = await client.storage
+    .from(FILES_BUCKET)
+    .upload(path, bytes, { contentType: mime ?? 'application/octet-stream', upsert: false })
+  if (uploadError) fail(`Gat ekki hlaðið ${name} upp`, uploadError)
+
+  const { data, error } = await client
+    .from('hg_files')
+    .update({ name, storage_path: path, size: bytes.length, mime: mime ?? null })
+    .eq('id', row.id)
+    .select('*')
+    .single()
+  if (error || !data) {
+    await client.storage.from(FILES_BUCKET).remove([path])
+    fail(`Gat ekki uppfært ${name}`, error)
+  }
+
+  const { error: removeError } = await client.storage.from(FILES_BUCKET).remove([row.storage_path])
+  if (removeError) console.error(`Viðvörun: gamla eintakið ${row.storage_path} var ekki fjarlægt: ${removeError.message}`)
+  return { file: data, outcome: 'replaced' }
 }
 
 // Bytes of a stored file through a short lived signed URL.

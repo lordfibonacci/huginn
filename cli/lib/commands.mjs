@@ -19,6 +19,7 @@ import {
   markActionDone,
   openWork,
   pushBundle,
+  putFile,
   setPlanStatus,
   updateAction,
   updateItem,
@@ -30,6 +31,7 @@ import {
   PLAN_STATUSES,
   guardClose,
   mimeFor,
+  normalizeRepoPath,
   parseCommand,
   parseTags,
   placeItem,
@@ -387,9 +389,19 @@ const WRITE = {
         const local = readLocal(path)
         const { client, user, project } = await context(flags)
         const item = await findById(client, 'item', project.id, itemId)
-        const repoPath = flags['repo-path'] !== undefined ? textOrNull(flags['repo-path']) : null
-        const f = await uploadFile(client, { projectId: project.id, itemId: item.id, userId: user.id, repoPath, ...local })
-        return { json: { ok: true, id: f.id }, text: `Skrá ${oneLine(f.name)} hlaðið upp #${shortId(f.id)} á verk #${shortId(item.id)}.` }
+        const repoPath = flags['repo-path'] !== undefined ? normalizeRepoPath(flags['repo-path']) : null
+        const { file: f, outcome } = await putFile(client, { projectId: project.id, itemId: item.id, userId: user.id, repoPath, ...local })
+        const at = `#${shortId(f.id)} á verk #${shortId(item.id)}`
+        const text =
+          outcome === 'replaced'
+            ? `Skjal ${oneLine(f.name)} uppfært ${at}.`
+            : outcome === 'unchanged'
+              ? `Skjal ${oneLine(f.name)} óbreytt ${at}, ekkert skrifað.`
+              : `Skrá ${oneLine(f.name)} hlaðið upp ${at}.`
+        return {
+          json: { ok: true, id: f.id, outcome, replaced: outcome === 'replaced', unchanged: outcome === 'unchanged' },
+          text,
+        }
       },
     },
 

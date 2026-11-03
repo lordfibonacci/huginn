@@ -6,6 +6,7 @@ import {
   guardClose,
   idRange,
   mimeFor,
+  normalizeRepoPath,
   parseCommand,
   parseTags,
   pickOne,
@@ -235,6 +236,19 @@ describe('upload rules', () => {
     expect(mimeFor('a.MD')).toBe('text/markdown')
     expect(mimeFor('a.png')).toBe('image/png')
     expect(mimeFor('a.weird')).toBeNull()
+  })
+})
+
+describe('normalizeRepoPath', () => {
+  it('trims, turns backslashes into slashes, strips a leading ./ and collapses //', () => {
+    expect(normalizeRepoPath(' docs\\plans\\a.md ')).toBe('docs/plans/a.md')
+    expect(normalizeRepoPath('./docs/a.md')).toBe('docs/a.md')
+    expect(normalizeRepoPath('docs//a.md')).toBe('docs/a.md')
+    expect(normalizeRepoPath('docs/a.md')).toBe('docs/a.md')
+  })
+  it('refuses a path that is empty after normalising', () => {
+    expect(() => normalizeRepoPath('  ')).toThrow('Slóðin er tóm.')
+    expect(() => normalizeRepoPath('./')).toThrow('Slóðin er tóm.')
   })
 })
 
