@@ -39,6 +39,8 @@ export function ItemPanel({ data, item, viewerId }: Props) {
   )
   const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('status')
+  // Stamp of the last send, so the chat goes to the bottom from any tab.
+  const [sentAt, setSentAt] = useState(0)
   const bodyRef = useRef<HTMLDivElement | null>(null)
 
   // Read on open, and again whenever someone else adds an event to the item
@@ -154,6 +156,7 @@ export function ItemPanel({ data, item, viewerId }: Props) {
             viewerId={viewerId}
             fresh={fresh}
             active={tab === 'chat'}
+            sentAt={sentAt}
             bodyRef={bodyRef}
           />
         </div>
@@ -175,7 +178,10 @@ export function ItemPanel({ data, item, viewerId }: Props) {
       </div>
       <CommentBox
         onSend={(body) => addComment({ projectId: item.project_id, itemId: item.id, body })}
-        onSent={() => choose('chat')}
+        onSent={() => {
+          choose('chat')
+          setSentAt(Date.now())
+        }}
       />
     </div>
   )

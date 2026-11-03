@@ -92,7 +92,7 @@ export function freshComment(
   return { short, line: firstLine(best.body) }
 }
 
-// What the card's "Síðan síðast" line says: a new item, else a fresh comment,
+// What the card's fresh line at its foot says: a new item, else a fresh comment,
 // else the first unread kinds and how many more.
 export type FreshLine =
   | { kind: 'created' }

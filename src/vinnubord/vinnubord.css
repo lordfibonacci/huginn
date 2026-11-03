@@ -349,6 +349,10 @@
   --hg-chat-day-size: 11px;
   --hg-chat-day-gap: 6px 0 2px;
   --hg-pn-tab-dot: 7px;
+  --hg-msg-line-gap: 3px;
+  --hg-msg-who-pad: 0 6px;
+  --hg-pn-tab-dot-gap: 5px;
+  --hg-pn-tab-dot-glow: 8px;
 
   /* Markdown reader */
   --hg-md-gap: 10px;
@@ -1104,7 +1108,7 @@
 .hg-chat-new { display: flex; align-items: center; gap: var(--hg-pn-list-gap); font-size: var(--hg-chat-day-size); font-weight: 800; color: var(--hg-gold); }
 .hg-chat-new::before, .hg-chat-new::after { content: ''; flex: 1; height: 1px; background: color-mix(in oklab, var(--hg-gold) 40%, transparent); }
 .hg-chat-empty { text-align: center; color: var(--hg-ink-3); }
-.hg-msg { max-width: var(--hg-msg-max-w); display: flex; flex-direction: column; gap: 3px; align-self: flex-start; }
+.hg-msg { max-width: var(--hg-msg-max-w); display: flex; flex-direction: column; gap: var(--hg-msg-line-gap); align-self: flex-start; }
 .hg-msg-me { align-self: flex-end; align-items: flex-end; }
 .hg-msg-body {
   padding: var(--hg-msg-pad); border-radius: var(--hg-msg-radius); font-size: var(--hg-msg-size); line-height: 1.4; color: var(--hg-ink);
@@ -1113,10 +1117,10 @@
 .hg-msg-me .hg-msg-body { border-bottom-left-radius: var(--hg-msg-radius); border-bottom-right-radius: var(--hg-msg-tail-radius); background: var(--hg-msg-me-bg); }
 .hg-msg-claude .hg-msg-body { background: var(--hg-msg-claude-bg); box-shadow: var(--hg-msg-claude-glow); }
 .hg-msg-body a { color: inherit; text-decoration: underline; }
-.hg-msg-who { font-size: var(--hg-msg-who-size); color: var(--hg-ink-3); padding: 0 6px; }
+.hg-msg-who { font-size: var(--hg-msg-who-size); color: var(--hg-ink-3); padding: var(--hg-msg-who-pad); }
 .hg-pn-tab-dot {
-  display: inline-block; width: var(--hg-pn-tab-dot); height: var(--hg-pn-tab-dot); border-radius: 50%; margin-left: 5px;
-  vertical-align: middle; background: var(--hg-gold); box-shadow: 0 0 8px var(--hg-gold);
+  display: inline-block; width: var(--hg-pn-tab-dot); height: var(--hg-pn-tab-dot); border-radius: 50%; margin-left: var(--hg-pn-tab-dot-gap);
+  vertical-align: middle; background: var(--hg-gold); box-shadow: 0 0 var(--hg-pn-tab-dot-glow) var(--hg-gold);
 }
 
 /* Markdown reader */
@@ -1361,7 +1365,7 @@
 /* The view menu and its editor */
 .hg-view-menu { min-width: var(--hg-menu-w); }
 .hg-menu-sep { height: 1px; margin: var(--hg-control-gap) 0; background: var(--hg-line); }
-.hg-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); font-size: var(--hg-chip-size); color: var(--hg-ink-2); }
+.hg-legend { list-style: none; margin: 0; padding: var(--hg-menu-item-pad); display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); font-size: var(--hg-chip-size); color: var(--hg-ink-2); }
 .hg-legend li { display: flex; align-items: center; gap: var(--hg-card-row-gap); }
 .hg-legend-dot { width: var(--hg-card-dot); height: var(--hg-card-dot); border-radius: 50%; background: var(--hg-c); box-shadow: 0 0 var(--hg-card-glow) var(--hg-c); flex: none; }
 .hg-view-editor { display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); padding: var(--hg-menu-item-pad); padding-bottom: var(--hg-menu-pad); }

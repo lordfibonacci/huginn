@@ -295,7 +295,7 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
     for (const c of chat) {
       const [first = '', ...rest] = multiLine(c.body).split('\n')
       lines.push(`- ${iso(c.created_at)} ${person(c.user_id, participants)}: ${first}`)
-      for (const line of rest) lines.push(`  ${line}`)
+      for (const line of rest) lines.push(line ? `  ${line}` : '')
     }
     lines.push('')
   }

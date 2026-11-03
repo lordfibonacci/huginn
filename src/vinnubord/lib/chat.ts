@@ -70,3 +70,30 @@ export function latestForeignCommentAt(comments: Comment[], itemId: string, view
   }
   return latest
 }
+
+export type BodyPart = { text: string; href?: string }
+
+// Punctuation that ends a sentence or closes a bracket after an address is
+// text, not part of the link.
+const LINK_TAIL = /[.,;:!?)\]]+$/
+
+// A message body split into plain text and http or https links. Nothing else
+// is read as markup; the component lets React escape the text.
+export function linkParts(body: string): BodyPart[] {
+  const parts: BodyPart[] = []
+  const push = (text: string, href?: string) => {
+    if (!text) return
+    const last = parts[parts.length - 1]
+    if (!href && last && !last.href) last.text += text
+    else parts.push(href ? { text, href } : { text })
+  }
+  body.split(/(https?:\/\/[^\s<>"']+)/g).forEach((part, i) => {
+    if (i % 2 === 0) return push(part)
+    const tail = LINK_TAIL.exec(part)?.[0] ?? ''
+    const link = part.slice(0, part.length - tail.length)
+    if (/^https?:\/\/./.test(link)) push(link, link)
+    else push(link)
+    push(tail)
+  })
+  return parts
+}

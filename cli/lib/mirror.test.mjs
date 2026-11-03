@@ -139,6 +139,10 @@ function fullBoard() {
       file('f2000000-0002', ITEM_ID, 'upptaka.mp4', 12 * MB, { mime: 'video/mp4' }),
       file('f3000000-0003', ITEM_ID, 'skyrsla.pdf', 5000, { repo_path: 'docs/skyrsla.pdf' }),
     ],
+    comments: [
+      { id: 'k1000000-0001', item_id: ITEM_ID, module_id: null, body: 'Drögin eru komin.\n\nSjá skrána.', user_id: 'u-a', created_at: '2026-10-09T10:00:00Z', project_id: 'pr' },
+      { id: 'k2000000-0002', item_id: ITEM_ID, module_id: null, body: 'Takk, les í dag.', user_id: 'u-h', created_at: '2026-10-09T11:00:00Z', project_id: 'pr' },
+    ],
   })
 }
 
@@ -427,7 +431,14 @@ describe('renderItemMd', () => {
     expect(md).not.toContain('annað verk')
   })
   it('has no Spjall section without comments', () => {
-    expect(renderFull(fullBoard()).md).not.toContain('## Spjall')
+    const data = fullBoard()
+    data.comments = []
+    expect(renderFull(data).md).not.toContain('## Spjall')
+  })
+  it('writes an empty line, not two spaces, for a blank line inside a message', () => {
+    const { md } = renderFull(fullBoard())
+    expect(md).toContain('- 2026-10-09T10:00:00.000Z Árni (Á): Drögin eru komin.\n\n  Sjá skrána.\n- 2026-10-09T11:00:00.000Z Heimir (H): Takk, les í dag.')
+    expect(md).not.toMatch(/^ +$/m)
   })
   it('a replaced file carries its update stamp, an untouched one is unchanged', () => {
     const data = fullBoard()
@@ -454,6 +465,7 @@ describe('renderItemMd', () => {
     const direct = renderItemMd(it, data.plans, data.actions, data.questions, data.rulings, participants, {
       module: data.modules[0],
       files: mirrorTargets(data, NOW).find((t) => t.source === 'item.md').files,
+      comments: data.comments,
     })
     expect(direct).toBe(renderFull(data).md)
   })

@@ -42,11 +42,21 @@ export function formatDueDate(dateString: string): { text: string; urgent: boole
 export function formatStamp(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
-  if (d.toDateString() === now.toDateString()) {
-    const time = new Intl.DateTimeFormat(activeLocale(), { hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
-    return `${i18n.t('dates.today')} ${time}`
-  }
+  if (d.toDateString() === now.toDateString()) return `${i18n.t('dates.today')} ${clock(d)}`
   return formatDate(d, now)
+}
+
+// "10:15", 24 hour clock in the active locale.
+function clock(d: Date): string {
+  return new Intl.DateTimeFormat(activeLocale(), { hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
+}
+
+// Clock time alone, for a chat bubble whose day is carried by the day row.
+// Empty on an invalid date.
+export function formatTime(dateString: string): string {
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return ''
+  return clock(d)
 }
 
 // "30. október" this year, "30. október 2025" in another year.

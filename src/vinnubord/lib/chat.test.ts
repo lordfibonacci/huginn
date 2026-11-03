@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { chatRows, latestForeignCommentAt } from './chat'
-import { formatDay } from '../../shared/lib/dateUtils'
+import { chatRows, latestForeignCommentAt, linkParts } from './chat'
+import { formatDay, formatTime } from '../../shared/lib/dateUtils'
 import type { Comment, Participant } from './types'
 
 // formatDay reads i18n; a stub keeps the test free of the browser language detector.
@@ -59,5 +59,48 @@ describe('formatDay', () => {
   })
   it('an invalid date is empty', () => {
     expect(formatDay('nope', now)).toBe('')
+  })
+})
+
+describe('formatTime', () => {
+  it('the clock time alone, 24 hour, on any day', () => {
+    expect(formatTime(new Date(2026, 10, 3, 11, 20).toISOString())).toBe('11:20')
+    expect(formatTime(new Date(2025, 9, 30, 16, 5).toISOString())).toBe('16:05')
+  })
+  it('an invalid date is empty', () => {
+    expect(formatTime('nope')).toBe('')
+  })
+})
+
+describe('linkParts', () => {
+  it('plain text stays one part', () => {
+    expect(linkParts('engin slóð hér')).toEqual([{ text: 'engin slóð hér' }])
+  })
+  it('an address is a link, the text around it stays text', () => {
+    expect(linkParts('sjá https://huginn.pro/p/metta núna')).toEqual([
+      { text: 'sjá ' },
+      { text: 'https://huginn.pro/p/metta', href: 'https://huginn.pro/p/metta' },
+      { text: ' núna' },
+    ])
+  })
+  it('trailing punctuation and closing brackets are text, not link', () => {
+    expect(linkParts('Sjá https://a.is/x.')).toEqual([
+      { text: 'Sjá ' },
+      { text: 'https://a.is/x', href: 'https://a.is/x' },
+      { text: '.' },
+    ])
+    expect(linkParts('(http://a.is/b?c=1), og [https://b.is]!')).toEqual([
+      { text: '(' },
+      { text: 'http://a.is/b?c=1', href: 'http://a.is/b?c=1' },
+      { text: '), og [' },
+      { text: 'https://b.is', href: 'https://b.is' },
+      { text: ']!' },
+    ])
+    for (const p of [',', ';', ':', '?', '!']) {
+      expect(linkParts(`https://a.is${p}`)).toEqual([{ text: 'https://a.is', href: 'https://a.is' }, { text: p }])
+    }
+  })
+  it('a bare scheme with nothing after it is text', () => {
+    expect(linkParts('https://.')).toEqual([{ text: 'https://.' }])
   })
 })
