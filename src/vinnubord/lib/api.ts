@@ -387,10 +387,10 @@ export async function uploadFile(input: { projectId: string; itemId: string; fil
   return data as FileRow
 }
 
-export async function fileUrl(storagePath: string, downloadAs?: string): Promise<string> {
+export async function fileUrl(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage
     .from(FILES_BUCKET)
-    .createSignedUrl(storagePath, SIGNED_URL_SECONDS, downloadAs ? { download: downloadAs } : undefined)
+    .createSignedUrl(storagePath, SIGNED_URL_SECONDS)
   if (error || !data) fail('Gat ekki opnað skrána.', error)
   return data.signedUrl
 }
@@ -402,7 +402,8 @@ export async function fileText(storagePath: string): Promise<string> {
   return data.text()
 }
 
-const BLOB_REVOKE_MS = 10_000
+// A save picker (Firefox, Safari with "always ask") can hold the download for a while.
+const BLOB_REVOKE_MS = 60_000
 
 // Blob route: a signed url with download garbles the name (filename* comes back double encoded, H%C3%B6...).
 export async function downloadFile(file: Pick<FileRow, 'storage_path' | 'name'>): Promise<void> {

@@ -13,7 +13,7 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 
 **Task 2, `huginn file add --note` og `file set`** (bfece93, lagfæring cd22e43). `file add` tekur `--note`, `huginn file set <fileid> --note ".."` lagar lýsingu á skrá sem er til. Skipti á sömu repo slóð án `--note` heldur gömlu lýsingunni. Tóm `--note` er hafnað. Lýsingarbreyting skrifar engan atburð og engan stimpil. `npm run smoke:hg` atriði 12 (`ok 12/12`) nær yfir bæta við, skipta, óbreytt og `file set`.
 
-**Task 3, lýsing og Sækja á skjalaflipanum** (c31ea95). Lýsingarlína (`.hg-file-note`) undir nafni skráar og Sækja hnappur (`.hg-file-dl`, 44 px) á hverri skrá. Sækja fer um blob leiðina: undirritaðar slóðir Supabase tvíkóða íslensk skráarnöfn (`filename*=UTF-8''H%25C3%25B6...`), svo nafnið brenglast. Blobbinn er afturkallaður 10 sekúndum eftir smell, því Safari getur misst niðurhal sem er afturkallað strax.
+**Task 3, lýsing og Sækja á skjalaflipanum** (c31ea95). Lýsingarlína (`.hg-file-note`) undir nafni skráar og Sækja hnappur (`.hg-file-dl`, 44 px) á hverri skrá. Sækja fer um blob leiðina: undirritaðar slóðir Supabase tvíkóða íslensk skráarnöfn (`filename*=UTF-8''H%25C3%25B6...`), svo nafnið brenglast. Blobbinn er afturkallaður 60 sekúndum eftir smell, því Safari getur misst niðurhal sem er afturkallað strax og vistunargluggi getur haldið niðurhalinu.
 
 **Task 4, fyrirsagnir og efnisyfirlit** (be06689). `renderMarkdown` með `headingIds` gefur h1 til h3 á efsta stigi auðkennin `hg-h-N` í röð, `outline` skilar sömu röð. Án valkostsins engin `id`. `marked` er áfram aðeins í lata bútnum.
 
@@ -41,7 +41,7 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 - `file add --note ""` er hafnað, ekki túlkað sem að þurrka lýsingu. Engin leið er að þurrka lýsingu út í þessu verki.
 - Smoke atriði 12 fékk tilvik fyrir skipti með nýrri lýsingu. Lengdarmörkin 200 eru prófuð í einingaprófum, ekki á lifandi gagnagrunni.
 - Blob slóðin er notuð fyrir allar skrár (spekk 4.2 varaleiðin), ekki aðeins þær með íslensk nöfn.
-- Blobbinn er afturkallaður 10 sekúndum eftir smell.
+- Blobbinn er afturkallaður 60 sekúndum eftir smell, því vistunargluggi (Firefox, Safari með "spyrja alltaf") getur haldið niðurhalinu.
 - Aðeins h1 til h3 á efsta stigi fá auðkenni (ekki fyrirsagnir inni í tilvitnun eða lista), svo auðkenni í HTML og efnisyfirlit stemmi alltaf.
 - Md hamur heldur `68ch` mörkunum, sem eru mjórri í pixlum í mónóletri (498 á móti 581), því `ch` er heiðarleg línulengd.
 - Bilað Sækja í lesaranum skiptir ekki textanum út, villan kemur sem lína undir stikunni.
@@ -83,12 +83,13 @@ Staða: smíði lokið, bíður lokayfirferðar allrar greinarinnar (Fable) og p
 - metta2_new commit 6dd545c7 er ekki ýtt: það fer með næsta ýti þeirrar geymslu.
 - Aðdráttarhnapparnir (Sýna allt) eru undir hliðarspjaldinu á borði, og með 920 px spjaldi eru þeir faldir á öllum breiddum meðan lesari er opinn. Útreikningurinn er réttur, en hönnunarspurning hvort hnapparnir eigi að færast vinstra megin við opið spjald.
 - Við 768 til um 951 px er tilkynning falin undir spjaldinu með lesara opinn (spekk 4.3 sættir sig við mjóa ræmu). Við 1024 px er hún 56 px breið.
+- Lyklaborðsfókus fellur á síðuna þegar lesarinn opnast og þegar Til baka lokar honum, svo Tab byrjar efst. Laga síðar: fókus á Til baka við opnun og á skráarröðina við til baka.
+- `file add --json` skilar `noteUpdated: false` á nýrri skrá sem fékk lýsingu (reiturinn þýðir að til lýsing breyttist).
 - Smávægilegt sem var frestað í yfirferð (allt í `.superpowers/sdd/2026-11-03-skjol/progress.md`):
   - `note.length` telur UTF-16 einingar, svo emoji telst sem 2 (sama og `maxLength` í reitnum).
   - Engin lengdarmörk á `note` í gagnagrunni, aðeins í vef og CLI (ein setning í migration, að ásettu ráði).
   - `file add --json` skilar aukareitnum `noteUpdated` (viðbót).
   - Óbreytt skrá með nýrri lýsingu hefur enga `storage_path` vörn (skaðlaust, lýsingin tilheyrir röðinni).
-  - `fileUrl` hefur ekki lengur kallanda fyrir `downloadAs` (blob leiðin vann), fella burt eða halda.
   - Haus athugasemd í `FilesTab` var breytt án þess að endurbrjóta línur.
   - `downloadFile` afturkallar ekki object slóðina ef `a.click()` kastar villu.
   - `outline` brýtur ekki inn í tákn, svo `***x***` sýnir `**x**` og inline html sést sem texti í efnisyfirliti (spekk 4.3 segir engin `*` eða bakstrik).

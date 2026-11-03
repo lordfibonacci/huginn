@@ -162,7 +162,11 @@ export default function FileReader({ file, mode, onMode, onBack }: Props) {
             disabled={text === null}
             onClick={() => void copy(normalizeForCopy(text ?? ''))}
           >
-            {state === 'ok' ? t('vinnubord.panel.reader.copied') : t('vinnubord.panel.reader.copyAll')}
+            {state === 'ok'
+              ? t('vinnubord.panel.reader.copied')
+              : state === 'fail'
+                ? t('vinnubord.panel.copyFailed')
+                : t('vinnubord.panel.reader.copyAll')}
           </button>
         </div>
       </div>
