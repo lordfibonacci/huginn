@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
-import { fileText, fileUrl } from '../../lib/api'
+import { downloadFile, fileText, fileUrl } from '../../lib/api'
 import { fileStamp, sortFiles } from '../../lib/files'
 import { fileKindLabel } from '../../lib/upload'
 import type { FileRow, Participant, Plan } from '../../lib/types'
@@ -19,8 +19,8 @@ type Reader = { file: FileRow; text: string | null; error: string | null }
 
 // "Skjöl": plans with a repo path come first (path only, no open), then who
 // added what and when (a replaced file shows its last replace), the repo path
-// to copy. A tap opens the file: md and txt in the reader inside the panel,
-// anything else in a new tab through a signed url. A file someone else
+// to copy, and the file's note. A tap opens the file: md and txt in the reader inside the panel,
+// anything else in a new tab through a signed url; the arrow saves it. A file someone else
 // added since the viewer last opened the item is marked new; plan rows
 // never are.
 export function FilesTab({ files, plans, participants, fresh }: Props) {
@@ -64,6 +64,21 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
     } catch (e) {
       console.error(e)
       tab?.close()
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      opening.current.delete(file.id)
+    }
+  }
+
+  // Saves the file under its own name. A double click saves once.
+  const download = async (file: FileRow) => {
+    setError(null)
+    if (opening.current.has(file.id)) return
+    opening.current.add(file.id)
+    try {
+      await downloadFile(file)
+    } catch (e) {
+      console.error(e)
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       opening.current.delete(file.id)
@@ -125,15 +140,29 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
           const isNew = fresh(stamp.at, stamp.by)
           return (
             <li key={f.id} className={`hg-file${isNew ? ' hg-fresh' : ''}`}>
-              <button
-                type="button"
-                className="hg-file-open"
-                onClick={() => void open(f)}
-                aria-label={t('vinnubord.panel.files.open', { name: f.name })}
-              >
-                <span className="hg-pill">{fileKindLabel(f.name)}</span>
-                <span className="hg-file-name">{f.name}</span>
-              </button>
+              <div className="hg-file-head">
+                <button
+                  type="button"
+                  className="hg-file-open"
+                  onClick={() => void open(f)}
+                  aria-label={t('vinnubord.panel.files.open', { name: f.name })}
+                >
+                  <span className="hg-pill">{fileKindLabel(f.name)}</span>
+                  <span className="hg-file-name">{f.name}</span>
+                </button>
+                <button
+                  type="button"
+                  className="hg-file-dl"
+                  aria-label={t('vinnubord.panel.files.download', { name: f.name })}
+                  title={t('vinnubord.panel.files.download', { name: f.name })}
+                  onClick={() => void download(f)}
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M3 13h10" />
+                  </svg>
+                </button>
+              </div>
+              {f.note && <p className="hg-file-note">{f.note}</p>}
               <p className="hg-pn-meta">
                 <span className="hg-av" aria-hidden="true">
                   {by?.short ?? '?'}

@@ -254,6 +254,7 @@
       "files": {
         "back": "Aftur í skjöl",
         "by": "{{name}}, {{when}}",
+        "download": "Sækja {{name}}",
         "empty": "Engin skjöl ennþá.",
         "loading": "Sæki skjal",
         "open": "Opna {{name}}",

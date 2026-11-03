@@ -384,8 +384,10 @@ export async function uploadFile(input: { projectId: string; itemId: string; fil
   return data as FileRow
 }
 
-export async function fileUrl(storagePath: string): Promise<string> {
-  const { data, error } = await supabase.storage.from(FILES_BUCKET).createSignedUrl(storagePath, SIGNED_URL_SECONDS)
+export async function fileUrl(storagePath: string, downloadAs?: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(FILES_BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_SECONDS, downloadAs ? { download: downloadAs } : undefined)
   if (error || !data) fail('Gat ekki opnað skrána.', error)
   return data.signedUrl
 }
@@ -395,6 +397,24 @@ export async function fileText(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage.from(FILES_BUCKET).download(storagePath)
   if (error || !data) fail('Gat ekki lesið skrána.', error)
   return data.text()
+}
+
+const BLOB_REVOKE_MS = 10_000
+
+// Blob route: a signed url with download garbles the name (filename* comes back double encoded, H%C3%B6...).
+export async function downloadFile(file: Pick<FileRow, 'storage_path' | 'name'>): Promise<void> {
+  const { data, error } = await supabase.storage.from(FILES_BUCKET).download(file.storage_path)
+  if (error || !data) fail('Gat ekki sótt skrána.', error)
+  const href = URL.createObjectURL(data)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = file.name
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Safari can lose the download when the url is revoked in the same task as the click.
+  window.setTimeout(() => URL.revokeObjectURL(href), BLOB_REVOKE_MS)
 }
 
 // Marks a ruling as one to reverse ("snúa við"), or clears the mark.

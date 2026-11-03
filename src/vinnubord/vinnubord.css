@@ -316,6 +316,8 @@
   --hg-resume-btn-w: 150px;
   --hg-resume-note-w: 160px;
   --hg-file-pad: 4px 14px 10px;
+  --hg-file-note-gap: 2px;
+  --hg-file-dl-icon: 16px;
   --hg-reader-name-margin: 12px 0;
   --hg-q-mark: 3px;
   --hg-answer-gap: 8px;
@@ -1040,6 +1042,18 @@
 
 /* Files, questions, history */
 .hg-file { padding: var(--hg-file-pad); border-radius: var(--hg-radius-code); background: var(--hg-chip-bg); }
+.hg-file-head { display: flex; align-items: center; gap: var(--hg-pn-list-gap); }
+.hg-file-head .hg-file-open { flex: 1; min-width: 0; }
+.hg-file-dl {
+  flex: none; width: var(--hg-touch); height: var(--hg-touch); display: grid; place-items: center; padding: 0; border: none;
+  border-radius: var(--hg-radius-chip); background: none; color: var(--hg-ink-3); cursor: pointer;
+}
+.hg-file-dl:hover, .hg-file-dl:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
+.hg-file-dl svg {
+  width: var(--hg-file-dl-icon); height: var(--hg-file-dl-icon); fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.hg-file-note { margin: var(--hg-file-note-gap) 0 0; font-size: var(--hg-pn-h-size); color: var(--hg-ink-3); overflow-wrap: anywhere; }
 .hg-file-plan .hg-file-head { display: flex; align-items: center; gap: var(--hg-pn-list-gap); min-height: var(--hg-touch); }
 .hg-file-plan .hg-file-name { font-weight: 800; color: var(--hg-ink); }
 .hg-file-open {

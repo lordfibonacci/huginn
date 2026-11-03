@@ -261,6 +261,7 @@
         "by": "{{name}}, {{when}}",
         "updatedBy": "Updated: {{name}}, {{when}}",
         "back": "Back to files",
+        "download": "Download {{name}}",
         "loading": "Loading file",
         "open": "Open {{name}}",
         "openLink": "Tap to open {{name}}",
