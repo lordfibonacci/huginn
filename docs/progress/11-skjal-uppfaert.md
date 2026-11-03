@@ -5,7 +5,7 @@ Grein: `vinnubord-11` (commits b65f339 til 5f997bc ofan á main 7b75aa0, auk þe
 Plan: `docs/superpowers/plans/2026-11-03-skjal-uppfaert.md`
 Spekk: `docs/superpowers/specs/2026-11-03-skjal-uppfaert-design.md`
 
-Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis. Migration 0014 er keyrð. Sameinað í main og ýtt 2026-11-03.
+Staða: lokið. Lokayfirferð allrar greinarinnar (Fable) er hrein eftir lagfæringar, bíður prófunar Heimis. Migration 0014 er keyrð. Sameinað í main og ýtt 2026-11-03.
 
 ## Hvað var gert
 
