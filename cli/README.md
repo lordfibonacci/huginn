@@ -59,7 +59,8 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `plan add <item>` | `huginn plan add 1a2b3c4d --name "Plan A" --path docs/plan.md --status todo` |
 | `plan set <pid>` | `huginn plan set 0c1d2e3f --status building` |
 | `ruling add <plan>` | `huginn ruling add 0c1d2e3f --code R1 --body "Engin ný tafla" --cost "Lítill"` |
-| `file add <item> <path>` | `huginn file add 1a2b3c4d skyrsla.pdf --repo-path docs/skyrsla.pdf` (sama --repo-path á sama verki uppfærir skjalið í stað þess að bæta við eintaki; óbreytt skjal skrifar ekkert) |
+| `file add <item> <path>` | `huginn file add 1a2b3c4d skyrsla.pdf --repo-path docs/skyrsla.pdf --note "Skýrsla um stöðuna, fyrir Árna"` (sama --repo-path á sama verki uppfærir skjalið í stað þess að bæta við eintaki; óbreytt skjal skrifar ekkert; --note er ein setning, hvað skjalið er og fyrir hvern (mest 200 stafir), og án --note helst lýsingin sem var) |
+| `file set <fileid>` | `huginn file set 7a8b9c0d --note "Hönnunarskjal lesarans, fyrir Heimi"` |
 | `file get <fileid>` | `huginn file get 7a8b9c0d --out ./skyrsla.pdf` (`--force` skrifar yfir) |
 | `comment add <item>` | `huginn comment add 1a2b3c4d --body "Lítur vel út"` |
 | `bundle push` | `huginn bundle push --file bundle.md` (setur samhengi verkefnisins) |

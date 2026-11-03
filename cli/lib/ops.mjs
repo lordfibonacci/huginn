@@ -220,8 +220,9 @@ export async function addComment(client, { projectId, itemId, userId, body }) {
 
 // Same rules as uploadFile in src/vinnubord/lib/api.ts: validateUpload, a
 // unique key under <project>/<item>/, upsert false (there is no storage UPDATE
-// policy), and the object is removed again if the hg_files row fails.
-export async function uploadFile(client, { projectId, itemId, userId, name, bytes, mime, repoPath }) {
+// policy), and the object is removed again if the hg_files row fails. note is
+// the one sentence description (normalizeNote), undefined and null store null.
+export async function uploadFile(client, { projectId, itemId, userId, name, bytes, mime, repoPath, note }) {
   const check = validateUpload({ name, size: bytes.length })
   if (!check.ok) throw new Error(`${name}: ${check.reason}`)
 
@@ -241,6 +242,7 @@ export async function uploadFile(client, { projectId, itemId, userId, name, byte
       size: bytes.length,
       mime: mime ?? null,
       repo_path: repoPath ?? null,
+      note: note ?? null,
       uploaded_by: userId,
     })
     .select('*')
@@ -259,9 +261,12 @@ export async function uploadFile(client, { projectId, itemId, userId, name, byte
 // new key, the row is updated (the triggers stamp updated_at and log
 // file.updated) and the old object is removed; a failed update removes the
 // new object again, a failed remove of the old one only warns.
+// note: undefined leaves the row's note as it is (a replace without --note keeps
+// it), a string or null writes it. Same bytes with another note write only the
+// note, which neither stamps nor logs (0014 triggers watch storage_path only).
 export async function putFile(client, input) {
-  const { projectId, itemId, name, bytes, mime, repoPath } = input
-  if (!repoPath) return { file: await uploadFile(client, input), outcome: 'added' }
+  const { projectId, itemId, name, bytes, mime, repoPath, note } = input
+  if (!repoPath) return { file: await uploadFile(client, input), outcome: 'added', noteUpdated: false }
 
   const { data: row, error: findError } = await client
     .from('hg_files')
@@ -270,7 +275,7 @@ export async function putFile(client, input) {
     .eq('repo_path', repoPath)
     .maybeSingle()
   if (findError) fail(`Gat ekki flett upp ${repoPath}`, findError)
-  if (!row) return { file: await uploadFile(client, input), outcome: 'added' }
+  if (!row) return { file: await uploadFile(client, input), outcome: 'added', noteUpdated: false }
 
   // An old storage_path outside this item's folder is never read or removed
   // (same rule as the mirror): the row is still replaced, the object is left.
@@ -282,7 +287,10 @@ export async function putFile(client, input) {
     } catch {
       // A missing or unreadable old object counts as different bytes.
     }
-    if (old && Buffer.compare(old, bytes) === 0) return { file: row, outcome: 'unchanged' }
+    if (old && Buffer.compare(old, bytes) === 0) {
+      if (note === undefined || note === row.note) return { file: row, outcome: 'unchanged', noteUpdated: false }
+      return { file: await setFileNote(client, row.id, note), outcome: 'unchanged', noteUpdated: true }
+    }
   }
 
   const check = validateUpload({ name, size: bytes.length })
@@ -294,9 +302,12 @@ export async function putFile(client, input) {
     .upload(path, bytes, { contentType: mime ?? 'application/octet-stream', upsert: false })
   if (uploadError) fail(`Gat ekki hlaðið ${name} upp`, uploadError)
 
+  const patch = { name, storage_path: path, size: bytes.length, mime: mime ?? null }
+  // Only a given note is written, so a missing --note never clears the old one.
+  if (note !== undefined) patch.note = note
   const { data, error } = await client
     .from('hg_files')
-    .update({ name, storage_path: path, size: bytes.length, mime: mime ?? null })
+    .update(patch)
     .eq('id', row.id)
     // A concurrent replace that got there first changed storage_path, so this
     // update matches no row and fails instead of orphaning the other object.
@@ -314,7 +325,14 @@ export async function putFile(client, input) {
     const { error: removeError } = await client.storage.from(FILES_BUCKET).remove([row.storage_path])
     if (removeError) console.error(`Viðvörun: gamla eintakið ${row.storage_path} var ekki fjarlægt: ${removeError.message}`)
   }
-  return { file: data, outcome: 'replaced' }
+  return { file: data, outcome: 'replaced', noteUpdated: note !== undefined && note !== row.note }
+}
+
+// file set --note: writes only the note. No trigger stamps or logs it.
+export async function setFileNote(client, fileId, note) {
+  const { data, error } = await client.from('hg_files').update({ note }).eq('id', fileId).select('*').single()
+  if (error || !data) fail('Gat ekki uppfært lýsinguna', error)
+  return data
 }
 
 // Bytes of a stored file through a short lived signed URL.

@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
-import { putFile } from '../cli/lib/ops.mjs'
+import { putFile, setFileNote } from '../cli/lib/ops.mjs'
 
-const TOTAL = 11
+const TOTAL = 12
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -503,6 +503,28 @@ try {
     const n2 = await put('x', null)
     smokeObjects.push(n2.file.storage_path)
     expect(n1.outcome === 'added' && n2.outcome === 'added' && n1.file.id !== n2.file.id, 'files without a path were merged')
+    passed++
+    scenario = '12 file note'
+    const putN = (bytes, note) =>
+      putFile(sb, { projectId, itemId, userId: me, name: 'note.md', bytes: Buffer.from(bytes), mime: 'text/markdown', repoPath: 'docs/note.md', note })
+    // a: add with a note
+    const a12 = await putN('v1', 'Fyrsta lýsing')
+    smokeObjects.push(a12.file.storage_path)
+    expect(a12.outcome === 'added' && a12.file.note === 'Fyrsta lýsing', `add with note ${JSON.stringify(a12)}`)
+    // b: replace without --note keeps it
+    const b12 = await putN('v2', undefined)
+    smokeObjects.push(b12.file.storage_path)
+    expect(b12.outcome === 'replaced' && b12.file.note === 'Fyrsta lýsing', 'replace lost the note')
+    // c: unchanged bytes with a new note write the note and nothing else
+    const c12 = await putN('v2', 'Önnur lýsing')
+    expect(c12.outcome === 'unchanged' && c12.noteUpdated === true && c12.file.note === 'Önnur lýsing', `unchanged note ${JSON.stringify(c12)}`)
+    expect(c12.file.updated_at === b12.file.updated_at && c12.file.storage_path === b12.file.storage_path, 'a note write moved the stamp or the object')
+    // d: setFileNote writes, no event, no stamp
+    const ev12Before = (await readEvents()).filter((e) => e.data?.file_id === a12.file.id).length
+    const d12 = await setFileNote(sb, a12.file.id, 'Þriðja lýsing')
+    expect(d12.note === 'Þriðja lýsing' && d12.updated_at === b12.file.updated_at, 'setFileNote changed more than the note')
+    const ev12After = (await readEvents()).filter((e) => e.data?.file_id === a12.file.id).length
+    expect(ev12After === ev12Before, `a note write logged ${ev12After - ev12Before} events`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind

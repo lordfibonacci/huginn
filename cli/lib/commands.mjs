@@ -20,6 +20,7 @@ import {
   openWork,
   pushBundle,
   putFile,
+  setFileNote,
   setPlanStatus,
   updateAction,
   updateItem,
@@ -31,6 +32,7 @@ import {
   PLAN_STATUSES,
   guardClose,
   mimeFor,
+  normalizeNote,
   normalizeRepoPath,
   parseCommand,
   parseTags,
@@ -382,26 +384,52 @@ const WRITE = {
 
   file: {
     add: {
-      usage: 'file add <item> <path> [--repo-path docs/..]',
+      usage: 'file add <item> <path> [--repo-path docs/..] [--note ".."]',
       args: 2,
-      spec: { 'repo-path': 'value' },
+      spec: { 'repo-path': 'value', note: 'value' },
       async run(flags, [itemId, path]) {
         const local = readLocal(path)
         const repoPath = flags['repo-path'] !== undefined ? normalizeRepoPath(flags['repo-path']) : null
+        // No --note leaves a replaced file's note as it is; --note "" clears it.
+        const n = flags.note !== undefined ? normalizeNote(flags.note) : { ok: true, note: undefined }
+        if (!n.ok) throw new Error(n.reason)
         const { client, user, project } = await context(flags)
         const item = await findById(client, 'item', project.id, itemId)
-        const { file: f, outcome } = await putFile(client, { projectId: project.id, itemId: item.id, userId: user.id, repoPath, ...local })
+        const { file: f, outcome, noteUpdated } = await putFile(client, {
+          projectId: project.id,
+          itemId: item.id,
+          userId: user.id,
+          repoPath,
+          note: n.note,
+          ...local,
+        })
         const at = `#${shortId(f.id)} á verk #${shortId(item.id)}`
+        const noted = noteUpdated ? ', lýsing uppfærð' : ''
         const text =
           outcome === 'replaced'
-            ? `Skjal ${oneLine(f.name)} uppfært ${at}.`
+            ? `Skjal ${oneLine(f.name)} uppfært ${at}${noted}.`
             : outcome === 'unchanged'
-              ? `Skjal ${oneLine(f.name)} óbreytt ${at}, ekkert skrifað.`
+              ? `Skjal ${oneLine(f.name)} óbreytt ${at}, ekkert skrifað${noted}.`
               : `Skrá ${oneLine(f.name)} hlaðið upp ${at}.`
         return {
-          json: { ok: true, id: f.id, outcome, replaced: outcome === 'replaced', unchanged: outcome === 'unchanged' },
+          json: { ok: true, id: f.id, outcome, replaced: outcome === 'replaced', unchanged: outcome === 'unchanged', noteUpdated },
           text,
         }
+      },
+    },
+
+    set: {
+      usage: 'file set <fileid> --note ".."',
+      args: 1,
+      spec: { note: 'value' },
+      async run(flags, [fileId]) {
+        const n = normalizeNote(need(flags, 'note'))
+        if (!n.ok) throw new Error(n.reason)
+        if (n.note === null) throw new Error('--note vantar.')
+        const { client, project } = await context(flags)
+        const f = await findById(client, 'file', project.id, fileId)
+        await setFileNote(client, f.id, n.note)
+        return { json: { ok: true, id: f.id }, text: `Lýsing skjals #${shortId(f.id)} uppfærð.` }
       },
     },
 
