@@ -312,18 +312,34 @@ describe('boardRects', () => {
 })
 
 describe('estimateCardHeight', () => {
+  // Long enough that the card clears the newCardH floor, so extra rows show.
+  const TITLE = 'Mjög langur titill '.repeat(4)
+
   it('is at least the size the web assumes for an undrawn card', () => {
     expect(estimateCardHeight({ title: 'Stutt', tags: [] })).toBeGreaterThanOrEqual(S.newCardH)
   })
 
-  it('grows with a long title, chips and plans', () => {
-    const base = estimateCardHeight({ id: 'x', title: 'Stutt', tags: [] })
+  it('grows with a long title and plans', () => {
+    const base = estimateCardHeight({ id: 'x', title: TITLE, tags: [] })
     const long = estimateCardHeight({ id: 'x', title: 'Mjög langur titill '.repeat(6), tags: [] })
-    const chips = estimateCardHeight({ id: 'x', title: 'Stutt', tags: ['a'] })
-    const plans = estimateCardHeight({ id: 'x', title: 'Stutt', tags: [] }, { plans: [{ item_id: 'x' }] })
+    const plans = estimateCardHeight({ id: 'x', title: TITLE, tags: [] }, { plans: [{ item_id: 'x' }] })
     expect(long).toBeGreaterThan(base)
-    expect(chips).toBeGreaterThan(base)
     expect(plans).toBeGreaterThan(base)
+  })
+
+  it('ignores tags, counts the module line and the stamp row only within 7 days', () => {
+    const now = Date.parse('2026-11-03T12:00:00Z')
+    const quiet = estimateCardHeight({ id: 'x', title: TITLE, tags: [], updated_at: '2026-10-01T00:00:00Z' }, {}, now)
+    const tagged = estimateCardHeight({ id: 'x', title: TITLE, tags: ['a', 'b', 'c'], updated_at: '2026-10-01T00:00:00Z' }, {}, now)
+    const withModule = estimateCardHeight({ id: 'x', title: TITLE, tags: [], module_id: 'm', updated_at: '2026-10-01T00:00:00Z' }, {}, now)
+    const recent = estimateCardHeight({ id: 'x', title: TITLE, tags: [], updated_at: '2026-10-27T13:00:00Z' }, {}, now)
+    const exact = estimateCardHeight({ id: 'x', title: TITLE, tags: [], updated_at: '2026-10-27T12:00:00Z' }, {}, now)
+    const edge = estimateCardHeight({ id: 'x', title: TITLE, tags: [], updated_at: '2026-10-27T11:00:00Z' }, {}, now)
+    expect(tagged).toBe(quiet)
+    expect(withModule).toBeGreaterThan(quiet)
+    expect(recent).toBeGreaterThan(quiet)
+    expect(exact).toBeGreaterThan(quiet)
+    expect(edge).toBe(quiet)
   })
 })
 

@@ -286,6 +286,8 @@ export const CSS_TOKENS = {
   touch: 'touch',
   cardW: 'card-w',
   cardStSize: 'card-st-size',
+  cardBySize: 'card-by-size',
+  cardModuleGap: 'card-module-gap',
   cardStGap: 'card-st-gap',
   cardTitleSize: 'card-title-size',
   avSize: 'av-size',
@@ -308,6 +310,8 @@ const GLYPH_REGULAR = 0.56
 // Room the open count ("3 opin") takes beside a module name.
 const MODULE_COUNT_CHARS = 7
 const BORDER = 2
+// A card shows its mover row only when the item changed within this many days.
+export const CARD_STAMP_DAYS = 7
 
 const base = {
   packW: 440,
@@ -328,6 +332,8 @@ const base = {
   cardPadY: 29,
   cardPadX: 34,
   cardStSize: 12,
+  cardBySize: 12,
+  cardModuleGap: 4,
   cardStGap: 8,
   cardTitleSize: 17,
   avSize: 20,
@@ -368,10 +374,10 @@ export function estimateModuleHeight(module) {
   return Math.ceil(Math.max(S.touch, h))
 }
 
-// Estimated height of an item card: status row, title, mover row, chips and
-// plan bars as ItemCard draws them. Never less than the size the web assumes
+// Estimated height of an item card: status row, title, module line, mover row
+// (recent changes only), chips and plan bars as ItemCard draws them. Never less than the size the web assumes
 // for a card it has not drawn yet. A new card (no id) may carry fileCount.
-export function estimateCardHeight(item, board = {}) {
+export function estimateCardHeight(item, board = {}, now = Date.now()) {
   const inner = S.cardW - S.cardPadX - BORDER
   const mine = (rows) => (item.id ? (rows ?? []).filter((r) => r.item_id === item.id) : [])
   const fileCount = item.fileCount ?? mine(board.files).length
@@ -381,9 +387,11 @@ export function estimateCardHeight(item, board = {}) {
   let h = BORDER + S.cardPadY
   h += S.cardStSize * LH_CARD + S.cardStGap
   h += lines(item.title, inner, S.cardTitleSize, GLYPH_BOLD) * S.cardTitleSize * LH_CARD
-  h += S.cardStGap + S.avSize
+  if (item.module_id) h += S.cardModuleGap + S.cardBySize * LH_CARD
+  const changed = Date.parse(item.updated_at ?? '')
+  if (Number.isFinite(changed) && now - changed <= CARD_STAMP_DAYS * 86_400_000) h += S.cardStGap + S.avSize
 
-  const chips = [...(item.tags ?? [])]
+  const chips = []
   if (fileCount > 0) chips.push(`${fileCount} skrár`)
   if (actionsOpen > 0) chips.push(`${actionsOpen} handtök`)
   if (chips.length) {

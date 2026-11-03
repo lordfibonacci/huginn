@@ -5,9 +5,11 @@ import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './client.mjs'
 import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
 import { readFileSync } from 'node:fs'
 import * as webUpload from '../../src/vinnubord/lib/upload.ts'
+import * as webCards from '../../src/vinnubord/lib/cards.ts'
 import * as webPlacement from '../../src/vinnubord/lib/placement.ts'
 import {
   BOARD_SIZES,
+  CARD_STAMP_DAYS,
   CSS_TOKENS,
   MAX_NAME_LENGTH,
   MAX_UPLOAD_BYTES,
@@ -79,6 +81,10 @@ describe('board window parity with the web', () => {
 
 describe('write helpers parity with the web', () => {
   const NAMES = ['a.md', 'Skýrsla á íslensku.md', 'ÞÆÖ ðé.pdf', '???', '', 'x'.repeat(181), 'mynd (1).PNG', 'a/b\c.txt']
+
+  it('the card stamp rule matches the web', () => {
+    expect(CARD_STAMP_DAYS).toBe(webCards.CARD_STAMP_DAYS)
+  })
 
   it('upload limits and validateUpload agree with upload.ts', () => {
     expect(MAX_UPLOAD_BYTES).toBe(webUpload.MAX_UPLOAD_BYTES)
