@@ -104,6 +104,9 @@ export function BoardPage() {
             modules: data.modules,
             unread: unreadByItem,
             filter: filterApi.filter,
+            comments: data.comments,
+            reads: data.reads,
+            now: Date.now(),
           })
         : [],
     [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter],
