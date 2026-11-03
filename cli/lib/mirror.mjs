@@ -193,10 +193,11 @@ export function fileTargets(item, files, projectId) {
 
 function fileLine({ file, kind, name }) {
   const head = `- ${oneLine(file.name)}, ${Number(file.size) || 0} bæti`
-  if (kind === 'repo') return `${head}: í repoinu, ${oneLine(file.repo_path)}`
-  if (kind === 'pointer') return `${head}: í Storage, bendiskrá ${name}`
-  if (kind === 'invalid') return `${head}: ekki sótt, Storage slóðin er utan verksins`
-  return `${head}: afrit í möppunni, ${name}`
+  const stamp = file.updated_at ? ` (uppfært ${iso(file.updated_at)})` : ''
+  if (kind === 'repo') return `${head}: í repoinu, ${oneLine(file.repo_path)}${stamp}`
+  if (kind === 'pointer') return `${head}: í Storage, bendiskrá ${name}${stamp}`
+  if (kind === 'invalid') return `${head}: ekki sótt, Storage slóðin er utan verksins${stamp}`
+  return `${head}: afrit í möppunni, ${name}${stamp}`
 }
 
 // Rows may be the whole board's arrays; they are filtered to this item. extra

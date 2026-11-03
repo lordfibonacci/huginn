@@ -412,6 +412,15 @@ describe('planMirror', () => {
 })
 
 describe('renderItemMd', () => {
+  it('a replaced file carries its update stamp, an untouched one is unchanged', () => {
+    const data = fullBoard()
+    data.files.push(file('f4000000-0004', ITEM_ID, 'plan.md', 300, { repo_path: 'docs/plan.md', updated_at: '2026-11-03T07:55:28.517Z' }))
+    const { md } = renderFull(data)
+    expect(md).toContain('í repoinu, docs/plan.md (uppfært 2026-11-03T07:55:28.517Z)')
+    expect(md).toContain('í repoinu, docs/skyrsla.pdf\n')
+    expect(md).not.toMatch(/docs\/skyrsla\.pdf \(uppfært/)
+  })
+
   it('gives the same output twice and for shuffled input rows', () => {
     const data = fullBoard()
     const a = renderFull(data).md

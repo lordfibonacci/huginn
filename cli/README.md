@@ -59,7 +59,7 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `plan add <item>` | `huginn plan add 1a2b3c4d --name "Plan A" --path docs/plan.md --status todo` |
 | `plan set <pid>` | `huginn plan set 0c1d2e3f --status building` |
 | `ruling add <plan>` | `huginn ruling add 0c1d2e3f --code R1 --body "Engin ný tafla" --cost "Lítill"` |
-| `file add <item> <path>` | `huginn file add 1a2b3c4d skyrsla.pdf --repo-path docs/skyrsla.pdf` |
+| `file add <item> <path>` | `huginn file add 1a2b3c4d skyrsla.pdf --repo-path docs/skyrsla.pdf` (sama --repo-path á sama verki uppfærir skjalið í stað þess að bæta við eintaki; óbreytt skjal skrifar ekkert) |
 | `file get <fileid>` | `huginn file get 7a8b9c0d --out ./skyrsla.pdf` (`--force` skrifar yfir) |
 | `comment add <item>` | `huginn comment add 1a2b3c4d --body "Lítur vel út"` |
 | `bundle push` | `huginn bundle push --file bundle.md` (setur samhengi verkefnisins) |
@@ -72,7 +72,7 @@ Með `--json` skilar hver skrifskipun `{ "ok": true, "id": "<uuid>" }`.
 - **Lokun.** `item close` og `item set --status done|dropped` neita ef verkið á ósvaraða spurningu eða opið handtak. `--force` lokar samt.
 - **Handtök.** Handtak sem varð rangt er lagað með `action set`, aldrei hakað sem gert. Handtak sem á ekki lengur við er fellt niður með `action cancel`; það telst lokað (stöðvar hvorki `item close` né plan sem fer í done) en ekki gert.
 - **Hreinsun.** `--module none` tekur verkið úr módúl, `--tags ""` tæmir merki, tómt gildi á textareit tæmir hann.
-- **Skrár.** Sömu reglur og vefurinn: hámark 50 MB, nafn að hámarki 180 stafir, geymt í `hg-files`. `--file` má endurtaka.
+- **Skrár.** Sömu reglur og vefurinn: hámark 50 MB, nafn að hámarki 180 stafir, geymt í `hg-files`. `--file` má endurtaka. Skrá með --repo-path er eitt skjal á hverja slóð á hverju verki: sama slóð aftur uppfærir röðina og eintakið, sömu bæti gera ekkert, og slóðin er stöðluð (bakstrik, ./, bil).
 - **Staðsetning.** Nýtt spjald lendir við hlið módúlsins eins og í vefnum, annars efst til vinstri við það sem er á borðinu, aldrei ofan á spjaldi eða pakka.
 - **Rofar.** Óþekktur rofi er villa. Gildi sem byrjar á `--` þarf að gefa sem `--body=--gildi`.
 
