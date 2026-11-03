@@ -121,12 +121,10 @@
           "status": "staða",
           "text": "texti"
         },
-        "more": "+{{count}}",
-        "since": "Síðan síðast:"
+        "more": "+{{count}}"
       },
       "movedBy": "Síðast hreyft af {{name}}",
-      "planOf": "Plan {{current}} af {{total}}",
-      "unread": "Nýtt hjá þér"
+      "planOf": "Plan {{current}} af {{total}}"
     },
     "filters": {
       "heading": "Síur"

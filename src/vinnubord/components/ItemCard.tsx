@@ -2,7 +2,8 @@ import { memo, useCallback, useState, type AnimationEvent, type CSSProperties, t
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../shared/lib/dateUtils'
 import { planProgress } from '../lib/layout'
-import { freshChips, type UnreadSummary } from '../lib/reads'
+import { freshLine, type FreshLine as FreshLineModel } from '../lib/cards'
+import type { UnreadSummary } from '../lib/reads'
 import type { Tone } from '../lib/status'
 import type { Item, Plan } from '../lib/types'
 
@@ -10,6 +11,8 @@ type Props = {
   item: Item
   tone: Tone
   label: string
+  // Name of the item's module, shown under the title; null when it has none.
+  moduleName: string | null
   plans: Plan[]
   actionsOpen: number
   // open actions owned by the viewer, shown instead of the open count
@@ -17,8 +20,12 @@ type Props = {
   fileCount: number
   // Who changed the item last (updated_by, else created_by).
   mover: { short: string; name: string } | null
+  // Whether the mover and date row shows (only for recent changes).
+  showStamp: boolean
   // What others did since the viewer last opened the card, null when nothing
   fresh: UnreadSummary | null
+  // The newest unread comment by someone else, which the fresh line prefers.
+  freshComment: { short: string; line: string } | null
   parked: boolean
   pulse: boolean
   selected: boolean
@@ -39,12 +46,15 @@ export const ItemCard = memo(function ItemCard({
   item,
   tone,
   label,
+  moduleName,
   plans,
   actionsOpen,
   actionsMine,
   fileCount,
   mover,
+  showStamp,
   fresh,
+  freshComment,
   parked,
   pulse,
   selected,
@@ -83,6 +93,7 @@ export const ItemCard = memo(function ItemCard({
     parked ? 'hg-card-parked' : '',
     pulse ? 'hg-card-pulse' : '',
     selected ? 'hg-card-open' : '',
+    fresh !== null ? 'hg-card-new' : '',
     lifted ? 'hg-card-lift' : '',
     chosen ? 'hg-card-sel' : '',
     dim ? 'hg-card-dim' : '',
@@ -105,13 +116,13 @@ export const ItemCard = memo(function ItemCard({
       onKeyDown={onKeyDown}
       onAnimationEnd={onAnimationEnd}
     >
-      {fresh !== null && <span className="hg-card-ring" role="img" aria-label={t('vinnubord.card.unread')} />}
       <div className="hg-card-st">
         <i className="hg-card-dot" aria-hidden="true" />
         {label}
       </div>
       <h3 className="hg-card-title">{item.title}</h3>
-      {mover && (
+      {moduleName && <div className="hg-card-module">{moduleName}</div>}
+      {mover && showStamp && (
         <div className="hg-card-by" title={t('vinnubord.card.movedBy', { name: mover.name })}>
           <span className="hg-av" aria-hidden="true">
             {mover.short}
@@ -119,7 +130,7 @@ export const ItemCard = memo(function ItemCard({
           {formatStamp(item.updated_at)}
         </div>
       )}
-      {(item.tags.length > 0 || fileCount > 0 || actionsOpen > 0 || actionsMine > 0) && (
+      {(fileCount > 0 || actionsOpen > 0 || actionsMine > 0) && (
         <div className="hg-card-chips">
           {fileCount > 0 && <span>{t('vinnubord.card.files', { count: fileCount })}</span>}
           {actionsMine > 0 ? (
@@ -127,9 +138,6 @@ export const ItemCard = memo(function ItemCard({
           ) : (
             actionsOpen > 0 && <span>{t('vinnubord.card.actions', { count: actionsOpen })}</span>
           )}
-          {item.tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
         </div>
       )}
       {progress.total > 0 && (
@@ -144,28 +152,29 @@ export const ItemCard = memo(function ItemCard({
           </small>
         </>
       )}
-      {fresh && <FreshLine summary={fresh} />}
+      {fresh && <FreshLine line={freshLine(fresh, freshComment)} />}
     </div>
   )
 })
 
-function FreshLine({ summary }: { summary: UnreadSummary }) {
+// One line: a new item, else the newest comment, else the kinds of change.
+function FreshLine({ line }: { line: FreshLineModel }) {
   const { t } = useTranslation()
-  const chips = freshChips(summary)
-  if (chips.created) {
+  if (line.kind === 'created') {
     return (
       <div className="hg-card-fresh">
         <b>{t('vinnubord.card.fresh.created')}</b>
       </div>
     )
   }
-  return (
-    <div className="hg-card-fresh">
-      <b>{t('vinnubord.card.fresh.since')}</b>
-      {chips.shown.map(({ kind, n }) => (
-        <span key={kind}>{t(`vinnubord.card.fresh.kinds.${kind}`, { count: n })}</span>
-      ))}
-      {chips.more > 0 && <span>{t('vinnubord.card.fresh.more', { count: chips.more })}</span>}
-    </div>
-  )
+  if (line.kind === 'comment') {
+    return (
+      <div className="hg-card-fresh">
+        <b>{line.short}:</b> {line.line}
+      </div>
+    )
+  }
+  const text = line.kinds.map(({ kind, n }) => t(`vinnubord.card.fresh.kinds.${kind}`, { count: n })).join(', ')
+  const more = line.more > 0 ? ` ${t('vinnubord.card.fresh.more', { count: line.more })}` : ''
+  return <div className="hg-card-fresh">{text + more}</div>
 }

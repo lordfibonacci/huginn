@@ -123,10 +123,6 @@
   --hg-radius-chip: 8px;
   --hg-chip-size: 11px;
   --hg-bar-track: rgba(255, 255, 255, 0.07);
-  --hg-ring-size: 16px;
-  --hg-ring-offset: -7px;
-  --hg-ring-border: 3px;
-  --hg-ring-glow: 14px;
   --hg-card-enter-scale: 0.8;
   --hg-card-dot: 9px;
   --hg-card-glow: 12px;
@@ -137,6 +133,12 @@
   --hg-card-st-gap: 8px;
   --hg-card-by-gap: 8px;
   --hg-card-chips-gap: 10px;
+  --hg-card-module-gap: 4px;
+  --hg-card-new-size: 28px;
+  --hg-card-new-spread: 2px;
+  --hg-card-new-border: color-mix(in oklab, var(--hg-gold) 45%, var(--hg-line));
+  --hg-card-new-ring: color-mix(in oklab, var(--hg-gold) 25%, transparent);
+  --hg-card-new-color: color-mix(in oklab, var(--hg-gold) 22%, transparent);
   --hg-card-plans-gap: 11px;
   --hg-card-plan-label-gap: 6px;
   --hg-card-plan-label-size: 11.5px;
@@ -731,22 +733,20 @@
 .hg-card-plan-label {
   display: block; margin-top: var(--hg-card-plan-label-gap); font-size: var(--hg-card-plan-label-size); color: var(--hg-ink-3);
 }
-.hg-card-ring {
-  position: absolute; top: var(--hg-ring-offset); right: var(--hg-ring-offset); width: var(--hg-ring-size);
-  height: var(--hg-ring-size); border-radius: 50%; background: var(--hg-c);
-  border: var(--hg-ring-border) solid var(--hg-board); box-shadow: 0 0 var(--hg-ring-glow) var(--hg-c);
+.hg-card-module {
+  margin-top: var(--hg-card-module-gap); font-size: var(--hg-card-by-size); color: var(--hg-ink-3); line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
-/* "Síðan síðast": what others did since the viewer last opened the card. */
+.hg-card-new {
+  border-color: var(--hg-card-new-border);
+  box-shadow: 0 0 0 1px var(--hg-card-new-ring), 0 0 var(--hg-card-new-size) var(--hg-card-new-spread) var(--hg-card-new-color), var(--hg-card-shadow);
+}
+/* The one line under the hairline that says what is new since the viewer last opened the card. */
 .hg-card-fresh {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hg-card-chip-gap); margin-top: var(--hg-card-plans-gap);
-  padding-top: var(--hg-card-plan-label-gap); border-top: 1px dashed var(--hg-line); font-size: var(--hg-chip-size); color: var(--hg-gold);
+  margin-top: var(--hg-card-plans-gap); padding-top: var(--hg-card-plan-label-gap); border-top: 1px dashed var(--hg-line);
+  font-size: var(--hg-chip-size); color: var(--hg-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .hg-card-fresh b { font-weight: 800; }
-.hg-card-fresh span {
-  padding: var(--hg-card-chip-pad); border-radius: var(--hg-radius-chip);
-  background: color-mix(in oklab, var(--hg-gold) 15%, transparent);
-}
 
 /* Non blocking notice, for example a failed refresh while the board stays.
    Bottom left, never wider than half the board so it cannot reach the zoom

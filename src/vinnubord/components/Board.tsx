@@ -879,6 +879,9 @@ export function Board({
               fileCount={filesByItem.get(c.item.id) ?? 0}
               mover={c.mover}
               fresh={c.fresh}
+              freshComment={c.freshComment}
+              moduleName={c.moduleName}
+              showStamp={c.showStamp}
               parked={c.item.status === 'parked'}
               pulse={c.mode === 'pulse'}
               selected={c.item.id === selectedId}

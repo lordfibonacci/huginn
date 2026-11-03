@@ -175,7 +175,6 @@
       "files_other": "{{count}} files",
       "fresh": {
         "created": "New item",
-        "since": "Since last time:",
         "more": "+{{count}}",
         "kinds": {
           "action_one": "+{{count}} action",
@@ -200,7 +199,6 @@
         }
       },
       "planOf": "Plan {{current}} of {{total}}",
-      "unread": "New for you",
       "movedBy": "Last moved by {{name}}"
     },
     "panel": {
