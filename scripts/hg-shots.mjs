@@ -208,6 +208,35 @@ async function shots(browser, name, dev) {
   await page.locator('.hg-pn-tab', { hasText: 'Spjall' }).click()
   await page.waitForTimeout(600)
   await shot('10-chat')
+  // The reader needs a card with a Markdown file: try the picked card first, then the next list rows.
+  let mdRow = null
+  for (let i = 0; i < 12 && !mdRow; i++) {
+    if (i > 0) {
+      if (!(await page.locator('.hg-list').isVisible())) {
+        await page.keyboard.press('Escape') // a phone sheet covers the list button
+        await page.waitForTimeout(500)
+        await page.locator('.hg-list-btn').click()
+        await page.waitForTimeout(500)
+      }
+      const rows = page.locator('.hg-list-row')
+      if (i >= (await rows.count())) break
+      await rows.nth(i).click()
+      await page.waitForTimeout(800)
+    }
+    await page.locator('.hg-pn-tab', { hasText: 'Skjöl' }).click()
+    await page.waitForTimeout(400)
+    const row = page.locator('.hg-file:has(.hg-pill:text-is("MD")) .hg-file-open').first()
+    if (await row.count()) mdRow = row
+  }
+  if (mdRow) {
+    await mdRow.click()
+    await page.waitForSelector('.hg-reader .hg-markdown, .hg-reader .hg-reader-text', { timeout: 8000 })
+    await page.waitForTimeout(600)
+    await shot('11-reader')
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(600)
+    await shot('11b-reader-back')
+  } else console.log(name, 'no md file on the first list rows, reader shots skipped')
   await page.keyboard.press('Escape')
   if (errors.length) console.log(name, 'console:', errors.slice(0, 10))
   await ctx.close()
