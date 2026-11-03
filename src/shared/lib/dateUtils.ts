@@ -42,12 +42,29 @@ export function formatDueDate(dateString: string): { text: string; urgent: boole
 export function formatStamp(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
-  const locale = activeLocale()
   if (d.toDateString() === now.toDateString()) {
-    const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
+    const time = new Intl.DateTimeFormat(activeLocale(), { hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
     return `${i18n.t('dates.today')} ${time}`
   }
+  return formatDate(d, now)
+}
+
+// "30. október" this year, "30. október 2025" in another year.
+function formatDate(d: Date, now: Date): string {
   const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
   if (d.getFullYear() !== now.getFullYear()) opts.year = 'numeric'
-  return new Intl.DateTimeFormat(locale, opts).format(d)
+  return new Intl.DateTimeFormat(activeLocale(), opts).format(d)
+}
+
+// Day heading for the chat: "í dag", "í gær", else the date as formatStamp
+// writes an older day.
+export function formatDay(dateString: string, now: Date = new Date()): string {
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return ''
+  const day = d.toDateString()
+  if (day === now.toDateString()) return i18n.t('dates.today')
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (day === yesterday.toDateString()) return i18n.t('dates.yesterday')
+  return formatDate(d, now)
 }

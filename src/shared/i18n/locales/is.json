@@ -67,7 +67,8 @@
     "justNow": "rétt í þessu",
     "overdue_one": "{{count}}d fram yfir",
     "overdue_other": "{{count}}d fram yfir",
-    "today": "í dag"
+    "today": "í dag",
+    "yesterday": "í gær"
   },
   "vinnubord": {
     "board": {

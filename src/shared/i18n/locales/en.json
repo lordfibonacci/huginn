@@ -67,7 +67,8 @@
     "dueInDays_one": "due in {{count}}d",
     "dueInDays_other": "due in {{count}}d",
     "dueOn": "due {{date}}",
-    "today": "today"
+    "today": "today",
+    "yesterday": "yesterday"
   },
   "vinnubord": {
     "board": {
