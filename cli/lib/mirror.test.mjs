@@ -412,6 +412,23 @@ describe('planMirror', () => {
 })
 
 describe('renderItemMd', () => {
+  it('renders the chat in time order after the questions and before the files', () => {
+    const data = fullBoard()
+    data.comments = [
+      { id: 'k2', item_id: ITEM_ID, module_id: null, body: 'Já, taktu hann með.', user_id: 'u-h', created_at: '2026-10-31T11:42:00Z', project_id: 'pr' },
+      { id: 'k1', item_id: ITEM_ID, module_id: null, body: 'Fyrsta brief\r\nkemur á morgun', user_id: 'u-a', created_at: '2026-10-31T11:20:00Z', project_id: 'pr' },
+      { id: 'k3', item_id: 'other', module_id: null, body: 'annað verk', user_id: 'u-a', created_at: '2026-10-31T12:00:00Z', project_id: 'pr' },
+    ]
+    const { md } = renderFull(data)
+    const chat = md.indexOf('## Spjall')
+    expect(chat).toBeGreaterThan(md.indexOf('## Spurningar'))
+    expect(chat).toBeLessThan(md.indexOf('## Skrár'))
+    expect(md).toContain('- 2026-10-31T11:20:00.000Z Árni (Á): Fyrsta brief\n  kemur á morgun\n- 2026-10-31T11:42:00.000Z Heimir (H): Já, taktu hann með.')
+    expect(md).not.toContain('annað verk')
+  })
+  it('has no Spjall section without comments', () => {
+    expect(renderFull(fullBoard()).md).not.toContain('## Spjall')
+  })
   it('a replaced file carries its update stamp, an untouched one is unchanged', () => {
     const data = fullBoard()
     data.files.push(file('f4000000-0004', ITEM_ID, 'plan.md', 300, { repo_path: 'docs/plan.md', updated_at: '2026-11-03T07:55:28.517Z' }))
@@ -426,7 +443,7 @@ describe('renderItemMd', () => {
     const a = renderFull(data).md
     const b = renderFull(fullBoard()).md
     const shuffled = fullBoard()
-    for (const key of ['plans', 'rulings', 'actions', 'questions', 'files']) shuffled[key].reverse()
+    for (const key of ['plans', 'rulings', 'actions', 'questions', 'files', 'comments']) shuffled[key].reverse()
     expect(a).toBe(b)
     expect(renderFull(shuffled).md).toBe(a)
   })

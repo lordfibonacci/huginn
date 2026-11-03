@@ -289,6 +289,17 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
     }
   }
 
+  const chat = (extra.comments ?? []).filter((c) => c.item_id === item.id).sort(byCreated)
+  if (chat.length) {
+    lines.push('## Spjall', '')
+    for (const c of chat) {
+      const [first = '', ...rest] = multiLine(c.body).split('\n')
+      lines.push(`- ${iso(c.created_at)} ${person(c.user_id, participants)}: ${first}`)
+      for (const line of rest) lines.push(`  ${line}`)
+    }
+    lines.push('')
+  }
+
   if (files.length) lines.push('## Skrár', '', ...files.map(fileLine), '')
 
   return `${lines.join('\n').replace(/\n+$/, '')}\n`
@@ -336,6 +347,7 @@ function itemTargets(item, data, slug, withFiles) {
   const content = renderItemMd(item, data.plans ?? [], data.actions ?? [], data.questions ?? [], data.rulings ?? [], data.participants ?? [], {
     module,
     files,
+    comments: data.comments ?? [],
   })
   const targets = [{ path: `${slug}/${ITEM_FILE}`, kind: 'md', source: ITEM_FILE, content, files }]
   if (!withFiles) return targets
