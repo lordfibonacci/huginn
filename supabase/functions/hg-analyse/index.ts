@@ -55,7 +55,7 @@ type Item = {
   updated_at: string
 }
 
-type FileRecord = { name: string; size: number; mime: string | null; storage_path: string }
+type FileRecord = { name: string; size: number; mime: string | null; storage_path: string; note: string | null }
 
 type Participant = { user_id: string; short: string; display_name: string; is_service: boolean }
 
@@ -142,7 +142,7 @@ async function readFiles(
 ): Promise<{ files: MessageFile[]; sent: string[] }> {
   const { data, error } = await db
     .from('hg_files')
-    .select('name, size, mime, storage_path')
+    .select('name, size, mime, storage_path, note')
     .eq('item_id', item.id)
     .order('created_at')
   if (error) throw new Error(`Gat ekki lesið skrárnar: ${error.message}`)
@@ -155,26 +155,26 @@ async function readFiles(
   const sent: string[] = []
   for (const row of rows) {
     if (!toSend.has(row)) {
-      files.push({ name: row.name, size: row.size })
+      files.push({ name: row.name, size: row.size, ...(row.note ? { note: row.note } : {}) })
       continue
     }
     if (!isItemFilePath(row.storage_path, item.project_id, item.id)) {
       console.warn(`hg-analyse ${item.id}: ${row.name} has an unexpected storage path, not read`)
-      files.push({ name: row.name, size: row.size })
+      files.push({ name: row.name, size: row.size, ...(row.note ? { note: row.note } : {}) })
       continue
     }
     if (budget.full) {
-      files.push({ name: row.name, size: row.size, overBudget: true })
+      files.push({ name: row.name, size: row.size, overBudget: true, ...(row.note ? { note: row.note } : {}) })
       continue
     }
     const { data: blob, error: dlError } = await db.storage.from(BUCKET).download(row.storage_path)
     if (dlError || !blob) throw new Error(`Gat ekki sótt ${row.name}: ${dlError?.message ?? 'tómt svar'}`)
     const text = clipText(await blob.text())
     if (!budget.take(text)) {
-      files.push({ name: row.name, size: row.size, overBudget: true })
+      files.push({ name: row.name, size: row.size, overBudget: true, ...(row.note ? { note: row.note } : {}) })
       continue
     }
-    files.push({ name: row.name, size: row.size, text })
+    files.push({ name: row.name, size: row.size, text, ...(row.note ? { note: row.note } : {}) })
     sent.push(row.name)
   }
   return { files, sent }

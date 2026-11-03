@@ -192,7 +192,8 @@ export function fileTargets(item, files, projectId) {
 // ---------- item.md ----------
 
 function fileLine({ file, kind, name }) {
-  const head = `- ${oneLine(file.name)}, ${Number(file.size) || 0} bæti`
+  const note = file.note ? ` (${oneLine(file.note)})` : ''
+  const head = `- ${oneLine(file.name)} #${shortId(file.id)}${note}, ${Number(file.size) || 0} bæti`
   const stamp = file.updated_at ? ` (uppfært ${iso(file.updated_at)})` : ''
   if (kind === 'repo') return `${head}: í repoinu, ${oneLine(file.repo_path)}${stamp}`
   if (kind === 'pointer') return `${head}: í Storage, bendiskrá ${name}${stamp}`

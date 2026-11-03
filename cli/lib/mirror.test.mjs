@@ -135,7 +135,7 @@ function fullBoard() {
       { id: 'd1000000-q', item_id: ITEM_ID, body: 'Hvaða leturgerð?', asked_by: 'u-c', asked_to: 'u-h', answer: null, answered_by: null, answered_at: null, created_at: '2026-10-08T00:00:00Z' },
     ],
     files: [
-      file('f1000000-0001', ITEM_ID, 'drog.md', 120),
+      file('f1000000-0001', ITEM_ID, 'drog.md', 120, { note: 'Drög Árna, fyrir Claude' }),
       file('f2000000-0002', ITEM_ID, 'upptaka.mp4', 12 * MB, { mime: 'video/mp4' }),
       file('f3000000-0003', ITEM_ID, 'skyrsla.pdf', 5000, { repo_path: 'docs/skyrsla.pdf' }),
     ],
@@ -377,7 +377,7 @@ describe('planMirror', () => {
       ['STATUS.md', 'write'],
     ])
     expect(plan[1].reason).toBe(BAD_STORAGE_PATH)
-    expect(plan[0].content).toContain('- annad.pdf, 10 bæti: ekki sótt, Storage slóðin er utan verksins')
+    expect(plan[0].content).toContain('- annad.pdf #f1, 10 bæti: ekki sótt, Storage slóðin er utan verksins')
   })
 
   it('reuses a local folder with the same id suffix after a title change, the slug folder winning, else lexical first', () => {
@@ -493,9 +493,9 @@ describe('renderItemMd', () => {
       'Spurning #d1000000, ósvöruð',
       'Svar frá Árni (Á), 2026-10-07T00:00:00.000Z:',
       'Blár',
-      'drog.md, 120 bæti: afrit í möppunni, drog.md',
-      'upptaka.mp4, 12582912 bæti: í Storage, bendiskrá upptaka.mp4.pointer.json',
-      'skyrsla.pdf, 5000 bæti: í repoinu, docs/skyrsla.pdf',
+      'drog.md #f1000000 (Drög Árna, fyrir Claude), 120 bæti: afrit í möppunni, drog.md',
+      'upptaka.mp4 #f2000000, 12582912 bæti: í Storage, bendiskrá upptaka.mp4.pointer.json',
+      'skyrsla.pdf #f3000000, 5000 bæti: í repoinu, docs/skyrsla.pdf',
     ]) {
       expect(md).toContain(part)
     }

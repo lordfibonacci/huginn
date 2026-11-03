@@ -5,7 +5,7 @@ export type FileRow = { name: string; size: number; mime: string | null }
 
 // overBudget marks a text file left out because the total text budget of the
 // item was already used up.
-export type MessageFile = { name: string; size: number; text?: string; overBudget?: boolean }
+export type MessageFile = { name: string; size: number; text?: string; overBudget?: boolean; note?: string }
 
 export type MessageInput = {
   item: { title: string; body: string | null }
@@ -151,13 +151,15 @@ export function buildUserMessage(input: MessageInput): string {
 
   const itemPart = ['# Nýtt atriði', `Titill: ${item.title}`, '', body].join('\n')
 
-  const fileLines = files.map((f) =>
-    f.text !== undefined
-      ? `- ${f.name}, ${sizeKb(f.size)}`
-      : f.overBudget
-        ? `- ${f.name}, ${sizeKb(f.size)}, aðeins nafn og stærð, heildarþak á texta náð`
-        : `- ${f.name}, ${sizeKb(f.size)}, aðeins nafn og stærð, efnið er ekki sent`,
-  )
+  const fileLines = files.map((f) => {
+    const line =
+      f.text !== undefined
+        ? `- ${f.name}, ${sizeKb(f.size)}`
+        : f.overBudget
+          ? `- ${f.name}, ${sizeKb(f.size)}, aðeins nafn og stærð, heildarþak á texta náð`
+          : `- ${f.name}, ${sizeKb(f.size)}, aðeins nafn og stærð, efnið er ekki sent`
+    return f.note ? `${line}: ${f.note}` : line
+  })
   const fileTexts = files
     .filter((f): f is MessageFile & { text: string } => f.text !== undefined)
     .map((f) => {

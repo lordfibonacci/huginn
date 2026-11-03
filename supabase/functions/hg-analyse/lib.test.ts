@@ -221,6 +221,12 @@ describe('buildUserMessage', () => {
     expect(msg.match(/synidaemi\.mp4/g)).toHaveLength(1)
   })
 
+  it('ends a file line with its note', () => {
+    const msg = buildUserMessage({ ...input, files: [{ name: 'a.md', size: 1024, text: 'x', note: 'Brief frá Árna, fyrir Claude' }, { name: 'b.mp4', size: 2048, note: 'Sýnidæmi' }] })
+    expect(msg).toContain('- a.md, 1 KB: Brief frá Árna, fyrir Claude')
+    expect(msg).toContain('- b.mp4, 2 KB, aðeins nafn og stærð, efnið er ekki sent: Sýnidæmi')
+  })
+
   it('lists a file over the total budget by name and size with the budget note, without its text', () => {
     const msg = buildUserMessage({
       ...input,
