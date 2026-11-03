@@ -53,6 +53,15 @@ export function BoardPage() {
   const { data, loading: boardLoading, error, reload, live } = useBoardData(project?.id ?? null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
+  // The file open in the reader, by id: the row is looked up live in
+  // data.files on every render, so a replaced or removed file follows.
+  const [readerFileId, setReaderFileId] = useState<string | null>(null)
+  // Any change of the selected item ends the reader: select, closePanel, openModule,
+  // a deleted item, a list pick. One effect instead of a call in each.
+  useEffect(() => {
+    setReaderFileId(null)
+  }, [selectedId])
+  const closeReader = useCallback(() => setReaderFileId(null), [])
   const [newOpen, setNewOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   // The filter sheet belongs to the two row bar: past 1024 px (a tablet
@@ -240,6 +249,26 @@ export function BoardPage() {
   if (boardLoading || !loaded || !counts) return <Loader />
 
   const selectedItem = selectedId ? (data.items.find((i) => i.id === selectedId) ?? null) : null
+  // Only a file of the selected item opens the reader; a row that leaves the
+  // data closes it.
+  const readerFile =
+    selectedItem && readerFileId
+      ? (data.files.find((f) => f.id === readerFileId && f.item_id === selectedItem.id) ?? null)
+      : null
+  const readerOpen = readerFile !== null
+  // The wide reader panel and the list do not fit side by side, so the list is
+  // hidden while a reader is open, without touching the stored list pref.
+  const listShown = listPrefs.open && !readerOpen
+  // With a reader open the list button closes the reader and shows the list
+  // (again if it was open, else opens it): one click either way.
+  const toggleListWithReader = () => {
+    if (readerOpen) {
+      closeReader()
+      if (!listPrefs.open) toggleList()
+      return
+    }
+    toggleList()
+  }
   const openModuleRow = openModuleId ? (data.modules.find((m) => m.id === openModuleId) ?? null) : null
   const viewerParticipant = data.participants.find((p) => p.user_id === user.id) ?? null
   // The number on the filter button: chosen packages and tags, plus one for an
@@ -277,8 +306,8 @@ export function BoardPage() {
         onOpenFilters={() => setFiltersOpen(true)}
         picks={picks}
         onNewItem={() => setNewOpen(true)}
-        listOpen={listPrefs.open}
-        onToggleList={toggleList}
+        listOpen={listShown}
+        onToggleList={toggleListWithReader}
       />
       <Board
         key={project.id}
@@ -292,10 +321,11 @@ export function BoardPage() {
         selectedId={selectedId}
         onSelect={select}
         onOpenModule={openModule}
-        listOpen={listPrefs.open && !narrow}
+        listOpen={listShown && !narrow}
         panelOpen={panelOpen}
+        panelWide={readerOpen}
       >
-        {listPrefs.open && (
+        {listShown && (
           <ListDrawer
             rows={list.rows}
             count={list.count}
@@ -313,6 +343,7 @@ export function BoardPage() {
         <Toast
           toast={newItemToast.toast}
           panelOpen={selectedItem !== null || openModuleRow !== null}
+          panelWide={readerOpen}
           onOpen={select}
           onDone={newItemToast.dismiss}
         />
@@ -320,6 +351,8 @@ export function BoardPage() {
       <PanelShell
         open={selectedItem !== null || openModuleRow !== null}
         onClose={closePanel}
+        wide={readerOpen}
+        onEscape={readerOpen ? closeReader : closePanel}
         label={openModuleRow ? t('vinnubord.panel.moduleLabel') : t('vinnubord.panel.label')}
       >
         {selectedItem ? (
@@ -328,8 +361,8 @@ export function BoardPage() {
             data={data}
             item={selectedItem}
             viewerId={user.id}
-            readerFile={null}
-            onReader={() => {}}
+            readerFile={readerFile}
+            onReader={setReaderFileId}
           />
         ) : openModuleRow ? (
           <ModulePanel

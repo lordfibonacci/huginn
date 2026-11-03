@@ -9,6 +9,10 @@ type Props = {
   // Accessible name of the panel.
   label: string
   children: ReactNode
+  // The file reader is open: the side panel takes the wider reader width.
+  wide?: boolean
+  // What Esc does instead of onClose (the reader closes before the panel).
+  onEscape?: () => void
 }
 
 // How long closed content stays mounted so it can slide out. Matches
@@ -18,7 +22,7 @@ const TAP_SLOP_PX = 6
 // A release this long after the last move is not a flick.
 const FLICK_WINDOW_MS = 120
 
-// A pointer drag from the handle or the head. moved turns true once the
+// A pointer drag from the handle, the head or the reader bar. moved turns true once the
 // pointer passes TAP_SLOP_PX; before that a release on the handle is a tap.
 type Drag = {
   pointerId: number
@@ -69,7 +73,7 @@ const CLOSE = '.hg-sheet-close'
 // scrolled to the top. Esc closes. Rendered outside the board, so pointer
 // events here never reach the viewport or the card drag; the data-panel mark
 // is kept for Board's click guard anyway.
-export function PanelShell({ open, onClose, label, children }: Props) {
+export function PanelShell({ open, onClose, label, children, wide = false, onEscape }: Props) {
   const { t } = useTranslation()
   const narrow = useIsMobile()
   const ref = useRef<HTMLElement | null>(null)
@@ -88,9 +92,15 @@ export function PanelShell({ open, onClose, label, children }: Props) {
     return () => clearTimeout(timer)
   }, [open])
   const content = open ? children : linger ? last.current : null
+  // The lingering content keeps its width too, so a reader closed with the
+  // panel slides out wide instead of narrowing on the way.
+  const lastWide = useRef(wide)
+  if (open) lastWide.current = wide
+  const isWide = open ? wide : linger && lastWide.current
 
-  // Esc closes. Inside a text field it only leaves the field, so a half
-  // written answer or comment is not thrown away by a stray key.
+  // Esc closes (or runs onEscape, which closes the reader first). Inside a
+  // text field it only leaves the field, so a half written answer or comment
+  // is not thrown away by a stray key.
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -100,11 +110,11 @@ export function PanelShell({ open, onClose, label, children }: Props) {
         target.blur()
         return
       }
-      onClose()
+      ;(onEscape ?? onClose)()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open, onClose, onEscape])
 
   // ---------- bottom sheet ----------
   const [stop, setStop] = useState<SheetStop>(OPEN_STOP)
@@ -170,7 +180,7 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       if (!narrow || !open || (e.pointerType === 'mouse' && e.button !== 0)) return
       const target = e.target as Element
       if (target.closest?.(CLOSE)) return
-      const zone = target.closest?.('.hg-sheet-handle, .hg-pn-head')
+      const zone = target.closest?.('.hg-sheet-handle, .hg-pn-head, .hg-reader-bar')
       if (!zone) return
       const max = maxRef.current
       const offset = sheetFraction(stop) * max
@@ -215,7 +225,7 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       if (!d || d.pointerId !== e.pointerId) return
       drag.current = null
       if (!d.moved) {
-        // A tap on the handle swaps full and half; a tap on the head does nothing.
+        // A tap on the handle swaps full and half; a tap on the head or the reader bar does nothing.
         if (d.handle) setStop(stop === 'full' ? 'half' : 'full')
         return
       }
@@ -269,7 +279,7 @@ export function PanelShell({ open, onClose, label, children }: Props) {
       cancel()
       if (e.touches.length !== 1) return
       const target = e.target as Element | null
-      if (!target?.closest || target.closest(`${CLOSE}, .hg-sheet-handle, .hg-pn-head, input, textarea, select`)) return
+      if (!target?.closest || target.closest(`${CLOSE}, .hg-sheet-handle, .hg-pn-head, .hg-reader-bar, input, textarea, select`)) return
       const body = target.closest('.hg-pn-body')
       if (!body) return
       const p = e.touches[0]
@@ -354,6 +364,7 @@ export function PanelShell({ open, onClose, label, children }: Props) {
     'hg-panel',
     narrow ? 'hg-panel-sheet' : 'hg-panel-side',
     open ? 'hg-panel-open' : '',
+    isWide ? 'hg-panel-wide' : '',
     dragging ? 'hg-panel-dragging' : '',
   ]
     .filter(Boolean)

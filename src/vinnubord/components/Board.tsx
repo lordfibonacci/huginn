@@ -88,6 +88,8 @@ type Props = {
   listOpen: boolean
   // An item or module panel is open on the right (a sheet on a phone).
   panelOpen: boolean
+  // The open panel is the wide reader panel (--hg-panel-w-reader).
+  panelWide: boolean
   // Drawn over the board inside its area (the new item toast).
   children?: ReactNode
   ref?: Ref<BoardHandle>
@@ -158,6 +160,7 @@ export function Board({
   onOpenModule,
   listOpen,
   panelOpen,
+  panelWide,
   children,
   ref,
 }: Props) {
@@ -708,7 +711,8 @@ export function Board({
 
   // ---------- fit ----------
   // Padding of the free area: the list drawer on the left, the side panel on
-  // the right (from 768 px), the half sheet at the bottom (below). The CSS
+  // the right (from 768 px, the reader width while a reader is open), the half
+  // sheet at the bottom (below). The CSS
   // tokens are read, so a restyle moves the free area with the surfaces.
   const padding = useCallback(
     (panel: boolean): Padding => {
@@ -717,10 +721,10 @@ export function Board({
       const root = getComputedStyle(document.documentElement)
       const phone = window.matchMedia('(max-width: 767px)').matches
       const list = listOpen ? parsePx(root.getPropertyValue('--hg-list-w')) : 0
-      const panelW = panel && !phone ? parsePx(root.getPropertyValue('--hg-panel-w')) + parsePx(root.getPropertyValue('--hg-panel-inset')) : 0
+      const panelW = panel && !phone ? parsePx(root.getPropertyValue(panelWide ? '--hg-panel-w-reader' : '--hg-panel-w')) + parsePx(root.getPropertyValue('--hg-panel-inset')) : 0
       return freeRect(size, { list, panel: panelW, sheet: panel && phone }, DEFAULT_PADDING)
     },
-    [listOpen],
+    [listOpen, panelWide],
   )
 
   // animate: glide over --hg-dur-view (the fit button), or jump (first load).

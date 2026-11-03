@@ -819,6 +819,9 @@
   .hg-toast-wrap.hg-toast-panel {
     right: calc(min(var(--hg-panel-w), 100vw - 2 * var(--hg-panel-inset)) + var(--hg-panel-inset) + var(--hg-control-inset));
   }
+  .hg-toast-wrap.hg-toast-panel.hg-toast-panel-wide {
+    right: calc(min(var(--hg-panel-w-reader), 100vw - 2 * var(--hg-panel-inset)) + var(--hg-panel-inset) + var(--hg-control-inset));
+  }
 }
 @media (max-width: 767px) {
   .hg-toast-wrap.hg-toast-panel { top: var(--hg-control-inset); bottom: auto; }
@@ -852,8 +855,10 @@
   top: var(--hg-panel-top); right: var(--hg-panel-inset); bottom: var(--hg-panel-inset);
   width: min(var(--hg-panel-w), calc(100vw - 2 * var(--hg-panel-inset)));
   border-radius: var(--hg-radius-panel); opacity: 0; transform: translateX(var(--hg-panel-slide));
-  transition: transform var(--hg-dur-panel) var(--hg-ease), opacity var(--hg-dur-panel) var(--hg-ease);
+  transition: transform var(--hg-dur-panel) var(--hg-ease), opacity var(--hg-dur-panel) var(--hg-ease), width var(--hg-dur-view) var(--hg-ease);
 }
+/* The file reader is open: the panel widens, the board strip stays left of it. */
+.hg-panel-side.hg-panel-wide { width: min(var(--hg-panel-w-reader), calc(100vw - 2 * var(--hg-panel-inset))); }
 .hg-panel-side.hg-panel-open { opacity: 1; transform: none; }
 /* The sheet is anchored to the bottom at full height and pushed down by
    --hg-sheet-offset px: 0 at full, 45% of its height at half, its whole
@@ -874,8 +879,8 @@
   transition: transform var(--hg-dur-panel) var(--hg-ease), visibility 0s linear var(--hg-dur-panel);
 }
 .hg-panel-sheet.hg-panel-dragging { transition: none; user-select: none; }
-.hg-panel-sheet .hg-pn-head { touch-action: none; cursor: grab; }
-.hg-panel-dragging .hg-pn-head { cursor: grabbing; }
+.hg-panel-sheet .hg-pn-head, .hg-panel-sheet .hg-reader-bar { touch-action: none; cursor: grab; }
+.hg-panel-dragging .hg-pn-head, .hg-panel-dragging .hg-reader-bar { cursor: grabbing; }
 .hg-sheet-handle {
   position: relative; flex: none; height: var(--hg-touch); display: grid; place-items: center; cursor: grab; touch-action: none;
 }

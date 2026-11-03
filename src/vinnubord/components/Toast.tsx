@@ -12,11 +12,13 @@ type Props = {
   toast: NewItemToast | null
   // The side panel or bottom sheet is open: the toast moves out of its way.
   panelOpen: boolean
+  // The open panel is the wide reader panel: the toast keeps left of it.
+  panelWide: boolean
   onOpen: (itemId: string) => void
   onDone: () => void
 }
 
-export function Toast({ toast, panelOpen, onOpen, onDone }: Props) {
+export function Toast({ toast, panelOpen, panelWide, onOpen, onDone }: Props) {
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -26,7 +28,11 @@ export function Toast({ toast, panelOpen, onOpen, onDone }: Props) {
   }, [toast, onDone])
 
   return (
-    <div className={`hg-toast-wrap${panelOpen ? ' hg-toast-panel' : ''}`} role="status" aria-live="polite">
+    <div
+      className={`hg-toast-wrap${panelOpen ? ' hg-toast-panel' : ''}${panelWide ? ' hg-toast-panel-wide' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       {toast && (
         <button
           key={toast.eventId}
