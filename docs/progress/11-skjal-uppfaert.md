@@ -24,7 +24,7 @@ Staða: lokið, bíður lokayfirferðar allrar greinarinnar og prófunar Heimis.
 ## Staðfesting
 
 - `npm run build`: grænt.
-- `npm run test`: 33 skrár, 519 próf græn (518 fyrir task 5, 1 nýtt speglunarpróf).
+- `npm run test`: 33 skrár, 521 próf græn (518 fyrir task 5, 1 nýtt speglunarpróf, 2 ný röðunarpróf í lokayfirferðarlagfæringu).
 - `npm run smoke:hg`: `ok 11/11` á móti lifandi gagnagrunni. Smoke skildi engar Storage hluti eftir.
 - Hand próf úr skelinni (skref 9) var ekki keyrt: ekkert plan 11 verk er á metta borðinu.
 - Skoðun í vafra á skjali sem var skipt út (Skjöl og Saga) var ekki gerð: ekkert slíkt skjal var til meðan á smíðinni stóð.
