@@ -253,6 +253,7 @@
       "files": {
         "empty": "No files yet.",
         "by": "{{name}}, {{when}}",
+        "updatedBy": "Updated: {{name}}, {{when}}",
         "back": "Back to files",
         "loading": "Loading file",
         "open": "Open {{name}}",
@@ -303,6 +304,7 @@
       "planAdded": "added a plan",
       "planStatus": "set a plan to {{to}}",
       "fileAdded": "added {{name}}",
+      "fileUpdated": "updated {{name}}",
       "questionAsked": "asked a question",
       "questionAnswered": "answered a question",
       "actionAdded": "added an action",

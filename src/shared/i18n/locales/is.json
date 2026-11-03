@@ -155,6 +155,7 @@
         "title": "titilinn"
       },
       "fileAdded": "bætti við {{name}}",
+      "fileUpdated": "uppfærði {{name}}",
       "itemCreated": "stofnaði verkið",
       "itemStatus": "færði verkið úr {{from}} í {{to}}",
       "itemUpdated": "uppfærði {{fields}}",
@@ -251,7 +252,8 @@
         "loading": "Sæki skjal",
         "open": "Opna {{name}}",
         "openLink": "Smelltu til að opna {{name}}",
-        "planKind": "Plan"
+        "planKind": "Plan",
+        "updatedBy": "Uppfært: {{name}}, {{when}}"
       },
       "fresh": "nýtt",
       "history": {

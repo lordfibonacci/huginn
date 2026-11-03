@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatStamp } from '../../../shared/lib/dateUtils'
 import { fileText, fileUrl } from '../../lib/api'
+import { fileStamp, sortFiles } from '../../lib/files'
 import { fileKindLabel } from '../../lib/upload'
 import type { FileRow, Participant, Plan } from '../../lib/types'
 import { CopyButton } from '../CopyButton'
@@ -17,7 +18,7 @@ type Props = {
 type Reader = { file: FileRow; text: string | null; error: string | null }
 
 // "Skjöl": plans with a repo path come first (path only, no open), then who
-// added what and when, the repo path to copy. A tap opens the file: md and txt
+// added what and when (a replaced file shows its last replace), the repo path to copy. A tap opens the file: md and txt
 // in the reader inside the panel, anything else in a new tab through a signed
 // url. A file someone else added since the viewer last opened the item is
 // marked new; plan rows never are.
@@ -117,9 +118,10 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
             </div>
           </li>
         ))}
-        {files.map((f) => {
-          const by = participants.find((p) => p.user_id === f.uploaded_by)
-          const isNew = fresh(f.created_at, f.uploaded_by)
+        {sortFiles(files).map((f) => {
+          const stamp = fileStamp(f)
+          const by = participants.find((p) => p.user_id === stamp.by)
+          const isNew = fresh(stamp.at, stamp.by)
           return (
             <li key={f.id} className={`hg-file${isNew ? ' hg-fresh' : ''}`}>
               <button
@@ -136,9 +138,9 @@ export function FilesTab({ files, plans, participants, fresh }: Props) {
                   {by?.short ?? '?'}
                 </span>
                 {isNew && <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')}</span>}
-                {t('vinnubord.panel.files.by', {
+                {t(stamp.updated ? 'vinnubord.panel.files.updatedBy' : 'vinnubord.panel.files.by', {
                   name: by?.display_name ?? '?',
-                  when: f.created_at ? formatStamp(f.created_at) : '',
+                  when: stamp.at ? formatStamp(stamp.at) : '',
                 })}
               </p>
               {links[f.id] && (
