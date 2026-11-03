@@ -479,6 +479,7 @@ try {
     const d11 = await put('v3', 'docs/plan.md')
     smokeObjects.push(d11.file.storage_path)
     expect(d11.outcome === 'replaced' && d11.file.storage_path !== b11.file.storage_path, 'same size other bytes was not replaced')
+    expect((await sb.storage.from('hg-files').download(b11.file.storage_path)).error !== null, 'replaced object still in storage')
     // e: old object already gone by hand: the row is still updated
     must(await sb.storage.from('hg-files').remove([d11.file.storage_path]), 'remove by hand')
     const e11 = await put('v4', 'docs/plan.md')

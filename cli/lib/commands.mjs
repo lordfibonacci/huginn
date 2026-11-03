@@ -387,9 +387,9 @@ const WRITE = {
       spec: { 'repo-path': 'value' },
       async run(flags, [itemId, path]) {
         const local = readLocal(path)
+        const repoPath = flags['repo-path'] !== undefined ? normalizeRepoPath(flags['repo-path']) : null
         const { client, user, project } = await context(flags)
         const item = await findById(client, 'item', project.id, itemId)
-        const repoPath = flags['repo-path'] !== undefined ? normalizeRepoPath(flags['repo-path']) : null
         const { file: f, outcome } = await putFile(client, { projectId: project.id, itemId: item.id, userId: user.id, repoPath, ...local })
         const at = `#${shortId(f.id)} á verk #${shortId(item.id)}`
         const text =

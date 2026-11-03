@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { storagePathOk } from './mirror.mjs'
 import { idRange, pickOne, storagePath, validateUpload } from './write.mjs'
 
 // Database and storage writes of the CLI (ruling R5): item create and the seed
@@ -271,7 +272,10 @@ export async function putFile(client, input) {
   if (findError) fail(`Gat ekki flett upp ${repoPath}`, findError)
   if (!row) return { file: await uploadFile(client, input), outcome: 'added' }
 
-  if (Number(row.size) === bytes.length) {
+  // An old storage_path outside this item's folder is never read or removed
+  // (same rule as the mirror): the row is still replaced, the object is left.
+  const oldOk = storagePathOk(row, projectId, itemId)
+  if (oldOk && Number(row.size) === bytes.length) {
     let old = null
     try {
       old = await downloadFile(client, row.storage_path)
@@ -294,6 +298,9 @@ export async function putFile(client, input) {
     .from('hg_files')
     .update({ name, storage_path: path, size: bytes.length, mime: mime ?? null })
     .eq('id', row.id)
+    // A concurrent replace that got there first changed storage_path, so this
+    // update matches no row and fails instead of orphaning the other object.
+    .eq('storage_path', row.storage_path)
     .select('*')
     .single()
   if (error || !data) {
@@ -301,8 +308,12 @@ export async function putFile(client, input) {
     fail(`Gat ekki uppfært ${name}`, error)
   }
 
-  const { error: removeError } = await client.storage.from(FILES_BUCKET).remove([row.storage_path])
-  if (removeError) console.error(`Viðvörun: gamla eintakið ${row.storage_path} var ekki fjarlægt: ${removeError.message}`)
+  if (!oldOk) {
+    console.error(`Viðvörun: gamla eintakið ${row.storage_path} er ekki í möppu verksins og var ekki fjarlægt.`)
+  } else {
+    const { error: removeError } = await client.storage.from(FILES_BUCKET).remove([row.storage_path])
+    if (removeError) console.error(`Viðvörun: gamla eintakið ${row.storage_path} var ekki fjarlægt: ${removeError.message}`)
+  }
   return { file: data, outcome: 'replaced' }
 }
 
