@@ -20,8 +20,9 @@ type Reader = { file: FileRow; text: string | null; error: string | null }
 // "Skjöl": plans with a repo path come first (path only, no open), then who
 // added what and when (a replaced file shows its last replace), the repo path
 // to copy. A tap opens the file: md and txt in the reader inside the panel,
-// anything else in a new tab through a signed url. A file someone else added since the viewer last opened the item is
-// marked new; plan rows never are.
+// anything else in a new tab through a signed url. A file someone else
+// added since the viewer last opened the item is marked new; plan rows
+// never are.
 export function FilesTab({ files, plans, participants, fresh }: Props) {
   const { t } = useTranslation()
   const [reader, setReader] = useState<Reader | null>(null)
