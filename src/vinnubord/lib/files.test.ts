@@ -28,6 +28,16 @@ describe('sortFiles', () => {
     const c = row({ id: 'c', created_at: null })
     expect(sortFiles([a, b, c]).map((f) => f.id)).toEqual(['c', 'b', 'a'])
   })
+  it('an unparsable time sorts first like a null time', () => {
+    const a = row({ id: 'a', created_at: 'not a date' })
+    const b = row({ id: 'b', created_at: '2026-11-02T10:00:00Z' })
+    expect(sortFiles([b, a]).map((f) => f.id)).toEqual(['a', 'b'])
+  })
+  it('the same stamp time sorts by id', () => {
+    const b = row({ id: 'b', created_at: '2026-11-02T10:00:00Z' })
+    const a = row({ id: 'a', created_at: '2026-11-02T10:00:00Z' })
+    expect(sortFiles([b, a]).map((f) => f.id)).toEqual(['a', 'b'])
+  })
   it('does not change the input', () => {
     const list = [row({ id: 'b', created_at: '2026-11-02T10:00:00Z' }), row({ id: 'a', created_at: '2026-11-01T10:00:00Z' })]
     sortFiles(list)
