@@ -14,6 +14,8 @@ import {
   MAX_NAME_LENGTH,
   MAX_UPLOAD_BYTES,
   NEW_CARD_GAP,
+  NOTE_MAX,
+  normalizeNote,
   placeNewCard,
   storageSafeName,
   validateUpload,
@@ -94,6 +96,11 @@ describe('write helpers parity with the web', () => {
         expect(validateUpload({ name, size }), `${name} ${size}`).toEqual(webUpload.validateUpload({ name, size }))
       }
     }
+  })
+
+  it('NOTE_MAX and normalizeNote agree with upload.ts', () => {
+    expect(NOTE_MAX).toBe(webUpload.NOTE_MAX)
+    for (const v of ['  a \r\n b ', '', 'x'.repeat(201), 'x'.repeat(200)]) expect(normalizeNote(v)).toEqual(webUpload.normalizeNote(v))
   })
 
   it('storageSafeName agrees with upload.ts', () => {

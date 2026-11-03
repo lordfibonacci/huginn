@@ -178,6 +178,16 @@ export function validateUpload(file) {
   return { ok: true }
 }
 
+export const NOTE_MAX = 200
+export const NOTE_TOO_LONG = 'Lýsing má mest vera 200 stafir.'
+
+export function normalizeNote(input) {
+  const note = (input ?? '').replace(/\s+/g, ' ').trim()
+  if (note === '') return { ok: true, note: null }
+  if (note.length > NOTE_MAX) return { ok: false, reason: NOTE_TOO_LONG }
+  return { ok: true, note }
+}
+
 export function storageSafeName(name) {
   const safe = name
     .normalize('NFKD')

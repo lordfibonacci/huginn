@@ -6,6 +6,8 @@ import {
   guardClose,
   idRange,
   mimeFor,
+  NOTE_MAX,
+  normalizeNote,
   normalizeRepoPath,
   parseCommand,
   parseTags,
@@ -425,5 +427,21 @@ describe('placeNewCard port', () => {
       x: 375,
       y: 245,
     })
+  })
+})
+
+describe('normalizeNote', () => {
+  it('trims and collapses whitespace, line endings included', () => {
+    expect(normalizeNote('  Hönnunarskjal\r\n  fyrir Heimi\t ')).toEqual({ ok: true, note: 'Hönnunarskjal fyrir Heimi' })
+  })
+  it('gives null for empty, whitespace, null and undefined', () => {
+    for (const v of ['', '   ', '\n\n', null, undefined]) expect(normalizeNote(v)).toEqual({ ok: true, note: null })
+  })
+  it('accepts exactly NOTE_MAX characters and refuses one more, in Icelandic', () => {
+    expect(normalizeNote('a'.repeat(NOTE_MAX))).toEqual({ ok: true, note: 'a'.repeat(NOTE_MAX) })
+    expect(normalizeNote('a'.repeat(NOTE_MAX + 1))).toEqual({ ok: false, reason: 'Lýsing má mest vera 200 stafir.' })
+  })
+  it('measures after collapsing, so padding never counts', () => {
+    expect(normalizeNote(' '.repeat(50) + 'a'.repeat(NOTE_MAX))).toEqual({ ok: true, note: 'a'.repeat(NOTE_MAX) })
   })
 })

@@ -4,7 +4,7 @@ import type { FileRow } from './types'
 
 const row = (p: Partial<FileRow>): FileRow => ({
   id: 'f', created_at: '2026-11-03T06:07:00Z', project_id: 'p', item_id: 'i', name: 'a.md', storage_path: 'p/i/x_a.md',
-  size: 1, mime: null, repo_path: null, uploaded_by: 'arni', updated_at: null, updated_by: null, ...p,
+  size: 1, mime: null, repo_path: null, note: null, uploaded_by: 'arni', updated_at: null, updated_by: null, ...p,
 })
 
 describe('fileStamp', () => {

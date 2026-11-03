@@ -26,6 +26,18 @@ export function validateUpload(file: { name: string; size: number }): UploadChec
   return { ok: true }
 }
 
+export const NOTE_MAX = 200
+export const NOTE_TOO_LONG = 'Lýsing má mest vera 200 stafir.'
+
+export function normalizeNote(
+  input: string | null | undefined,
+): { ok: true; note: string | null } | { ok: false; reason: string } {
+  const note = (input ?? '').replace(/\s+/g, ' ').trim()
+  if (note === '') return { ok: true, note: null }
+  if (note.length > NOTE_MAX) return { ok: false, reason: NOTE_TOO_LONG }
+  return { ok: true, note }
+}
+
 // Storage keys reject many characters (Icelandic letters among them), so the
 // key gets a safe copy of the name. The original name is kept in hg_files.name.
 export function storageSafeName(name: string): string {

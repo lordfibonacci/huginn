@@ -91,6 +91,7 @@ export type FileRow = {
   size: number
   mime: string | null
   repo_path: string | null
+  note: string | null
   uploaded_by: string
   updated_at: string | null
   updated_by: string | null
