@@ -28,6 +28,8 @@ export default function FileReader({ file, mode, onMode, onBack }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // A failed Sækja shows under the bar; the text being read stays.
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [active, setActive] = useState(0)
   const activeRef = useRef(0)
   const bodyRef = useRef<HTMLDivElement | null>(null)
@@ -102,11 +104,12 @@ export default function FileReader({ file, mode, onMode, onBack }: Props) {
   const download = async () => {
     if (saving.current) return
     saving.current = true
+    setSaveError(null)
     try {
       await downloadFile(file)
     } catch (e) {
       console.error(e)
-      setError(errorText(e))
+      setSaveError(errorText(e))
     } finally {
       saving.current = false
     }
@@ -163,6 +166,11 @@ export default function FileReader({ file, mode, onMode, onBack }: Props) {
           </button>
         </div>
       </div>
+      {saveError && (
+        <p className="hg-pn-error hg-reader-save-error" role="alert">
+          {saveError}
+        </p>
+      )}
       {toc && (
         <details className="hg-reader-toc-dd">
           <summary>{t('vinnubord.panel.reader.contentsAt', { heading: headings[active]?.text ?? '' })}</summary>
