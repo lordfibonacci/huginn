@@ -1,5 +1,5 @@
 import { supabase } from '../../shared/lib/supabase'
-import { storageSafeName, validateUpload } from './upload'
+import { normalizeNote, storageSafeName, validateUpload } from './upload'
 import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './boardWindow'
 import {
   moduleDeleteBlock,
@@ -351,9 +351,11 @@ export async function markAllRead(projectId: string): Promise<void> {
   if (error) fail('Gat ekki merkt allt lesið.', error)
 }
 
-export async function uploadFile(input: { projectId: string; itemId: string; file: File }): Promise<FileRow> {
+export async function uploadFile(input: { projectId: string; itemId: string; file: File; note?: string }): Promise<FileRow> {
   const check = validateUpload(input.file)
   if (!check.ok) throw new Error(check.reason)
+  const note = normalizeNote(input.note)
+  if (!note.ok) throw new Error(note.reason)
 
   const userId = await currentUserId()
   const path = `${input.projectId}/${input.itemId}/${crypto.randomUUID()}_${storageSafeName(input.file.name)}`
@@ -373,6 +375,7 @@ export async function uploadFile(input: { projectId: string; itemId: string; fil
       size: input.file.size,
       mime: input.file.type || null,
       uploaded_by: userId,
+      note: note.note,
     })
     .select('*')
     .single()

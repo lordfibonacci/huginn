@@ -415,6 +415,7 @@
       "drop": "Drop files here",
       "pick": "Choose files",
       "remove": "Remove {{name}}",
+      "note": "Description, one sentence: what it is and for whom",
       "state": {
         "waiting": "Waiting",
         "uploading": "Uploading",

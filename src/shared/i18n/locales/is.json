@@ -200,6 +200,7 @@
       "heading": "Nýtt verk",
       "module": "Módull",
       "noModule": "Enginn módull",
+      "note": "Lýsing, ein setning: hvað þetta er og fyrir hvern",
       "openItem": "Opna verkið",
       "pick": "Velja skrár",
       "remove": "Fjarlægja {{name}}",

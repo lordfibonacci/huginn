@@ -464,6 +464,7 @@
   --hg-new-file-gap: 10px;
   --hg-new-file-size: 12px;
   --hg-new-file-error-gap: 8px;
+  --hg-new-file-note-pad: 0 12px 10px 0;
   --hg-sheet-wrap-pad: 16px;
   --hg-tag-pick-pad: 0 12px;
   --hg-tag-pick-size: 12.5px;
@@ -1598,6 +1599,13 @@
 .hg-new-file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--hg-ink); font-weight: 600; }
 .hg-new-file-size { color: var(--hg-ink-3); font-size: var(--hg-new-file-size); white-space: nowrap; }
 .hg-new-file-row .hg-pill:last-child { margin-right: var(--hg-new-file-pad); }
+.hg-new-file-note {
+  display: block; width: 100%; margin: 0; padding: var(--hg-new-file-note-pad); border: none; background: none; color: var(--hg-ink);
+  font: inherit; font-size: var(--hg-fs-field); box-sizing: border-box;
+}
+.hg-new-file-note::placeholder { color: var(--hg-ink-3); }
+.hg-new-file-note:focus { outline: none; }
+.hg-new-file-note:disabled { color: var(--hg-ink-2); }
 .hg-file-uploading .hg-pill { color: var(--hg-gold); }
 .hg-file-done .hg-pill { color: var(--hg-ok); }
 .hg-file-error .hg-pill { color: var(--hg-error); }

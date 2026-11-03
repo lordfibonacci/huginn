@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { createItem, uploadFile } from '../lib/api'
 import type { FilterOption } from '../lib/filters'
 import { packLayout } from '../lib/layout'
+import { NOTE_MAX } from '../lib/upload'
 import { fileEntry, formatBytes, parseTags, toggleTagText, uploadSummary, type FileEntry } from '../lib/newItem'
 import type { BoardData, Item } from '../lib/types'
 
@@ -18,7 +19,7 @@ type Props = {
   onCreated: (item: Item) => void
 }
 
-type Picked = FileEntry & { file: File }
+type Picked = FileEntry & { file: File; note: string }
 
 const QUICK_TAGS = 10
 
@@ -84,7 +85,7 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
 
   function addFiles(list: FileList | null) {
     if (!list || created) return
-    const picked = Array.from(list).map((file) => ({ ...fileEntry(`f${nextId.current++}`, file), file }))
+    const picked = Array.from(list).map((file) => ({ ...fileEntry(`f${nextId.current++}`, file), file, note: '' }))
     setFiles((prev) => [...prev, ...picked])
   }
 
@@ -131,7 +132,7 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
       }
       setFileState(f.id, 'uploading')
       try {
-        await uploadFile({ projectId: data.project.id, itemId: item.id, file: f.file })
+        await uploadFile({ projectId: data.project.id, itemId: item.id, file: f.file, note: f.note })
         setFileState(f.id, 'done')
         results.push({ ...f, state: 'done' })
       } catch (err) {
@@ -289,6 +290,16 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
                         </button>
                       )}
                     </div>
+                    <input
+                      type="text"
+                      className="hg-new-file-note"
+                      value={f.note}
+                      maxLength={NOTE_MAX}
+                      placeholder={t('vinnubord.newItem.note')}
+                      aria-label={t('vinnubord.newItem.note')}
+                      disabled={locked}
+                      onChange={(e) => setFiles((prev) => prev.map((x) => (x.id === f.id ? { ...x, note: e.target.value } : x)))}
+                    />
                     {f.reason && <p className="hg-pn-error">{f.reason}</p>}
                   </li>
                 ))}
