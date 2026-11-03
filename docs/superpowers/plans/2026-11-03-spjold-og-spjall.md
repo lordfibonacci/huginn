@@ -436,12 +436,12 @@ with `const LEGEND: [Tone, string][] = [['gold', 'gold'], ['coral', 'coral'], ['
 - [ ] **Step 2: CSS.**
 
 ```
-.hg-legend { list-style: none; margin: 0; padding: 0 var(--hg-control-gap); display: flex; flex-direction: column; gap: var(--hg-control-gap); font-size: var(--hg-chip-size); color: var(--hg-ink-2); }
+.hg-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--hg-pn-list-gap); font-size: var(--hg-chip-size); color: var(--hg-ink-2); }
 .hg-legend li { display: flex; align-items: center; gap: var(--hg-card-row-gap); }
 .hg-legend-dot { width: var(--hg-card-dot); height: var(--hg-card-dot); border-radius: 50%; background: var(--hg-c); box-shadow: 0 0 var(--hg-card-glow) var(--hg-c); flex: none; }
 ```
 
-Confirm `--hg-control-gap` exists (it is used by `.hg-menu-sep`); otherwise use the token `.hg-menu` rows use for spacing.
+`--hg-pn-list-gap` is 10 px; `--hg-control-gap` (2 px) is too tight for rows.
 
 - [ ] **Step 3: Copy.** `en.json` `vinnubord.top.legend`: `{ title: "Colours", gold: "New, or waiting for Claude", coral: "Waiting for you", lilac: "Waiting for others", teal: "Ready or building", stone: "Parked or done" }`. `npm run translate`; check Icelandic: "Litir", "Nýtt, eða bíður Claude", "Bíður þín", "Bíður annarra", "Tilbúið eða í smíðum", "Parkerað eða lokið".
 
