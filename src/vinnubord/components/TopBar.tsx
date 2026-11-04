@@ -31,6 +31,9 @@ type Props = {
   onNewItem: () => void
   listOpen: boolean
   onToggleList: () => void
+  // Draw mode: the next press and drag on the board draws a new box.
+  drawing: boolean
+  onToggleDraw: () => void
   // Every increment (Ctrl+F or Cmd+F on the board) opens, focuses and selects the search field.
   searchRequest: number
 }
@@ -63,6 +66,8 @@ export function TopBar({
   onNewItem,
   listOpen,
   onToggleList,
+  drawing,
+  onToggleDraw,
   searchRequest,
 }: Props) {
   const { t, i18n } = useTranslation()
@@ -204,6 +209,18 @@ export function TopBar({
       )}
 
       <div className="hg-top-b">
+        <button
+          type="button"
+          className={`hg-icon-btn hg-zone-btn${drawing ? ' hg-on' : ''}`}
+          aria-label={t('vinnubord.top.newZone')}
+          aria-pressed={drawing}
+          onClick={onToggleDraw}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="2" y="3" width="12" height="10" rx="2.5" />
+            <path d="M8 6v4M6 8h4" />
+          </svg>
+        </button>
         <button
           type="button"
           className={`hg-icon-btn hg-list-btn${listOpen ? ' hg-on' : ''}`}

@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
 import { useMarquee } from '../hooks/useMarquee'
+import { useZoneDraw } from '../hooks/useZoneDraw'
 import {
   updateItemPosition,
   updatePackagePosition,
@@ -97,6 +98,12 @@ type Props = {
   onOpenModule: (moduleId: string) => void
   // A plain click or tap on a box name.
   onOpenZone: (id: string) => void
+  // Draw mode: a press and drag on the board draws a new box (useZoneDraw).
+  drawing: boolean
+  // A drawn rectangle big enough for a box, in world units.
+  onDrawn: (rect: Rect) => void
+  // The draw ended without a box (too small, a second finger, Esc).
+  onDrawCancel: () => void
   // The wide list drawer is open on the left of the board.
   listOpen: boolean
   // An item or module panel is open on the right (a sheet on a phone).
@@ -175,6 +182,9 @@ export function Board({
   onSelect,
   onOpenModule,
   onOpenZone,
+  drawing,
+  onDrawn,
+  onDrawCancel,
   listOpen,
   panelOpen,
   panelWide,
@@ -756,6 +766,7 @@ export function Board({
     onToggle: onMarqueeToggle,
     onClear: clearSelection,
   })
+  const draw = useZoneDraw({ boardRef, viewRef, gestureRef: vp.gestureRef, active: drawing, onDrawn, onCancel: onDrawCancel })
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') clearSelection()
@@ -1124,9 +1135,11 @@ export function Board({
       <Aurora />
       <div
         ref={boardRef}
-        className={`hg-board${vp.isPanning ? ' hg-board-panning' : ''}`}
+        className={`hg-board${vp.isPanning ? ' hg-board-panning' : ''}${drawing ? ' hg-board-draw' : ''}`}
         {...vp.bind}
-        {...marquee.bind}
+        onPointerDownCapture={(e) => {
+          if (!draw.onPointerDownCapture(e)) marquee.bind.onPointerDownCapture(e)
+        }}
         onClick={onBoardClick}
       >
         <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} gestureRef={vp.gestureRef} hotIds={hotIds} onFrame={stepFrame} />
@@ -1180,6 +1193,7 @@ export function Board({
           ))}
         </div>
         <div ref={marquee.boxRef} className="hg-marquee" aria-hidden="true" />
+        <div ref={draw.boxRef} className="hg-zone-draft" aria-hidden="true" />
       </div>
       <div className="hg-zoom">
         <button type="button" onClick={vp.zoomOut} aria-label={t('vinnubord.board.zoomOut')}>

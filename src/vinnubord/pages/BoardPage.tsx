@@ -8,8 +8,10 @@ import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { useListPrefs } from '../hooks/useListPrefs'
+import { createZone } from '../lib/api'
 import { cardModels } from '../lib/cards'
 import { packageCounts, tagCounts } from '../lib/filters'
+import type { Rect } from '../lib/geometry'
 import { boardOrder } from '../lib/layout'
 import { listRows } from '../lib/list'
 import { summarizeUnread } from '../lib/reads'
@@ -17,6 +19,7 @@ import { searchIndex } from '../lib/search'
 import { countsFor, isOnBoard, mineActionsByItem } from '../lib/status'
 import type { Item, View } from '../lib/types'
 import { itemsInView, viewCounts } from '../lib/views'
+import { DEFAULT_ZONE_COLOR, DEFAULT_ZONE_TITLE } from '../lib/zones'
 import { Board, type BoardHandle } from '../components/Board'
 import { FilterSheet } from '../components/FilterSheet'
 import { ListDrawer } from '../components/ListDrawer'
@@ -88,6 +91,39 @@ export function BoardPage() {
   }, [])
   // The box panel comes with Task 7, which fills this.
   const openZone = useCallback((_id: string) => {}, [])
+  // Draw mode (the Kassi button): the next press and drag on the board draws
+  // a box. Any end of the draw ends the mode, a new box opens in its panel.
+  const [drawing, setDrawing] = useState(false)
+  const toggleDraw = useCallback(() => setDrawing((d) => !d), [])
+  const onDrawCancel = useCallback(() => setDrawing(false), [])
+  const [zoneError, setZoneError] = useState<string | null>(null)
+  // The box just drawn, read by the box panel in Task 7.
+  const [, setJustCreatedZone] = useState<string | null>(null)
+  useEffect(() => {
+    if (!drawing) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrawing(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [drawing])
+  const onDrawn = useCallback(
+    (rect: Rect) => {
+      setDrawing(false)
+      if (!project) return
+      createZone({ projectId: project.id, title: DEFAULT_ZONE_TITLE, color: DEFAULT_ZONE_COLOR, note: null, ...rect })
+        .then((zone) => {
+          openZone(zone.id)
+          setJustCreatedZone(zone.id)
+          void reload()
+        })
+        .catch((err: unknown) => {
+          console.error(err)
+          setZoneError(t('vinnubord.zone.createError'))
+        })
+    },
+    [project, openZone, reload, t],
+  )
   const closePanel = useCallback(() => select(null), [select])
   const listPrefs = useListPrefs(project?.id ?? '', narrow)
 
@@ -330,6 +366,8 @@ export function BoardPage() {
         onNewItem={() => setNewOpen(true)}
         listOpen={listShown}
         onToggleList={toggleListWithReader}
+        drawing={drawing}
+        onToggleDraw={toggleDraw}
         searchRequest={searchRequest}
       />
       <Board
@@ -345,6 +383,9 @@ export function BoardPage() {
         onSelect={select}
         onOpenModule={openModule}
         onOpenZone={openZone}
+        drawing={drawing}
+        onDrawn={onDrawn}
+        onDrawCancel={onDrawCancel}
         listOpen={listShown && !narrow}
         panelOpen={panelOpen}
         panelWide={readerOpen}
@@ -414,6 +455,14 @@ export function BoardPage() {
           <span>{t('vinnubord.board.refreshError')}</span>
           <button type="button" onClick={() => void reload()}>
             {t('vinnubord.board.retry')}
+          </button>
+        </div>
+      )}
+      {zoneError && (
+        <div className="hg-notice" role="status">
+          <span>{zoneError}</span>
+          <button type="button" onClick={() => setZoneError(null)}>
+            {t('common.close')}
           </button>
         </div>
       )}
