@@ -1,7 +1,7 @@
 # 16 Vinnuborð: tiltekt (plan 16)
 
 Dagsetning: 2026-11-04
-Grein: `vinnubord-16` (commits fd6e2fd til 1451f72 ofan á main 6ee5103), lokayfirferð Fable lokið og lagað, sameinað í main og pushað.
+Grein: `vinnubord-16` (commits fd6e2fd til 70f173e ofan á main 6ee5103), lokayfirferð Fable lokið og lagað, sameinað í main og pushað.
 Plan: `docs/superpowers/plans/2026-11-04-tiltekt.md`
 Spekk: `docs/superpowers/specs/2026-11-04-kassar-og-tiltekt-design.md`
 
