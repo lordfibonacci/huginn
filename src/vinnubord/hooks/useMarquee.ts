@@ -78,7 +78,10 @@ export function useMarquee(opts: MarqueeOptions): { bind: MarqueeBind; boxRef: R
       e.preventDefault()
       const grip = (e.target as Element).closest<HTMLElement>(GRIP)
       const at = local(e.clientX, e.clientY)
-      press.current = { pointerId: e.pointerId, sx: at.x, sy: at.y, x: at.x, y: at.y, moved: false, target: grip ? dragTargetOf(grip) : null }
+      const t = grip ? dragTargetOf(grip) : null
+      // A box corner counts as its box (which a toggle leaves alone).
+      const target: SelTarget | null = t && t.kind === 'zoneResize' ? { kind: 'zone', id: t.id } : t
+      press.current = { pointerId: e.pointerId, sx: at.x, sy: at.y, x: at.x, y: at.y, moved: false, target }
       try {
         e.currentTarget.setPointerCapture(e.pointerId)
       } catch {

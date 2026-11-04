@@ -14,7 +14,14 @@ import { useTranslation } from 'react-i18next'
 import { useViewport } from '../hooks/useViewport'
 import { useCardDrag, type DragTarget } from '../hooks/useCardDrag'
 import { useMarquee } from '../hooks/useMarquee'
-import { updateItemPosition, updatePackagePosition, upsertViewPackPosition, upsertViewPosition } from '../lib/api'
+import {
+  updateItemPosition,
+  updatePackagePosition,
+  updateZoneRect,
+  upsertViewPackPosition,
+  upsertViewPosition,
+  upsertViewZonePosition,
+} from '../lib/api'
 import type { CardModel } from '../lib/cards'
 import { isActive, type Filter } from '../lib/filters'
 import {
@@ -50,10 +57,12 @@ import { settled, stepSpring, type Spring } from '../lib/spring'
 import { isOnBoard, mineActionsByItem } from '../lib/status'
 import type { BoardData, Item, Plan, View } from '../lib/types'
 import { packPositionsOf, positionOf, positionsOf } from '../lib/views'
+import { zonePositionsOf, zoneRect } from '../lib/zones'
 import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
 import { PackColumn } from './PackColumn'
 import { Wires, type WireItem, type WiresHandle } from './Wires'
+import { Zone } from './Zone'
 
 // The whiteboard: pack columns, item cards and wires inside one pan and zoom
 // world. Card positions live in a spring per card that Board steps every frame
@@ -67,6 +76,8 @@ import { Wires, type WireItem, type WiresHandle } from './Wires'
 // rests at its place in that view (hg_view_pack_positions), else at its own,
 // and a drop is saved to the view, never to the package. The save goes at
 // once, and until the data shows it the column rests at the dropped place.
+// A box (zone) is dragged by its name and follows the pack rules: its place
+// is per view (hg_view_zone_positions), its size is its own everywhere.
 // The pan and zoom view is written to the world layer by useViewport (worldRef);
 // nothing here writes its transform or --hg-z, so a re-render in the middle of
 // a gesture never moves the world. Anything that needs the live view reads
@@ -84,6 +95,8 @@ type Props = {
   selectedId: string | null
   onSelect: (id: string | null) => void
   onOpenModule: (moduleId: string) => void
+  // A plain click or tap on a box name.
+  onOpenZone: (id: string) => void
   // The wide list drawer is open on the left of the board.
   listOpen: boolean
   // An item or module panel is open on the right (a sheet on a phone).
@@ -118,6 +131,9 @@ type SaveJob = { timer: ReturnType<typeof setTimeout>; x: number; y: number; vie
 type Point = { x: number; y: number }
 // A dropped pack position waiting for the database, same reading as Pending.
 type PackPending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null }
+// A dropped box place or size waiting for the database, same reading as
+// Pending over all four of x, y, w and h.
+type ZonePending = { x: number; y: number; w: number; h: number; baseX: number; baseY: number; baseW: number; baseH: number; viewId: string | null }
 // Wires stay awake this long after each pack or group move, so they follow
 // the modules and the cards that moved outside the spring loop's notice.
 const PACK_MOVE_WAKE_MS = 100
@@ -127,7 +143,7 @@ const ENTRY_START_MS = 150
 const ENTRY_STEP_MS = 45
 const ENTRY_BURST = 8
 const DROP_BURST = 4
-const NO_DESELECT = '[data-card], [data-module], [data-panel]'
+const NO_DESELECT = '[data-card], [data-module], [data-panel], [data-zone] .hg-zone-title, [data-zone] .hg-zone-resize'
 // A board narrower than this, or any coarse pointer, opens on the first pack
 // at START_ZOOM instead of fitting the whole board (spec 4.4).
 const START_PACK_MAX_W = 1024
@@ -158,6 +174,7 @@ export function Board({
   selectedId,
   onSelect,
   onOpenModule,
+  onOpenZone,
   listOpen,
   panelOpen,
   panelWide,
@@ -178,6 +195,7 @@ export function Board({
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
+  const zonePositions = useMemo(() => zonePositionsOf(data.viewZonePositions, viewId), [data.viewZonePositions, viewId])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
   const plansByItem = useMemo(() => {
     const map = new Map<string, Plan[]>()
@@ -481,6 +499,122 @@ export function Board({
     [placePack],
   )
 
+  // ---------- zone drag ----------
+  // Boxes have no spring either: a move writes left, top, width and height
+  // straight away, and a re-render reads the same rect from zoneLive (the
+  // live drag) or zonePending (a drop on its way to the database).
+  const zoneEls = useRef(new Map<string, HTMLElement>())
+  const zonePending = useRef(new Map<string, ZonePending>())
+  const zoneLive = useRef(new Map<string, Rect>())
+  const [, setZoneTick] = useState(0)
+  const setZoneEl = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) zoneEls.current.set(id, el)
+    else zoneEls.current.delete(id)
+  }, [])
+  const placeZone = useCallback((id: string, r: Rect) => {
+    const el = zoneEls.current.get(id)
+    if (!el) return
+    el.style.left = `${r.x}px`
+    el.style.top = `${r.y}px`
+    el.style.width = `${r.w}px`
+    el.style.height = `${r.h}px`
+  }, [])
+  // Where the data has a box: its place in the active view, else its own, and its size.
+  const zoneDataRect = useCallback(
+    (id: string): Rect | null => {
+      const zone = data.zones.find((z) => z.id === id)
+      return zone ? zoneRect(zone, zonePositions) : null
+    },
+    [data.zones, zonePositions],
+  )
+  const zoneRectNow = useCallback((id: string, fallback: Rect): Rect => {
+    const live = zoneLive.current.get(id)
+    if (live) return live
+    const p = zonePending.current.get(id)
+    return p ? { x: p.x, y: p.y, w: p.w, h: p.h } : fallback
+  }, [])
+  // Same reading as the pack pendings above, over x, y, w and h.
+  useLayoutEffect(() => {
+    let changed = false
+    for (const zone of data.zones) {
+      const p = zonePending.current.get(zone.id)
+      if (!p) continue
+      const d = zoneRect(zone, zonePositions)
+      const atPending = d.x === p.x && d.y === p.y && d.w === p.w && d.h === p.h
+      const atBase = d.x === p.baseX && d.y === p.baseY && d.w === p.baseW && d.h === p.baseH
+      if (p.viewId !== viewId || atPending || !atBase) {
+        zonePending.current.delete(zone.id)
+        changed = true
+      }
+    }
+    if (changed) setZoneTick((t) => t + 1)
+  }, [data.zones, zonePositions, viewId])
+  const saveZoneMove = useCallback(
+    (id: string, x: number, y: number, inView: string | null) => {
+      const save = inView ? upsertViewZonePosition(projectId, inView, id, x, y) : updateZoneRect(id, { x, y })
+      save.catch((err: unknown) => {
+        console.error(err)
+        const p = zonePending.current.get(id)
+        if (p && p.x === x && p.y === y && p.viewId === inView) {
+          zonePending.current.delete(id)
+          const r = zoneDataRect(id)
+          if (r && !zoneLive.current.has(id)) placeZone(id, r)
+          setZoneTick((t) => t + 1)
+        }
+        setMoveFailed(true)
+      })
+    },
+    [projectId, zoneDataRect, placeZone],
+  )
+  const moveZone = useCallback(
+    (id: string, x: number, y: number) => {
+      const base = zoneDataRect(id)
+      if (!base) return
+      const now = zoneRectNow(id, base)
+      const r = { x, y, w: now.w, h: now.h }
+      zoneLive.current.set(id, r)
+      placeZone(id, r)
+    },
+    [zoneDataRect, zoneRectNow, placeZone],
+  )
+  const dropZone = useCallback(
+    (id: string, x: number, y: number) => {
+      const base = zoneDataRect(id)
+      if (!base) {
+        zoneLive.current.delete(id)
+        return
+      }
+      const now = zoneRectNow(id, base)
+      zoneLive.current.delete(id)
+      const rx = Math.round(x)
+      const ry = Math.round(y)
+      const old = zonePending.current.get(id)
+      zonePending.current.set(id, {
+        x: rx,
+        y: ry,
+        w: now.w,
+        h: now.h,
+        baseX: old?.baseX ?? base.x,
+        baseY: old?.baseY ?? base.y,
+        baseW: old?.baseW ?? base.w,
+        baseH: old?.baseH ?? base.h,
+        viewId,
+      })
+      placeZone(id, { x: rx, y: ry, w: now.w, h: now.h })
+      saveZoneMove(id, rx, ry, viewId)
+    },
+    [zoneDataRect, zoneRectNow, placeZone, saveZoneMove, viewId],
+  )
+  const cancelZone = useCallback(
+    (id: string, x: number, y: number) => {
+      const base = zoneDataRect(id)
+      const now = base ? zoneRectNow(id, base) : null
+      zoneLive.current.delete(id)
+      if (now) placeZone(id, { x, y, w: now.w, h: now.h })
+    },
+    [zoneDataRect, zoneRectNow, placeZone],
+  )
+
   // ---------- selection ----------
   // Ctrl (Cmd) marquee or Ctrl click picks cards and packs; a drag on any
   // member moves them all by the same delta (lib/selection). Mouse only.
@@ -551,6 +685,17 @@ export function Board({
 
   const getTargetPos = useCallback(
     (t: DragTarget) => {
+      // The corner resize is not wired yet, so a press on it never lifts.
+      if (t.kind === 'zoneResize') return null
+      if (t.kind === 'zone') {
+        const r = zoneDataRect(t.id)
+        if (!r) return null
+        // A box press never drags the Ctrl selection.
+        groupStart.current = null
+        clearSelection()
+        const now = zoneRectNow(t.id, r)
+        return { x: now.x, y: now.y }
+      }
       const own = t.kind === 'card' ? getPos(t.id) : (() => {
         const pos = packDataPos(t.id)
         return pos ? packPos(t.id, pos) : null
@@ -575,10 +720,16 @@ export function Board({
       groupStart.current = start
       return own
     },
-    [getPos, packDataPos, packPos, clearSelection],
+    [getPos, packDataPos, packPos, clearSelection, zoneDataRect, zoneRectNow],
   )
   const onTargetMove = useCallback(
     (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'zoneResize') return
+      if (t.kind === 'zone') {
+        moveZone(t.id, x, y)
+        wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+        return
+      }
       const group = groupStart.current
       if (group) {
         for (const [key, p] of groupMoves(group, t, x, y)) {
@@ -590,10 +741,17 @@ export function Board({
       else movePack(t.id, x, y)
       if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
     },
-    [onMove, movePack],
+    [onMove, movePack, moveZone],
   )
   const onTargetDrop = useCallback(
     (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'zoneResize') return
+      if (t.kind === 'zone') {
+        groupStart.current = null
+        dropZone(t.id, x, y)
+        wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+        return
+      }
       const group = groupStart.current
       groupStart.current = null
       if (group) {
@@ -606,10 +764,17 @@ export function Board({
       else dropPack(t.id, x, y)
       if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
     },
-    [onDrop, dropPack],
+    [onDrop, dropPack, dropZone],
   )
   const onTargetCancel = useCallback(
     (t: DragTarget, x: number, y: number) => {
+      if (t.kind === 'zoneResize') return
+      if (t.kind === 'zone') {
+        groupStart.current = null
+        cancelZone(t.id, x, y)
+        wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+        return
+      }
       const group = groupStart.current
       groupStart.current = null
       if (group) {
@@ -622,9 +787,10 @@ export function Board({
       else cancelPack(t.id, x, y)
       if (group || t.kind === 'pack') wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
     },
-    [onCancel, cancelPack],
+    [onCancel, cancelPack, cancelZone],
   )
-  // A pack title tap reaches the button's own onClick (fit), nothing to do here.
+  // A pack title tap reaches the button's own onClick (fit), and a box name
+  // tap its own onClick (open the box), nothing to do here for either.
   const onTargetTap = useCallback(
     (t: DragTarget) => {
       if (t.kind === 'card') onTap(t.id)
@@ -644,10 +810,11 @@ export function Board({
   // Everything lifted: the dragged target, or the whole selection when it is a member.
   const lifted = useMemo<Selection>(() => {
     const d = drag.dragging
-    if (!d) return EMPTY_SELECTION
+    if (!d || d.kind === 'zone' || d.kind === 'zoneResize') return EMPTY_SELECTION
     if (isMember(selection, d)) return selection
     return d.kind === 'card' ? { cards: new Set([d.id]), packs: new Set() } : { cards: new Set(), packs: new Set([d.id]) }
   }, [drag.dragging, selection])
+  const liftedZone = drag.dragging && (drag.dragging.kind === 'zone' || drag.dragging.kind === 'zoneResize') ? drag.dragging.id : null
   useLayoutEffect(() => {
     draggingRef.current = lifted.cards
   }, [lifted])
@@ -736,6 +903,9 @@ export function Board({
     }
     boardRef.current?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
       rects.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
+    })
+    boardRef.current?.querySelectorAll<HTMLElement>('[data-zone]').forEach((z) => {
+      rects.push({ x: z.offsetLeft, y: z.offsetTop, w: z.offsetWidth, h: z.offsetHeight })
     })
     fit(rects, padding(panelOpen), animate)
   }, [fit, padding, panelOpen])
@@ -853,6 +1023,9 @@ export function Board({
       >
         <Wires ref={wiresRef} items={wireItems} viewRef={viewRef} gestureRef={vp.gestureRef} hotIds={hotIds} onFrame={stepFrame} />
         <div ref={vp.worldRef} className="hg-world" {...drag.bind}>
+          {data.zones.map((z) => (
+            <Zone key={z.id} zone={z} rect={zoneRectNow(z.id, zoneRect(z, zonePositions))} lifted={liftedZone === z.id} setEl={setZoneEl} onOpen={onOpenZone} />
+          ))}
           {rows.map(({ pkg, modules }) => (
             <PackColumn
               key={pkg.id}

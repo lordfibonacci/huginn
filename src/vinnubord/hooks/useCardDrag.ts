@@ -6,10 +6,13 @@ import type { Gesture } from './useViewport'
 
 // Card and pack drag and tap. Spread bind on the world layer (inside the
 // board element that carries useViewport's bind), so these handlers run
-// before the board's. Two kinds of target: an item card ([data-card], the
+// before the board's. Targets: an item card ([data-card], the
 // whole card is the grip) and a pack column ([data-grip="pack"] inside
 // [data-pack], the title button is the grip and the column moves with its
-// modules). Both follow the same press rules below.
+// modules). A box name ([data-grip="zone"] inside [data-zone]) and a box
+// corner ([data-grip="zone-resize"] inside [data-zone]) are the third and
+// fourth kinds and follow the pack rules; a tap on the name reaches the
+// button's own onClick. All follow the same press rules below.
 //
 // Mouse and pen: pointerdown on a grip takes the target at once (capture,
 // no board pan), but it shows as lifted only once the press moves more than
@@ -41,8 +44,10 @@ const HAPTIC_MS = 10
 const CLICK_SWALLOW_MS = 500
 const GRIP = '[data-card], [data-grip]'
 
-export type DragKind = 'card' | 'pack'
-export type DragTarget = { kind: DragKind; id: string }
+export type DragKind = 'card' | 'pack' | 'zone' | 'zoneResize'
+// One object type per kind, so a check on kind narrows the target (a
+// zoneResize is not a selection target).
+export type DragTarget = { [K in DragKind]: { kind: K; id: string } }[DragKind]
 
 // The target a grip element belongs to, null when it is not a grip.
 export function dragTargetOf(el: HTMLElement): DragTarget | null {
@@ -51,6 +56,10 @@ export function dragTargetOf(el: HTMLElement): DragTarget | null {
   if (el.dataset.grip === 'pack') {
     const id = el.closest<HTMLElement>('[data-pack]')?.dataset.pack
     if (id) return { kind: 'pack', id }
+  }
+  if (el.dataset.grip === 'zone' || el.dataset.grip === 'zone-resize') {
+    const id = el.closest<HTMLElement>('[data-zone]')?.dataset.zone
+    if (id) return { kind: el.dataset.grip === 'zone' ? 'zone' : 'zoneResize', id }
   }
   return null
 }

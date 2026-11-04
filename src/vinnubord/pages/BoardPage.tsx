@@ -86,6 +86,8 @@ export function BoardPage() {
     setOpenModuleId(id)
     setSelectedId(null)
   }, [])
+  // The box panel comes with Task 7, which fills this.
+  const openZone = useCallback((_id: string) => {}, [])
   const closePanel = useCallback(() => select(null), [select])
   const listPrefs = useListPrefs(project?.id ?? '', narrow)
 
@@ -342,6 +344,7 @@ export function BoardPage() {
         selectedId={selectedId}
         onSelect={select}
         onOpenModule={openModule}
+        onOpenZone={openZone}
         listOpen={listShown && !narrow}
         panelOpen={panelOpen}
         panelWide={readerOpen}
