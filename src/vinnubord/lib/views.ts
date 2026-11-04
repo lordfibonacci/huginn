@@ -1,5 +1,7 @@
 // Saved views: a filter plus the viewer-shared card positions of that view.
 // The local filter only dims inside a view, the view decides what is drawn.
+// A closed card within the linger window has no tone, so a view without tones
+// draws it and a view with tones does not.
 
 import { matches, parseFilter, prunePackages, type Filter } from './filters'
 import { BUCKET_TONE, TONES, countBucket, isOnBoard } from './status'
@@ -34,16 +36,18 @@ export function normalizeViewFilter(
   }
 }
 
-// The on board items a view draws. Without a view, all of them. Packages that
-// no module belongs to any more are ignored, like in the local filter.
+// The on board items a view draws at now. Without a view, all of them.
+// Packages that no module belongs to any more are ignored, like in the local
+// filter.
 export function itemsInView(
   items: Item[],
   modules: Module[],
   actions: Action[],
   viewerId: string,
   view: View | null,
+  now = Date.now(),
 ): Item[] {
-  const onBoard = items.filter(isOnBoard)
+  const onBoard = items.filter((item) => isOnBoard(item, now))
   if (!view) return onBoard
   const packageOf = new Map(modules.map((m) => [m.id, m.package_id]))
   const known = new Set<string>()
@@ -51,9 +55,8 @@ export function itemsInView(
   const filter = prunePackages(viewFilterOf(view), known)
   return onBoard.filter((item) => {
     const bucket = countBucket(item, actions, viewerId)
-    if (!bucket) return false
     const packageId = item.module_id ? (packageOf.get(item.module_id) ?? null) : null
-    return matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: false, text: '' }, filter)
+    return matches(item, { tone: bucket ? BUCKET_TONE[bucket] : null, packageId, unread: false, text: '' }, filter)
   })
 }
 
@@ -97,8 +100,9 @@ export function viewCounts(
   modules: Module[],
   actions: Action[],
   viewerId: string,
+  now = Date.now(),
 ): Map<string, number> {
   const counts = new Map<string, number>()
-  for (const v of views) counts.set(v.id, itemsInView(items, modules, actions, viewerId, v).length)
+  for (const v of views) counts.set(v.id, itemsInView(items, modules, actions, viewerId, v, now).length)
   return counts
 }

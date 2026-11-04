@@ -69,6 +69,12 @@ describe('filters', () => {
     expect(matches(item(), ctx('syning'), withQuery(emptyFilter(), 'þyning')), 'þ is not t').toBe(false)
     expect(matches(item(), ctx('abc'), withQuery(emptyFilter(), '   ')), 'blank query').toBe(true)
   })
+  it('a null tone fails a tone filter and passes without one', () => {
+    const f = { ...emptyFilter(), tones: new Set<Tone>(['stone']) }
+    expect(matches(item(), { tone: null, packageId: null, unread: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: null, packageId: null, unread: false, text: 'lokað' }, { ...emptyFilter(), q: 'lok' })).toBe(true)
+    expect(matches(item({ tags: ['a'] }), { tone: null, packageId: 'p1', unread: false, text: '' }, { ...emptyFilter(), packages: new Set(['p1']) })).toBe(true)
+  })
 })
 
 describe('filter storage', () => {
@@ -174,6 +180,13 @@ describe('packageCounts', () => {
       { key: 'a', label: 'A', count: 2 },
       { key: 'b', label: 'B', count: 0 },
     ])
+  })
+  it('tagCounts and packageCounts skip closed items', () => {
+    const packages = [pk('p1', 1)]
+    const modules = [mod('m1', 'p1')]
+    const closed = item({ id: 'c', status: 'done', closed_at: '2026-11-04T00:00:00Z', tags: ['x'], module_id: 'm1' })
+    expect(tagCounts([closed], new Set())).toEqual([])
+    expect(packageCounts(packages, modules, [closed])[0].count).toBe(0)
   })
 })
 

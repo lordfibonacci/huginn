@@ -93,6 +93,16 @@ describe('itemsInView', () => {
     const items = [item({ id: 'a', status: 'done' }), item({ id: 'b', status: 'dropped' }), item({ id: 'c' })]
     expect(ids(itemsInView(items, [], NO_ACTIONS, ME, view()))).toEqual(['c'])
   })
+
+  it('a closed item within the linger window draws in a view without tones and not in one with tones', () => {
+    const now = Date.parse('2026-11-04T12:00:00Z')
+    const closed = item({ id: 'c', status: 'done', closed_at: '2026-11-03T12:00:00Z', module_id: 'm1' })
+    const old = item({ id: 'o', status: 'done', closed_at: '2026-10-20T12:00:00Z', module_id: 'm1' })
+    expect(itemsInView([closed, old], [module()], [], ME, null, now).map((i) => i.id)).toEqual(['c'])
+    expect(itemsInView([closed], [module()], [], ME, view({ filter: {} }), now).map((i) => i.id)).toEqual(['c'])
+    expect(itemsInView([closed], [module()], [], ME, view({ filter: { tones: ['stone'] } }), now)).toEqual([])
+    expect(itemsInView([closed], [module()], [], ME, view({ filter: { packages: ['p1'] } }), now).map((i) => i.id)).toEqual(['c'])
+  })
 })
 
 describe('positions', () => {

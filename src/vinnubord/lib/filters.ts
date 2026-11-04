@@ -1,5 +1,5 @@
 import { foldSearch } from './search'
-import { isOnBoard, type Tone } from './status'
+import { isOpen, type Tone } from './status'
 import type { Item, Module, Package } from './types'
 
 export type Filter = {
@@ -18,13 +18,15 @@ export function isActive(f: Filter): boolean {
   return f.tones.size > 0 || f.packages.size > 0 || f.tags.size > 0 || f.q.trim() !== '' || f.unread
 }
 
+// A null tone (a closed card, which has no count bucket) fails any tone
+// filter and passes when no tone is picked.
 export function matches(
   item: Item,
-  ctx: { tone: Tone; packageId: string | null; unread: boolean; text: string },
+  ctx: { tone: Tone | null; packageId: string | null; unread: boolean; text: string },
   f: Filter,
 ): boolean {
   if (f.unread && !ctx.unread) return false
-  if (f.tones.size > 0 && !f.tones.has(ctx.tone)) return false
+  if (f.tones.size > 0 && (ctx.tone === null || !f.tones.has(ctx.tone))) return false
   if (f.packages.size > 0 && (ctx.packageId === null || !f.packages.has(ctx.packageId))) return false
   if (f.tags.size > 0 && !item.tags.some((t) => f.tags.has(t))) return false
   const q = foldSearch(f.q)
@@ -107,13 +109,13 @@ export function prunePackages(f: Filter, known: Set<string>): Filter {
 
 export type FilterOption = { key: string; label: string; count: number }
 
-// Tags of the items on the board, most used first, then by name. A selected
+// Tags of the open items, most used first, then by name. A selected
 // tag that no open item carries any more stays with count 0, so it can still
 // be turned off from the menu.
 export function tagCounts(items: Item[], selected: Set<string>): FilterOption[] {
   const counts = new Map<string, number>()
   for (const item of items) {
-    if (!isOnBoard(item)) continue
+    if (!isOpen(item)) continue
     for (const tag of new Set(item.tags)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
   }
   for (const tag of selected) if (!counts.has(tag)) counts.set(tag, 0)
@@ -127,7 +129,7 @@ export function packageCounts(packages: Package[], modules: Module[], items: Ite
   const packageOf = new Map(modules.map((m) => [m.id, m.package_id]))
   const counts = new Map<string, number>()
   for (const item of items) {
-    if (!isOnBoard(item) || !item.module_id) continue
+    if (!isOpen(item) || !item.module_id) continue
     const pkg = packageOf.get(item.module_id)
     if (pkg) counts.set(pkg, (counts.get(pkg) ?? 0) + 1)
   }
