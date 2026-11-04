@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { oneLine, shortId, statusMarkdown } from './format.mjs'
-import { PLAN_NAMES, STATUS_NAMES, isOnBoard } from './status.mjs'
+import { PLAN_NAMES, STATUS_NAMES, isOpen } from './status.mjs'
 
 // Pure side of huginn sync: which items and files go into docs/huginn, under
 // which names, what item.md says and what needs writing. No fs and no
@@ -139,7 +139,7 @@ function withSuffix(name, suffix) {
 export function itemsToMirror(data, now) {
   const from = now - DONE_WINDOW_DAYS * DAY_MS
   return (data.items ?? []).filter(
-    (i) => isOnBoard(i) || (i.status === 'done' && i.closed_at && stampValue(i.closed_at) >= from),
+    (i) => isOpen(i) || (i.status === 'done' && i.closed_at && stampValue(i.closed_at) >= from),
   )
 }
 

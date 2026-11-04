@@ -14,8 +14,21 @@ export const STATUS_NAMES = {
 // Plan status names, shared by the write commands and the mirror.
 export const PLAN_NAMES = { todo: 'Á eftir', building: 'Í byggingu', done: 'Lokið' }
 
-export function isOnBoard(item) {
+// A closed item stays on the board CLOSED_LINGER_DAYS days after closed_at.
+// Copies of the web rule, parity pinned.
+export const CLOSED_LINGER_DAYS = 3
+
+export function isOpen(item) {
   return item.status !== 'done' && item.status !== 'dropped'
+}
+
+// A closed item without closed_at, or with one that does not parse, is off.
+export function isOnBoard(item, now = Date.now()) {
+  if (isOpen(item)) return true
+  if (!item.closed_at) return false
+  const closed = Date.parse(item.closed_at)
+  if (Number.isNaN(closed)) return false
+  return now - closed <= CLOSED_LINGER_DAYS * 86_400_000
 }
 
 // Whether an item waits for a user: waiting_on is that user, or the user owns

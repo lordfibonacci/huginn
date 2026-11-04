@@ -458,10 +458,11 @@ export function boardRects(board) {
 // what is on the board (the origin on an empty board). Obstacles are pack
 // columns and open cards. When every spot placeNewCard tries is taken, the
 // card goes straight below everything in that column, so it never overlaps.
-export function placeItem(board, moduleId, card = { title: '', tags: [] }) {
+export function placeItem(board, moduleId, card = { title: '', tags: [] }, now = Date.now()) {
   const { packs, modules } = boardRects(board)
   const cards = (board.items ?? [])
-    .filter(isOnBoard)
+    // a closed card still on the board is an obstacle
+    .filter((i) => isOnBoard(i, now))
     .map((i) => ({ x: i.pos_x, y: i.pos_y, w: S.cardW, h: estimateCardHeight(i, board) }))
   const obstacles = [...packs, ...cards]
   // A new card is just changed and sits in its module, so it gets the stamp

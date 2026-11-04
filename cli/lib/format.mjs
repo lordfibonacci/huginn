@@ -1,4 +1,4 @@
-import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
+import { STATUS_NAMES, isOpen, toneOf, waitsFor } from './status.mjs'
 
 // Readable output of the CLI. Everything here is deterministic: the same data
 // gives the same string byte for byte (ISO dates, stable sorts, no "today").
@@ -107,7 +107,7 @@ function waitingOrder(userIds, participants) {
 // by the web's waitsFor rule, in the order statusMarkdown lists the
 // "Bíður <X>" groups. Every participant is listed, zero included.
 export function briefCounts(data, participants) {
-  const open = (data.items ?? []).filter(isOnBoard)
+  const open = (data.items ?? []).filter(isOpen)
   const actions = data.actions ?? []
   const ids = waitingOrder(participants.map((p) => p.user_id), participants)
   return ids.map((userId) => {
@@ -138,7 +138,7 @@ export const STATUS_NOTE =
 
 // Groups in fixed order (ruling R2), empty groups left out.
 export function statusMarkdown(data, participants) {
-  const open = (data.items ?? []).filter(isOnBoard)
+  const open = (data.items ?? []).filter(isOpen)
   const groups = []
   const add = (heading, items) => {
     if (items.length) groups.push({ heading, items })

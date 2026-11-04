@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import * as web from '../../src/vinnubord/lib/status.ts'
 import * as webWindow from '../../src/vinnubord/lib/boardWindow.ts'
 import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './client.mjs'
-import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
+import { CLOSED_LINGER_DAYS, STATUS_NAMES, isOnBoard, isOpen, toneOf, waitsFor } from './status.mjs'
 import { readFileSync } from 'node:fs'
 import * as webUpload from '../../src/vinnubord/lib/upload.ts'
 import * as webTags from '../../src/vinnubord/lib/tags.ts'
@@ -40,10 +40,16 @@ describe('status parity with the web', () => {
     expect(STATUS_NAMES).toEqual(web.STATUS_NAMES)
   })
 
-  it('isOnBoard agrees for every status', () => {
+  it('isOpen and isOnBoard agree for every status and closed_at', () => {
+    const now = Date.parse('2026-11-04T12:00:00Z')
+    const closedAts = [null, new Date(now - 2 * 86_400_000).toISOString(), new Date(now - 4 * 86_400_000).toISOString()]
     for (const status of STATUSES) {
-      expect(isOnBoard({ status }), status).toBe(web.isOnBoard({ status }))
+      expect(isOpen({ status }), status).toBe(web.isOpen({ status }))
+      for (const closed_at of closedAts) {
+        expect(isOnBoard({ status, closed_at }, now), `${status} ${closed_at}`).toBe(web.isOnBoard({ status, closed_at }, now))
+      }
     }
+    expect(CLOSED_LINGER_DAYS).toBe(web.CLOSED_LINGER_DAYS)
   })
 
   it('toneOf matches itemTone seen by no particular viewer', () => {
