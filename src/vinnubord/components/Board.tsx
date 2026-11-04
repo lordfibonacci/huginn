@@ -137,7 +137,13 @@ export type BoardHandle = {
 // means the save landed, anything else means someone else moved the card.
 // viewId is the view it was dropped in (null for the main board): switching
 // views drops the pending, the card then rests where the new view has it.
-type Pending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null }
+// via holds earlier drops in the same view whose saves were sent but not yet
+// seen in the data when this one replaced them (a quick second drop, an
+// arrange undone at once). Data at a via point is that save arriving late:
+// stale like base, and it spends the via points up to it. While via is not
+// empty, data at pos may still be the stale base (an undo back to it), so the
+// pending stays until the late saves have shown.
+type Pending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null; via: Point[] }
 type CardSpring = Spring & { pending: Pending | null }
 // A debounced position save that has not been sent yet. It keeps the view it
 // was dropped in, so a view switch during the debounce cannot redirect it.
@@ -315,14 +321,19 @@ export function Board({
         carried.current.delete(item.id)
         s =
           c && !carrySpent(c, { x: px, y: py }, viewId)
-            ? { x: c.x, y: c.y, tx: c.x, ty: c.y, vx: 0, vy: 0, pending: { x: c.x, y: c.y, baseX: c.baseX, baseY: c.baseY, viewId } }
+            ? { x: c.x, y: c.y, tx: c.x, ty: c.y, vx: 0, vy: 0, pending: { x: c.x, y: c.y, baseX: c.baseX, baseY: c.baseY, viewId, via: [] } }
             : { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
         springs.current.set(item.id, s)
       } else if (!draggingRef.current.has(item.id)) {
         const p = s.pending
         if (p && p.viewId !== viewId) s.pending = null
-        else if (p && px === p.x && py === p.y) s.pending = null
-        else if (p && !(px === p.baseX && py === p.baseY)) s.pending = null
+        else if (p) {
+          const late = p.via.findIndex((v) => v.x === px && v.y === py)
+          if (late >= 0) p.via = p.via.slice(late + 1)
+          else if (px === p.x && py === p.y) {
+            if (p.via.length === 0) s.pending = null
+          } else if (!(px === p.baseX && py === p.baseY)) s.pending = null
+        }
         if (!s.pending) {
           s.tx = px
           s.ty = py
@@ -439,12 +450,17 @@ export function Board({
       const ry = Math.round(y)
       s.tx = rx
       s.ty = ry
+      // The replaced drop joins via only when its save already went out; a
+      // save still in its debounce is cancelled below and never arrives.
+      const prev = s.pending && s.pending.viewId === viewId ? s.pending : null
+      const via = prev ? (saveJobs.current.has(id) ? prev.via : [...prev.via, { x: prev.x, y: prev.y }]) : []
       s.pending = {
         x: rx,
         y: ry,
         baseX: s.pending?.baseX ?? pos.x,
         baseY: s.pending?.baseY ?? pos.y,
         viewId,
+        via,
       }
       wiresRef.current?.burst(id, DROP_BURST)
       const jobs = saveJobs.current
