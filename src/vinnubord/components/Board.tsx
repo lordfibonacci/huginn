@@ -24,6 +24,7 @@ import {
   upsertViewZonePosition,
 } from '../lib/api'
 import type { CardModel } from '../lib/cards'
+import { carrySpent, carryStep, type Carry } from '../lib/carry'
 import { isActive, type Filter } from '../lib/filters'
 import {
   DEFAULT_PADDING,
@@ -268,6 +269,10 @@ export function Board({
   const posById = useRef(new Map<string, Point>())
   // Cards being dragged right now: data never retargets their springs.
   const draggingRef = useRef<ReadonlySet<string>>(new Set())
+  // Hidden cards of folded packs whose place is on its way to the database
+  // (lib/carry): a folded pack drop, or a card's own drop still pending when
+  // its pack folded. Spent like a pending once the data shows it.
+  const carried = useRef(new Map<string, Carry>())
   const reduced = useRef(prefersReducedMotion())
 
   useEffect(() => {
@@ -300,7 +305,14 @@ export function Board({
       const { x: px, y: py } = posById.current.get(item.id) as Point
       let s = springs.current.get(item.id)
       if (!s) {
-        s = { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
+        // A carried card drawn again (its pack opened) before the data shows
+        // the carry starts there, with the carry as its pending.
+        const c = carried.current.get(item.id)
+        carried.current.delete(item.id)
+        s =
+          c && !carrySpent(c, { x: px, y: py }, viewId)
+            ? { x: c.x, y: c.y, tx: c.x, ty: c.y, vx: 0, vy: 0, pending: { x: c.x, y: c.y, baseX: c.baseX, baseY: c.baseY, viewId } }
+            : { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
         springs.current.set(item.id, s)
       } else if (!draggingRef.current.has(item.id)) {
         const p = s.pending
@@ -317,12 +329,21 @@ export function Board({
     }
     // A card that leaves the board forgets its entry delay too, so when a view
     // switch brings it back it pops in at once instead of waiting its load turn.
-    for (const id of springs.current.keys()) {
+    // A card that leaves with a drop still pending in this view (its pack
+    // folded) keeps that drop as a carry, so a folded drag starts from it.
+    for (const [id, s] of springs.current) {
       if (seen.has(id)) continue
+      const p = s.pending
+      if (p && p.viewId === viewId) carried.current.set(id, { x: p.x, y: p.y, baseX: p.baseX, baseY: p.baseY, viewId })
       springs.current.delete(id)
       delays.current.set(id, 0)
     }
-  }, [onBoard, positions, viewId])
+    const byId = new Map(items.map((i) => [i.id, i]))
+    for (const [id, c] of carried.current) {
+      const item = byId.get(id)
+      if (!item || carrySpent(c, positionOf(item, positions), viewId)) carried.current.delete(id)
+    }
+  }, [onBoard, items, positions, viewId])
 
   // One frame of every moving spring, called by Wires before it reads rects.
   // Returns whether any card moved, so Wires can rest when none did.
@@ -366,6 +387,8 @@ export function Board({
             s.ty = pos.y
           }
         }
+        const c = carried.current.get(id)
+        if (c && c.x === x && c.y === y && c.viewId === inView) carried.current.delete(id)
         setMoveFailed(true)
       })
     },
@@ -531,17 +554,27 @@ export function Board({
       placePack(id, { x: rx, y: ry })
       // A folded pack takes its hidden cards along (spec 4.4): they have no
       // element and no spring, so the drop writes them straight to the
-      // database by the pack's delta.
+      // database by the pack's delta. The delta goes on each card's live
+      // carry when it has one (a quick second drop, a hand drop still on its
+      // way), else on the data. A hand drop still waiting out its debounce is
+      // in that carry already, so the carry write replaces it.
       if (collapsedRef.current.has(id)) {
         const from = old ?? base
         const dx = rx - from.x
         const dy = ry - from.y
         if (dx !== 0 || dy !== 0) {
           const hidden = hiddenRef.current
+          const jobs = saveJobs.current
           for (const item of items) {
             if (!hidden.has(item.id) || !item.module_id || packOfModule.get(item.module_id) !== id) continue
-            const p = positionOf(item, positions)
-            savePosition(item.id, Math.round(p.x + dx), Math.round(p.y + dy), viewId)
+            const c = carryStep(positionOf(item, positions), carried.current.get(item.id), viewId, dx, dy)
+            carried.current.set(item.id, c)
+            const job = jobs.get(item.id)
+            if (job && job.viewId === viewId) {
+              clearTimeout(job.timer)
+              jobs.delete(item.id)
+            }
+            savePosition(item.id, c.x, c.y, viewId)
           }
         }
       }
@@ -1124,12 +1157,17 @@ export function Board({
           w = el.offsetWidth || w
         }
         // Cards with no element still have a place, so a new card does not
-        // land on one of them either: cards a view hides and cards of folded
-        // packs. isOnBoard reads its own clock here, one call per new card: a
-        // second of drift from the board's clock is harmless.
+        // land on one of them either. A card the view hides counts at its own
+        // place on the main board, where a new card made in a view is placed;
+        // a card of a folded pack counts where this board has it (its carry,
+        // else its place in the active view). isOnBoard reads its own clock
+        // here, one call per new card: a second of drift from the board's
+        // clock is harmless.
         for (const item of data.items) {
           if (!isOnBoard(item) || els.current.has(item.id)) continue
-          const p = positionOf(item, positions)
+          const p = hiddenIds.has(item.id)
+            ? (carried.current.get(item.id) ?? positionOf(item, positions))
+            : { x: item.pos_x, y: item.pos_y }
           obstacles.push({ x: p.x, y: p.y, w: NEW_CARD_SIZE.w, h: NEW_CARD_SIZE.h })
         }
         host?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
@@ -1173,7 +1211,7 @@ export function Board({
         if (itemId) els.current.get(itemId)?.classList.add('hg-card-peek')
       },
     }),
-    [viewRef, data.items, positions, packOfModule, animateTo, padding],
+    [viewRef, data.items, positions, hiddenIds, packOfModule, animateTo, padding],
   )
 
   const onBoardClick = useCallback(
