@@ -331,6 +331,14 @@
       "waitingOn": "Bíður eftir",
       "whereAreWe": "Hvar erum við"
     },
+    "selection": {
+      "arrange": "Raða",
+      "arranged": "Raðað",
+      "cancel": "Hætta við",
+      "count_one": "{{count}} kort valið",
+      "count_other": "{{count}} kort valin",
+      "undo": "Afturkalla"
+    },
     "settings": {
       "add": "Bæta við",
       "back": "Aftur á borðið",

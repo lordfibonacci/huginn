@@ -391,6 +391,14 @@
       "noModule": "No module",
       "empty": "No item matches"
     },
+    "selection": {
+      "count_one": "{{count}} card selected",
+      "count_other": "{{count}} cards selected",
+      "arrange": "Arrange",
+      "arranged": "Arranged",
+      "undo": "Undo",
+      "cancel": "Cancel"
+    },
     "top": {
       "project": "Project",
       "counters": "Status filter",

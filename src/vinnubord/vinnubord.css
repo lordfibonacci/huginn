@@ -122,6 +122,12 @@
   --hg-sel-pre-color: color-mix(in oklab, var(--hg-teal) 55%, transparent);
   --hg-marquee-fill: color-mix(in oklab, var(--hg-teal) 12%, transparent);
   --hg-marquee-z: 8;
+  /* The selection bar above the zoom row while two or more cards are selected. */
+  --hg-sel-bar-z: 25;
+  --hg-sel-bar-gap: 10px;
+  --hg-sel-bar-pad: 0 8px 0 16px;
+  --hg-sel-bar-size: 13.5px;
+  --hg-sel-bar-lift: 12px;
   --hg-chip-bg: rgba(255, 255, 255, 0.05);
   --hg-radius-chip: 8px;
   --hg-chip-size: 11px;
@@ -820,6 +826,21 @@
   border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-zone-border), transparent);
 }
 .hg-zone-draft.hg-on { display: block; }
+
+/* Selection bar: bottom centre, above the toast's place so the two never overlap. */
+.hg-sel-bar {
+  position: absolute; left: 50%; bottom: calc(var(--hg-control-stack) + var(--hg-touch) + var(--hg-sel-bar-lift)); translate: -50% 0;
+  z-index: var(--hg-sel-bar-z); display: flex; align-items: center; gap: var(--hg-sel-bar-gap); min-height: var(--hg-touch);
+  padding: var(--hg-sel-bar-pad); border-radius: var(--hg-radius-control); background: var(--hg-menu-bg); border: 1px solid var(--hg-line);
+  box-shadow: var(--hg-menu-shadow); backdrop-filter: var(--hg-blur-control); -webkit-backdrop-filter: var(--hg-blur-control);
+  color: var(--hg-ink); font-family: var(--hg-font); font-size: var(--hg-sel-bar-size); font-weight: 600; white-space: nowrap;
+  animation: hg-rise var(--hg-dur-panel) var(--hg-spring);
+}
+.hg-sel-bar button {
+  min-height: var(--hg-touch); padding: 0 var(--hg-control-inset); border-radius: var(--hg-radius-control-inner); border: none;
+  background: var(--hg-control-hover); color: var(--hg-ink); font: inherit; font-weight: 700; cursor: pointer;
+}
+.hg-sel-bar button:hover, .hg-sel-bar button:focus-visible { background: var(--hg-surface-2); outline: none; }
 .hg-board.hg-board-draw { cursor: crosshair; }
 .hg-card-st {
   display: flex; align-items: center; gap: var(--hg-card-row-gap); font-size: var(--hg-card-st-size); color: var(--hg-ink-2);

@@ -24,6 +24,7 @@ import {
   upsertViewZonePosition,
 } from '../lib/api'
 import type { CardModel } from '../lib/cards'
+import { arrangeGrid } from '../lib/arrange'
 import { carrySpent, carryStep, type Carry } from '../lib/carry'
 import { isActive, type Filter } from '../lib/filters'
 import {
@@ -63,6 +64,7 @@ import { clampZoneSize, zoneMembers, zonePositionsOf, zoneRect } from '../lib/zo
 import { Aurora } from './Aurora'
 import { ItemCard } from './ItemCard'
 import { PackColumn } from './PackColumn'
+import { SelectionBar } from './SelectionBar'
 import { Wires, type WireItem, type WiresHandle } from './Wires'
 import { Zone } from './Zone'
 
@@ -149,6 +151,8 @@ type ZonePending = { x: number; y: number; w: number; h: number; baseX: number; 
 // Wires stay awake this long after each pack or group move, so they follow
 // the modules and the cards that moved outside the spring loop's notice.
 const PACK_MOVE_WAKE_MS = 100
+// An arrange of the selected cards can be undone from the selection bar this long.
+const ARRANGE_UNDO_MS = 8000
 
 const SAVE_DEBOUNCE_MS = 300
 const ENTRY_START_MS = 150
@@ -856,6 +860,44 @@ export function Board({
     return () => window.removeEventListener('keydown', onKey)
   }, [clearSelection])
 
+  // ---------- arrange ----------
+  // Two or more selected cards can be laid out in a grid (lib/arrange) from
+  // the selection bar. Each card drops through onDrop, so the usual save rule
+  // holds (view or main board, debounced). undo keeps the places before the
+  // last arrange for ARRANGE_UNDO_MS, or until the selection changes.
+  const [undo, setUndo] = useState<Map<string, Point> | null>(null)
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stopUndoTimer = useCallback(() => {
+    if (undoTimer.current) clearTimeout(undoTimer.current)
+    undoTimer.current = null
+  }, [])
+  const arrange = useCallback(() => {
+    const boxes = cardBoxes().filter((b) => selection.cards.has(b.id))
+    if (boxes.length < 2) return
+    const { next, prev } = arrangeGrid(boxes)
+    for (const [id, p] of next) onDrop(id, p.x, p.y)
+    wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    setUndo(prev)
+    stopUndoTimer()
+    undoTimer.current = setTimeout(() => {
+      undoTimer.current = null
+      setUndo(null)
+    }, ARRANGE_UNDO_MS)
+  }, [cardBoxes, selection, onDrop, stopUndoTimer])
+  const undoArrange = useCallback(() => {
+    if (undo) for (const [id, p] of undo) onDrop(id, p.x, p.y)
+    wiresRef.current?.wake(PACK_MOVE_WAKE_MS)
+    setUndo(null)
+    stopUndoTimer()
+  }, [undo, onDrop, stopUndoTimer])
+  // Every marquee, toggle, Esc or clear makes a new selection object, and
+  // that ends the undo. arrange itself leaves the selection as it is.
+  useEffect(() => {
+    setUndo(null)
+    stopUndoTimer()
+  }, [selection, stopUndoTimer])
+  useEffect(() => stopUndoTimer, [stopUndoTimer])
+
   const getTargetPos = useCallback(
     (t: DragTarget) => {
       if (t.kind === 'zoneResize') {
@@ -1314,6 +1356,9 @@ export function Board({
           </svg>
         </button>
       </div>
+      {(selection.cards.size >= 2 || undo !== null) && (
+        <SelectionBar count={selection.cards.size} undoable={undo !== null} onArrange={arrange} onUndo={undoArrange} onCancel={clearSelection} />
+      )}
       {moveFailed && (
         <div className="hg-notice" role="status">
           <span>{t('vinnubord.board.moveError')}</span>
