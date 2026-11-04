@@ -1,11 +1,11 @@
 # 14 Vinnuborð: leit og tögg (plan 14)
 
 Dagsetning: 2026-11-04
-Grein: `vinnubord-14` (commits f995598 til 54368d2 ofan á main d272412, auk þessa skjals og CLAUDE.md). Greinin býr í worktree `D:/Claude Code/Huginn/huginn-vb14`, aðalmappan er áfram á main.
+Grein: `vinnubord-14` (commits f995598 til 1032144 ofan á main d272412), sameinuð á main með fast forward og ýtt 2026-11-04. Worktree og grein eru fjarlægð.
 Plan: `docs/superpowers/plans/2026-11-04-leit-og-togg.md`
 Spekk: `docs/superpowers/specs/2026-11-04-leit-og-togg-design.md`
 
-Staða: kóðinn er smíðaður og yfirfarinn, en **ekkert af þessu er í loftinu**. Migration 0016 var hafnað af MCP tenginu ("Migration was declined"), svo Heimir þarf að keyra `supabase/migrations/0016_hg_tags_keywords.sql` í SQL editor. Þangað til má greinin hvorki fara á main né vera ýtt: main birtist sjálfkrafa á huginn.pro og bæði vefur og CLI lesa `hg_tags` þegar borðið hleðst, svo borðið og hver `pull` í metta2 lotum brotnuðu. hg-analyse útgáfa 12 er í greininni en ekki sett í loftið, útgáfa 11 er í loftinu. Lokayfirferð allrar greinarinnar (Fable) er gerð og lagfæringar hennar eru komnar í greinina (sjá kaflann Lokalagfæring).
+Staða: **í loftinu** (2026-11-04). Heimir beitti `0016_hg_tags_keywords.sql` í SQL editor (MCP hafnaði henni), svo hún er ekki í `supabase_migrations.schema_migrations`, eins og 0002 og 0006. Staðfest í lifandi gagnagrunni: 36 tögg, `hg_items.keywords`, þrjú `hg.silent` when skilyrði, anon getur ekki keyrt RPC, `hg_tags` í rauntíma. Greinin er á main og ýtt (d272412..1032144). hg-analyse útgáfa 12 er í loftinu (útgáfa 11 farin). Heimir keyrði hreinsunina, `0016b_hg_tags_check` er beitt og smoke prentaði `ok 13/13`. Task 10 er gert. Eftir eru vafraathuganir og fyrsta raunverulega greiningin á útgáfu 12 (sjá Opið).
 
 ## Hvað var gert
 
@@ -23,39 +23,40 @@ Staða: kóðinn er smíðaður og yfirfarinn, en **ekkert af þessu er í lofti
 
 **Task 7, CLI** (a5d6dfa). `huginn tag list`, `huginn tag add <nafn>`, `--keywords` á `item create` og `item set`, `Leitarorð` lína í `item.md`, og `withTagHint` sem bætir við tagalista þegar tagg er hafnað.
 
-**Task 8, hg-analyse útgáfa 12** (9c960be). Greiningin fær taggalista verkefnisins í skilaboðin, velur tögg aðeins af listanum (hámark 6, `óflokkað` þegar ekkert passar) og skrifar leitarorð. Orð höfundar vinna. deno check hreint. **Ekki sett í loftið.**
+**Task 8, hg-analyse útgáfa 12** (9c960be). Greiningin fær taggalista verkefnisins í skilaboðin, velur tögg aðeins af listanum (hámark 6, `óflokkað` þegar ekkert passar) og skrifar leitarorð. Orð höfundar vinna. deno check hreint. Sett í loftið 2026-11-04.
 
 **Task 9, hreinsun og 0016b** (1af46e4). `supabase/manual/2026-11-04-hg-tag-cleanup.sql` (Heimir keyrir, ein færsla, `hg.silent` kveikt, reiknað en ekki harðkóðað, skýrsla í lokin: stafsetningarsameining, tögg á opnum verkum sem færast á listann, einnotatögg á lokuðum verkum eytt, sýnir lagaðar) og `0016b_hg_tags_check` (trigger sem neitar taggi utan listans með 22023 og skiptir hverju taggi út fyrir stafsetningu listans).
 
-**Task 10, skillið og leitarorð**: ekki gert, sjá ákvarðanir.
+**Task 10, skillið og leitarorð**: gert 2026-11-04. `/huginn` skillið í metta2_new fékk tagg- og leitarorðareglurnar (metta2_new commit 6bfd4517, ýtt). Öll 97 speglaðu metta verkin fengu 13 til 21 leitarorð hvert, skrifuð þegjandi (mesta `updated_at` og fjöldi atburða óbreytt, 0 opin verk án leitarorða).
 
-**Task 11, smoke atriði 13** (54368d2). Atriði 13 í `scripts/hg-smoke.mjs`: endurnefning, sameining, eyðing án atburða, leitarorð án atburðar, hástafatagg hafnað eftir 0016b. Skrifað, **ekki keyrt**.
+**Task 11, smoke atriði 13** (54368d2). Atriði 13 í `scripts/hg-smoke.mjs`: endurnefning, sameining, eyðing án atburða, leitarorð án atburðar, hástafatagg hafnað eftir 0016b. Keyrt eftir hreinsun og 0016b: `ok 13/13`.
 
 ## Ákvarðanir í byggingu
 
 - 0016 var lagað áður en það var beitt: `execute` er aðeins fyrir `authenticated` (spekk 4.4), og `hg.silent` er núllstillt áður en hvert RPC skilar sér, svo stillingin lekur ekki yfir í aðra setningu í sömu færslu. Skráin er fryst þegar hún er beitt, því var yfirferð og lagfæring gerð fyrst.
 - Sama regla fyrir migration og útsetningu: yfirferð fyrst, beiting eða útsetning á eftir.
 - MCP hafnaði 0016. Ekki var reynt að fara framhjá því með `execute_sql` eða endurtekningu: höfnun er ákvörðun notandans eða tengisins. Heimir beitir skránni í SQL editor, eins og 0002 og 0006.
-- Greinin var flutt í worktree `huginn-vb14` (node_modules tengill, `.env` afritað) og aðalmappan sett aftur á main. SessionStart hookið og `/huginn` skillið í metta2_new keyra CLI úr aðalmöppunni og CLI greinarinnar les `hg_tags`, sem er ekki til enn.
-- Engin sameining á main og ekkert ýtt fyrr en 0016 er í loftinu.
-- Task 10 frestað: skillreglurnar vísa á `tag list` og `--keywords`, sem aðal CLI hefur ekki fyrr en eftir sameiningu, og leitarorðaskrifin þurfa `keywords` dálkinn.
-- Smoke atriði 13 er skrifað en ekki keyrt, því það þarf 0016, hreinsun og 0016b.
+- (Saga) Greinin var flutt í worktree `huginn-vb14` (node_modules tengill, `.env` afritað) og aðalmappan sett aftur á main. SessionStart hookið og `/huginn` skillið í metta2_new keyra CLI úr aðalmöppunni og CLI greinarinnar les `hg_tags`, sem er ekki til enn.
+- Engin sameining á main og ekkert ýtt fyrr en 0016 var í loftinu. Það gekk eftir: sameinað og ýtt eftir að Heimir beitti 0016.
+- Task 10 var frestað þar til eftir sameiningu og 0016, og var þá gert (sjá Task 10).
+- Smoke atriði 13 var keyrt eftir 0016, hreinsun og 0016b.
 - Fjöldi verka á taggi telur aðeins borðgluggann (lokuð verk að 90 dögum). Spekk 7, síðasti punktur, velur þetta.
 - Smíðalotan bætti engu við í Huginn (ekkert opið verk um plan 14 meðal 138) og sagði Heimi frá í spjalli. Lokalagfæringin bjó til eitt verk um plan 14 með tveimur aðgerðum á Heimi: að beita 0016 og að keyra hreinsunina.
 
 ## Staðfesting
 
-- `npm run test`: 588 próf græn eftir lokalagfæringu (586 fyrir hana).
-- `npm run build`: grænt.
+- `npm run test`: 588 próf græn. `npm run build`: grænt.
 - deno check á `supabase/functions/hg-analyse/index.ts`: hreint.
-- `npm run smoke:hg`: **ekki keyrt**. Vænt `ok 13/13` eftir 0016, hreinsun og 0016b.
-- hg-analyse útgáfa 12: **ekki sett í loftið**, útgáfa 11 er í loftinu.
-- Handvirkar vafraathuganir Task 3 til 6: **ekki gerðar**, borðið hleðst ekki án `hg_tags`.
-- Lifandi athugun yfirfarans á hreinsuninni: eftir sameiningar er ekkert opið verk með tagg utan listans, skref 5 eyðir 28 einnotataggum af lokuðum verkum, engin sýn verður taglaus.
+- `npm run smoke:hg`: `ok 13/13` (2026-11-04, eftir 0016, hreinsun og 0016b).
+- hg-analyse útgáfa 12: í loftinu, útgáfa 11 farin. Sett í loftið með MCP og birti textinn er eins og í repo við 1032144. Engin greining hefur enn keyrt á útgáfu 12.
+- Skýrsla hreinsunarinnar (Heimir keyrði `supabase/manual/2026-11-04-hg-tag-cleanup.sql`): 36 tögg á listanum, 0 verk með tagg utan listans, engu bætt við, engin sýn varð taglaus.
+- `0016b_hg_tags_check` beitt með MCP eftir hreinsunina.
+- Lifandi athugun 0016: 36 tögg, `hg_items.keywords`, þrjú `hg.silent` when skilyrði, anon getur ekki keyrt RPC, `hg_tags` í rauntíma.
+- Handvirkar vafraathuganir Task 3 til 6: **ekki gerðar enn** (sjá Það sem Heimir athugar).
 
 ## Það sem Heimir athugar
 
-Aðeins hægt eftir að 0016 er beitt og greinin sameinuð.
+0016 er beitt og greinin er á main, svo þetta er hægt núna.
 
 - Ctrl+F á borðinu og í opnu spjaldi fer í leitarreitinn okkar (ekki leit vafrans). Í lesaranum opnast leit vafrans sjálfs. Esc tæmir leitina.
 - Leit að `syning` finnur verk með taggið `sýning`.
@@ -68,28 +69,23 @@ Aðeins hægt eftir að 0016 er beitt og greinin sameinuð.
 
 ## Opið
 
-Í þessari röð:
+Eftir:
 
-1. Heimir beitir `supabase/migrations/0016_hg_tags_keywords.sql` í SQL editor (Supabase, project `czdjxtsjgughimlazdmu`). Þegar því er beitt í höndunum verður það ekki skráð í `supabase_migrations.schema_migrations`, eins og 0002 og 0006.
-2. Claude sameinar `vinnubord-14` á main (fast forward) og ýtir strax: `git checkout main && git pull --ff-only origin main && git merge --ff-only vinnubord-14 && npm run build && git push origin main`. Kóði greinarinnar þarf aðeins 0016.
-3. Setja hg-analyse útgáfu 12 í loftið (`deploy_edge_function`, tvær skrár, `verify_jwt` false, íslenskir stafir sem `\u` í sendingunni, bera saman við repo).
-4. Heimir keyrir `supabase/manual/2026-11-04-hg-tag-cleanup.sql` í SQL editor, les skýrsluna sem hún prentar í lokin og sendir Claude hana.
-5. Beita `0016b_hg_tags_check`. Það má ekki koma á undan sameiningunni, því gamli vefurinn og gamla CLI sem eru í loftinu skrifa frjáls tögg og fengju hrátt 22023. Ef verk ber enn tagg utan listans neitar 0016b sjálft við beitingu og nefnir verkið.
-6. `npm run smoke:hg`, vænt `ok 13/13`. Án hreinsunar og 0016b fellur atriði 13 skref a (hástafatagg vistast eins og skrifað).
-7. Task 10: skillreglur í metta2_new (`tag list`, `--keywords`) og leitarorð á verkin sem eru til. Lesa push regluna í CLAUDE.md metta2_new fyrst, því ýtið fer með fyrri óýtt commit (6dd545c7 o.fl.).
-8. Handvirkar vafraathuganir Task 3 til 6 (listinn hér að ofan), sérstaklega Ctrl+F á þröngu borði.
+1. Handvirkar vafraathuganir Task 3 til 6 (listinn Það sem Heimir athugar hér að ofan), sérstaklega Ctrl+F á þröngu borði.
+2. Fyrsta raunverulega greiningin á útgáfu 12: athuga að tögg hennar séu af listanum og að hún skrifi leitarorð.
+
+Verkið "Leit og tögg (plan 14): beita 0016 og ljúka" (1aeb972a) í Huginn ber tvær aðgerðir á Heimi (að beita 0016 og keyra hreinsunina). Báðum er lokið af honum.
 
 Frestað smávægilegt úr yfirferð (allt í `.superpowers/sdd/2026-11-04-leit-og-togg/progress.md`; það sem lokalagfæringin lagaði er talið upp í kaflanum Lokalagfæring):
 
-- 0016b: bæði atriðin eru löguð (sjá Lokalagfæring).
 - Kapphlaup: þögul endurnefning eða sameining hreyfir ekki `updated_at`, svo samtímis skrif hg-analyse (gluggi um 110 s á nýju verki) gæti sett gamla nafnið aftur. Eftir 0016b mistekst greining sem keppir við þögla endurnefningu með 22023 (sést sem `analysis.failed`). Bein PostgREST uppfærsla eða eyðing á `hg_tags` getur skilið verk eftir með tagg utan listans.
-- hg-analyse: `MAX_TAGS` sker áður en skipt er í á lista og utan lista. Leitarorð eru ekki síuð gegn töggum höfundar eftir `mergeIntoItem` (spekk 4.6). Ekkert `MAX_KEYWORDS` loft eftir sameiningu. `óflokkað` getur lent í leitarorðum. Engin NFC jöfnun í taggasamanburði.
-- Vefur: `viewFilterOf` heldur `q` og `unread` (setja `q` '' og `unread` false). Veikt próf fyrir `foldSearch('Þór')`. Ein lína sem fold sameinar getur spannað reitamörk (plan krafðist, skaðlaust).
-- Ctrl+F: opið Pakki eða Tögg fellilisti verður áfram opinn og étur fyrsta Esc. Með nýtt verk eða síublað opið fer fókus á leitina bak við. Ctrl+F meðan Loader sést er gleypt. Á þröngu borði gæti `setSearchOpen` úr passive effect lent á eftir rAF fókus.
-- TagsEditor: breyting á hástöfum eingöngu skilur Vista eftir virkt og drögin í hástöfum (`TagsEditor.tsx:143`). Öll 22023 skilaboð fara í gegn óbreytt. Athugasemd á `ProjectSettingsPage.tsx:388` ætti að nefna rauntíma.
-- NewItemSheet: `chosen` heldur nöfnum, endurnefning eða eyðing meðan blaðið er opið sendir nafn utan lista (byggja af `tagList` síuðum með `chosen`). Tagghnappar án hópmerkis (`role=group aria-labelledby`). Tvöfalt bil á undan `noTags` vísbendingu.
-- CLI: `tag list` og `tag add` prenta nöfn óhreinsuð (`commands.mjs:301`, `:314`, nota `oneLine`, escape raðir í terminal). README línan fyrir `item.md` ætti að nefna leitarorð (`cli/README.md:100`). `withTagHint` hefur ekkert eigið próf (einkafall, smoke 13 nær því).
-- Smoke: sameining og eyðing hafa ekki eigin atburðaathugun. Endurnefning les aðeins `tags[0]`. Leitarorðagildi ekki borin saman. `void td` lína (plan). Orðalag við hluta eyðingu.
+- hg-analyse: `MAX_TAGS` sker áður en skipt er í á lista og utan lista. Engin NFC jöfnun í taggasamanburði.
+- Vefur: `viewFilterOf` heldur `q` og `unread` (setja `q` '' og `unread` false). Ein lína sem fold sameinar getur spannað reitamörk (plan krafðist, skaðlaust).
+- Ctrl+F: opið Pakki eða Tögg fellilisti verður áfram opinn og étur fyrsta Esc. Með nýtt verk eða síublað opið fer fókus á leitina bak við. Ctrl+F meðan Loader sést er gleypt.
+- TagsEditor: öll 22023 skilaboð fara í gegn óbreytt. Athugasemd á `ProjectSettingsPage.tsx:388` ætti að nefna rauntíma.
+- NewItemSheet: tagghnappar án hópmerkis (`role=group aria-labelledby`). Tvöfalt bil á undan `noTags` vísbendingu.
+- CLI: `withTagHint` hefur ekkert eigið próf (einkafall, smoke 13 nær því).
+- Smoke: `void td` lína (plan).
 - Lítið: bókstafstab í stað `\t` í `tags.test.ts:9` og `parity.test.mjs:64`. Sýnaröð í hreinsun skref 3 er raðað (plan).
 - Ef prófverk eða prófsýn verður eftir við smoke keyrslu er þess getið hér af lotunni sem keyrir hana.
 
