@@ -27,3 +27,11 @@ export function tagNameTaken(name: string, tags: Pick<Tag, 'id' | 'name'>[], sel
   const key = name.toLocaleLowerCase('is')
   return tags.some((t) => t.id !== selfId && t.name.toLocaleLowerCase('is') === key) ? TAG_TAKEN : null
 }
+
+// The tag writes' database errors in Icelandic: the unique index gives the
+// fixed text, the RPCs' own 22023 messages pass through, the rest is null.
+export function tagErrorMessage(code: string | undefined, message: string): string | null {
+  if (code === '23505') return TAG_TAKEN
+  if (code === '22023') return message
+  return null
+}

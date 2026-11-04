@@ -1,5 +1,6 @@
 import { supabase } from '../../shared/lib/supabase'
 import { normalizeNote, storageSafeName, validateUpload } from './upload'
+import { tagErrorMessage } from './tags'
 import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './boardWindow'
 import {
   moduleDeleteBlock,
@@ -534,4 +535,35 @@ export async function removeParticipant(participant: Participant, viewerId: stri
   if (block) throw new Error(block)
   const { error } = await supabase.from('hg_participants').delete().eq('id', participant.id)
   if (error) fail('Gat ekki fjarlægt þátttakandann.', error)
+}
+
+// The tag list (spec 4.4). A taken name and the RPCs' own refusals come back
+// in Icelandic through tagErrorMessage, anything else as fallback plus message.
+function tagFail(fallback: string, error: { code?: string; message: string } | null): never {
+  throw new Error(tagErrorMessage(error?.code, error?.message ?? '') ?? (error ? `${fallback}: ${error.message}` : fallback))
+}
+
+export async function addTag(projectId: string, name: string): Promise<Tag> {
+  const { data, error } = await supabase
+    .from('hg_tags')
+    .insert({ project_id: projectId, name, created_by: await currentUserId() })
+    .select('*')
+    .single()
+  if (error || !data) tagFail('Gat ekki bætt tagginu við.', error)
+  return data as Tag
+}
+
+export async function renameTag(id: string, name: string): Promise<void> {
+  const { error } = await supabase.rpc('hg_tag_rename', { p_tag: id, p_name: name })
+  if (error) tagFail('Gat ekki endurnefnt taggið.', error)
+}
+
+export async function mergeTag(fromId: string, intoId: string): Promise<void> {
+  const { error } = await supabase.rpc('hg_tag_merge', { p_from: fromId, p_into: intoId })
+  if (error) tagFail('Gat ekki sameinað töggin.', error)
+}
+
+export async function deleteTag(id: string): Promise<void> {
+  const { error } = await supabase.rpc('hg_tag_delete', { p_tag: id })
+  if (error) tagFail('Gat ekki eytt tagginu.', error)
 }

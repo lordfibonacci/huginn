@@ -394,6 +394,20 @@
       "remove": "Fjarlægja",
       "save": "Vista",
       "saved": "Vistað",
+      "tags": {
+        "choose": "Veldu tagg",
+        "count_one": "{{count}} verk",
+        "count_other": "{{count}} verk",
+        "deleteConfirm": "Eyða tagginu {{name}}? Það fer af {{count}} verkum.",
+        "empty": "Engin tögg enn.",
+        "hint": "Fastur listi. Skyndigreiningin og lotur Claude velja úr honum. Endurnefning, sameining og eyðing skrifa á öll verk án þess að merkja þau ólesin.",
+        "merge": "Sameina",
+        "mergeConfirm": "Sameina {{from}} við {{into}}? {{from}} fer af listanum og verkin þess fá {{into}}.",
+        "mergeInto": "Sameina við",
+        "name": "Nafn",
+        "newTitle": "Nýtt tagg",
+        "title": "Tögg"
+      },
       "title": "Stillingar verkefnis"
     },
     "toast": {

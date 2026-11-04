@@ -9,11 +9,12 @@ import { ModulesEditor } from '../components/settings/ModulesEditor'
 import { PackagesEditor } from '../components/settings/PackagesEditor'
 import { ParticipantsEditor } from '../components/settings/ParticipantsEditor'
 import { ProjectFields } from '../components/settings/ProjectFields'
+import { TagsEditor } from '../components/settings/TagsEditor'
 import { NoAccessPage } from './NoAccessPage'
 
-// /p/:slug/stillingar: the project fields, packages, modules and participants
-// of one project, with a way back to its board. Packages and modules arrive
-// by realtime too, participants and the project row only by reload.
+// /p/:slug/stillingar: the project fields, packages, modules, tags and
+// participants of one project, with a way back to its board. Packages and
+// modules arrive by realtime too, participants and the project row only by reload.
 export function ProjectSettingsPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
@@ -55,6 +56,7 @@ export function ProjectSettingsPage() {
         <ProjectFields project={data.project} onSaved={projectSaved} />
         <PackagesEditor projectId={project.id} packages={data.packages} onChange={refresh} />
         <ModulesEditor projectId={project.id} packages={data.packages} modules={data.modules} onChange={refresh} />
+        <TagsEditor projectId={project.id} tags={data.tags} items={data.items} onChange={refresh} />
         <ParticipantsEditor
           projectId={project.id}
           participants={data.participants}

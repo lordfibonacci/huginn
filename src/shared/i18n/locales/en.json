@@ -146,6 +146,20 @@
         "deleteConfirm": "Delete the module {{name}}?",
         "choosePackage": "Choose a package"
       },
+      "tags": {
+        "choose": "Choose a tag",
+        "count_one": "{{count}} item",
+        "count_other": "{{count}} items",
+        "deleteConfirm": "Delete the tag {{name}}? It leaves {{count}} items.",
+        "empty": "No tags yet.",
+        "hint": "A fixed list. The quick analysis and Claude's sessions choose from it. Renaming, merging and deleting write to every item without marking it unread.",
+        "merge": "Merge",
+        "mergeConfirm": "Merge {{from}} into {{into}}? {{from}} leaves the list and its items get {{into}}.",
+        "mergeInto": "Merge into",
+        "name": "Name",
+        "newTitle": "New tag",
+        "title": "Tags"
+      },
       "colors": {
         "coral": "Coral",
         "gold": "Gold",
