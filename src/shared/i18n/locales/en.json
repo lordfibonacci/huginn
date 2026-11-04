@@ -181,6 +181,16 @@
       }
     },
     "viewerError": "Could not load your projects.",
+    "zone": {
+      "kind": "Box",
+      "panelLabel": "Box panel",
+      "open": "Open {{title}}",
+      "title": "Name",
+      "note": "Text",
+      "noteHint": "At most 200 characters, shown at the bottom of the box",
+      "deleteConfirm": "Delete the box “{{title}}”? The cards stay where they are.",
+      "createError": "Could not create the box."
+    },
     "card": {
       "actionsMine_one": "{{count}} for you",
       "actionsMine_other": "{{count}} for you",
@@ -408,7 +418,8 @@
         "stone": "Parked or done"
       },
       "signOut": "Sign out",
-      "newItem": "New item"
+      "newItem": "New item",
+      "newZone": "New box"
     },
     "filters": {
       "heading": "Filters"

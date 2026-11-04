@@ -153,6 +153,25 @@
   --hg-beat-ring: 10px;
   --hg-ease-beat: ease-out;
 
+  /* ---------- Kassar: boxes drawn under the packs and cards ---------- */
+  --hg-zone-z: 1;
+  --hg-zone-lift-z: 2;
+  --hg-radius-zone: 18px;
+  --hg-zone-fill: 11%;
+  --hg-zone-fill-lift: 16%;
+  --hg-zone-border: 40%;
+  --hg-zone-border-lift: 70%;
+  --hg-zone-title-size: 13px;
+  --hg-zone-title-pad: 0 10px;
+  --hg-zone-title-inset: 14px;
+  --hg-zone-title-h: 28px;
+  --hg-zone-note-size: 12px;
+  --hg-zone-note-inset: 8px;
+  --hg-zone-note-max-w: 70%;
+  --hg-zone-grip-size: 14px;
+  --hg-zone-grip-alpha: 55%;
+  --hg-zone-draft-color: var(--hg-lilac);
+
   /* Non blocking notice and the new item toast over the board */
   --hg-notice-size: 13px;
   /* Below the panel (30): the toast never covers the side panel or sheet. */
@@ -548,6 +567,7 @@
     --hg-module-hot-lift: 0 10px 24px -16px;
     --hg-panel-shadow: 0 16px 40px -24px rgba(0, 0, 0, 0.9);
     --hg-msg-claude-glow: none;
+    --hg-zone-title-h: var(--hg-touch);
   }
 }
 
@@ -729,6 +749,57 @@
   border: 1px dashed var(--hg-sel-color); background: var(--hg-marquee-fill); border-radius: var(--hg-radius-control-inner);
 }
 .hg-marquee.hg-on { display: block; }
+/* ---------- Kassar ----------
+   A box is a flat rectangle in the world layer under the packs and cards.
+   left, top, width and height are written by Board, not React, while it is
+   dragged or resized. The name sits on the top border and is the grip that
+   moves the box with everything inside it; the corner is the grip that
+   resizes it. No shadow, no blur, no stripe: a fill and a border in --hg-c. */
+.hg-zone {
+  position: absolute; z-index: var(--hg-zone-z); border-radius: var(--hg-radius-zone);
+  background: color-mix(in oklab, var(--hg-c) var(--hg-zone-fill), transparent);
+  border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-zone-border), transparent);
+  font-family: var(--hg-font);
+}
+.hg-zone.hg-zone-lift {
+  z-index: var(--hg-zone-lift-z);
+  background: color-mix(in oklab, var(--hg-c) var(--hg-zone-fill-lift), transparent);
+  border-color: color-mix(in oklab, var(--hg-c) var(--hg-zone-border-lift), transparent);
+}
+.hg-zone-title {
+  position: absolute; left: var(--hg-zone-title-inset); top: calc(-1 * var(--hg-zone-title-h) / 2);
+  min-height: var(--hg-zone-title-h); max-width: calc(100% - 2 * var(--hg-zone-title-inset)); padding: var(--hg-zone-title-pad);
+  border: none; border-radius: var(--hg-radius-chip); background: var(--hg-board); color: var(--hg-c);
+  font: inherit; font-size: var(--hg-zone-title-size); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.hg-zone.hg-zone-lift .hg-zone-title { cursor: grabbing; }
+.hg-zone-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
+.hg-zone-note {
+  position: absolute; left: var(--hg-zone-title-inset); bottom: var(--hg-zone-note-inset); max-width: var(--hg-zone-note-max-w);
+  font-size: var(--hg-zone-note-size); color: var(--hg-ink-2); line-height: 1.35; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; pointer-events: none;
+}
+.hg-zone-resize {
+  position: absolute; right: 0; bottom: 0; width: var(--hg-touch); height: var(--hg-touch); cursor: nwse-resize;
+  border-bottom-right-radius: var(--hg-radius-zone);
+}
+.hg-zone-resize::before {
+  content: ''; position: absolute; right: var(--hg-zone-note-inset); bottom: var(--hg-zone-note-inset);
+  width: var(--hg-zone-grip-size); height: var(--hg-zone-grip-size);
+  background:
+    linear-gradient(135deg, transparent calc(50% - 1px), color-mix(in oklab, var(--hg-c) var(--hg-zone-grip-alpha), transparent) 50%, transparent calc(50% + 1px)),
+    linear-gradient(135deg, transparent calc(80% - 1px), color-mix(in oklab, var(--hg-c) var(--hg-zone-grip-alpha), transparent) 80%, transparent calc(80% + 1px));
+}
+/* The rectangle drawn in draw mode, screen space inside the board, like the marquee. */
+.hg-zone-draft {
+  --hg-c: var(--hg-zone-draft-color);
+  position: absolute; display: none; z-index: var(--hg-marquee-z); pointer-events: none; border-radius: var(--hg-radius-zone);
+  background: color-mix(in oklab, var(--hg-c) var(--hg-zone-fill), transparent);
+  border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-zone-border), transparent);
+}
+.hg-zone-draft.hg-on { display: block; }
+.hg-board.hg-board-draw { cursor: crosshair; }
 .hg-card-st {
   display: flex; align-items: center; gap: var(--hg-card-row-gap); font-size: var(--hg-card-st-size); color: var(--hg-ink-2);
   margin-bottom: var(--hg-card-st-gap); line-height: 1.3;
@@ -1397,6 +1468,8 @@
   font-style: normal; font-weight: 800; display: grid; place-items: center;
 }
 .hg-list-btn circle { fill: currentColor; stroke: none; }
+.hg-zone-btn rect { stroke-dasharray: 2.5 2; }
+.hg-zone-btn.hg-on { background: var(--hg-pill-on-bg); }
 
 /* Package and tag menus, the viewer menu */
 .hg-dd { position: relative; flex: none; }

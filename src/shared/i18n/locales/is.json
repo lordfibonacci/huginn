@@ -433,6 +433,7 @@
       "liveHint": "Breytingar frá öðrum birtast um leið og þær gerast",
       "markAllRead": "Merkja allt lesið",
       "newItem": "Nýtt verk",
+      "newZone": "Nýr kassi",
       "noPackages": "Engir pakkar enn",
       "noTags": "Engin tögg enn",
       "openSearch": "Leita",
@@ -460,6 +461,16 @@
       "sharedHint": "Sýnir eru sameiginlegar. Valin sýn vistast í þessum vafra.",
       "show": "Sýna",
       "tags": "Tögg"
+    },
+    "zone": {
+      "createError": "Ekki tókst að búa til kassann.",
+      "deleteConfirm": "Eyða kassanum „{{title}}“? Kortin standa kyrr.",
+      "kind": "Kassi",
+      "note": "Texti",
+      "noteHint": "Mest 200 stafir, sést neðst í kassanum",
+      "open": "Opna {{title}}",
+      "panelLabel": "Kassaspjald",
+      "title": "Nafn"
     }
   }
 }
