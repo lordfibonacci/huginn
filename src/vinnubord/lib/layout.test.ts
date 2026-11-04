@@ -11,7 +11,7 @@ const mod = (id: string, package_id: string | null, position: number): Module =>
 })
 const item = (id: string, module_id: string | null, status: Item['status'], extra: Partial<Item> = {}): Item => ({
   id, created_at: null, project_id: 'p', module_id, title: id, summary: null, body: null,
-  status, waiting_on: null, tags: [], pos_x: 0, pos_y: 0, source_ref: null, next_step: null,
+  status, waiting_on: null, tags: [], keywords: [], pos_x: 0, pos_y: 0, source_ref: null, next_step: null,
   next_prompt: null, created_by: 'u1', updated_by: null, updated_at: '', closed_at: null, ...extra,
 })
 const people: Participant[] = [

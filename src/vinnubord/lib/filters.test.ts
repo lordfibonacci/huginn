@@ -20,7 +20,7 @@ import type { Tone } from './status'
 function item(over: Partial<Item> = {}): Item {
   return {
     id: 'i1', created_at: null, project_id: 'pr', module_id: null, title: 'Efnaskrá A og B', summary: null,
-    body: null, status: 'new', waiting_on: null, tags: [], pos_x: 0, pos_y: 0, source_ref: null,
+    body: null, status: 'new', waiting_on: null, tags: [], keywords: [], pos_x: 0, pos_y: 0, source_ref: null,
     next_step: null, next_prompt: null, created_by: 'u', updated_by: null,
     updated_at: '2026-01-01T00:00:00Z', closed_at: null, ...over,
   }

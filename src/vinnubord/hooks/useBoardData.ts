@@ -19,6 +19,7 @@ const REALTIME_TABLES = [
   'hg_modules',
   'hg_packages',
   'hg_views',
+  'hg_tags',
   'hg_view_positions',
   'hg_view_pack_positions',
 ] as const

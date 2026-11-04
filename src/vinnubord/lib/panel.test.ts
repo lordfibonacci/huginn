@@ -14,6 +14,7 @@ function item(id: string, over: Partial<Item> = {}): Item {
     status: 'new',
     waiting_on: null,
     tags: [],
+    keywords: [],
     pos_x: 0,
     pos_y: 0,
     source_ref: null,

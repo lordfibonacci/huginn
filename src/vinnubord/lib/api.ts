@@ -23,6 +23,7 @@ import type {
   Question,
   Read,
   Ruling,
+  Tag,
   UnreadRow,
   View,
   ViewFilterJson,
@@ -69,6 +70,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     reads,
     unread,
     views,
+    tags,
     viewPositions,
     viewPackPositions,
   ] = await Promise.all([
@@ -91,6 +93,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     byProject('hg_reads'),
     supabase.rpc('hg_unread', { p_project: projectId }),
     byProject('hg_views').order('position').order('created_at'),
+    byProject('hg_tags').order('name'),
     byProject('hg_view_positions'),
     byProject('hg_view_pack_positions'),
   ])
@@ -111,6 +114,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     reads,
     unread,
     views,
+    tags,
     viewPositions,
     viewPackPositions,
   ]
@@ -134,6 +138,7 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     reads: (reads.data ?? []) as Read[],
     unread: (unread.data ?? []) as UnreadRow[],
     views: (views.data ?? []) as View[],
+    tags: (tags.data ?? []) as Tag[],
     viewPositions: (viewPositions.data ?? []) as ViewPosition[],
     viewPackPositions: (viewPackPositions.data ?? []) as ViewPackPosition[],
   }

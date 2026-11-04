@@ -7,7 +7,7 @@ const project: Project = {
 }
 const item = (over: Partial<Item> = {}): Item => ({
   id: '1a2b3c4d-0000-4000-8000-000000000000', created_at: null, project_id: 'pr', module_id: null, title: 'Titill',
-  summary: 'Samantekt', body: 'Lýsing', status: 'waiting', waiting_on: null, tags: [], pos_x: 0, pos_y: 0, source_ref: null,
+  summary: 'Samantekt', body: 'Lýsing', status: 'waiting', waiting_on: null, tags: [], keywords: [], pos_x: 0, pos_y: 0, source_ref: null,
   next_step: 'Næsta skref', next_prompt: null, created_by: 'u', updated_by: null, updated_at: '2026-01-01T00:00:00Z',
   closed_at: null, ...over,
 })

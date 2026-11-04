@@ -58,6 +58,7 @@ export type Item = {
   status: ItemStatus
   waiting_on: string | null
   tags: string[]
+  keywords: string[]
   pos_x: number
   pos_y: number
   source_ref: string | null
@@ -183,6 +184,15 @@ export type View = {
   created_by: string | null
 }
 
+// One tag of the project's fixed list (hg_tags). Items carry names, not ids.
+export type Tag = {
+  id: string
+  created_at: string | null
+  project_id: string
+  name: string
+  created_by: string | null
+}
+
 // Where one item sits inside one view (hg_view_positions).
 export type ViewPosition = {
   project_id: string
@@ -217,6 +227,7 @@ export type BoardData = {
   reads: Read[]
   unread: UnreadRow[]
   views: View[]
+  tags: Tag[]
   viewPositions: ViewPosition[]
   viewPackPositions: ViewPackPosition[]
 }
