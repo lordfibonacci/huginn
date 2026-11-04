@@ -26,6 +26,7 @@ import {
 import type { CardModel } from '../lib/cards'
 import { arrangeGrid } from '../lib/arrange'
 import { carrySpent, carryStep, type Carry } from '../lib/carry'
+import { pendingDrop, pendingFailed, pendingStep, type Pending } from '../lib/pending'
 import { isActive, type Filter } from '../lib/filters'
 import {
   DEFAULT_PADDING,
@@ -132,18 +133,7 @@ export type BoardHandle = {
   peek: (itemId: string | null) => void
 }
 
-// A dropped position waiting for the database. base is the data position the
-// drag started from: data still showing base is stale and ignored, data at pos
-// means the save landed, anything else means someone else moved the card.
-// viewId is the view it was dropped in (null for the main board): switching
-// views drops the pending, the card then rests where the new view has it.
-// via holds earlier drops in the same view whose saves were sent but not yet
-// seen in the data when this one replaced them (a quick second drop, an
-// arrange undone at once). Data at a via point is that save arriving late:
-// stale like base, and it spends the via points up to it. While via is not
-// empty, data at pos may still be the stale base (an undo back to it), so the
-// pending stays until the late saves have shown.
-type Pending = { x: number; y: number; baseX: number; baseY: number; viewId: string | null; via: Point[] }
+// A dropped position waiting for the database (lib/pending).
 type CardSpring = Spring & { pending: Pending | null }
 // A debounced position save that has not been sent yet. It keeps the view it
 // was dropped in, so a view switch during the debounce cannot redirect it.
@@ -325,15 +315,7 @@ export function Board({
             : { x: px, y: py, tx: px, ty: py, vx: 0, vy: 0, pending: null }
         springs.current.set(item.id, s)
       } else if (!draggingRef.current.has(item.id)) {
-        const p = s.pending
-        if (p && p.viewId !== viewId) s.pending = null
-        else if (p) {
-          const late = p.via.findIndex((v) => v.x === px && v.y === py)
-          if (late >= 0) p.via = p.via.slice(late + 1)
-          else if (px === p.x && py === p.y) {
-            if (p.via.length === 0) s.pending = null
-          } else if (!(px === p.baseX && py === p.baseY)) s.pending = null
-        }
+        if (s.pending) s.pending = pendingStep(s.pending, { x: px, y: py }, viewId)
         if (!s.pending) {
           s.tx = px
           s.ty = py
@@ -394,8 +376,9 @@ export function Board({
         console.error(err)
         const s = springs.current.get(id)
         const p = s?.pending
-        if (s && p && p.x === x && p.y === y && p.viewId === inView) {
-          s.pending = null
+        const next = p ? pendingFailed(p, { x, y }, inView) : null
+        if (s && p) s.pending = next
+        if (s && p && !next) {
           const pos = posById.current.get(id)
           if (pos && !draggingRef.current.has(id)) {
             s.tx = pos.x
@@ -450,18 +433,9 @@ export function Board({
       const ry = Math.round(y)
       s.tx = rx
       s.ty = ry
-      // The replaced drop joins via only when its save already went out; a
-      // save still in its debounce is cancelled below and never arrives.
-      const prev = s.pending && s.pending.viewId === viewId ? s.pending : null
-      const via = prev ? (saveJobs.current.has(id) ? prev.via : [...prev.via, { x: prev.x, y: prev.y }]) : []
-      s.pending = {
-        x: rx,
-        y: ry,
-        baseX: s.pending?.baseX ?? pos.x,
-        baseY: s.pending?.baseY ?? pos.y,
-        viewId,
-        via,
-      }
+      // A save still in its debounce is cancelled below, so the replaced drop
+      // joins via only when its save already went out.
+      s.pending = pendingDrop(s.pending, rx, ry, pos, viewId, !saveJobs.current.has(id))
       wiresRef.current?.burst(id, DROP_BURST)
       const jobs = saveJobs.current
       const old = jobs.get(id)
@@ -907,11 +881,12 @@ export function Board({
     stopUndoTimer()
   }, [undo, onDrop, stopUndoTimer])
   // Every marquee, toggle, Esc or clear makes a new selection object, and
-  // that ends the undo. arrange itself leaves the selection as it is.
+  // that ends the undo. arrange itself leaves the selection as it is. A view
+  // switch ends it too: its places belong to the view it was made in.
   useEffect(() => {
     setUndo(null)
     stopUndoTimer()
-  }, [selection, stopUndoTimer])
+  }, [selection, viewId, stopUndoTimer])
   useEffect(() => stopUndoTimer, [stopUndoTimer])
 
   const getTargetPos = useCallback(
