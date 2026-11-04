@@ -211,6 +211,31 @@ export type ViewPackPosition = {
   pos_y: number
 }
 
+// A box on the board (hg_zones): a named, coloured rectangle with an optional note.
+// Position per view through hg_view_zone_positions, size shared.
+export type Zone = {
+  id: string
+  created_at: string | null
+  project_id: string
+  title: string
+  color: string
+  note: string | null
+  pos_x: number
+  pos_y: number
+  w: number
+  h: number
+  created_by: string | null
+}
+
+// Where one box sits inside one view (hg_view_zone_positions).
+export type ViewZonePosition = {
+  project_id: string
+  view_id: string
+  zone_id: string
+  pos_x: number
+  pos_y: number
+}
+
 export type BoardData = {
   project: Project
   participants: Participant[]
@@ -230,4 +255,6 @@ export type BoardData = {
   tags: Tag[]
   viewPositions: ViewPosition[]
   viewPackPositions: ViewPackPosition[]
+  zones: Zone[]
+  viewZonePositions: ViewZonePosition[]
 }

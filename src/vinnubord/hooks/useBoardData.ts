@@ -22,6 +22,8 @@ const REALTIME_TABLES = [
   'hg_tags',
   'hg_view_positions',
   'hg_view_pack_positions',
+  'hg_zones',
+  'hg_view_zone_positions',
 ] as const
 
 const RELOAD_DEBOUNCE_MS = 150

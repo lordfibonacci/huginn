@@ -30,6 +30,8 @@ import type {
   ViewFilterJson,
   ViewPackPosition,
   ViewPosition,
+  ViewZonePosition,
+  Zone,
 } from './types'
 
 // Data layer for the vinnubord. Every function throws an Error with a short
@@ -74,6 +76,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     tags,
     viewPositions,
     viewPackPositions,
+    zones,
+    viewZonePositions,
   ] = await Promise.all([
     supabase.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
     byProject('hg_participants').order('created_at'),
@@ -97,6 +101,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     byProject('hg_tags').order('name'),
     byProject('hg_view_positions'),
     byProject('hg_view_pack_positions'),
+    byProject('hg_zones').order('created_at'),
+    byProject('hg_view_zone_positions'),
   ])
 
   const results = [
@@ -118,6 +124,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     tags,
     viewPositions,
     viewPackPositions,
+    zones,
+    viewZonePositions,
   ]
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið.', failed.error)
@@ -142,6 +150,8 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     tags: (tags.data ?? []) as Tag[],
     viewPositions: (viewPositions.data ?? []) as ViewPosition[],
     viewPackPositions: (viewPackPositions.data ?? []) as ViewPackPosition[],
+    zones: (zones.data ?? []) as Zone[],
+    viewZonePositions: (viewZonePositions.data ?? []) as ViewZonePosition[],
   }
 }
 

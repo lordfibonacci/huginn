@@ -32,3 +32,4 @@ The folder `supabase/manual/` holds scripts Heimir runs himself in the SQL edito
 - 0015_hg_file_note: hg_files.note (at most 200 characters, enforced by normalizeNote in the web and CLI, not in the database); no trigger, function or policy change.
 - 0016_hg_tags_keywords: hg_tags (fixed tag list per project, seeded with the 36 metta tags), hg_items.keywords (ignored by the touch trigger), hg.silent when clauses on the item stamp, touch and event triggers, and the RPCs hg_tag_rename, hg_tag_merge and hg_tag_delete.
 - 0016b_hg_tags_check: trigger that canonicalises item tags against hg_tags and refuses a tag off the list (22023). Applied through MCP on 2026-11-04, after the manual tag cleanup and after hg-analyse version 12.
+- 0017_hg_zones: hg_zones (boxes on the board: title, colour, note, position and size) and hg_view_zone_positions (box positions per view, composite project keys), participant RLS, created_by stamp, realtime.
