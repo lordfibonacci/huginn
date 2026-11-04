@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { putFile, setFileNote } from '../cli/lib/ops.mjs'
 
-const TOTAL = 12
+const TOTAL = 13
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -19,6 +19,8 @@ let itemId = null
 let viewId = null
 let extraItems = []
 let smokeObjects = []
+let smokeTags = []
+let tagViewId = null
 let projectId = null
 let failure = null
 let sb = null
@@ -531,8 +533,78 @@ try {
     const ev12After = (await readEvents()).filter((e) => e.data?.file_id === a12.file.id).length
     expect(ev12After === ev12Before, `a note write logged ${ev12After - ev12Before} events`)
     passed++
+    scenario = '13 tags and keywords'
+    const addTag13 = async (name) => {
+      const row = must(await sb.from('hg_tags').insert({ project_id: projectId, name, created_by: me }).select('id, name').single(), `insert tag ${name}`)
+      smokeTags.push(row.id)
+      return row
+    }
+    const ta = await addTag13('smoke tag')
+    const tb = await addTag13('smoke tag b')
+    // a: canonical spelling and dedupe on write
+    must(await sb.from('hg_items').update({ tags: ['Smoke Tag', 'SMOKE TAG', 'smoke tag b'] }).eq('id', itemId), 'set tags')
+    let row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read tags')
+    expect(JSON.stringify(row13.tags) === JSON.stringify(['smoke tag', 'smoke tag b']), `tags after write ${JSON.stringify(row13.tags)}`)
+    // b: a tag off the list is refused with 22023
+    const bad13 = await sb.from('hg_items').update({ tags: ['smoke tag', 'ekki til'] }).eq('id', itemId)
+    expect(bad13.error?.code === '22023' && /ekki til/.test(bad13.error.message), `off list tag gave ${JSON.stringify(bad13.error)}`)
+    // c: rename moves no stamp and logs nothing
+    const ev13Before = (await readEvents()).length
+    const stamp13 = row13.updated_at
+    must(await sb.rpc('hg_tag_rename', { p_tag: ta.id, p_name: 'smoke tag renamed' }), 'rename')
+    row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read after rename')
+    expect(row13.tags[0] === 'smoke tag renamed' && row13.updated_at === stamp13, `rename ${JSON.stringify(row13)}`)
+    expect((await readEvents()).length === ev13Before, 'rename logged an event')
+    // d: a view with this tag alone blocks delete
+    const view13 = must(
+      await sb.from('hg_views').insert({ project_id: projectId, name: 'smoke tag view', filter: { tones: [], packages: [], tags: ['smoke tag renamed'] }, created_by: me }).select('id').single(),
+      'insert tag view',
+    )
+    tagViewId = view13.id
+    const blocked13 = await sb.rpc('hg_tag_delete', { p_tag: ta.id })
+    expect(blocked13.error?.code === '22023' && /smoke tag view/.test(blocked13.error.message), `delete with a view gave ${JSON.stringify(blocked13.error)}`)
+    // e: merge rewrites the item and the view, drops the from row
+    must(await sb.rpc('hg_tag_merge', { p_from: ta.id, p_into: tb.id }), 'merge')
+    smokeTags = smokeTags.filter((id) => id !== ta.id)
+    row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read after merge')
+    expect(JSON.stringify(row13.tags) === JSON.stringify(['smoke tag b']) && row13.updated_at === stamp13, `merge ${JSON.stringify(row13)}`)
+    const view13After = must(await sb.from('hg_views').select('filter').eq('id', view13.id).single(), 'view after merge')
+    expect(JSON.stringify(view13After.filter.tags) === JSON.stringify(['smoke tag b']), `view after merge ${JSON.stringify(view13After.filter)}`)
+    const gone13 = must(await sb.from('hg_tags').select('id').eq('id', ta.id), 'from row')
+    expect(gone13.length === 0, 'merge kept the from row')
+    // f: delete once the view has another tag
+    must(await sb.from('hg_views').update({ filter: { tones: [], packages: [], tags: ['smoke tag b', 'smokes'] } }).eq('id', view13.id), 'widen view')
+    must(await sb.rpc('hg_tag_delete', { p_tag: tb.id }), 'delete')
+    smokeTags = []
+    row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read after delete')
+    expect(row13.tags.length === 0 && row13.updated_at === stamp13, `delete ${JSON.stringify(row13)}`)
+    // g: review focus 2, a rename that collides ignoring case is refused
+    const tc = await addTag13('smoke tag c')
+    const td = await addTag13('smoke tag d')
+    const dup13 = await sb.rpc('hg_tag_rename', { p_tag: tc.id, p_name: 'SMOKE TAG D' })
+    expect(dup13.error?.code === '23505', `case collision gave ${JSON.stringify(dup13.error)}`)
+    void td
+    // h: review focus 3, keywords move no stamp and log nothing
+    must(await sb.from('hg_items').update({ keywords: ['social media', 'efni'] }).eq('id', itemId), 'set keywords')
+    row13 = must(await sb.from('hg_items').select('keywords, updated_at').eq('id', itemId).single(), 'read keywords')
+    expect(row13.keywords.length === 2 && row13.updated_at === stamp13, `keywords ${JSON.stringify(row13)}`)
+    expect((await readEvents()).length === ev13Before, 'keywords logged an event')
+    passed++
   } finally {
     // runs even on failure so nothing is left behind
+    if (smokeTags.length) {
+      const d = await sb.from('hg_tags').delete().in('id', smokeTags).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_tags ids ${smokeTags.join(', ')}: ${d.error.message}`)
+      else {
+        const left = smokeTags.filter((id) => !d.data?.some((r) => r.id === id))
+        if (left.length) console.error(`cleanup deleted nothing for hg_tags ids ${left.join(', ')}, leaked`)
+      }
+    }
+    if (tagViewId) {
+      const d = await sb.from('hg_views').delete().eq('id', tagViewId).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_views id ${tagViewId}: ${d.error.message}`)
+      else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_views id ${tagViewId}`)
+    }
     if (viewId) {
       const d = await sb.from('hg_views').delete().eq('id', viewId).select('id')
       if (d.error) console.error(`cleanup failed, leaked hg_views id ${viewId}: ${d.error.message}`)
