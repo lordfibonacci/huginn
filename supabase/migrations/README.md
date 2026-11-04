@@ -8,6 +8,8 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - Any DROP or DELETE is done by hand by Heimir, never by a migration run from an agent.
 - 0002_hg_rls_hardening was applied by Heimir in the SQL editor because the connector declined it (DROP statements), so it is not recorded in supabase_migrations.schema_migrations.
 
+The folder `supabase/manual/` holds scripts Heimir runs himself in the SQL editor (cleanups with DELETE or data rewrites). They are not migrations and are never applied by an agent.
+
 ## Files
 
 - 0001_hg_schema: the hg_ tables, RLS through hg_is_participant, helpers and the realtime publication.
@@ -28,3 +30,4 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0014_hg_file_replace: updated_at and updated_by on hg_files, stamped and logged as file.updated when storage_path changes, file_id in both file events, hg_unread counts one file once, unique (item_id, repo_path) where repo_path is not null. Heimir runs the duplicate cleanup from the spec before it is applied.
 - 0015_hg_file_note: hg_files.note (at most 200 characters, enforced by normalizeNote in the web and CLI, not in the database); no trigger, function or policy change.
 - 0016_hg_tags_keywords: hg_tags (fixed tag list per project, seeded with the 36 metta tags), hg_items.keywords (ignored by the touch trigger), hg.silent when clauses on the item stamp, touch and event triggers, and the RPCs hg_tag_rename, hg_tag_merge and hg_tag_delete.
+- 0016b_hg_tags_check: trigger that canonicalises item tags against hg_tags and refuses a tag off the list (22023). Applied after the manual tag cleanup and after hg-analyse version 12.
