@@ -1,26 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { fileEntry, formatBytes, parseTags, toggleTagText, uploadSummary } from './newItem'
+import { fileEntry, formatBytes, uploadSummary } from './newItem'
 
 const MB = 1024 * 1024
-
-describe('parseTags', () => {
-  it('splits on commas, trims, drops empties and duplicates, keeps order', () => {
-    expect(parseTags(' efni, smokes ,,efni,  ')).toEqual(['efni', 'smokes'])
-  })
-  it('empty text gives no tags', () => {
-    expect(parseTags('   ')).toEqual([])
-  })
-})
-
-describe('toggleTagText', () => {
-  it('appends a tag that is not there', () => {
-    expect(toggleTagText('efni', 'smokes')).toBe('efni, smokes')
-    expect(toggleTagText('', 'smokes')).toBe('smokes')
-  })
-  it('removes a tag that is there', () => {
-    expect(toggleTagText('efni, smokes, villa', 'smokes')).toBe('efni, villa')
-  })
-})
 
 describe('fileEntry', () => {
   it('a valid file waits', () => {

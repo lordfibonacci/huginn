@@ -1,27 +1,10 @@
 import { validateUpload } from './upload'
 
-// Pure parts of the new item sheet: the tag field and the per file upload
+// Pure parts of the new item sheet: the per file upload
 // state (ruling R18: a state per file, no percentage).
 
 export type UploadState = 'waiting' | 'uploading' | 'done' | 'error'
 export type FileEntry = { id: string; name: string; size: number; state: UploadState; reason: string | null }
-
-// Comma separated tags, trimmed, without empties or repeats, in typed order.
-export function parseTags(text: string): string[] {
-  const out: string[] = []
-  for (const part of text.split(',')) {
-    const tag = part.trim()
-    if (tag !== '' && !out.includes(tag)) out.push(tag)
-  }
-  return out
-}
-
-// The tag field with one tag added or, when it is there, removed.
-export function toggleTagText(text: string, tag: string): string {
-  const tags = parseTags(text)
-  const next = tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]
-  return next.join(', ')
-}
 
 // A picked file: waiting, or an error with the Icelandic reason when
 // validateUpload rejects it. Rejected files are never uploaded.

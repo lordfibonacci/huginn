@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createItem, uploadFile } from '../lib/api'
-import type { FilterOption } from '../lib/filters'
 import { packLayout } from '../lib/layout'
 import { NOTE_MAX } from '../lib/upload'
-import { fileEntry, formatBytes, parseTags, toggleTagText, uploadSummary, type FileEntry } from '../lib/newItem'
-import type { BoardData, Item } from '../lib/types'
+import { fileEntry, formatBytes, uploadSummary, type FileEntry } from '../lib/newItem'
+import { tagRows } from '../lib/tags'
+import type { BoardData, Item, Tag } from '../lib/types'
 
 type Props = {
   open: boolean
   data: BoardData
-  // Tags already in use, offered as quick picks.
-  tags: FilterOption[]
+  // The project's tag list.
+  tags: Tag[]
   // Where the new card lands, from the board (beside its module or mid view).
   place: (moduleId: string | null) => { x: number; y: number } | null
   onClose: () => void
@@ -20,8 +20,6 @@ type Props = {
 }
 
 type Picked = FileEntry & { file: File; note: string }
-
-const QUICK_TAGS = 10
 
 // "+ Nýtt verk": title (required), markdown text, module, tags and files
 // (several, drag and drop or the button). Creates the item with status new,
@@ -41,7 +39,7 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [moduleId, setModuleId] = useState('')
-  const [tagText, setTagText] = useState('')
+  const [chosen, setChosen] = useState<Set<string>>(new Set())
   const [files, setFiles] = useState<Picked[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,8 +51,8 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
   const headingId = useId()
 
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
-  const chosenTags = parseTags(tagText)
-  const dirty = title.trim() !== '' || body.trim() !== '' || tagText.trim() !== '' || files.length > 0
+  const tagList = useMemo(() => tagRows(tags, data.items), [tags, data.items])
+  const dirty = title.trim() !== '' || body.trim() !== '' || chosen.size > 0 || files.length > 0
 
   useEffect(() => {
     titleRef.current?.focus()
@@ -111,7 +109,7 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
         title: title.trim(),
         body: body.trim() === '' ? undefined : body,
         moduleId: mod,
-        tags: chosenTags,
+        tags: [...chosen],
         pos: place(mod) ?? undefined,
       })
     } catch (err) {
@@ -224,25 +222,39 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
           </label>
 
           <div className="hg-new-field">
-            <label>
-              <span>
-                {t('vinnubord.newItem.tags')} <small>{t('vinnubord.newItem.tagsHint')}</small>
-              </span>
-              <input value={tagText} onChange={(e) => setTagText(e.target.value)} disabled={locked} />
-            </label>
-            {tags.length > 0 && !locked && (
+            <span>
+              {t('vinnubord.newItem.tags')}
+              {tagList.length === 0 && (
+                <>
+                  {' '}
+                  <small>{t('vinnubord.newItem.noTags')}</small>
+                </>
+              )}
+            </span>
+            {tagList.length > 0 && (
               <div className="hg-new-tags">
-                {tags.slice(0, QUICK_TAGS).map((o) => (
-                  <button
-                    key={o.key}
-                    type="button"
-                    className={`hg-tag-pick${chosenTags.includes(o.key) ? ' hg-on' : ''}`}
-                    aria-pressed={chosenTags.includes(o.key)}
-                    onClick={() => setTagText((v) => toggleTagText(v, o.key))}
-                  >
-                    {o.label}
-                  </button>
-                ))}
+                {tagList.map((r) => {
+                  const on = chosen.has(r.name)
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={`hg-tag-pick${on ? ' hg-on' : ''}`}
+                      aria-pressed={on}
+                      disabled={locked}
+                      onClick={() =>
+                        setChosen((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(r.name)) next.delete(r.name)
+                          else next.add(r.name)
+                          return next
+                        })
+                      }
+                    >
+                      {r.name}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>

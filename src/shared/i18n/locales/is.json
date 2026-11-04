@@ -200,6 +200,7 @@
       "heading": "Nýtt verk",
       "module": "Módull",
       "noModule": "Enginn módull",
+      "noTags": "Engin tögg á listanum enn. Bættu þeim við í stillingum verkefnisins.",
       "note": "Lýsing, ein setning: hvað þetta er og fyrir hvern",
       "openItem": "Opna verkið",
       "pick": "Velja skrár",
@@ -211,7 +212,6 @@
         "waiting": "Bíður"
       },
       "tags": "Tögg",
-      "tagsHint": "Komma á milli",
       "title": "Titill",
       "titlePlaceholder": "Um hvað snýst verkið",
       "titleRequired": "Verkið þarf titil.",

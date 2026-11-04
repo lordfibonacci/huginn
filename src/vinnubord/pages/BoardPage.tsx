@@ -405,7 +405,7 @@ export function BoardPage() {
         viewMenu={<ViewMenu inline {...viewMenuProps} />}
         onClearView={clearView}
       />
-      <NewItemSheet open={newOpen} data={data} tags={allTags} place={place} onClose={closeNew} onCreated={onCreated} />
+      <NewItemSheet open={newOpen} data={data} tags={data.tags} place={place} onClose={closeNew} onCreated={onCreated} />
       {error && (
         <div className="hg-notice" role="status">
           <span>{t('vinnubord.board.refreshError')}</span>
