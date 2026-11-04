@@ -6,6 +6,8 @@ import {
   guardClose,
   idRange,
   mimeFor,
+  normalizeTag,
+  parseKeywords,
   NOTE_MAX,
   normalizeNote,
   normalizeRepoPath,
@@ -443,5 +445,21 @@ describe('normalizeNote', () => {
   })
   it('measures after collapsing, so padding never counts', () => {
     expect(normalizeNote(' '.repeat(50) + 'a'.repeat(NOTE_MAX))).toEqual({ ok: true, note: 'a'.repeat(NOTE_MAX) })
+  })
+})
+
+describe('normalizeTag', () => {
+  it('lowercases, collapses whitespace and refuses empty, long and comma', () => {
+    expect(normalizeTag('  Fyrir   SÝNINGU ')).toEqual({ ok: true, name: 'fyrir sýningu' })
+    expect(normalizeTag('')).toEqual({ ok: false, reason: 'Taggið þarf nafn.' })
+    expect(normalizeTag('x'.repeat(41))).toEqual({ ok: false, reason: 'Tagg má mest vera 40 stafir.' })
+    expect(normalizeTag('a, b')).toEqual({ ok: false, reason: 'Tagg má ekki hafa kommu.' })
+  })
+})
+
+describe('parseKeywords', () => {
+  it('splits on commas, lowercases, trims, drops empties and duplicates', () => {
+    expect(parseKeywords('Social Media, efni ,SOCIAL MEDIA,,instagram')).toEqual(['social media', 'efni', 'instagram'])
+    expect(parseKeywords('')).toEqual([])
   })
 })

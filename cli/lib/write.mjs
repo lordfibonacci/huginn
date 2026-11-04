@@ -188,6 +188,21 @@ export function normalizeNote(input) {
   return { ok: true, note }
 }
 
+export const TAG_MAX = 40
+
+// Same rule as normalizeTag in src/vinnubord/lib/tags.ts.
+export function normalizeTag(input) {
+  const name = (input ?? '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('is')
+  if (name === '') return { ok: false, reason: 'Taggið þarf nafn.' }
+  if (name.length > TAG_MAX) return { ok: false, reason: 'Tagg má mest vera 40 stafir.' }
+  if (name.includes(',')) return { ok: false, reason: 'Tagg má ekki hafa kommu.' }
+  return { ok: true, name }
+}
+
+export function parseKeywords(text) {
+  return [...new Set(parseTags(text).map((k) => k.toLocaleLowerCase('is')))]
+}
+
 export function storageSafeName(name) {
   const safe = name
     .normalize('NFKD')

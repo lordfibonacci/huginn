@@ -5,6 +5,7 @@ import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './client.mjs'
 import { STATUS_NAMES, isOnBoard, toneOf, waitsFor } from './status.mjs'
 import { readFileSync } from 'node:fs'
 import * as webUpload from '../../src/vinnubord/lib/upload.ts'
+import * as webTags from '../../src/vinnubord/lib/tags.ts'
 import * as webCards from '../../src/vinnubord/lib/cards.ts'
 import * as webPlacement from '../../src/vinnubord/lib/placement.ts'
 import {
@@ -15,7 +16,9 @@ import {
   MAX_UPLOAD_BYTES,
   NEW_CARD_GAP,
   NOTE_MAX,
+  TAG_MAX,
   normalizeNote,
+  normalizeTag,
   placeNewCard,
   storageSafeName,
   validateUpload,
@@ -83,6 +86,12 @@ describe('board window parity with the web', () => {
 
 describe('write helpers parity with the web', () => {
   const NAMES = ['a.md', 'Skýrsla á íslensku.md', 'ÞÆÖ ðé.pdf', '???', '', 'x'.repeat(181), 'mynd (1).PNG', 'a/b\c.txt']
+
+  it('TAG_MAX and normalizeTag agree with tags.ts', () => {
+    expect(TAG_MAX).toBe(webTags.TAG_MAX)
+    for (const v of ['  Fyrir   SÝNINGU ', '', '   ', 'x'.repeat(40), 'x'.repeat(41), 'a, b', 'Árni	leiðarvísir', null])
+      expect(normalizeTag(v)).toEqual(webTags.normalizeTag(v))
+  })
 
   it('the card stamp rule matches the web', () => {
     expect(CARD_STAMP_DAYS).toBe(webCards.CARD_STAMP_DAYS)
