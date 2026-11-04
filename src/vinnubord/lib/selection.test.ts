@@ -99,6 +99,10 @@ describe('zone targets', () => {
     const sel = { cards: new Set(['a']), packs: new Set(['p']) }
     expect(isMember(sel, { kind: 'zone', id: 'a' })).toBe(false)
   })
+  it('toggleMember leaves the selection unchanged for a zone', () => {
+    const sel = { cards: new Set(['a']), packs: new Set(['p']) }
+    expect(toggleMember(sel, { kind: 'zone', id: 'z' })).toBe(sel)
+  })
   it('groupMoves with a zone grip moves every member by the same delta', () => {
     const start = new Map([
       [selKey({ kind: 'zone', id: 'z' }), { x: 100, y: 100 }],

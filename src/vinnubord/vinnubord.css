@@ -171,6 +171,7 @@
   --hg-zone-grip-size: 14px;
   --hg-zone-grip-alpha: 55%;
   --hg-zone-draft-color: var(--hg-lilac);
+  --hg-zone-note-field-h: 72px;
 
   /* Non blocking notice and the new item toast over the board */
   --hg-notice-size: 13px;
@@ -1576,6 +1577,10 @@
   .hg-new span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .hg-new { padding: 0; }
 }
+/* Phones keep the top bar they had: no room for the Kassi button next to the project name. */
+@media (max-width: 767px) {
+  .hg-zone-btn { display: none; }
+}
 
 /* Below 1024 px: two rows. Row one: brand, project | live dot, search button,
    filter button, viewer, new item. Row two: the counters alone across the full
@@ -1767,6 +1772,7 @@
   border-radius: var(--hg-radius-field); min-height: var(--hg-touch); padding: var(--hg-new-input-pad); width: 100%;
 }
 .hg-set-field textarea { padding: var(--hg-field-pad); resize: vertical; line-height: 1.45; min-height: var(--hg-set-bundle-h); }
+.hg-pn .hg-set-field textarea { min-height: var(--hg-zone-note-field-h); }
 .hg-set-field select option { background: var(--hg-surface); }
 .hg-set-field input:focus, .hg-set-field textarea:focus, .hg-set-field select:focus { outline: none; border-color: var(--hg-pill-hover); }
 .hg-set-field :disabled { opacity: 0.6; }

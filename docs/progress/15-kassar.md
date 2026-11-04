@@ -1,11 +1,15 @@
 # 15 Vinnuborð: kassar (plan 15)
 
 Dagsetning: 2026-11-04
-Grein: `vinnubord-15` (commits f76f6ef til 5ee7e12 ofan á main 02e4fd5), ekki sameinuð á main enn: lokayfirferð Fable á allri greininni á eftir, svo sameining og push.
+Grein: `vinnubord-15` (commits f76f6ef til 5ee7e12 ofan á main 02e4fd5), lokayfirferð Fable lokið og athugasemdir lagaðar, sameinuð á main og pushuð.
 Plan: `docs/superpowers/plans/2026-11-04-kassar.md`
 Spekk: `docs/superpowers/specs/2026-11-04-kassar-og-tiltekt-design.md`
 
-Staða: **smíðað, bíður lokayfirferðar**. Migration `0017_hg_zones` er beitt með MCP `apply_migration` 2026-11-04 (MCP samþykkti hana). Allir prófkassar úr handprófunum eru eyddir gegnum nýja spjaldið og `hg_zones` á metta var tóm eftir Task 7.
+Staða: **smíðað, lokayfirferð lokið og lagað, sameinað á main og pushað**. Migration `0017_hg_zones` er beitt með MCP `apply_migration` 2026-11-04 (MCP samþykkti hana). Allir prófkassar úr handprófunum eru eyddir gegnum nýja spjaldið og `hg_zones` á metta var tóm eftir Task 7.
+
+## Lokayfirferð og lagfæringar
+
+Fable fór yfir alla greinina. Lagað í einni lotu: Kassi hnappur falinn undir 768 px, athugasemdarreitur spjaldsins 72 px (`--hg-zone-note-field-h`), Vista helst ekki virkt eftir titil með aukabilum, haus athugasemd í `TopBar`, komma í CLAUDE.md, próf fyrir `toggleMember` með kassa (600 próf). Skýrsla: `.superpowers/sdd/2026-11-04-kassar/final-fix-report.md`.
 
 ## Hvað var gert
 
@@ -39,7 +43,7 @@ Staða: **smíðað, bíður lokayfirferðar**. Migration `0017_hg_zones` er bei
 
 ## Staðfesting
 
-- `npm run test`: 599 próf græn (588 áður plús 11). `npm run build`: grænt.
+- `npm run test`: 600 próf græn (588 áður plús 12). `npm run build`: grænt.
 - `npm run smoke:hg`: `ok 14/14`, engar `smoke%` raðir í `hg_zones` og engar `smoke zone%` sýnir eftir.
 - `0017_hg_zones` beitt gegnum MCP `apply_migration` 2026-11-04. Lifandi athugun: 0 raðir í `hg_zones`, báðar töflur í `supabase_realtime`, 8 policy.
 - Handprófanir hvers verkefnis (Chrome 1440 með mús, iPhone 14 með snertingu gegnum CDP) stóðust, sjá skýrslur í `.superpowers/sdd/2026-11-04-kassar/`.
@@ -55,10 +59,8 @@ Staða: **smíðað, bíður lokayfirferðar**. Migration `0017_hg_zones` er bei
 
 ## Opið
 
-1. iPhone: Kassi hnappurinn skarast við verkefnisnafnið ("Metta") í topplínu (sést í `zone7-phone-2.png`). Kemur úr Task 6.
+1. Á síma (undir 768 px) er Kassi hnappurinn falinn (`display: none`), kassar sjást, dragast og opnast þar áfram. Heimir getur beðið um teikningu á síma í staðinn, þá styttist verkefnisnafnið með úrfellingu.
 2. Nafn kassa sem er undir kortum eða einingaspjöldum er ekki hægt að smella á, því kassinn er teiknaður undir þeim samkvæmt spekki. Þarf að draga eða þysja til að ná í hann.
-3. Athugasemdarreiturinn í spjaldinu er mjög hár (um 220 px) því CSS stillingareitsins ræður hæðinni þrátt fyrir `rows={2}`.
-4. Þetta þrennt og frestað smávægilegt úr yfirferð (allt í `.superpowers/sdd/2026-11-04-kassar/progress.md`) fer til lokayfirferðar Fable á allri greininni.
-5. Plan 16 (tiltekt) fylgir á nýrri grein af main.
+3. Plan 16 (tiltekt) fylgir á nýrri grein af main.
 
 Frestað smávægilegt, til lokayfirferðar: `Zone.color` er `string` í gerðinni þótt gagnagrunnur leyfi aðeins fimm tóna, tvöfaldur FK á `view_id` og `zone_id` (eins og 0013), `toggleMember` vörn án prófs, `updateZone` og `updateZoneRect` með tóman patch senda `.update({})`, bókstafsgildi (letur, bil) í kassareglum eins og aðrar reglur, `Zone` memo sleppir aldrei (eins og `PackColumn`), venjulegur smellur á nafn kassa hreinsar Ctrl val, óaðgengilegir else-if varakostir í move, drop og cancel, færsla og stærðarvistun innan eins ferðs geta blikkað fyrri stöðu (lagast sjálft), Esc í teikniham hreinsar líka val og lokar spjaldi, smellur lekur eftir Esc í miðri ýtingu, hjól eða svif í miðri teikningu færir upphafshornið, `zoneError` skarast við endurnýjunartilkynninguna og hreinsast ekki við næstu velgengni, teiknistaða lifir verkefnaskipti, haus athugasemd í `TopBar` nefnir ekki Kassi hnappinn, ýting á flug stöðvar það án þess að teikna, titilbreyting ber saman hráan texta (Vista helst virkt eftir "Kassi  "), athugasemdarreitur býður línuskil sem `normalizeNote` fellir í bil, `openZoneId` helst ef teiknaður kassi nær aldrei í `data.zones`, smoke nær ekki til meðlimakorta (rökfræði í vef), smoke hreinsar `zoneId` og `zoneViewIds` án raðatalningar.

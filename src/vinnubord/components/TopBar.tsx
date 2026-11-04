@@ -42,7 +42,7 @@ type Props = {
 const COUNT_ORDER: (keyof Counts)[] = ['unread', 'new', 'mine', 'others', 'build', 'parked']
 
 // The top bar above the board: brand, project switcher, the counters (which
-// are the status filter), search, package and tag menus, the view menu, "Hreinsa" while a
+// are the status filter), search, the Kassi button, package and tag menus, the view menu, "Hreinsa" while a
 // filter is on, the live dot, participants, the viewer menu and "+ Nýtt verk".
 // From 1024 px one row; below it two rows, the counters alone in the second
 // row scrolling sideways, search behind a magnifier button and the package,

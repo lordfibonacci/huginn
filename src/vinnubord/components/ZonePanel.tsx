@@ -36,7 +36,7 @@ export function ZonePanel({ zone, focusTitle, onDeleted, onReload }: Props) {
   const checked = normalizeZoneTitle(title)
   const noteChecked = normalizeNote(note)
   const dirty =
-    title !== zone.title || color !== zone.color || (noteChecked.ok ? noteChecked.note : note) !== zone.note
+    (checked.ok ? checked.title : title) !== zone.title || color !== zone.color || (noteChecked.ok ? noteChecked.note : note) !== zone.note
   const valid = checked.ok && noteChecked.ok
   const reason = !checked.ok ? checked.reason : !noteChecked.ok ? noteChecked.reason : null
 
