@@ -93,3 +93,22 @@ describe('groupMoves', () => {
     expect(groupMoves(new Map(), { kind: 'card', id: 'z' }, 1, 1).size).toBe(0)
   })
 })
+
+describe('zone targets', () => {
+  it('a zone is never a member of the selection', () => {
+    const sel = { cards: new Set(['a']), packs: new Set(['p']) }
+    expect(isMember(sel, { kind: 'zone', id: 'a' })).toBe(false)
+  })
+  it('groupMoves with a zone grip moves every member by the same delta', () => {
+    const start = new Map([
+      [selKey({ kind: 'zone', id: 'z' }), { x: 100, y: 100 }],
+      [selKey({ kind: 'card', id: 'a' }), { x: 120, y: 130 }],
+      [selKey({ kind: 'pack', id: 'p' }), { x: 300, y: 100 }],
+    ])
+    const out = groupMoves(start, { kind: 'zone', id: 'z' }, 110, 90)
+    expect(out.get('zone:z')).toEqual({ x: 110, y: 90 })
+    expect(out.get('card:a')).toEqual({ x: 130, y: 120 })
+    expect(out.get('pack:p')).toEqual({ x: 310, y: 90 })
+    expect(parseSelKey('zone:z')).toEqual({ kind: 'zone', id: 'z' })
+  })
+})

@@ -263,6 +263,83 @@ export async function upsertViewPosition(
   if (error) fail('Gat ekki fært verkið í sýninni.', error)
 }
 
+export type ZoneInput = {
+  projectId: string
+  title: string
+  color: string
+  note: string | null
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export async function createZone(input: ZoneInput): Promise<Zone> {
+  const { data, error } = await supabase
+    .from('hg_zones')
+    .insert({
+      project_id: input.projectId,
+      title: input.title,
+      color: input.color,
+      note: input.note,
+      pos_x: Math.round(input.x),
+      pos_y: Math.round(input.y),
+      w: Math.round(input.w),
+      h: Math.round(input.h),
+    })
+    .select('*')
+    .single()
+  if (error || !data) fail('Gat ekki stofnað kassann.', error)
+  return data as Zone
+}
+
+export type ZonePatch = { title?: string; color?: string; note?: string | null }
+
+export async function updateZone(id: string, patch: ZonePatch): Promise<void> {
+  const update: ZonePatch = {}
+  if (patch.title !== undefined) update.title = patch.title
+  if (patch.color !== undefined) update.color = patch.color
+  if (patch.note !== undefined) update.note = patch.note
+  const { error } = await supabase.from('hg_zones').update(update).eq('id', id)
+  if (error) fail('Gat ekki vistað kassann.', error)
+}
+
+export type ZoneRectPatch = { x?: number; y?: number; w?: number; h?: number }
+
+// A box moved or resized on the main board. Only the given sides are written.
+export async function updateZoneRect(id: string, patch: ZoneRectPatch): Promise<void> {
+  const update: { pos_x?: number; pos_y?: number; w?: number; h?: number } = {}
+  if (patch.x !== undefined) update.pos_x = Math.round(patch.x)
+  if (patch.y !== undefined) update.pos_y = Math.round(patch.y)
+  if (patch.w !== undefined) update.w = Math.round(patch.w)
+  if (patch.h !== undefined) update.h = Math.round(patch.h)
+  const { error } = await supabase.from('hg_zones').update(update).eq('id', id)
+  if (error) fail('Gat ekki fært kassann.', error)
+}
+
+// A box moved inside a view, same rule as upsertViewPosition. Its size is
+// never per view.
+export async function upsertViewZonePosition(
+  projectId: string,
+  viewId: string,
+  zoneId: string,
+  x: number,
+  y: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('hg_view_zone_positions')
+    .upsert(
+      { project_id: projectId, view_id: viewId, zone_id: zoneId, pos_x: Math.round(x), pos_y: Math.round(y) },
+      { onConflict: 'view_id,zone_id' },
+    )
+  if (error) fail('Gat ekki fært kassann í sýninni.', error)
+}
+
+export async function deleteZone(id: string): Promise<void> {
+  const { error } = await supabase.from('hg_zones').delete().eq('id', id)
+  if (error) fail('Gat ekki eytt kassanum.', error)
+}
+
 export async function createItem(input: {
   projectId: string
   title: string

@@ -4,10 +4,11 @@ import type { Rect } from './geometry'
 // marquee, the cards it touches and the packs whose title it touches are
 // selected, and a drag on any member moves the whole selection by the same
 // delta. Everything here is geometry and sets, Board owns the DOM and the
-// saves.
+// saves. A zone (kassi) is a grip of a group move, never a member: a drag on
+// its title moves it and what lies in it, but it is never selected.
 
 export type Point = { x: number; y: number }
-export type SelTarget = { kind: 'card' | 'pack'; id: string }
+export type SelTarget = { kind: 'card' | 'pack' | 'zone'; id: string }
 export type Selection = { cards: ReadonlySet<string>; packs: ReadonlySet<string> }
 
 export const EMPTY_SELECTION: Selection = { cards: new Set(), packs: new Set() }
@@ -28,6 +29,7 @@ export function selKey(t: SelTarget): string {
 }
 
 export function isMember(sel: Selection, t: SelTarget): boolean {
+  if (t.kind === 'zone') return false
   return t.kind === 'card' ? sel.cards.has(t.id) : sel.packs.has(t.id)
 }
 
@@ -56,8 +58,10 @@ export function selectInRect(rect: Rect, cards: Boxed[], packTitles: Boxed[], ba
   return { cards: c, packs: p }
 }
 
-// Ctrl click: a card or pack joins the selection or leaves it.
+// Ctrl click: a card or pack joins the selection or leaves it. A zone is
+// never a member, so it leaves the selection as it was.
 export function toggleMember(sel: Selection, t: SelTarget): Selection {
+  if (t.kind === 'zone') return sel
   const c = new Set(sel.cards)
   const p = new Set(sel.packs)
   const set = t.kind === 'card' ? c : p
