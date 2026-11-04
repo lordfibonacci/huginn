@@ -3,7 +3,9 @@
 -- hg-analyse version 12 is live, and before 0016b is applied
 -- (spec 2026-11-04-leit-og-togg-design.md, 4.5). Computed, not hardcoded:
 -- correct whenever it runs. One transaction, hg.silent on, so nothing gets a
--- stamp or an event. The last statement prints the report.
+-- stamp or an event. The report table outlives the commit (a plain temp
+-- table, gone when the session ends), and the last statement, after the
+-- commit, prints it, so the SQL editor shows the report rows.
 
 begin;
 
@@ -26,7 +28,7 @@ create temp table views_before on commit drop as
   where project_id = (select id from cleanup_project)
     and jsonb_array_length(coalesce(filter->'tags', '[]'::jsonb)) > 0;
 
-create temp table report (step text, detail text) on commit drop;
+create temp table report (step text, detail text);
 
 -- 1 and 2: lowercase, trim, spelling merges, duplicates dropped, on items
 update hg_items i
@@ -51,7 +53,19 @@ set filter = jsonb_set(v.filter, '{tags}', (
 where v.project_id = (select id from cleanup_project)
   and jsonb_array_length(coalesce(v.filter->'tags', '[]'::jsonb)) > 0;
 
--- 4: a tag on an open item that is not on the list joins it
+-- 4: a tag on an open item that is not on the list joins it, when the list
+-- rule allows it (at most 40 characters, no comma); a skipped one is reported
+insert into report
+select distinct 'tagg of langt eða með kommu, ekki bætt við', u.t
+from hg_items i
+cross join unnest(i.tags) as u(t)
+where i.project_id = (select id from cleanup_project)
+  and i.status not in ('done', 'dropped')
+  and (char_length(u.t) > 40 or position(',' in u.t) > 0)
+  and not exists (
+    select 1 from hg_tags g where g.project_id = i.project_id and lower(g.name) = lower(u.t)
+  );
+
 with added as (
   insert into hg_tags (project_id, name)
   select distinct i.project_id, u.t
@@ -59,6 +73,8 @@ with added as (
   cross join unnest(i.tags) as u(t)
   where i.project_id = (select id from cleanup_project)
     and i.status not in ('done', 'dropped')
+    and char_length(u.t) <= 40
+    and position(',' in u.t) = 0
     and not exists (
       select 1 from hg_tags g where g.project_id = i.project_id and lower(g.name) = lower(u.t)
     )
@@ -112,6 +128,6 @@ from views_before b
 join hg_views v on v.id = b.id
 where jsonb_array_length(coalesce(v.filter->'tags', '[]'::jsonb)) = 0;
 
-select * from report order by step, detail;
-
 commit;
+
+select * from report order by step, detail;

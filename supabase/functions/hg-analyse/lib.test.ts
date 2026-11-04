@@ -554,6 +554,20 @@ describe('mergeIntoItem', () => {
     const r = mergeIntoItem({ ...item, keywords: ['a', 'b'] }, { ...matched, keywords: ['B', 'c'] })
     expect(r.keywords).toEqual(['a', 'b', 'c'])
   })
+
+  it('drops a keyword equal to a merged tag, ignoring case', () => {
+    const r = mergeIntoItem({ ...item, tags: ['Bókun'] }, { ...matched, keywords: ['bókun', 'booking'] })
+    expect(r.tags).toContain('Bókun')
+    expect(r.keywords).toEqual(['booking'])
+  })
+
+  it('caps the merged keywords at MAX_KEYWORDS', () => {
+    const own = Array.from({ length: 15 }, (_, n) => `eigið ${n}`)
+    const more = Array.from({ length: 15 }, (_, n) => `greint ${n}`)
+    const r = mergeIntoItem({ ...item, keywords: own }, { ...matched, keywords: more })
+    expect(r.keywords).toHaveLength(MAX_KEYWORDS)
+    expect(r.keywords.slice(0, 15)).toEqual(own)
+  })
 })
 
 describe('isItemFilePath', () => {

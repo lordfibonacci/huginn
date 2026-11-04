@@ -109,7 +109,7 @@ function Sheet({ data, tags, place, onClose, onCreated }: Props) {
         title: title.trim(),
         body: body.trim() === '' ? undefined : body,
         moduleId: mod,
-        tags: [...chosen],
+        tags: tagList.filter((r) => chosen.has(r.name)).map((r) => r.name),
         pos: place(mod) ?? undefined,
       })
     } catch (err) {

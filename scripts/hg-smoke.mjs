@@ -553,7 +553,7 @@ try {
     const stamp13 = row13.updated_at
     must(await sb.rpc('hg_tag_rename', { p_tag: ta.id, p_name: 'smoke tag renamed' }), 'rename')
     row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read after rename')
-    expect(row13.tags[0] === 'smoke tag renamed' && row13.updated_at === stamp13, `rename ${JSON.stringify(row13)}`)
+    expect(JSON.stringify(row13.tags) === JSON.stringify(['smoke tag renamed', 'smoke tag b']) && row13.updated_at === stamp13, `rename ${JSON.stringify(row13)}`)
     expect((await readEvents()).length === ev13Before, 'rename logged an event')
     // d: a view with this tag alone blocks delete
     const view13 = must(
@@ -572,12 +572,14 @@ try {
     expect(JSON.stringify(view13After.filter.tags) === JSON.stringify(['smoke tag b']), `view after merge ${JSON.stringify(view13After.filter)}`)
     const gone13 = must(await sb.from('hg_tags').select('id').eq('id', ta.id), 'from row')
     expect(gone13.length === 0, 'merge kept the from row')
+    expect((await readEvents()).length === ev13Before, 'merge logged an event')
     // f: delete once the view has another tag
     must(await sb.from('hg_views').update({ filter: { tones: [], packages: [], tags: ['smoke tag b', 'smokes'] } }).eq('id', view13.id), 'widen view')
     must(await sb.rpc('hg_tag_delete', { p_tag: tb.id }), 'delete')
     smokeTags = []
     row13 = must(await sb.from('hg_items').select('tags, updated_at').eq('id', itemId).single(), 'read after delete')
     expect(row13.tags.length === 0 && row13.updated_at === stamp13, `delete ${JSON.stringify(row13)}`)
+    expect((await readEvents()).length === ev13Before, 'delete logged an event')
     // g: review focus 2, a rename that collides ignoring case is refused
     const tc = await addTag13('smoke tag c')
     const td = await addTag13('smoke tag d')
@@ -587,7 +589,7 @@ try {
     // h: review focus 3, keywords move no stamp and log nothing
     must(await sb.from('hg_items').update({ keywords: ['social media', 'efni'] }).eq('id', itemId), 'set keywords')
     row13 = must(await sb.from('hg_items').select('keywords, updated_at').eq('id', itemId).single(), 'read keywords')
-    expect(row13.keywords.length === 2 && row13.updated_at === stamp13, `keywords ${JSON.stringify(row13)}`)
+    expect(JSON.stringify(row13.keywords) === JSON.stringify(['social media', 'efni']) && row13.updated_at === stamp13, `keywords ${JSON.stringify(row13)}`)
     expect((await readEvents()).length === ev13Before, 'keywords logged an event')
     passed++
   } finally {
@@ -597,7 +599,7 @@ try {
       if (d.error) console.error(`cleanup failed, leaked hg_tags ids ${smokeTags.join(', ')}: ${d.error.message}`)
       else {
         const left = smokeTags.filter((id) => !d.data?.some((r) => r.id === id))
-        if (left.length) console.error(`cleanup deleted nothing for hg_tags ids ${left.join(', ')}, leaked`)
+        if (left.length) console.error(`cleanup left hg_tags ids ${left.join(', ')} (deleted ${smokeTags.length - left.length} of ${smokeTags.length}), leaked`)
       }
     }
     if (tagViewId) {

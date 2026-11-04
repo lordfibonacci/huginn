@@ -15,6 +15,8 @@ describe('foldSearch', () => {
     expect(foldSearch('SÝNING')).toBe('syning')
     expect(foldSearch('Árni  leiðarvísir')).toBe('arni leiðarvisir')
     expect(foldSearch('Þór æfir')).toBe('þor æfir')
+    expect(foldSearch('Þór')).not.toBe('thor')
+    expect(foldSearch('sæti')).toBe('sæti')
     expect(foldSearch('  a \n b ')).toBe('a b')
   })
 })

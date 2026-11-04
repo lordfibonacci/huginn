@@ -3,7 +3,30 @@
 -- ran supabase/manual/2026-11-04-hg-tag-cleanup.sql and after hg-analyse
 -- version 12 is live (version 11 wrote free tags). Every tag is replaced by
 -- the list's spelling, duplicates drop, order stays, and a tag off the list
--- is refused with 22023.
+-- is refused with 22023. The block below makes the apply itself fail while
+-- any item still carries a tag off its project's list (the cleanup has not
+-- run, or its report showed leftovers).
+
+do $$
+declare
+  v_item uuid;
+  v_tag text;
+begin
+  select i.id, u.t into v_item, v_tag
+  from hg_items i
+  cross join unnest(i.tags) with ordinality as u(t, n)
+  where u.t is not null
+    and not exists (
+      select 1 from hg_tags g where g.project_id = i.project_id and lower(g.name) = lower(btrim(u.t))
+    )
+  order by i.id, u.n
+  limit 1;
+  if v_item is not null then
+    raise exception 'Verk % ber taggið "%" sem er ekki á taggalista verkefnisins. Keyrðu taggahreinsunina fyrst.', v_item, v_tag
+      using errcode = '22023';
+  end if;
+end;
+$$;
 
 create or replace function hg_items_check_tags()
 returns trigger
@@ -21,7 +44,7 @@ begin
 
   select u.t into v_bad
   from unnest(new.tags) with ordinality as u(t, n)
-  where not exists (
+  where u.t is not null and not exists (
     select 1 from hg_tags g where g.project_id = new.project_id and lower(g.name) = lower(btrim(u.t))
   )
   order by u.n

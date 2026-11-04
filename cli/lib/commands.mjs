@@ -504,7 +504,7 @@ const WRITE = {
           .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'is'))
         return {
           json: rows,
-          text: rows.length ? rows.map((r) => `${r.name} (${r.count})`).join('\n') : 'Engin tögg á listanum.',
+          text: rows.length ? rows.map((r) => `${oneLine(r.name)} (${r.count})`).join('\n') : 'Engin tögg á listanum.',
         }
       },
     },
@@ -517,7 +517,7 @@ const WRITE = {
         if (!check.ok) throw new Error(check.reason)
         const { client, user, project } = await context(flags)
         const tag = await addTag(client, { projectId: project.id, userId: user.id, name: check.name })
-        return { json: { ok: true, id: tag.id }, text: `Tagg bætt við: ${tag.name}` }
+        return { json: { ok: true, id: tag.id }, text: `Tagg bætt við: ${oneLine(tag.name)}` }
       },
     },
   },

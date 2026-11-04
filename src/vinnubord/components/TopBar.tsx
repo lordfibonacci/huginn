@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../shared/hooks/useAuth'
@@ -73,14 +73,19 @@ export function TopBar({
   const f = filter.filter
   const searching = searchOpen || f.q !== ''
 
+  // Every open asks for focus once. The layout effect runs right after the
+  // commit that shows the field (on a narrow bar it is hidden until then), so
+  // the focus never hits a hidden input, from the magnifier or from Ctrl+F.
+  const [focusAsk, setFocusAsk] = useState(0)
   const openSearch = useCallback(() => {
     setSearchOpen(true)
-    // The field mounts visible in this render, focus it after paint.
-    requestAnimationFrame(() => {
-      searchRef.current?.focus()
-      searchRef.current?.select()
-    })
+    setFocusAsk((n) => n + 1)
   }, [])
+  useLayoutEffect(() => {
+    if (focusAsk === 0) return
+    searchRef.current?.focus()
+    searchRef.current?.select()
+  }, [focusAsk])
 
   // Only a request made while this bar is mounted opens the search: the bar
   // mounts again after a project switch, and an old count must not steal focus.

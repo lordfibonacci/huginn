@@ -50,7 +50,11 @@ function TagRow({ row, tags, onChange }: { row: Row; tags: Tag[]; onChange: () =
     const reason = n.ok ? tagNameTaken(n.name, tags, row.id) : n.reason
     setInvalid(reason)
     if (reason || !n.ok) return
-    if (await run(() => renameTag(row.id, n.name))) onChange()
+    if (await run(() => renameTag(row.id, n.name))) {
+      // A case only edit keeps the row key, so return the field to the stored spelling.
+      setName(n.name)
+      onChange()
+    }
   }
 
   async function merge() {

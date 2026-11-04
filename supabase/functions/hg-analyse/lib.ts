@@ -409,7 +409,8 @@ function dedupe(values: string[]): string[] {
 // What the author wrote wins over the analysis: their text is kept verbatim
 // under its own heading, their module stays, their tags come first. An author
 // who chose a module gets no óflokkað tag. Keywords already on the item come
-// before the analysis's.
+// before the analysis's, a keyword equal to a merged tag drops, and the list
+// stays within MAX_KEYWORDS.
 export function mergeIntoItem(
   item: { body: string | null; module_id: string | null; tags: string[]; keywords: string[] },
   analysis: Analysis,
@@ -423,11 +424,18 @@ export function mergeIntoItem(
       ? analysis.tags
       : analysis.tags.filter((t) => t.toLowerCase() !== UNMATCHED_TAG)
 
+  const tags = dedupe([...item.tags, ...suggested])
+  // A keyword that equals a tag adds nothing to the search, the tag is there.
+  const tagKeys = new Set(tags.map((t) => t.toLowerCase()))
+  const keywords = dedupe([...item.keywords, ...analysis.keywords])
+    .filter((k) => !tagKeys.has(k.toLowerCase()))
+    .slice(0, MAX_KEYWORDS)
+
   return {
     summary: analysis.summary,
     body,
     module_id: item.module_id ?? analysis.module_id,
-    tags: dedupe([...item.tags, ...suggested]),
-    keywords: dedupe([...item.keywords, ...analysis.keywords]),
+    tags,
+    keywords,
   }
 }
