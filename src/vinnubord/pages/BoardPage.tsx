@@ -147,9 +147,13 @@ export function BoardPage() {
   const activeView = useActiveView(project?.id ?? '', loaded ? data.views : NO_VIEWS)
   // The items the active view draws. Counters, menus and the board all read
   // these; the panel still finds its item in data.items, hidden or not.
+  // One clock per board load: it moves with every reload and realtime change,
+  // never between renders of the same data, so the lingering closed cards and
+  // every count agree.
+  const now = useMemo(() => Date.now(), [data])
   const visibleItems = useMemo(
-    () => (loaded ? itemsInView(data.items, data.modules, data.actions, viewerId, activeView.view) : []),
-    [loaded, data, viewerId, activeView.view],
+    () => (loaded ? itemsInView(data.items, data.modules, data.actions, viewerId, activeView.view, now) : []),
+    [loaded, data, viewerId, activeView.view, now],
   )
   const unread = loaded ? data.unread : null
   const unreadByItem = useMemo(() => summarizeUnread(unread ?? []), [unread])
@@ -171,11 +175,11 @@ export function BoardPage() {
             filter: filterApi.filter,
             comments: data.comments,
             reads: data.reads,
-            now: Date.now(),
+            now,
             search,
           })
         : [],
-    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search],
+    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search, now],
   )
   const mineByItem = useMemo(
     () => (loaded ? mineActionsByItem(data.actions, viewerId) : new Map<string, number>()),
@@ -201,8 +205,8 @@ export function BoardPage() {
   )
   const allTags = useMemo(() => (loaded ? tagCounts(data.items, new Set()) : []), [loaded, data])
   const perView = useMemo(
-    () => (loaded ? viewCounts(data.views, data.items, data.modules, data.actions, viewerId) : new Map<string, number>()),
-    [loaded, data, viewerId],
+    () => (loaded ? viewCounts(data.views, data.items, data.modules, data.actions, viewerId, now) : new Map<string, number>()),
+    [loaded, data, viewerId, now],
   )
 
   // A package deleted while it is in the filter would keep the board dim with
@@ -364,7 +368,7 @@ export function BoardPage() {
     views: data.views,
     active: activeView.view,
     counts: perView,
-    boardCount: data.items.filter(isOnBoard).length,
+    boardCount: data.items.filter((i) => isOnBoard(i, now)).length,
     packages: allPackages,
     tags: allTags,
     filter: filterApi.filter,

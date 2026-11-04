@@ -3,6 +3,7 @@ import { freshChips, readAtOf, type UnreadKind, type UnreadSummary } from './rea
 import {
   BUCKET_TONE,
   countBucket,
+  isOpen,
   itemStatusLabel,
   itemTone,
   wireMode,
@@ -21,6 +22,8 @@ export type CardModel = {
   label: string
   mode: WireMode
   visible: boolean
+  // Done or dropped, still drawn within CLOSED_LINGER_DAYS.
+  closed: boolean
   fresh: UnreadSummary | null
   mover: { short: string; name: string } | null
   // Who the item waits for, when it waits and that person is a participant.
@@ -111,7 +114,8 @@ export function freshLine(summary: UnreadSummary, comment: { short: string; line
 
 // items in board order (boardOrder), one model per item, same order.
 // visible is false only when the filter is active and the item does not
-// match it; the tone filter reads the bucket tone, as the counter pills do.
+// match it; the tone filter reads the bucket tone, as the counter pills do,
+// so a closed card (no bucket) matches no tone but still matches the rest.
 export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
   const { viewerId, participants, actions, unread, filter } = ctx
   const packageOfModule = new Map(ctx.modules.map((m) => [m.id, m.package_id]))
@@ -124,7 +128,8 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
     const fresh = unread.get(item.id) ?? null
     const text = ctx.search.get(item.id) ?? ''
     const visible =
-      !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: fresh !== null, text }, filter))
+      !filterOn ||
+      matches(item, { tone: bucket !== null ? BUCKET_TONE[bucket] : null, packageId, unread: fresh !== null, text }, filter)
     const moverId = item.updated_by ?? item.created_by
     const mover = participants.find((p) => p.user_id === moverId)
     const waiter = item.status === 'waiting' ? participants.find((p) => p.user_id === item.waiting_on) : undefined
@@ -135,6 +140,7 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
       label: itemStatusLabel(item, viewerId, participants),
       mode: wireMode(item, tone),
       visible,
+      closed: !isOpen(item),
       fresh,
       mover: mover ? { short: mover.short, name: mover.display_name } : null,
       waitingOn: waiter ? { short: waiter.short, name: waiter.display_name } : null,

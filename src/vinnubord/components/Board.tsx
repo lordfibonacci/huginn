@@ -1076,7 +1076,9 @@ export function Board({
           w = el.offsetWidth || w
         }
         // Cards the view hides keep their own place on the main board, so a
-        // new card does not land on one of them either.
+        // new card does not land on one of them either. isOnBoard reads its
+        // own clock here, one call per new card: a second of drift from the
+        // board's clock is harmless.
         if (activeView) {
           for (const item of data.items) {
             if (!isOnBoard(item) || els.current.has(item.id)) continue

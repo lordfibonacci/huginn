@@ -1,4 +1,4 @@
-import { isOnBoard, isTone, itemTone, type Tone } from './status'
+import { isOpen, isTone, itemTone, type Tone } from './status'
 import type { Item, Module, Package, Participant, Plan, PlanStatus } from './types'
 
 export type PackRow = { pkg: Package; modules: Module[] }
@@ -12,8 +12,9 @@ export function packLayout(packages: Package[], modules: Module[]): PackRow[] {
     }))
 }
 
+// Open items of the module; a closed card still drawn on the board never counts.
 export function moduleOpenCount(moduleId: string, items: Item[]): number {
-  return items.filter((i) => i.module_id === moduleId && isOnBoard(i)).length
+  return items.filter((i) => i.module_id === moduleId && isOpen(i)).length
 }
 
 // Tone of the first open item that is not parked. Without one, the color the
@@ -24,7 +25,7 @@ export function moduleTone(
   viewerId: string,
   participants: Participant[],
 ): Tone {
-  const first = items.find((i) => i.module_id === module.id && isOnBoard(i) && i.status !== 'parked')
+  const first = items.find((i) => i.module_id === module.id && isOpen(i) && i.status !== 'parked')
   if (first) return itemTone(first, viewerId, participants)
   return isTone(module.color) ? module.color : 'stone'
 }

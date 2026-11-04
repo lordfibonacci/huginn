@@ -14,7 +14,7 @@ function item(over: Partial<Item> = {}): Item {
 
 function card(over: Partial<CardModel> = {}): CardModel {
   return {
-    item: item(), tone: 'gold', bucket: 'new', label: '', mode: 'pulse', visible: true,
+    item: item(), tone: 'gold', bucket: 'new', label: '', mode: 'pulse', visible: true, closed: false,
     fresh: null, mover: null, waitingOn: null, moduleName: null, showStamp: false, freshComment: null, ...over,
   }
 }
