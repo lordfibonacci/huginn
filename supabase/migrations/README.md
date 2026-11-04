@@ -26,4 +26,5 @@ SQL migrations for the `hg_` tables on Supabase project `czdjxtsjgughimlazdmu` (
 - 0012_hg_action_edits: updated_at, updated_by, cancelled and cancel_reason on hg_actions, edit stamps, action.updated and action.cancelled events.
 - 0013_hg_view_pack_positions: hg_view_pack_positions (pack column positions per view, composite project keys), participant RLS, realtime.
 - 0014_hg_file_replace: updated_at and updated_by on hg_files, stamped and logged as file.updated when storage_path changes, file_id in both file events, hg_unread counts one file once, unique (item_id, repo_path) where repo_path is not null. Heimir runs the duplicate cleanup from the spec before it is applied.
+- 0015_hg_file_note: hg_files.note (at most 200 characters, enforced by normalizeNote in the web and CLI, not in the database); no trigger, function or policy change.
 - 0016_hg_tags_keywords: hg_tags (fixed tag list per project, seeded with the 36 metta tags), hg_items.keywords (ignored by the touch trigger), hg.silent when clauses on the item stamp, touch and event triggers, and the RPCs hg_tag_rename, hg_tag_merge and hg_tag_delete.

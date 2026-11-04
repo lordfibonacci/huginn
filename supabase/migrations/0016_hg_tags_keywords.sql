@@ -135,6 +135,8 @@ begin
     where project_id = v_project and v_old = any(tags);
   update hg_views set filter = jsonb_set(filter, '{tags}', hg_tags_json_replace(filter->'tags', v_old, v_name))
     where project_id = v_project and filter->'tags' ? v_old;
+  -- Clear the flag so later statements in the same transaction stamp and log again.
+  perform set_config('hg.silent', '', true);
 end;
 $$;
 
@@ -168,6 +170,8 @@ begin
   update hg_views set filter = jsonb_set(filter, '{tags}', hg_tags_json_replace(filter->'tags', v_from, v_into))
     where project_id = v_project and filter->'tags' ? v_from;
   delete from hg_tags where id = p_from;
+  -- Clear the flag so later statements in the same transaction stamp and log again.
+  perform set_config('hg.silent', '', true);
   return v_n;
 end;
 $$;
@@ -202,13 +206,15 @@ begin
   update hg_views set filter = jsonb_set(filter, '{tags}', hg_tags_json_replace(filter->'tags', v_name, null))
     where project_id = v_project and filter->'tags' ? v_name;
   delete from hg_tags where id = p_tag;
+  -- Clear the flag so later statements in the same transaction stamp and log again.
+  perform set_config('hg.silent', '', true);
   return v_n;
 end;
 $$;
 
-revoke all on function hg_tag_rename(uuid, text) from public;
-revoke all on function hg_tag_merge(uuid, uuid) from public;
-revoke all on function hg_tag_delete(uuid) from public;
+revoke all on function hg_tag_rename(uuid, text) from public, anon;
+revoke all on function hg_tag_merge(uuid, uuid) from public, anon;
+revoke all on function hg_tag_delete(uuid) from public, anon;
 grant execute on function hg_tag_rename(uuid, text) to authenticated;
 grant execute on function hg_tag_merge(uuid, uuid) to authenticated;
 grant execute on function hg_tag_delete(uuid) to authenticated;
