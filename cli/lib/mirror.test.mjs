@@ -112,6 +112,7 @@ function fullBoard() {
     waiting_on: 'u-h',
     module_id: 'm-1',
     tags: ['efnaskra', 'honnun'],
+    keywords: ['Social Media', 'efni'],
     source_ref: 'WhatsApp 2026-10-29',
     next_step: 'Heimir velur útgáfu.',
     next_prompt: 'Lestu docs/huginn og ```haltu áfram```',
@@ -430,6 +431,11 @@ describe('renderItemMd', () => {
     expect(md).toContain('- 2026-10-31T11:20:00.000Z Árni (Á): Fyrsta brief\n  kemur á morgun\n- 2026-10-31T11:42:00.000Z Heimir (H): Já, taktu hann með.')
     expect(md).not.toContain('annað verk')
   })
+  it('has no Leitarorð line without keywords', () => {
+    const data = fullBoard()
+    data.items[0].keywords = []
+    expect(renderFull(data).md).not.toContain('Leitarorð')
+  })
   it('has no Spjall section without comments', () => {
     const data = fullBoard()
     data.comments = []
@@ -481,6 +487,7 @@ describe('renderItemMd', () => {
       'Bíður eftir: Heimir (H)',
       'Módúll: Efnaskrá (efnaskra)',
       'Merki: efnaskra, honnun',
+      'Leitarorð: Social Media, efni',
       'Stofnað: 2026-10-01T09:00:00.000Z',
       '## Hvar erum við',
       'Árni sendi drög.\nClaude greindi.',

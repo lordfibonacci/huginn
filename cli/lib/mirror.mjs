@@ -211,6 +211,8 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
   if (module) meta.push(`Módúll: ${oneLine(module.name)} (${oneLine(module.slug)})`)
   const tags = (item.tags ?? []).map(oneLine).filter(Boolean)
   if (tags.length) meta.push(`Merki: ${tags.join(', ')}`)
+  const keywords = (item.keywords ?? []).map(oneLine).filter(Boolean)
+  if (keywords.length) meta.push(`Leitarorð: ${keywords.join(', ')}`)
   if (item.created_at) meta.push(`Stofnað: ${iso(item.created_at)}, af ${person(item.created_by, participants)}`)
   if (item.updated_at) meta.push(`Uppfært: ${iso(item.updated_at)}`)
   if (item.closed_at) meta.push(`Lokað: ${iso(item.closed_at)}`)

@@ -42,12 +42,13 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `huginn sync` | Speglar verkin í `docs/huginn/` og skrifar `docs/huginn/STATUS.md` (sjá Spegill) |
 | `huginn sync --dry-run` | Sýnir hvað yrði skrifað, skrifar ekkert |
 | `huginn sync --out <mappa>` | Speglar í aðra möppu |
+| `huginn tag list` | Taggalisti verkefnisins með fjölda verka á hverju taggi, raðað eftir fjölda. `--json` gefur `[{ id, name, count }]` |
 
 ### Skrifskipanir
 
 | Skipun | Dæmi |
 |---|---|
-| `item create` | `huginn item create --title "Nýtt verk" --body-file lysing.md --module efnaskra --tags a,b --file mynd.png --file skjal.pdf` |
+| `item create` | `huginn item create --title "Nýtt verk" --body-file lysing.md --module efnaskra --tags a,b --keywords "social media,efni,instagram" --file mynd.png --file skjal.pdf` |
 | `item set <id>` | `huginn item set 1a2b3c4d --status waiting --waiting-on H --summary "Bíður svars"` |
 | `item close <id>` | `huginn item close 1a2b3c4d` (staðan Lokið), `--dropped` fyrir Hætt við |
 | `question ask <item>` | `huginn question ask 1a2b3c4d --to Á --body "Hvaða litur?"` |
@@ -63,6 +64,7 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `file set <fileid>` | `huginn file set 7a8b9c0d --note "Hönnunarskjal lesarans, fyrir Heimi"` |
 | `file get <fileid>` | `huginn file get 7a8b9c0d --out ./skyrsla.pdf` (`--force` skrifar yfir) |
 | `comment add <item>` | `huginn comment add 1a2b3c4d --body "Lítur vel út"` |
+| `tag add <nafn>` | `huginn tag add "edge function"` (lágstafir, mest 40 stafir, engin komma; tvítak er villa) |
 | `bundle push` | `huginn bundle push --file bundle.md` (setur samhengi verkefnisins) |
 
 Með `--json` skilar hver skrifskipun `{ "ok": true, "id": "<uuid>" }`.
@@ -72,7 +74,8 @@ Með `--json` skilar hver skrifskipun `{ "ok": true, "id": "<uuid>" }`.
 - **Staða.** Önnur staða en `waiting` hreinsar `waiting_on`. `--waiting-on H` án `--status` setur verkið í bið eftir H. `--status waiting` án manns er leyft.
 - **Lokun.** `item close` og `item set --status done|dropped` neita ef verkið á ósvaraða spurningu eða opið handtak. `--force` lokar samt.
 - **Handtök.** Handtak sem varð rangt er lagað með `action set`, aldrei hakað sem gert. Handtak sem á ekki lengur við er fellt niður með `action cancel`; það telst lokað (stöðvar hvorki `item close` né plan sem fer í done) en ekki gert.
-- **Hreinsun.** `--module none` tekur verkið úr módúl, `--tags ""` tæmir merki, tómt gildi á textareit tæmir hann.
+- **Hreinsun.** `--module none` tekur verkið úr módúl, `--tags ""` tæmir merki, `--keywords ""` tæmir leitarorð, tómt gildi á textareit tæmir hann.
+- **Tögg og leitarorð.** `--tags` tekur aðeins tögg af listanum (`tag list`); gagnagrunnurinn skrifar stafsetningu listans á verkið og hafnar öðru. `--keywords a,b` eru falin leitarorð (lágstafir, komma á milli), 10 til 15 á verk, íslensk og ensk; `item set --keywords` skiptir listanum út, `--keywords ""` tæmir. Þau standa í `item.md` sem `Leitarorð:`.
 - **Skrár.** Sömu reglur og vefurinn: hámark 50 MB, nafn að hámarki 180 stafir, geymt í `hg-files`. `--file` má endurtaka. Skrá með --repo-path er eitt skjal á hverja slóð á hverju verki: sama slóð aftur uppfærir röðina og eintakið, sömu bæti gera ekkert, og slóðin er stöðluð (bakstrik, ./, bil).
 - **Staðsetning.** Nýtt spjald lendir við hlið módúlsins eins og í vefnum, annars efst til vinstri við það sem er á borðinu, aldrei ofan á spjaldi eða pakka.
 - **Rofar.** Óþekktur rofi er villa. Gildi sem byrjar á `--` þarf að gefa sem `--body=--gildi`.

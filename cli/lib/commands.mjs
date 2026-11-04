@@ -8,6 +8,7 @@ import {
   addComment,
   addPlan,
   addRuling,
+  addTag,
   answerQuestion,
   askQuestion,
   cancelAction,
@@ -34,7 +35,9 @@ import {
   mimeFor,
   normalizeNote,
   normalizeRepoPath,
+  normalizeTag,
   parseCommand,
+  parseKeywords,
   parseTags,
   placeItem,
   resolveModule,
@@ -105,6 +108,18 @@ async function guardedUpdate(client, item, patch, force) {
   return updateItem(client, item.id, patch)
 }
 
+// The 0016b trigger refuses a tag off the list; say where the list is.
+async function withTagHint(fn) {
+  try {
+    return await fn()
+  } catch (error) {
+    if (/taggalista verkefnisins/.test(error.message)) {
+      error.message += ' huginn tag list sýnir hann, huginn tag add bætir við.'
+    }
+    throw error
+  }
+}
+
 function itemText(verb, item) {
   return `${verb} #${shortId(item.id)}: ${oneLine(item.title)}, ${STATUS_NAMES[item.status] ?? oneLine(item.status)}`
 }
@@ -113,13 +128,14 @@ const WRITE = {
   item: {
     create: {
       usage:
-        'item create --title T [--body-file f.md] [--module slug] [--tags a,b] [--file path ...] [--status new|waiting|ready|building|parked] [--waiting-on short]',
+        'item create --title T [--body-file f.md] [--module slug] [--tags a,b] [--keywords a,b] [--file path ...] [--status new|waiting|ready|building|parked] [--waiting-on short]',
       args: 0,
       spec: {
         title: 'value',
         'body-file': 'value',
         module: 'value',
         tags: 'value',
+        keywords: 'value',
         file: 'multi',
         status: 'value',
         'waiting-on': 'value',
@@ -139,17 +155,20 @@ const WRITE = {
         const sp = statusPatch(flags.status, waitingOn)
         const pos = placeItem(board, moduleId, { title, tags, fileCount: files.length })
 
-        const item = await createItem(client, {
-          projectId: project.id,
-          userId: user.id,
-          title,
-          body,
-          moduleId,
-          tags,
-          status: sp.status ?? 'new',
-          waitingOn: sp.waiting_on ?? null,
-          pos,
-        })
+        const item = await withTagHint(() =>
+          createItem(client, {
+            projectId: project.id,
+            userId: user.id,
+            title,
+            body,
+            moduleId,
+            tags,
+            keywords: parseKeywords(flags.keywords),
+            status: sp.status ?? 'new',
+            waitingOn: sp.waiting_on ?? null,
+            pos,
+          }),
+        )
         const uploaded = []
         for (const f of files) {
           try {
@@ -168,7 +187,7 @@ const WRITE = {
 
     set: {
       usage:
-        'item set <id> [--status ..] [--waiting-on short|none] [--summary ".."] [--body-file f.md] [--module slug|none] [--tags a,b] [--next-step ".."] [--next-prompt-file f.txt] [--source-ref ".."] [--force]',
+        'item set <id> [--status ..] [--waiting-on short|none] [--summary ".."] [--body-file f.md] [--module slug|none] [--tags a,b] [--keywords a,b] [--next-step ".."] [--next-prompt-file f.txt] [--source-ref ".."] [--force]',
       args: 1,
       spec: {
         status: 'value',
@@ -177,6 +196,7 @@ const WRITE = {
         'body-file': 'value',
         module: 'value',
         tags: 'value',
+        keywords: 'value',
         'next-step': 'value',
         'next-prompt-file': 'value',
         'source-ref': 'value',
@@ -197,12 +217,13 @@ const WRITE = {
         if (body !== undefined) patch.body = textOrNull(body)
         if (flags.module !== undefined) patch.module_id = resolveModule(await listModules(client, project.id), flags.module)
         if (flags.tags !== undefined) patch.tags = parseTags(flags.tags)
+        if (flags.keywords !== undefined) patch.keywords = parseKeywords(flags.keywords)
         if (flags['next-step'] !== undefined) patch.next_step = textOrNull(flags['next-step'])
         if (nextPrompt !== undefined) patch.next_prompt = textOrNull(nextPrompt)
         if (flags['source-ref'] !== undefined) patch.source_ref = textOrNull(flags['source-ref'])
         if (Object.keys(patch).length === 0) throw new Error('Ekkert að breyta. Sjá huginn --help.')
 
-        const updated = await guardedUpdate(client, item, patch, flags.force === true)
+        const updated = await withTagHint(() => guardedUpdate(client, item, patch, flags.force === true))
         return { json: { ok: true, id: updated.id }, text: itemText('Verk uppfært', updated) }
       },
     },
@@ -466,6 +487,37 @@ const WRITE = {
         const item = await findById(client, 'item', project.id, itemId)
         const c = await addComment(client, { projectId: project.id, itemId: item.id, userId: user.id, body })
         return { json: { ok: true, id: c.id }, text: `Athugasemd skráð #${shortId(c.id)} á verk #${shortId(item.id)}.` }
+      },
+    },
+  },
+
+  tag: {
+    list: {
+      usage: 'tag list',
+      args: 0,
+      spec: {},
+      async run(flags) {
+        const { client, project } = await context(flags)
+        const board = await loadBoard(client, project.id)
+        const rows = board.tags
+          .map((tg) => ({ id: tg.id, name: tg.name, count: board.items.filter((i) => (i.tags ?? []).includes(tg.name)).length }))
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'is'))
+        return {
+          json: rows,
+          text: rows.length ? rows.map((r) => `${r.name} (${r.count})`).join('\n') : 'Engin tögg á listanum.',
+        }
+      },
+    },
+    add: {
+      usage: 'tag add <name>',
+      args: 1,
+      spec: {},
+      async run(flags, [raw]) {
+        const check = normalizeTag(raw)
+        if (!check.ok) throw new Error(check.reason)
+        const { client, user, project } = await context(flags)
+        const tag = await addTag(client, { projectId: project.id, userId: user.id, name: check.name })
+        return { json: { ok: true, id: tag.id }, text: `Tagg bætt við: ${tag.name}` }
       },
     },
   },

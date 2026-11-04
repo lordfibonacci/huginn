@@ -76,6 +76,7 @@ export async function createItem(client, input) {
     summary: input.summary ?? null,
     module_id: input.moduleId ?? null,
     tags: input.tags ?? [],
+    keywords: input.keywords ?? [],
     status: input.status ?? 'new',
     waiting_on: input.waitingOn ?? null,
     source_ref: input.sourceRef ?? null,
@@ -215,6 +216,19 @@ export async function addComment(client, { projectId, itemId, userId, body }) {
     .select('*')
     .single()
   if (error || !data) fail('Gat ekki vistað athugasemdina', error)
+  return data
+}
+
+// One tag on the project's list. The unique index on lower(name) refuses a
+// name already there, in any case.
+export async function addTag(client, { projectId, userId, name }) {
+  const { data, error } = await client
+    .from('hg_tags')
+    .insert({ project_id: projectId, name, created_by: userId })
+    .select('*')
+    .single()
+  if (error?.code === '23505') fail('Taggið er þegar á listanum.')
+  if (error || !data) fail('Gat ekki bætt tagginu við', error)
   return data
 }
 
