@@ -43,6 +43,8 @@
   --hg-pack-title-indent: 14px;
   --hg-pack-title-size: 30px;
   --hg-pack-rail-top: 71px;
+  --hg-pack-fold-size: 13px;
+  --hg-pack-fold-gap: 6px;
 
   /* ---------- Module cards ---------- */
   --hg-module-bg: rgba(22, 30, 43, 0.72);
@@ -597,6 +599,20 @@
   position: absolute; left: 0; top: var(--hg-pack-rail-top); bottom: 0; width: 1px;
   background: linear-gradient(to bottom, var(--hg-line), transparent);
 }
+/* Title row: the title button (grip) and the fold toggle. Folded, the modules
+   and the rail are not drawn and one line counts them. */
+.hg-pack-head {
+  display: flex; align-items: center; gap: var(--hg-pack-fold-gap);
+  margin: 0 0 var(--hg-pack-title-gap) var(--hg-pack-title-indent); width: calc(100% - var(--hg-pack-title-indent));
+}
+.hg-pack-head .hg-pack-title { margin: 0; width: auto; flex: 1; min-width: 0; }
+.hg-pack-fold {
+  width: var(--hg-touch); height: var(--hg-touch); flex: none; display: grid; place-items: center; cursor: pointer;
+  border: none; border-radius: var(--hg-radius-control-inner); background: none; color: var(--hg-ink-3);
+}
+.hg-pack-fold svg { width: var(--hg-icon); height: var(--hg-icon); stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.hg-pack-fold:hover, .hg-pack-fold:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
+.hg-pack-fold-line { margin: 0 0 0 var(--hg-pack-title-indent); font-size: var(--hg-pack-fold-size); color: var(--hg-ink-3); }
 
 .hg-tone-gold { --hg-c: var(--hg-gold); }
 .hg-tone-lilac { --hg-c: var(--hg-lilac); }

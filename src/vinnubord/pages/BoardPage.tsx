@@ -8,6 +8,7 @@ import { useBoardData } from '../hooks/useBoardData'
 import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { useListPrefs } from '../hooks/useListPrefs'
+import { useCollapsedPacks } from '../hooks/useCollapsedPacks'
 import { createZone } from '../lib/api'
 import { cardModels } from '../lib/cards'
 import { packageCounts, tagCounts } from '../lib/filters'
@@ -141,6 +142,8 @@ export function BoardPage() {
     setJustCreatedZone(null)
   }, [select])
   const listPrefs = useListPrefs(project?.id ?? '', narrow)
+  // Pack columns folded in this browser.
+  const folds = useCollapsedPacks(project?.id ?? '')
 
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
@@ -235,16 +238,44 @@ export function BoardPage() {
     focusListButton()
     hideList()
   }, [hideList])
+  // The pack of an item through its module, null when unknown.
+  const itemsData = loaded ? data.items : null
+  const modulesData = loaded ? data.modules : null
+  const packOfItem = useCallback(
+    (id: string) => {
+      const item = itemsData?.find((i) => i.id === id)
+      const m = item?.module_id ? modulesData?.find((x) => x.id === item.module_id) : null
+      return m?.package_id ?? null
+    },
+    [itemsData, modulesData],
+  )
+  // A card of a folded pack has no element to glide to: pick opens its pack
+  // and leaves the id here, and the effect below reveals it after the commit
+  // that drew the card, so its element and spring exist.
+  const pendingReveal = useRef<string | null>(null)
+  const { collapsed: foldedPacks, expand: expandPack } = folds
+  useEffect(() => {
+    const id = pendingReveal.current
+    if (id) {
+      pendingReveal.current = null
+      boardRef.current?.reveal(id)
+    }
+  }, [foldedPacks])
   // A row or a module panel item: open the panel and glide the board to the card.
   // On a narrow board the list covers the board, so it closes first; focus
   // then belongs with the opening panel and is left alone.
   const pick = useCallback(
     (id: string) => {
+      const pack = packOfItem(id)
+      if (pack && foldedPacks.has(pack)) {
+        expandPack(pack)
+        pendingReveal.current = id
+      }
       if (narrow) hideList()
       select(id)
-      boardRef.current?.reveal(id)
+      if (pendingReveal.current !== id) boardRef.current?.reveal(id)
     },
-    [narrow, hideList, select],
+    [narrow, hideList, select, packOfItem, foldedPacks, expandPack],
   )
   const toggleList = useCallback(() => {
     if (listPrefs.open) {
@@ -312,11 +343,14 @@ export function BoardPage() {
   const onCreated = useCallback(
     (item: Item) => {
       setNewOpen(false)
+      // A new item in a module of a folded pack opens the pack, so its card shows.
+      const pack = item.module_id ? modulesData?.find((m) => m.id === item.module_id)?.package_id : null
+      if (pack) expandPack(pack)
       select(item.id)
       // Realtime brings the item too; this makes the panel open without waiting for it.
       void reload()
     },
-    [select, reload],
+    [select, reload, modulesData, expandPack],
   )
 
   if (viewerLoading) return <Loader />
@@ -415,6 +449,8 @@ export function BoardPage() {
         drawing={drawing}
         onDrawn={onDrawn}
         onDrawCancel={onDrawCancel}
+        collapsedPacks={folds.collapsed}
+        onToggleFold={folds.toggle}
         listOpen={listShown && !narrow}
         panelOpen={panelOpen}
         panelWide={readerOpen}

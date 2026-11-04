@@ -104,6 +104,10 @@ type Props = {
   onDrawn: (rect: Rect) => void
   // The draw ended without a box (too small, a second finger, Esc).
   onDrawCancel: () => void
+  // Pack columns folded in this browser (useCollapsedPacks): their cards are
+  // not drawn, the list and the pills still show them.
+  collapsedPacks: ReadonlySet<string>
+  onToggleFold: (packageId: string) => void
   // The wide list drawer is open on the left of the board.
   listOpen: boolean
   // An item or module panel is open on the right (a sheet on a phone).
@@ -185,6 +189,8 @@ export function Board({
   drawing,
   onDrawn,
   onDrawCancel,
+  collapsedPacks,
+  onToggleFold,
   listOpen,
   panelOpen,
   panelWide,
@@ -201,12 +207,31 @@ export function Board({
   // From items, not cards: cards change on every filter keystroke, and a new
   // onBoard would rerun the springs, the entry delays and the bursts. Same
   // order as the cards (BoardPage builds them from boardOrder of these items).
-  const onBoard = useMemo(() => boardOrder(items), [items])
+  // Folded packs hide their cards from the board, not from the list or the pills.
+  const packOfModule = useMemo(() => new Map(data.modules.map((m) => [m.id, m.package_id])), [data.modules])
+  const hiddenIds = useMemo(
+    () =>
+      new Set(
+        items.filter((i) => i.module_id && collapsedPacks.has(packOfModule.get(i.module_id) ?? '')).map((i) => i.id),
+      ),
+    [items, collapsedPacks, packOfModule],
+  )
+  const onBoard = useMemo(() => boardOrder(items.filter((i) => !hiddenIds.has(i.id))), [items, hiddenIds])
+  // The cards drawn on the board: every model but the hidden ones.
+  const drawn = useMemo(() => cards.filter((c) => !hiddenIds.has(c.item.id)), [cards, hiddenIds])
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
   const zonePositions = useMemo(() => zonePositionsOf(data.viewZonePositions, viewId), [data.viewZonePositions, viewId])
   const rows = useMemo(() => packLayout(data.packages, data.modules), [data.packages, data.modules])
+  // The items of each column's modules, for the fold line.
+  const cardCounts = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const { pkg, modules } of rows) {
+      map.set(pkg.id, items.filter((i) => i.module_id && modules.some((m) => m.id === i.module_id)).length)
+    }
+    return map
+  }, [rows, items])
   const plansByItem = useMemo(() => {
     const map = new Map<string, Plan[]>()
     for (const p of data.plans) map.set(p.item_id, [...(map.get(p.item_id) ?? []), p])
@@ -224,10 +249,10 @@ export function Board({
 
   const wireItems = useMemo<WireItem[]>(
     () =>
-      cards
+      drawn
         .filter((c) => c.visible && c.item.module_id !== null)
         .map((c) => ({ id: c.item.id, moduleId: c.item.module_id as string, tone: c.tone, mode: c.mode })),
-    [cards],
+    [drawn],
   )
 
   const dimModuleIds = useMemo(() => {
@@ -487,6 +512,13 @@ export function Board({
     },
     [placePack],
   )
+  // Mirrors of the fold state for dropPack, which runs inside a drag.
+  const collapsedRef = useRef(collapsedPacks)
+  const hiddenRef = useRef(hiddenIds)
+  useLayoutEffect(() => {
+    collapsedRef.current = collapsedPacks
+    hiddenRef.current = hiddenIds
+  }, [collapsedPacks, hiddenIds])
   const dropPack = useCallback(
     (id: string, x: number, y: number) => {
       const base = packDataPos(id)
@@ -497,9 +529,25 @@ export function Board({
       const old = packPending.current.get(id)
       packPending.current.set(id, { x: rx, y: ry, baseX: old?.baseX ?? base.x, baseY: old?.baseY ?? base.y, viewId })
       placePack(id, { x: rx, y: ry })
+      // A folded pack takes its hidden cards along (spec 4.4): they have no
+      // element and no spring, so the drop writes them straight to the
+      // database by the pack's delta.
+      if (collapsedRef.current.has(id)) {
+        const from = old ?? base
+        const dx = rx - from.x
+        const dy = ry - from.y
+        if (dx !== 0 || dy !== 0) {
+          const hidden = hiddenRef.current
+          for (const item of items) {
+            if (!hidden.has(item.id) || !item.module_id || packOfModule.get(item.module_id) !== id) continue
+            const p = positionOf(item, positions)
+            savePosition(item.id, Math.round(p.x + dx), Math.round(p.y + dy), viewId)
+          }
+        }
+      }
       savePackPosition(id, rx, ry, viewId)
     },
-    [packDataPos, placePack, savePackPosition, viewId],
+    [packDataPos, placePack, savePackPosition, viewId, items, packOfModule, positions, savePosition],
   )
   const cancelPack = useCallback(
     (id: string, x: number, y: number) => {
@@ -1075,15 +1123,14 @@ export function Board({
           if (s) obstacles.push({ x: s.tx, y: s.ty, w: el.offsetWidth, h: el.offsetHeight })
           w = el.offsetWidth || w
         }
-        // Cards the view hides keep their own place on the main board, so a
-        // new card does not land on one of them either. isOnBoard reads its
-        // own clock here, one call per new card: a second of drift from the
-        // board's clock is harmless.
-        if (activeView) {
-          for (const item of data.items) {
-            if (!isOnBoard(item) || els.current.has(item.id)) continue
-            obstacles.push({ x: item.pos_x, y: item.pos_y, w: NEW_CARD_SIZE.w, h: NEW_CARD_SIZE.h })
-          }
+        // Cards with no element still have a place, so a new card does not
+        // land on one of them either: cards a view hides and cards of folded
+        // packs. isOnBoard reads its own clock here, one call per new card: a
+        // second of drift from the board's clock is harmless.
+        for (const item of data.items) {
+          if (!isOnBoard(item) || els.current.has(item.id)) continue
+          const p = positionOf(item, positions)
+          obstacles.push({ x: p.x, y: p.y, w: NEW_CARD_SIZE.w, h: NEW_CARD_SIZE.h })
         }
         host?.querySelectorAll<HTMLElement>('[data-pack]').forEach((p) => {
           obstacles.push({ x: p.offsetLeft, y: p.offsetTop, w: p.offsetWidth, h: p.offsetHeight })
@@ -1099,6 +1146,12 @@ export function Board({
           const r = mod.getBoundingClientRect()
           const [x, y] = screenToWorld(v, r.left - ox, r.top - oy)
           anchor = { x, y, w: r.width / v.z, h: r.height / v.z }
+        } else if (moduleId) {
+          // A module of a folded pack has no element: the new card goes
+          // beside its column instead.
+          const pack = packOfModule.get(moduleId)
+          const col = pack ? host?.querySelector<HTMLElement>(`[data-pack="${CSS.escape(pack)}"]`) : null
+          if (col) anchor = { x: col.offsetLeft, y: col.offsetTop, w: col.offsetWidth, h: col.offsetHeight }
         }
         // Cards and pack columns are obstacles. The spots beside a module lie
         // outside its own column, so the column never pushes its card away.
@@ -1120,7 +1173,7 @@ export function Board({
         if (itemId) els.current.get(itemId)?.classList.add('hg-card-peek')
       },
     }),
-    [viewRef, activeView, data.items, animateTo, padding],
+    [viewRef, data.items, positions, packOfModule, animateTo, padding],
   )
 
   const onBoardClick = useCallback(
@@ -1165,9 +1218,12 @@ export function Board({
               dimModuleIds={dimModuleIds}
               onOpenModule={onOpenModule}
               onFitPack={onFitPack}
+              folded={collapsedPacks.has(pkg.id)}
+              cardCount={cardCounts.get(pkg.id) ?? 0}
+              onToggleFold={onToggleFold}
             />
           ))}
-          {cards.map((c) => (
+          {drawn.map((c) => (
             <ItemCard
               key={c.item.id}
               item={c.item}
