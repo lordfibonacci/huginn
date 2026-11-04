@@ -5,10 +5,11 @@
 // The request is answered with 202 at once and the work runs in the
 // background: wait 20 s so files uploaded right after the item are included,
 // sign in as the Claude service user (RLS and the author triggers apply), take
-// the lock, read the item, its text files, the context bundle, the modules and
-// the participants, ask Claude, and write the analysis onto the item with
-// status waiting on Heimir, its questions and an analysis.done event. A failed
-// run logs analysis.failed, releases the lock and leaves the status alone.
+// the lock, read the item, its text files, the context bundle, the modules,
+// the project's tag list and the participants, ask Claude, and write the
+// analysis onto the item with status waiting on Heimir, its questions and an
+// analysis.done event. A failed run logs analysis.failed, releases the lock
+// and leaves the status alone.
 // Items the Claude service user created itself are never analysed (R28).
 //
 // Deployed with verify_jwt false: the bearer secret is the only gate.
@@ -49,6 +50,7 @@ type Item = {
   status: string
   module_id: string | null
   tags: string[]
+  keywords: string[]
   created_by: string
   // The version stamp for the final write. Taking or releasing the lock does
   // not move it (migration 0007), any real edit does.
@@ -116,7 +118,7 @@ async function signIn(): Promise<Session> {
 async function readItem(db: SupabaseClient, itemId: string): Promise<Item | null> {
   const { data, error } = await db
     .from('hg_items')
-    .select('id, project_id, title, body, status, module_id, tags, created_by, updated_at')
+    .select('id, project_id, title, body, status, module_id, tags, keywords, created_by, updated_at')
     .eq('id', itemId)
     .maybeSingle()
   if (error) throw new Error(`Gat ekki lesið verkið: ${error.message}`)
@@ -181,17 +183,20 @@ async function readFiles(
 }
 
 async function readProject(db: SupabaseClient, projectId: string) {
-  const [project, modules, participants] = await Promise.all([
+  const [project, modules, tags, participants] = await Promise.all([
     db.from('hg_projects').select('context_bundle').eq('id', projectId).single(),
     db.from('hg_modules').select('id, slug, name, status_line').eq('project_id', projectId).order('position'),
+    db.from('hg_tags').select('name').eq('project_id', projectId).order('name'),
     db.from('hg_participants').select('user_id, short, display_name, is_service').eq('project_id', projectId),
   ])
   if (project.error) throw new Error(`Gat ekki lesið verkefnið: ${project.error.message}`)
   if (modules.error) throw new Error(`Gat ekki lesið módúlana: ${modules.error.message}`)
+  if (tags.error) throw new Error(`Gat ekki lesið töggin: ${tags.error.message}`)
   if (participants.error) throw new Error(`Gat ekki lesið þátttakendur: ${participants.error.message}`)
   return {
     bundle: (project.data as { context_bundle: string | null }).context_bundle,
     modules: (modules.data ?? []) as Array<{ id: string; slug: string; name: string; status_line: string | null }>,
+    tags: ((tags.data ?? []) as Array<{ name: string }>).map((t) => t.name),
     participants: (participants.data ?? []) as Participant[],
   }
 }
@@ -255,7 +260,7 @@ async function runAnalysis(
   progress: { stage: Stage },
 ): Promise<void> {
   const { files, sent } = await readFiles(db, item)
-  const { bundle, modules, participants } = await readProject(db, item.project_id)
+  const { bundle, modules, tags, participants } = await readProject(db, item.project_id)
 
   const heimir = participants.find((p) => sameShort(p.short, 'H'))
   if (!heimir) throw new Error('Enginn þátttakandi með stutta nafnið H')
@@ -266,11 +271,12 @@ async function runAnalysis(
       files,
       bundle,
       modules,
+      tags,
       participants: participants.map((p) => ({ short: p.short, name: p.display_name })),
     }),
   )
 
-  const analysis = applyAnalysis(input, modules)
+  const analysis = applyAnalysis(input, modules, tags)
   if (analysis.summary === '') throw new Error('Greiningin skilaði tómri samantekt')
   if (analysis.body === '') throw new Error('Greiningin skilaði tómum texta')
 
