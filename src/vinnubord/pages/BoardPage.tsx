@@ -145,12 +145,12 @@ export function BoardPage() {
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
   const activeView = useActiveView(project?.id ?? '', loaded ? data.views : NO_VIEWS)
-  // The items the active view draws. Counters, menus and the board all read
-  // these; the panel still finds its item in data.items, hidden or not.
   // One clock per board load: it moves with every reload and realtime change,
   // never between renders of the same data, so the lingering closed cards and
   // every count agree.
   const now = useMemo(() => Date.now(), [data])
+  // The items the active view draws. Counters, menus and the board all read
+  // these; the panel still finds its item in data.items, hidden or not.
   const visibleItems = useMemo(
     () => (loaded ? itemsInView(data.items, data.modules, data.actions, viewerId, activeView.view, now) : []),
     [loaded, data, viewerId, activeView.view, now],
