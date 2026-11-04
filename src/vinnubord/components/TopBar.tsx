@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../shared/hooks/useAuth'
@@ -31,6 +31,8 @@ type Props = {
   onNewItem: () => void
   listOpen: boolean
   onToggleList: () => void
+  // Every increment (Ctrl+F or Cmd+F on the board) opens, focuses and selects the search field.
+  searchRequest: number
 }
 
 // Pill order follows the mockup: unread first, then new, waiting on you, waiting on others, in build, on hold.
@@ -61,6 +63,7 @@ export function TopBar({
   onNewItem,
   listOpen,
   onToggleList,
+  searchRequest,
 }: Props) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -73,8 +76,20 @@ export function TopBar({
   const openSearch = useCallback(() => {
     setSearchOpen(true)
     // The field mounts visible in this render, focus it after paint.
-    requestAnimationFrame(() => searchRef.current?.focus())
+    requestAnimationFrame(() => {
+      searchRef.current?.focus()
+      searchRef.current?.select()
+    })
   }, [])
+
+  // Only a request made while this bar is mounted opens the search: the bar
+  // mounts again after a project switch, and an old count must not steal focus.
+  const handledRequest = useRef(searchRequest)
+  useEffect(() => {
+    if (searchRequest === handledRequest.current) return
+    handledRequest.current = searchRequest
+    openSearch()
+  }, [searchRequest, openSearch])
 
   // A pill shows when it counts something or is switched on, so an active
   // tone whose count drops to 0 can still be switched off.
@@ -148,8 +163,11 @@ export function TopBar({
           onBlur={() => setSearchOpen(false)}
           onKeyDown={(e) => {
             if (e.key !== 'Escape') return
-            // Esc in the field leaves it, it does not close the side panel.
+            // Esc in the field clears it and leaves it, nothing else closes:
+            // stopping the event here also stops the native keydown before it
+            // reaches the window listeners (side panel, list, board selection).
             e.stopPropagation()
+            if (f.q !== '') filter.setQuery('')
             e.currentTarget.blur()
           }}
         />

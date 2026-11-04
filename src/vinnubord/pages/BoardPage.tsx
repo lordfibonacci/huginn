@@ -57,6 +57,7 @@ export function BoardPage() {
   // The file open in the reader, by id: the row is looked up live in
   // data.files on every render, so a replaced or removed file follows.
   const [readerFileId, setReaderFileId] = useState<string | null>(null)
+  const [searchRequest, setSearchRequest] = useState(0)
   // Any change of the selected item ends the reader: select, closePanel, openModule,
   // a deleted item, a list pick. One effect instead of a call in each.
   useEffect(() => {
@@ -226,6 +227,22 @@ export function BoardPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [listIsOpen, panelOpen, newOpen, filtersOpen, closeList])
+  // From the id, not readerOpen, which is defined below the early returns.
+  const readerIsOpen = readerFileId !== null
+  // Ctrl+F or Cmd+F goes to the board search unless a field has focus or the
+  // reader is open, where the browser's own find is the right one (spec 4.1).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'f') return
+      if (readerIsOpen) return
+      const active = document.activeElement
+      if (active instanceof HTMLElement && (active.closest('input, textarea, select') || active.isContentEditable)) return
+      e.preventDefault()
+      setSearchRequest((n) => n + 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [readerIsOpen])
   const onCreated = useCallback(
     (item: Item) => {
       setNewOpen(false)
@@ -311,6 +328,7 @@ export function BoardPage() {
         onNewItem={() => setNewOpen(true)}
         listOpen={listShown}
         onToggleList={toggleListWithReader}
+        searchRequest={searchRequest}
       />
       <Board
         key={project.id}
