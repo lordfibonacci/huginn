@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { putFile, setFileNote } from '../cli/lib/ops.mjs'
 
-const TOTAL = 13
+const TOTAL = 14
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -21,6 +21,8 @@ let extraItems = []
 let smokeObjects = []
 let smokeTags = []
 let tagViewId = null
+let zoneId = null
+let zoneViewIds = []
 let projectId = null
 let failure = null
 let sb = null
@@ -592,6 +594,41 @@ try {
     expect(JSON.stringify(row13.keywords) === JSON.stringify(['social media', 'efni']) && row13.updated_at === stamp13, `keywords ${JSON.stringify(row13)}`)
     expect((await readEvents()).length === ev13Before, 'keywords logged an event')
     passed++
+    scenario = '14 zones'
+    const stamp14 = (await readItem()).updated_at
+    // a: insert with created_by stamped from the signed in user
+    const z = must(
+      await sb.from('hg_zones').insert({ project_id: projectId, title: 'smoke zone', color: 'coral', pos_x: 10, pos_y: 20, w: 200, h: 150, created_by: heimir.user_id }).select('id, created_by, color').single(),
+      'insert zone',
+    )
+    zoneId = z.id
+    expect(z.created_by === me, `zone created_by is ${z.created_by}, expected signed in user`)
+    // b: review focus 3, a size under the minimum is refused
+    const small14 = await sb.from('hg_zones').update({ w: 100 }).eq('id', zoneId)
+    expect(small14.error?.code === '23514', `small zone gave ${JSON.stringify(small14.error)}`)
+    const badColor14 = await sb.from('hg_zones').update({ color: '#ff0000' }).eq('id', zoneId)
+    expect(badColor14.error?.code === '23514', `hex colour gave ${JSON.stringify(badColor14.error)}`)
+    // c: review focus 2, a position in a view leaves hg_zones alone
+    const v14 = must(await sb.from('hg_views').insert({ project_id: projectId, name: 'smoke zone view', filter: {}, created_by: me }).select('id').single(), 'insert zone view')
+    zoneViewIds.push(v14.id)
+    must(await sb.from('hg_view_zone_positions').upsert({ project_id: projectId, view_id: v14.id, zone_id: zoneId, pos_x: 500, pos_y: 600 }, { onConflict: 'view_id,zone_id' }), 'upsert zone position')
+    const zAfter = must(await sb.from('hg_zones').select('pos_x, pos_y').eq('id', zoneId).single(), 'zone after view position')
+    expect(zAfter.pos_x === 10 && zAfter.pos_y === 20, `view position moved the zone to ${zAfter.pos_x}, ${zAfter.pos_y}`)
+    // d: deleting the view drops its zone positions
+    must(await sb.from('hg_views').delete().eq('id', v14.id), 'delete zone view')
+    zoneViewIds = []
+    const left14 = must(await sb.from('hg_view_zone_positions').select('zone_id').eq('view_id', v14.id), 'positions after view delete')
+    expect(left14.length === 0, `${left14.length} zone positions survived the view delete`)
+    // e: deleting the zone drops its positions, and no item stamp moved
+    const v14b = must(await sb.from('hg_views').insert({ project_id: projectId, name: 'smoke zone view b', filter: {}, created_by: me }).select('id').single(), 'insert zone view b')
+    zoneViewIds.push(v14b.id)
+    must(await sb.from('hg_view_zone_positions').upsert({ project_id: projectId, view_id: v14b.id, zone_id: zoneId, pos_x: 1, pos_y: 2 }, { onConflict: 'view_id,zone_id' }), 'upsert zone position b')
+    must(await sb.from('hg_zones').delete().eq('id', zoneId), 'delete zone')
+    zoneId = null
+    const left14b = must(await sb.from('hg_view_zone_positions').select('zone_id').eq('view_id', v14b.id), 'positions after zone delete')
+    expect(left14b.length === 0, `${left14b.length} zone positions survived the zone delete`)
+    expect((await readItem()).updated_at === stamp14, 'a zone write touched the item updated_at')
+    passed++
   } finally {
     // runs even on failure so nothing is left behind
     if (smokeTags.length) {
@@ -601,6 +638,16 @@ try {
         const left = smokeTags.filter((id) => !d.data?.some((r) => r.id === id))
         if (left.length) console.error(`cleanup left hg_tags ids ${left.join(', ')} (deleted ${smokeTags.length - left.length} of ${smokeTags.length}), leaked`)
       }
+    }
+    if (zoneId) {
+      const d = await sb.from('hg_zones').delete().eq('id', zoneId).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_zones id ${zoneId}: ${d.error.message}`)
+      else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_zones id ${zoneId}`)
+    }
+    for (const id of zoneViewIds) {
+      const d = await sb.from('hg_views').delete().eq('id', id).select('id')
+      if (d.error) console.error(`cleanup failed, leaked hg_views id ${id}: ${d.error.message}`)
+      else if (!d.data?.length) console.error(`cleanup deleted nothing, leaked hg_views id ${id}`)
     }
     if (tagViewId) {
       const d = await sb.from('hg_views').delete().eq('id', tagViewId).select('id')
