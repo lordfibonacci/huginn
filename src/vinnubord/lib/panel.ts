@@ -1,5 +1,5 @@
 import type { ItemPatch } from './api'
-import { isOnBoard } from './status'
+import { isOpen } from './status'
 import type { FileRow, Item, ItemStatus, Plan, Question } from './types'
 
 // Pure helpers behind the item and module panels.
@@ -18,7 +18,7 @@ export function moduleItems(items: Item[], moduleId: string, now: Date = new Dat
     mine
       .filter((i) => i.status === status && i.closed_at !== null && Date.parse(i.closed_at) >= since)
       .sort((a, b) => Date.parse(b.closed_at as string) - Date.parse(a.closed_at as string))
-  return { open: mine.filter(isOnBoard), done: closedSince('done'), dropped: closedSince('dropped') }
+  return { open: mine.filter(isOpen), done: closedSince('done'), dropped: closedSince('dropped') }
 }
 
 // The patch a deliberate status change saves (ruling R13). waiting_on only

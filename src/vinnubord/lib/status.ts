@@ -77,8 +77,22 @@ export function itemStatusLabel(item: Item, viewerId: string, participants: Part
   }
 }
 
-export function isOnBoard(item: Item): boolean {
+// A closed item stays on the board CLOSED_LINGER_DAYS days after closed_at,
+// faded (spec 4.6); isOpen is the old isOnBoard, for everything that means
+// open work.
+export const CLOSED_LINGER_DAYS = 3
+
+export function isOpen(item: Pick<Item, 'status'>): boolean {
   return item.status !== 'done' && item.status !== 'dropped'
+}
+
+// A closed item without closed_at, or with one that does not parse, is off.
+export function isOnBoard(item: Pick<Item, 'status' | 'closed_at'>, now = Date.now()): boolean {
+  if (isOpen(item)) return true
+  if (!item.closed_at) return false
+  const closed = Date.parse(item.closed_at)
+  if (Number.isNaN(closed)) return false
+  return now - closed <= CLOSED_LINGER_DAYS * 86_400_000
 }
 
 function isOpenMine(a: Action, viewerId: string): boolean {
@@ -102,11 +116,12 @@ export function mineActionsByItem(actions: Action[], viewerId: string): Map<stri
 
 export type Counts = { new: number; mine: number; others: number; build: number; parked: number; unread: number }
 
-// The counter bucket of one item, null when it is off the board. Buckets are
-// exclusive. "mine" takes precedence: anything waiting for the viewer
-// (waiting_on or an open owned action) counts only there.
+// The counter bucket of one item, null when it is closed (a lingering closed
+// card counts in no pill). Buckets are exclusive. "mine" takes precedence:
+// anything open waiting for the viewer (waiting_on or an open owned action)
+// counts only there.
 export function countBucket(item: Item, actions: Action[], viewerId: string): keyof Counts | null {
-  if (!isOnBoard(item)) return null
+  if (!isOpen(item)) return null
   if (waitsFor(item, actions, viewerId)) return 'mine'
   switch (item.status) {
     case 'new':
@@ -147,10 +162,10 @@ export function countsFor(items: Item[], actions: Action[], viewerId: string, un
 
 // How the wire of an item behaves: pulse (three sparks at a time) when it is
 // new or waits on someone, calm (a rare single spark) when it is in build,
-// parked (dashed, no sparks) when it is on hold.
+// parked (dashed, no sparks) when it is on hold or closed.
 export type WireMode = 'pulse' | 'calm' | 'parked'
 
 export function wireMode(item: Item, tone: Tone): WireMode {
-  if (item.status === 'parked') return 'parked'
+  if (!isOpen(item) || item.status === 'parked') return 'parked'
   return tone === 'gold' || tone === 'coral' || tone === 'lilac' ? 'pulse' : 'calm'
 }

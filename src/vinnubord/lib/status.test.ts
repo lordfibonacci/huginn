@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   BUCKET_TONE,
+  CLOSED_LINGER_DAYS,
   countBucket,
   countsFor,
   isOnBoard,
+  isOpen,
   itemStatusLabel,
   itemTone,
   mineActionsByItem,
@@ -81,12 +83,31 @@ describe('itemStatusLabel', () => {
   })
 })
 
-describe('isOnBoard and waitsFor', () => {
-  it('done and dropped are off board', () => {
-    expect(isOnBoard(item({ status: 'done' }))).toBe(false)
-    expect(isOnBoard(item({ status: 'dropped' }))).toBe(false)
-    expect(isOnBoard(item({ status: 'parked' }))).toBe(true)
+describe('isOpen and isOnBoard', () => {
+  const now = Date.parse('2026-11-04T12:00:00Z')
+  const daysAgo = (d: number) => new Date(now - d * 86_400_000).toISOString()
+  it('isOpen is false for done and dropped only', () => {
+    expect(isOpen(item({ status: 'done' }))).toBe(false)
+    expect(isOpen(item({ status: 'dropped' }))).toBe(false)
+    expect(isOpen(item({ status: 'parked' }))).toBe(true)
   })
+  it('a closed item lingers CLOSED_LINGER_DAYS days', () => {
+    expect(CLOSED_LINGER_DAYS).toBe(3)
+    expect(isOnBoard(item({ status: 'done', closed_at: daysAgo(2) }), now)).toBe(true)
+    expect(isOnBoard(item({ status: 'dropped', closed_at: daysAgo(3) }), now)).toBe(true)
+    expect(isOnBoard(item({ status: 'done', closed_at: daysAgo(3.01) }), now)).toBe(false)
+    expect(isOnBoard(item({ status: 'done', closed_at: null }), now)).toBe(false)
+    expect(isOnBoard(item({ status: 'parked', closed_at: null }), now)).toBe(true)
+  })
+  it('a closed item has no bucket and a parked wire', () => {
+    expect(countBucket(item({ status: 'done', closed_at: daysAgo(1) }), [], ME)).toBe(null)
+    expect(countBucket(item({ status: 'done', closed_at: daysAgo(1), waiting_on: ME }), [], ME)).toBe(null)
+    expect(wireMode(item({ status: 'done' }), 'stone')).toBe('parked')
+    expect(wireMode(item({ status: 'dropped' }), 'stone')).toBe('parked')
+  })
+})
+
+describe('waitsFor', () => {
   it('waitsFor by waiting_on or open owned action', () => {
     expect(waitsFor(item({ waiting_on: ME }), [], ME)).toBe(true)
     expect(waitsFor(item(), [action()], ME)).toBe(true)
