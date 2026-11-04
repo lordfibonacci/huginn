@@ -27,6 +27,7 @@ import { ItemPanel } from '../components/ItemPanel'
 import { ModulePanel } from '../components/ModulePanel'
 import { NewItemSheet } from '../components/NewItemSheet'
 import { PanelShell } from '../components/PanelShell'
+import { ZonePanel } from '../components/ZonePanel'
 import { Toast } from '../components/Toast'
 import { TopBar } from '../components/TopBar'
 import { ViewMenu } from '../components/ViewMenu'
@@ -57,6 +58,7 @@ export function BoardPage() {
   const { data, loading: boardLoading, error, reload, live } = useBoardData(project?.id ?? null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)
+  const [openZoneId, setOpenZoneId] = useState<string | null>(null)
   // The file open in the reader, by id: the row is looked up live in
   // data.files on every render, so a replaced or removed file follows.
   const [readerFileId, setReaderFileId] = useState<string | null>(null)
@@ -79,26 +81,36 @@ export function BoardPage() {
   const boardRef = useRef<BoardHandle | null>(null)
   const newItemToast = useNewItemToast(data, user?.id ?? '')
 
-  // An item and a module never share the panel: choosing one clears the other,
-  // null (empty board, Esc, sheet dragged shut) clears both.
+  // The box just drawn: its panel focuses the name field with the text selected.
+  // Any other panel choice ends it, so reopening that box later does not focus.
+  const [justCreatedZone, setJustCreatedZone] = useState<string | null>(null)
+  // An item, a module and a box never share the panel: choosing one clears the
+  // others, null (empty board, Esc, sheet dragged shut) clears all three.
   const select = useCallback((id: string | null) => {
     setSelectedId(id)
     setOpenModuleId(null)
+    setOpenZoneId(null)
+    setJustCreatedZone(null)
   }, [])
   const openModule = useCallback((id: string) => {
     setOpenModuleId(id)
     setSelectedId(null)
+    setOpenZoneId(null)
+    setJustCreatedZone(null)
   }, [])
-  // The box panel comes with Task 7, which fills this.
-  const openZone = useCallback((_id: string) => {}, [])
+  // onDrawn sets justCreatedZone right after this, in the same batch.
+  const openZone = useCallback((id: string) => {
+    setOpenZoneId(id)
+    setSelectedId(null)
+    setOpenModuleId(null)
+    setJustCreatedZone(null)
+  }, [])
   // Draw mode (the Kassi button): the next press and drag on the board draws
   // a box. Any end of the draw ends the mode, a new box opens in its panel.
   const [drawing, setDrawing] = useState(false)
   const toggleDraw = useCallback(() => setDrawing((d) => !d), [])
   const onDrawCancel = useCallback(() => setDrawing(false), [])
   const [zoneError, setZoneError] = useState<string | null>(null)
-  // The box just drawn, read by the box panel in Task 7.
-  const [, setJustCreatedZone] = useState<string | null>(null)
   useEffect(() => {
     if (!drawing) return
     const onKey = (e: KeyboardEvent) => {
@@ -124,7 +136,10 @@ export function BoardPage() {
     },
     [project, openZone, reload, t],
   )
-  const closePanel = useCallback(() => select(null), [select])
+  const closePanel = useCallback(() => {
+    select(null)
+    setJustCreatedZone(null)
+  }, [select])
   const listPrefs = useListPrefs(project?.id ?? '', narrow)
 
   const loaded = data !== null && project !== null && data.project.id === project.id
@@ -240,6 +255,7 @@ export function BoardPage() {
   // reload brings it (onCreated), and that id must wait for it.
   const itemList = loaded ? data.items : null
   const moduleList = loaded ? data.modules : null
+  const zoneList = loaded ? data.zones : null
   const seenSelected = useRef<string | null>(null)
   useEffect(() => {
     if (!itemList || !selectedId) return
@@ -249,8 +265,16 @@ export function BoardPage() {
   useEffect(() => {
     if (moduleList && openModuleId && !moduleList.some((m) => m.id === openModuleId)) setOpenModuleId(null)
   }, [moduleList, openModuleId])
+  // A box is opened by onDrawn before the reload brings it, so like an item its
+  // id is dropped only once the data has shown it.
+  const seenZone = useRef<string | null>(null)
+  useEffect(() => {
+    if (!zoneList || !openZoneId) return
+    if (zoneList.some((z) => z.id === openZoneId)) seenZone.current = openZoneId
+    else if (seenZone.current === openZoneId) setOpenZoneId(null)
+  }, [zoneList, openZoneId])
   // From the ids, not selectedItem: this and the Escape effect sit above the early returns.
-  const panelOpen = selectedId !== null || openModuleId !== null
+  const panelOpen = selectedId !== null || openModuleId !== null || openZoneId !== null
   // Esc closes the list only when nothing above it takes Esc first: a field,
   // the side panel, the new item sheet, the filter sheet or an open dropdown.
   const listIsOpen = listPrefs.open
@@ -328,6 +352,7 @@ export function BoardPage() {
     toggleList()
   }
   const openModuleRow = openModuleId ? (data.modules.find((m) => m.id === openModuleId) ?? null) : null
+  const openZoneRow = openZoneId ? (data.zones.find((z) => z.id === openZoneId) ?? null) : null
   const viewerParticipant = data.participants.find((p) => p.user_id === user.id) ?? null
   // The number on the filter button: chosen packages and tags, plus one for an
   // active view. Tones, unread and search show on the pills and in the field.
@@ -407,18 +432,24 @@ export function BoardPage() {
         )}
         <Toast
           toast={newItemToast.toast}
-          panelOpen={selectedItem !== null || openModuleRow !== null}
+          panelOpen={panelOpen}
           panelWide={readerOpen}
           onOpen={select}
           onDone={newItemToast.dismiss}
         />
       </Board>
       <PanelShell
-        open={selectedItem !== null || openModuleRow !== null}
+        open={selectedItem !== null || openModuleRow !== null || openZoneRow !== null}
         onClose={closePanel}
         wide={readerOpen}
         onEscape={readerOpen ? closeReader : closePanel}
-        label={openModuleRow ? t('vinnubord.panel.moduleLabel') : t('vinnubord.panel.label')}
+        label={
+          openZoneRow
+            ? t('vinnubord.zone.panelLabel')
+            : openModuleRow
+              ? t('vinnubord.panel.moduleLabel')
+              : t('vinnubord.panel.label')
+        }
       >
         {selectedItem ? (
           <ItemPanel
@@ -436,6 +467,14 @@ export function BoardPage() {
             module={openModuleRow}
             viewerId={user.id}
             onSelectItem={pick}
+          />
+        ) : openZoneRow ? (
+          <ZonePanel
+            key={`zone:${openZoneRow.id}`}
+            zone={openZoneRow}
+            focusTitle={justCreatedZone === openZoneRow.id}
+            onDeleted={closePanel}
+            onReload={reload}
           />
         ) : null}
       </PanelShell>
