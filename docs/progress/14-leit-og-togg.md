@@ -5,7 +5,7 @@ Grein: `vinnubord-14` (commits f995598 til 1032144 ofan á main d272412), samein
 Plan: `docs/superpowers/plans/2026-11-04-leit-og-togg.md`
 Spekk: `docs/superpowers/specs/2026-11-04-leit-og-togg-design.md`
 
-Staða: **í loftinu** (2026-11-04). Heimir beitti `0016_hg_tags_keywords.sql` í SQL editor (MCP hafnaði henni), svo hún er ekki í `supabase_migrations.schema_migrations`, eins og 0002 og 0006. Staðfest í lifandi gagnagrunni: 36 tögg, `hg_items.keywords`, þrjú `hg.silent` when skilyrði, anon getur ekki keyrt RPC, `hg_tags` í rauntíma. Greinin er á main og ýtt (d272412..1032144). hg-analyse útgáfa 12 er í loftinu (útgáfa 11 farin). Heimir keyrði hreinsunina, `0016b_hg_tags_check` er beitt og smoke prentaði `ok 13/13`. Task 10 er gert. Eftir eru vafraathuganir og fyrsta raunverulega greiningin á útgáfu 12 (sjá Opið).
+Staða: **í loftinu** (2026-11-04). Heimir beitti `0016_hg_tags_keywords.sql` í SQL editor (MCP hafnaði henni), svo hún er ekki í `supabase_migrations.schema_migrations`, eins og 0002 og 0006. Staðfest í lifandi gagnagrunni: 36 tögg, `hg_items.keywords`, þrjú `hg.silent` when skilyrði, anon getur ekki keyrt RPC, `hg_tags` í rauntíma. Greinin er á main og ýtt (d272412..1032144). hg-analyse útgáfa 12 er í loftinu (útgáfa 11 farin). Heimir keyrði hreinsunina, `0016b_hg_tags_check` er beitt og smoke prentaði `ok 13/13`. Task 10 er gert. Heimir gerði vafraathuganirnar 2026-11-04 og verkinu í Huginn (1aeb972a) er lokað. Eftir er aðeins að sjá fyrstu raunverulegu greininguna á útgáfu 12 (sjá Opið).
 
 ## Hvað var gert
 
@@ -52,7 +52,7 @@ Staða: **í loftinu** (2026-11-04). Heimir beitti `0016_hg_tags_keywords.sql` �
 - Skýrsla hreinsunarinnar (Heimir keyrði `supabase/manual/2026-11-04-hg-tag-cleanup.sql`): 36 tögg á listanum, 0 verk með tagg utan listans, engu bætt við, engin sýn varð taglaus.
 - `0016b_hg_tags_check` beitt með MCP eftir hreinsunina.
 - Lifandi athugun 0016: 36 tögg, `hg_items.keywords`, þrjú `hg.silent` when skilyrði, anon getur ekki keyrt RPC, `hg_tags` í rauntíma.
-- Handvirkar vafraathuganir Task 3 til 6: **ekki gerðar enn** (sjá Það sem Heimir athugar).
+- Handvirkar vafraathuganir Task 3 til 6: gerðar af Heimi 2026-11-04 (handtak #93e3b40d á verkinu 1aeb972a), engar athugasemdir.
 
 ## Það sem Heimir athugar
 
@@ -71,10 +71,9 @@ Staða: **í loftinu** (2026-11-04). Heimir beitti `0016_hg_tags_keywords.sql` �
 
 Eftir:
 
-1. Handvirkar vafraathuganir Task 3 til 6 (listinn Það sem Heimir athugar hér að ofan), sérstaklega Ctrl+F á þröngu borði.
-2. Fyrsta raunverulega greiningin á útgáfu 12: athuga að tögg hennar séu af listanum og að hún skrifi leitarorð.
+1. Fyrsta raunverulega greiningin á útgáfu 12: hún keyrir sjálf á næsta nýja verki frá Heimi eða Árna. Athuga þá að tögg hennar séu af listanum og að hún skrifi leitarorð (engin greining hafði keyrt á útgáfu 12 þann 2026-11-04 kl. 10:30).
 
-Verkið "Leit og tögg (plan 14): beita 0016 og ljúka" (1aeb972a) í Huginn ber tvær aðgerðir á Heimi (að beita 0016 og keyra hreinsunina). Báðum er lokið af honum.
+Verkið "Leit og tögg (plan 14): beita 0016 og ljúka" (1aeb972a) í Huginn er lokað 2026-11-04: öll þrjú handtökin (0016, hreinsun, vafraathuganir) eru lokin af Heimi.
 
 Frestað smávægilegt úr yfirferð (allt í `.superpowers/sdd/2026-11-04-leit-og-togg/progress.md`; það sem lokalagfæringin lagaði er talið upp í kaflanum Lokalagfæring):
 
