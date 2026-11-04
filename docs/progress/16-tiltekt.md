@@ -1,11 +1,11 @@
 # 16 Vinnuborð: tiltekt (plan 16)
 
 Dagsetning: 2026-11-04
-Grein: `vinnubord-16` (commits fd6e2fd til 1451f72 ofan á main 6ee5103), lokayfirferð Fable bíður, ekki sameinað og ekki pushað.
+Grein: `vinnubord-16` (commits fd6e2fd til 1451f72 ofan á main 6ee5103), lokayfirferð Fable lokið og lagað, sameinað í main og pushað.
 Plan: `docs/superpowers/plans/2026-11-04-tiltekt.md`
 Spekk: `docs/superpowers/specs/2026-11-04-kassar-og-tiltekt-design.md`
 
-Staða: **smíðað á grein, lokayfirferð Fable eftir**. Engin migration. `node cli/huginn.mjs pull --brief --project metta` er óbreytt eftir CLI verkefnið.
+Staða: **smíðað, lokayfirferð Fable lokið og lagað, sameinað í main og pushað**. Engin migration. `node cli/huginn.mjs pull --brief --project metta` er óbreytt eftir CLI verkefnið.
 
 ## Hvað var gert
 
@@ -17,7 +17,7 @@ Staða: **smíðað á grein, lokayfirferð Fable eftir**. Engin migration. `nod
 
 **Task 4, dofin spjöld** (fe993d2). Lokið spjald er dofið (`.hg-card-closed`, `--hg-card-closed-opacity` 0.45, enginn punktaljómi) og raðast síðast í listanum: í einingu, og í stöðuröðun sem eigin hópur "Lokið".
 
-**Task 5, CLI** (d42d19b). `isOpen`, `isOnBoard` og `CLOSED_LINGER_DAYS` afrituð í `cli/lib/write.mjs` með samsvörunarprófi í `parity.test.mjs`. Lokið spjald telst hindrun við staðsetningu nýs spjalds.
+**Task 5, CLI** (d42d19b). `isOpen`, `isOnBoard` og `CLOSED_LINGER_DAYS` afrituð í `cli/lib/status.mjs` (og `placeItem` í `write.mjs` tekur `now`) með samsvörunarprófi í `parity.test.mjs`. Lokið spjald telst hindrun við staðsetningu nýs spjalds.
 
 **Task 6, geymsla samanfelldra pakka** (f3c9a74). `lib/packs.ts` (`packsKey`, `parseCollapsed`, `serializeCollapsed`, `foldLine`) og `hooks/useCollapsedPacks.ts`.
 
@@ -53,13 +53,19 @@ Staða: **smíðað á grein, lokayfirferð Fable eftir**. Engin migration. `nod
 - Draga samanfelldan pakka og opna hann: kortin eru komin með.
 - Ctrl marquee yfir nokkur kort, Raða, svo Afturkalla. Afturkalla hverfur eftir 8 sekúndur.
 
+## Lokayfirferð og lagfæringar
+
+- Lokið spjald raðast fremst í DOM (`drawn` í `Board.tsx`), svo dofið spjald hylur aldrei opið verk.
+- Pillan "2 í byggingu" er ekki lengur skorin á 1440 px: Leita reiturinn er 120 px (`--hg-search-w-mid`) undir 1500 px, orsökin var Kassi hnappurinn úr plani 15.
+- Að fella pakka saman lokar ekki lengur opna spjaldinu (`.hg-pack-fold` í `NO_DESELECT`) en hreinsar valið (`toggleFold`).
+- Rangt skráarheiti í þessu skjali og lýsing á tón lokins spjalds í CLAUDE.md leiðrétt.
+- 641 próf græn, `npm run build` grænt, mynd `.playwright-mcp/shots/16-final-topbar-1440.png`.
+
 ## Opið
 
 1. Þriggja daga reglan fer af borðinu við næstu gagnabreytingu, ekki á klukkunni: klukkan (`now` í `BoardPage`) færist aðeins með gögnum, svo á rólegu borði helst lokið spjald lengur en þrjá daga.
 2. Nýtt verk í einingu í samanfelldum pakka lendir langt fyrir neðan haus dálksins (`placeNew` stígur yfir falin spjöld).
-3. Við fyrstu uppsetningu birtast öll verk sem lokuðust síðustu þrjá daga aftur, dofin á gamla staðnum, og geta skarast við spjald sem var sett þar síðan (sjá mynd `.playwright-mcp/shots/16-4-closed-card.png`). Lagast sjálft innan þriggja daga.
-4. Prufuverkið `25e9e6ce` liggur dofið í þrjá daga (sjá R1).
-5. Efsta línan á 1440 px: pillan "2 í byggingu" fer undir Leita reitinn. Óvíst hvort Kassi hnappur (plan 15) olli, bera saman við 02e4fd5. Kannað í lokayfirferð.
-6. Lokaðar lausar endar hjá lokayfirferð Fable, ásamt smávægilegu hér að neðan.
+3. Prufuverkið `25e9e6ce` liggur dofið í þrjá daga (sjá R1).
+4. Fjórða pillan (t.d. í bið) á 1440 px skrunast til hliðar á efstu línunni, eins og plan 2 ætlaði.
 
 Smávægilegt sem yfirferðir létu standa (fer í lokayfirferð greinarinnar): ekkert próf festir `filter(isOnBoard)` gildruna, `tagCounts` prófið notar fast `closed_at` og hættir að verja eftir 2026-11-07, 'off' dæmið í `list.test` hefur bucket null en closed false, `write.test` heitið "closed cards are not obstacles" stangast á við nýju regluna og enginn `placeItem` próf fyrir lokið hindrun, haus athugasemd í `placeItem` segir "open cards", `parity` vantar nákvæm mörk og ólesanlegt `closed_at`, `Point` gerðin er til í þriðja sinn í `arrange.ts`, ekkert próf á vikmörk raða gagnvart fyrsta kassa raðar, `useCollapsedPacks` án skýrrar skilagerðar, `collapsedRef` og `hiddenRef` óþarfa tvö með villandi athugasemd, athugasemd á `cardCount` í `PackColumn` ónákvæm, `.hg-pack-fold:focus-visible` með aðeins 6% lit en engan hring, þrjú eða fleiri samanfelld slepp með hlutaendurhleðslu á milli geta skilið spjald einu skrefi frá, `carry` yfirfærsla missir `via` og seinn ómur getur eytt `carry`, pakka og kassa bið heldur gömlu reglunni, Afturkalla sleppir spjaldi sem pakkinn var felldur á eftir Raða án viðvörunar, `pendingFailed` ber saman á hnitum, og afturköllun til base hunsar utanaðkomandi færslu á via punkt þar til næsta gögn koma. Class `.hg-sel-bar-text` er í markupinu án eigin reglu.

@@ -155,7 +155,7 @@ const ENTRY_START_MS = 150
 const ENTRY_STEP_MS = 45
 const ENTRY_BURST = 8
 const DROP_BURST = 4
-const NO_DESELECT = '[data-card], [data-module], [data-panel], [data-zone] .hg-zone-title, [data-zone] .hg-zone-resize'
+const NO_DESELECT = '[data-card], [data-module], [data-panel], [data-zone] .hg-zone-title, [data-zone] .hg-zone-resize, .hg-pack-fold'
 // A board narrower than this, or any coarse pointer, opens on the first pack
 // at START_ZOOM instead of fitting the whole board (spec 4.4).
 const START_PACK_MAX_W = 1024
@@ -218,8 +218,12 @@ export function Board({
     [items, collapsedPacks, packOfModule],
   )
   const onBoard = useMemo(() => boardOrder(items.filter((i) => !hiddenIds.has(i.id))), [items, hiddenIds])
-  // The cards drawn on the board: every model but the hidden ones.
-  const drawn = useMemo(() => cards.filter((c) => !hiddenIds.has(c.item.id)), [cards, hiddenIds])
+  // The cards drawn on the board: every model but the hidden ones. Closed
+  // cards come first in the DOM, so a lingering card never covers open work.
+  const drawn = useMemo(() => {
+    const shown = cards.filter((c) => !hiddenIds.has(c.item.id))
+    return [...shown.filter((c) => c.closed), ...shown.filter((c) => !c.closed)]
+  }, [cards, hiddenIds])
   const viewId = activeView?.id ?? null
   const positions = useMemo(() => positionsOf(data.viewPositions, viewId), [data.viewPositions, viewId])
   const packPositions = useMemo(() => packPositionsOf(data.viewPackPositions, viewId), [data.viewPackPositions, viewId])
@@ -783,6 +787,15 @@ export function Board({
   const clearSelection = useCallback(() => {
     if (selectionSize(selectionRef.current) > 0) setSelection(EMPTY_SELECTION)
   }, [])
+  // A fold leaves the open panel alone but drops the selection, since it can
+  // hide selected cards.
+  const toggleFold = useCallback(
+    (id: string) => {
+      clearSelection()
+      onToggleFold(id)
+    },
+    [clearSelection, onToggleFold],
+  )
   // Every drawn card at its spring target with its measured size (world units).
   const cardBoxes = useCallback((): Boxed[] => {
     const out: Boxed[] = []
@@ -1291,7 +1304,7 @@ export function Board({
               onFitPack={onFitPack}
               folded={collapsedPacks.has(pkg.id)}
               cardCount={cardCounts.get(pkg.id) ?? 0}
-              onToggleFold={onToggleFold}
+              onToggleFold={toggleFold}
             />
           ))}
           {drawn.map((c) => (

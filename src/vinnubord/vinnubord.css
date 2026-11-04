@@ -445,6 +445,8 @@
   --hg-count-size: 14px;
   --hg-count-pad-phone: 0 11px;
   --hg-search-w: 170px;
+  /* The search field gives up width to the pills on a mid size screen (1440). */
+  --hg-search-w-mid: 120px;
   --hg-search-pad: 0 12px 0 34px;
   --hg-search-icon-inset: 12px;
   --hg-icon: 15px;
@@ -1490,6 +1492,9 @@
 }
 .hg-search::placeholder { color: var(--hg-ink-3); }
 .hg-search:focus { outline: none; border-color: var(--hg-pill-hover); }
+@media (max-width: 1500px) {
+  .hg-search { width: var(--hg-search-w-mid); }
+}
 .hg-search-icon, .hg-icon-btn svg, .hg-new svg, .hg-new-file-remove svg, .hg-sheet-close svg {
   width: var(--hg-icon); height: var(--hg-icon); stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round;
 }
