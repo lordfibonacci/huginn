@@ -1,7 +1,7 @@
 # 15 Vinnuborð: kassar (plan 15)
 
 Dagsetning: 2026-11-04
-Grein: `vinnubord-15` (commits f76f6ef til 5ee7e12 ofan á main 02e4fd5), lokayfirferð Fable lokið og athugasemdir lagaðar, sameinuð á main og pushuð.
+Grein: `vinnubord-15` (commits f76f6ef til 019a2c5 ofan á main 02e4fd5), lokayfirferð Fable lokið og athugasemdir lagaðar, sameinuð á main og pushuð.
 Plan: `docs/superpowers/plans/2026-11-04-kassar.md`
 Spekk: `docs/superpowers/specs/2026-11-04-kassar-og-tiltekt-design.md`
 
@@ -39,7 +39,7 @@ Fable fór yfir alla greinina. Lagað í einni lotu: Kassi hnappur falinn undir 
 - `zoneSaveFailed` er sameiginlegt fyrir færslu og stærðarvistun og afturkallar aðeins þegar x, y, w, h og sýn eru nákvæmlega það sem sú vistun sendi, svo misheppnuð færsla afturkallar ekki nýrri stærð og öfugt.
 - `useZoneDraw` er með `gestureRef` vörn: ekkert er teiknað meðan flug eða klípa hreyfir sýnina, ýtingin fer til sýnarinnar sem stöðvar hreyfinguna.
 - `justCreatedZone` er hreinsað við hverja opnun spjalds (`select`, `openModule`, `openZone`, `closePanel`), annars veldi enduropnun nýs kassa nafnavali aftur.
-- `toggleMember` skilar vali óbreyttu fyrir kassa (viðbót frá Task 2, án sérprófs).
+- `toggleMember` skilar vali óbreyttu fyrir kassa (viðbót frá Task 2, prófuð í lokalagfæringu).
 
 ## Staðfesting
 
@@ -63,4 +63,4 @@ Fable fór yfir alla greinina. Lagað í einni lotu: Kassi hnappur falinn undir 
 2. Nafn kassa sem er undir kortum eða einingaspjöldum er ekki hægt að smella á, því kassinn er teiknaður undir þeim samkvæmt spekki. Þarf að draga eða þysja til að ná í hann.
 3. Plan 16 (tiltekt) fylgir á nýrri grein af main.
 
-Frestað smávægilegt, til lokayfirferðar: `Zone.color` er `string` í gerðinni þótt gagnagrunnur leyfi aðeins fimm tóna, tvöfaldur FK á `view_id` og `zone_id` (eins og 0013), `toggleMember` vörn án prófs, `updateZone` og `updateZoneRect` með tóman patch senda `.update({})`, bókstafsgildi (letur, bil) í kassareglum eins og aðrar reglur, `Zone` memo sleppir aldrei (eins og `PackColumn`), venjulegur smellur á nafn kassa hreinsar Ctrl val, óaðgengilegir else-if varakostir í move, drop og cancel, færsla og stærðarvistun innan eins ferðs geta blikkað fyrri stöðu (lagast sjálft), Esc í teikniham hreinsar líka val og lokar spjaldi, smellur lekur eftir Esc í miðri ýtingu, hjól eða svif í miðri teikningu færir upphafshornið, `zoneError` skarast við endurnýjunartilkynninguna og hreinsast ekki við næstu velgengni, teiknistaða lifir verkefnaskipti, haus athugasemd í `TopBar` nefnir ekki Kassi hnappinn, ýting á flug stöðvar það án þess að teikna, titilbreyting ber saman hráan texta (Vista helst virkt eftir "Kassi  "), athugasemdarreitur býður línuskil sem `normalizeNote` fellir í bil, `openZoneId` helst ef teiknaður kassi nær aldrei í `data.zones`, smoke nær ekki til meðlimakorta (rökfræði í vef), smoke hreinsar `zoneId` og `zoneViewIds` án raðatalningar.
+Smávægilegt sem lokayfirferð lét standa: `Zone.color` er `string` í gerðinni þótt gagnagrunnur leyfi aðeins fimm tóna, tvöfaldur FK á `view_id` og `zone_id` (eins og 0013), `updateZone` og `updateZoneRect` með tóman patch senda `.update({})`, bókstafsgildi (letur, bil) í kassareglum eins og aðrar reglur, `Zone` memo sleppir aldrei (eins og `PackColumn`), venjulegur smellur á nafn kassa hreinsar Ctrl val, óaðgengilegir else-if varakostir í move, drop og cancel, færsla og stærðarvistun innan eins ferðs geta blikkað fyrri stöðu (lagast sjálft), Esc í teikniham hreinsar líka val og lokar spjaldi, smellur lekur eftir Esc í miðri ýtingu, hjól eða svif í miðri teikningu færir upphafshornið, `zoneError` skarast við endurnýjunartilkynninguna og hreinsast ekki við næstu velgengni, teiknistaða lifir verkefnaskipti, ýting á flug stöðvar það án þess að teikna, athugasemdarreitur býður línuskil sem `normalizeNote` fellir í bil, `openZoneId` helst ef teiknaður kassi nær aldrei í `data.zones`, smoke nær ekki til meðlimakorta (rökfræði í vef), smoke hreinsar `zoneId` og `zoneViewIds` án raðatalningar.
