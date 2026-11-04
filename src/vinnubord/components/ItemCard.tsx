@@ -27,6 +27,8 @@ type Props = {
   // The newest unread comment by someone else, which the fresh line prefers.
   freshComment: { short: string; line: string } | null
   parked: boolean
+  // Done or dropped, lingering on the board faded
+  closed: boolean
   pulse: boolean
   selected: boolean
   lifted: boolean
@@ -56,6 +58,7 @@ export const ItemCard = memo(function ItemCard({
   fresh,
   freshComment,
   parked,
+  closed,
   pulse,
   selected,
   lifted,
@@ -91,6 +94,7 @@ export const ItemCard = memo(function ItemCard({
     entered ? '' : 'hg-in',
     `hg-tone-${tone}`,
     parked ? 'hg-card-parked' : '',
+    closed ? 'hg-card-closed' : '',
     pulse ? 'hg-card-pulse' : '',
     selected ? 'hg-card-open' : '',
     fresh !== null ? 'hg-card-new' : '',

@@ -74,6 +74,7 @@
     "board": {
       "counts": {
         "build": "In build",
+        "closed": "Closed",
         "mine": "Waiting on you",
         "new": "New",
         "others": "Waiting on others",

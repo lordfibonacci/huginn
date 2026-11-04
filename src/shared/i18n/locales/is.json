@@ -74,6 +74,7 @@
     "board": {
       "counts": {
         "build": "Í byggingu",
+        "closed": "Lokið",
         "mine": "Bíður þín",
         "new": "Nýtt",
         "others": "Bíða annarra",

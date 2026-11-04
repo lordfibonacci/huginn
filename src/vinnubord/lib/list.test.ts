@@ -113,7 +113,7 @@ describe('listRows by status and by updated', () => {
   ]
   it('status: bucket rows in pill order, newest first inside, module name on the row', () => {
     const rows = listRows(cards, packages, modules, 'status').rows
-    expect(rows.map((r) => (r.kind === 'item' ? r.card.item.id : `${r.kind}:${r.id}`))).toEqual(['bucket:new', 'n', 'bucket:mine', 'new', 'old'])
+    expect(rows.map((r) => (r.kind === 'item' ? r.card.item.id : `${r.kind}:${r.id}`))).toEqual(['bucket:new', 'n', 'bucket:mine', 'new', 'old', 'bucket:closed', 'off'])
     expect(rows[3]).toMatchObject({ kind: 'item', moduleName: 'Kiosk' })
     expect(rows[1]).toMatchObject({ kind: 'item', moduleName: null })
   })
@@ -121,5 +121,20 @@ describe('listRows by status and by updated', () => {
     const tie = [card({ item: item({ id: 'b', updated_at: '2026-01-01T00:00:00Z' }) }), card({ item: item({ id: 'a', updated_at: '2026-01-01T00:00:00Z' }) })]
     expect(listRows(tie, packages, modules, 'updated').rows.map((r) => r.kind === 'item' && r.card.item.id)).toEqual(['a', 'b'])
     expect(listRows(cards, packages, modules, 'updated').rows.map((r) => r.kind === 'item' && r.card.item.id)).toEqual(['new', 'n', 'old', 'off'])
+  })
+})
+
+describe('closed cards in the list', () => {
+  const closed = card({ item: item({ id: 'c', title: 'Lokað', module_id: 'm1', updated_at: '2026-01-03T00:00:00Z' }), bucket: null, closed: true, tone: 'stone' })
+  const open = card({ item: item({ id: 'o', title: 'Opið', module_id: 'm1', updated_at: '2026-01-01T00:00:00Z' }), bucket: 'parked' })
+  it('lists last inside a module', () => {
+    const titles = listRows([closed, open], packages, [module({})], 'pack').rows.filter((r) => r.kind === 'item').map((r) => r.kind === 'item' && r.card.item.title)
+    expect(titles).toEqual(['Opið', 'Lokað'])
+  })
+  it('gets its own group after the buckets in status order', () => {
+    const rows = listRows([closed, open], packages, [module({})], 'status').rows
+    expect(rows.filter((r) => r.kind === 'bucket').map((r) => r.kind === 'bucket' && r.id)).toEqual(['parked', 'closed'])
+    const last = rows[rows.length - 1]
+    expect(last.kind === 'item' && last.card.item.id).toBe('c')
   })
 })

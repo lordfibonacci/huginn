@@ -42,13 +42,14 @@ export const BUCKET_ORDER: readonly (keyof Counts)[] = ['new', 'mine', 'others',
 export type ListRow =
   | { kind: 'pack'; id: string; name: string }
   | { kind: 'module'; id: string | null; name: string | null; color: string | null; count: number }
-  | { kind: 'bucket'; id: keyof Counts; count: number }
+  | { kind: 'bucket'; id: keyof Counts | 'closed'; count: number }
   | { kind: 'item'; card: CardModel; moduleName: string | null }
 
 // count: item rows
 export type ListRows = { rows: ListRow[]; count: number }
 
-const bucketIndex = (c: CardModel) => (c.bucket === null ? -1 : BUCKET_ORDER.indexOf(c.bucket))
+// A closed card (bucket null) sorts after every bucket.
+const bucketIndex = (c: CardModel) => (c.bucket === null ? BUCKET_ORDER.length : BUCKET_ORDER.indexOf(c.bucket))
 
 function byBucketThenTitle(a: CardModel, b: CardModel): number {
   return bucketIndex(a) - bucketIndex(b) || a.item.title.localeCompare(b.item.title, 'is')
@@ -79,6 +80,12 @@ export function listRows(cards: CardModel[], packages: Package[], modules: Modul
       rows.push({ kind: 'bucket', id: bucket, count: group.length })
       for (const c of group) rows.push(itemRow(c))
       count += group.length
+    }
+    const closed = shown.filter((c) => c.bucket === null).sort(byUpdated)
+    if (closed.length > 0) {
+      rows.push({ kind: 'bucket', id: 'closed', count: closed.length })
+      for (const c of closed) rows.push(itemRow(c))
+      count += closed.length
     }
     return { rows, count }
   }

@@ -109,6 +109,7 @@
   --hg-card-peek-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --hg-card-peek-z: 7;
   --hg-card-parked-opacity: 0.6;
+  --hg-card-closed-opacity: 0.45;
   --hg-card-focus-ring: 2px;
   --hg-card-focus-offset: 3px;
   --hg-card-open-ring: 3px;
@@ -713,6 +714,9 @@
 .hg-card.hg-in { animation: hg-pop var(--hg-dur-pop) var(--hg-spring) backwards; }
 @keyframes hg-pop { from { opacity: 0; transform: scale(var(--hg-card-enter-scale)); } }
 .hg-card.hg-card-parked { border-style: dashed; opacity: var(--hg-card-parked-opacity); }
+/* Closed (done or dropped) within CLOSED_LINGER_DAYS: faded, the dot without its glow. */
+.hg-card.hg-card-closed { opacity: var(--hg-card-closed-opacity); }
+.hg-card.hg-card-closed .hg-card-dot { box-shadow: none; }
 .hg-card:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
 @media (hover: hover) {
   .hg-board:not(.hg-board-panning) .hg-card:not(.hg-card-lift):not(.hg-card-dim):hover,

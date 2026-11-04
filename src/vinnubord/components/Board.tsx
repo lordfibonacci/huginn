@@ -1183,6 +1183,7 @@ export function Board({
               moduleName={c.moduleName}
               showStamp={c.showStamp}
               parked={c.item.status === 'parked'}
+              closed={c.closed}
               pulse={c.mode === 'pulse'}
               selected={c.item.id === selectedId}
               lifted={lifted.cards.has(c.item.id)}
