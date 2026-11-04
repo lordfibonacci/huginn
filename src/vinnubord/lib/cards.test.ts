@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { cardModels, firstLine, freshComment, freshLine, showStamp, type CardContext } from './cards'
-import { emptyFilter } from './filters'
+import { emptyFilter, withQuery } from './filters'
 import type { UnreadKind } from './reads'
 import type { Tone } from './status'
 import type { Item, Module, Participant } from './types'
@@ -37,6 +37,7 @@ const participants: Participant[] = [
 const base: CardContext = {
   viewerId: 'me', participants, actions: [], modules: [module({ id: 'm1', package_id: 'p1' })],
   unread: new Map(), filter: emptyFilter(), comments: [], reads: [], now: Date.now(),
+  search: new Map(),
 }
 
 describe('cardModels', () => {
@@ -70,6 +71,12 @@ describe('cardModels', () => {
     expect(a.visible).toBe(true)
     expect(b.fresh).toBeNull()
     expect(b.visible).toBe(false)
+  })
+  it('a query dims a card whose index text lacks it and keeps one whose text has it', () => {
+    const f = withQuery(emptyFilter(), 'sýning')
+    const search = new Map([['i1', 'syning i dag'], ['i2', 'annad']])
+    expect(cardModels([item({ id: 'i1' })], ctx({ filter: f, search }))[0].visible).toBe(true)
+    expect(cardModels([item({ id: 'i2' })], ctx({ filter: f, search }))[0].visible).toBe(false)
   })
   it('mover is updated_by, else created_by', () => {
     expect(cardModels([item({ created_by: 'me', updated_by: 'other' })], ctx())[0].mover?.short).toBe('A')

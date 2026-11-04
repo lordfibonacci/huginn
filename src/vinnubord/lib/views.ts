@@ -53,7 +53,7 @@ export function itemsInView(
     const bucket = countBucket(item, actions, viewerId)
     if (!bucket) return false
     const packageId = item.module_id ? (packageOf.get(item.module_id) ?? null) : null
-    return matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: false }, filter)
+    return matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: false, text: '' }, filter)
   })
 }
 

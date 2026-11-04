@@ -43,6 +43,8 @@ export type CardContext = {
   comments: Comment[]
   reads: Read[]
   now: number
+  // Folded search text per item id (searchIndex).
+  search: Map<string, string>
 }
 
 // A card shows its change stamp only while the change is recent.
@@ -120,8 +122,9 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
     const bucket = countBucket(item, actions, viewerId)
     const packageId = item.module_id ? (packageOfModule.get(item.module_id) ?? null) : null
     const fresh = unread.get(item.id) ?? null
+    const text = ctx.search.get(item.id) ?? ''
     const visible =
-      !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: fresh !== null }, filter))
+      !filterOn || (bucket !== null && matches(item, { tone: BUCKET_TONE[bucket], packageId, unread: fresh !== null, text }, filter))
     const moverId = item.updated_by ?? item.created_by
     const mover = participants.find((p) => p.user_id === moverId)
     const waiter = item.status === 'waiting' ? participants.find((p) => p.user_id === item.waiting_on) : undefined

@@ -13,6 +13,7 @@ import { packageCounts, tagCounts } from '../lib/filters'
 import { boardOrder } from '../lib/layout'
 import { listRows } from '../lib/list'
 import { summarizeUnread } from '../lib/reads'
+import { searchIndex } from '../lib/search'
 import { countsFor, isOnBoard, mineActionsByItem } from '../lib/status'
 import type { Item, View } from '../lib/types'
 import { itemsInView, viewCounts } from '../lib/views'
@@ -98,6 +99,7 @@ export function BoardPage() {
   )
   const unread = loaded ? data.unread : null
   const unreadByItem = useMemo(() => summarizeUnread(unread ?? []), [unread])
+  const search = useMemo(() => (loaded ? searchIndex(data) : new Map<string, string>()), [loaded, data])
   const counts = useMemo(
     () => (loaded ? countsFor(visibleItems, data.actions, viewerId, new Set(unreadByItem.keys())) : null),
     [loaded, data, visibleItems, viewerId, unreadByItem],
@@ -116,9 +118,10 @@ export function BoardPage() {
             comments: data.comments,
             reads: data.reads,
             now: Date.now(),
+            search,
           })
         : [],
-    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter],
+    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search],
   )
   const mineByItem = useMemo(
     () => (loaded ? mineActionsByItem(data.actions, viewerId) : new Map<string, number>()),

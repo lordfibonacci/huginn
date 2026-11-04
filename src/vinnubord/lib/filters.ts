@@ -1,3 +1,4 @@
+import { foldSearch } from './search'
 import { isOnBoard, type Tone } from './status'
 import type { Item, Module, Package } from './types'
 
@@ -19,18 +20,15 @@ export function isActive(f: Filter): boolean {
 
 export function matches(
   item: Item,
-  ctx: { tone: Tone; packageId: string | null; unread: boolean },
+  ctx: { tone: Tone; packageId: string | null; unread: boolean; text: string },
   f: Filter,
 ): boolean {
   if (f.unread && !ctx.unread) return false
   if (f.tones.size > 0 && !f.tones.has(ctx.tone)) return false
   if (f.packages.size > 0 && (ctx.packageId === null || !f.packages.has(ctx.packageId))) return false
   if (f.tags.size > 0 && !item.tags.some((t) => f.tags.has(t))) return false
-  const q = f.q.trim().toLowerCase()
-  if (q !== '') {
-    const hay = [item.title, item.summary ?? '', item.body ?? '', ...item.tags].join('\n').toLowerCase()
-    if (!hay.includes(q)) return false
-  }
+  const q = foldSearch(f.q)
+  if (q !== '' && !ctx.text.includes(q)) return false
   return true
 }
 
