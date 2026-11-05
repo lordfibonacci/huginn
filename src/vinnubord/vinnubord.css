@@ -402,7 +402,7 @@
   --hg-panel-w-reader: 920px;
   --hg-reader-toc-w: 180px;
   --hg-reader-toc-indent: 12px;
-  --hg-reader-measure: 68ch;
+  --hg-reader-measure: none;
   --hg-reader-bar-gap: 10px;
   --hg-reader-bar-pad: 12px 16px;
   --hg-reader-toc-pad: 16px 12px;
