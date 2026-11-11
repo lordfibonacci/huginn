@@ -191,3 +191,183 @@ Commit: `docs(vinnubord): far labels and the 10% zoom floor`.
 ## Rýni
 
 Ein kóðarýni á Opus eftir verk 1, lokarýni á Fable (les diffið og skjámyndina). Hafnaðar athugasemdir fá eina línu hér fyrir neðan.
+
+### Rýni 1 (Opus á 1ae58e8, og skjámynd og mæling stjórnanda)
+
+Mæling, `npm run shots:hg perf` á móti local preview, sama build, far tokenin 0 eða eins og byggt (hermdur sími, 4x CPU):
+
+| | pinch-out@min gap mean | pinch-in gap mean | p90 |
+|---|---|---|---|
+| Slökkt (2 keyrslur) | 43.2, 42.3 | 41.7, 46.6 | 100 |
+| Kveikt (3 keyrslur) | 45.4, 45.4, 50.3 | 46.4, 47.1, 59.8 | 100 til 150 |
+
+Athugið: `pinch-out@min` byrjar nú í 10% en ekki 20%, svo tölurnar eru ekki sambærilegar við plan 9.
+
+| # | Atriði | Niðurstaða |
+|---|---|---|
+| 1 | `max-width` og `scale` breytast í hverjum ramma neðan við þröskuld (Important, staðfest með mælingu) | Lagað: lagfæring 1, sest zoom `--hg-zs` |
+| 2 | Perf grunnlínan breytist | Skráð hér fyrir ofan |
+| 3 | Vafri sem hafnar `calc` deilingu með `max()` | Hafnað: gilt samkvæmt css-values-4, staðfest í Chromium, iPhone er á athugunarlista Heimis |
+| 4 | Val og aðild að kassa lesa óskalaðan titilkassa pakka | Hafnað sem kóðabreyting: Ctrl val er aðeins með mús og tekur titilinn þegar kassinn nær yfir neðri brún nafnsins. Skráð í CLAUDE.md |
+| 5 | Gripsvæðið stækkar með nafninu | Engin breyting: í samræmi við það sem er teiknað. Skráð í CLAUDE.md |
+| 6 | Athugasemd leggst yfir nafn á litlum kassa | Lagað: þak á stækkun athugasemdar og `--hg-zone-note-z` |
+| 7 | Löng pakkanöfn fá úrfellingu í stað línuskila í 100% | Hafnað: ekkert pakkanafn nálgast breidd dálksins, fullt nafn er í `aria-label` og listanum, `title` myndi sýna tooltip á hverju hover |
+| 8 | `z-index: 1` sem tala í reglu | Lagað: `--hg-pack-fold-z` |
+| S1 | Skjámynd: athugasemdir kassa of stórar í fjarlægð og hálfar undir spjöldum | Lagað: `--hg-zone-note-far-max` |
+| S2 | Skjámynd: pakkanöfn styttast ("Stórel…") af því þau eru köppuð við dálkbreidd | Lagað: kappið tekið af |
+
+Lagfæringin snertir `src/vinnubord/hooks/useViewport.ts`, sem planið nefndi ekki, svo verkið fylgir fullu sniði héðan: Opus rýnir lagfæringuna og hver umferð er rýnd þar til rýni kemur hrein.
+
+## Lagfæring 1
+
+Allt verbatim. Engin önnur breyting.
+
+### L1a. `src/vinnubord/hooks/useViewport.ts`
+
+Í hausathugasemdinni verður setningin
+
+```ts
+// 120 ms after the last wheel step, at the end of a glide (animateTo), when a
+// press stops a glide or fling, and on setView. Anything that needs the
+// view every frame reads viewRef, not `view`.
+```
+
+að:
+
+```ts
+// 120 ms after the last wheel step, at the end of a glide (animateTo), when a
+// press stops a glide or fling, and on setView. Anything that needs the
+// view every frame reads viewRef, not `view`. sync() also writes the settled
+// zoom --hg-zs on the world (settle), which CSS that may only follow the zoom
+// at gesture end reads instead of --hg-z.
+```
+
+Fallið `sync` verður, með nýju `settle` á undan:
+
+```ts
+  // The settled zoom (--hg-zs) for CSS that follows the zoom at gesture end
+  // only (the far labels in vinnubord.css). Never written per frame, so a
+  // pinch, a wheel run or a glide costs no layout or paint for it.
+  const settle = useCallback(() => {
+    worldRef.current?.style.setProperty('--hg-zs', String(viewRef.current.z))
+  }, [])
+
+  const sync = useCallback(() => {
+    settle()
+    setViewState(viewRef.current)
+  }, [settle])
+```
+
+Í `useLayoutEffect` sem setur sýnina á world sem mountast seinna verður línan `if (worldRef.current) apply(viewRef.current)` að:
+
+```ts
+    if (worldRef.current) {
+      apply(viewRef.current)
+      settle()
+    }
+```
+
+`settle` er skilgreint á undan `sync`, og `sync` er þegar á undan þessu effecti, svo röðin gengur.
+
+### L1b. `src/vinnubord/vinnubord.css`, tokens
+
+Pack columns hópurinn, athugasemdin og tokenið frá verki 1 verða (og nýtt token á eftir):
+
+```css
+  /* Below this board zoom the pack name stops shrinking on screen: once the
+     zoom settles (--hg-zs) it is scaled back up by this over the zoom, so 0.5
+     keeps a 30 px name at 15 px. 0 turns it off. */
+  --hg-pack-title-far: 0.5;
+  /* The fold button sits above the pack name, which covers it when scaled up. */
+  --hg-pack-fold-z: 1;
+```
+
+Kassar hópurinn, athugasemdin og tokenið frá verki 1 verða (og tvö ný token á eftir):
+
+```css
+  /* Below this board zoom the box name and note stop shrinking on screen: once
+     the zoom settles (--hg-zs) they are scaled back up by this over the zoom.
+     1 keeps the name at its own size at every zoom below 100%. 0 turns it off. */
+  --hg-zone-far: 1;
+  /* The note is scaled back up at most this many times (at least 1): 2.5 keeps
+     it readable down to 40% and lets it shrink further out, where a full size
+     note would slide under the cards. */
+  --hg-zone-note-far-max: 2.5;
+  /* The note sits under the name and the resize corner. */
+  --hg-zone-note-z: -1;
+```
+
+### L1c. `src/vinnubord/vinnubord.css`, pakkatitill
+
+Athugasemdin og reglan `.hg-pack-title-text` frá verki 1 verða:
+
+```css
+/* The name alone is scaled back up when the board is zoomed far out
+   (--hg-pack-title-far), from its bottom left corner: it grows upwards and to
+   the right over the hairline and never pushes the modules. The button keeps
+   its box, so the selection ring and the boxes Board measures stay the same.
+   It reads the settled zoom, so it scales with the board during a gesture and
+   settles when the gesture ends. */
+.hg-pack-title-text {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transform-origin: left bottom; scale: max(1, calc(var(--hg-pack-title-far) / var(--hg-zs, var(--hg-z, 1))));
+  transition: scale var(--hg-dur-view) var(--hg-ease);
+}
+```
+
+Í reglunni `.hg-pack-fold` verður `position: relative; z-index: 1;` að:
+
+```css
+  position: relative; z-index: var(--hg-pack-fold-z);
+```
+
+### L1d. `src/vinnubord/vinnubord.css`, kassar
+
+Í reglunni `.hg-zone` verða athugasemdin og `--hg-far-k` línan frá verki 1 að:
+
+```css
+  /* How much the name and the note are scaled back up when the board is zoomed
+     far out (--hg-zone-far), read from the settled zoom so a gesture costs
+     nothing. Their width caps shrink by the same factor, so a scaled label
+     still ends inside the box. */
+  --hg-far-k: max(1, calc(var(--hg-zone-far) / var(--hg-zs, var(--hg-z, 1))));
+  --hg-far-note-k: min(var(--hg-far-k), var(--hg-zone-note-far-max));
+```
+
+Í reglunni `.hg-zone-title` verður síðasta línan (`transform-origin: left center; scale: var(--hg-far-k);`) að:
+
+```css
+  transform-origin: left center; scale: var(--hg-far-k); transition: scale var(--hg-dur-view) var(--hg-ease);
+```
+
+Reglan `.hg-zone-note` verður:
+
+```css
+.hg-zone-note {
+  position: absolute; left: var(--hg-zone-title-inset); bottom: var(--hg-zone-note-inset); max-width: calc(var(--hg-zone-note-max-w) / var(--hg-far-note-k));
+  z-index: var(--hg-zone-note-z);
+  font-size: var(--hg-zone-note-size); color: var(--hg-ink-2); line-height: 1.35; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; pointer-events: none;
+  transform-origin: left bottom; scale: var(--hg-far-note-k); transition: scale var(--hg-dur-view) var(--hg-ease);
+}
+```
+
+### L1e. CLAUDE.md
+
+Málsgreinin "Far labels (2026-11-11): ..." í Design System verður í heild:
+
+```
+Far labels (2026-11-11): three labels stop shrinking on screen below a zoom threshold, each by `scale: max(1, far / zoom)` in CSS only (no layout change, so the offset boxes that selection and box membership read stay the unscaled ones: a marquee or a box takes a pack by its unscaled title box, while the press area of a name is the scaled one). The zoom they read is `--hg-zs`, the settled zoom that `useViewport` writes on `.hg-world` in `sync()` and when the world mounts, never per frame: during a pinch, a wheel run or a glide the labels scale with the board and settle over `--hg-dur-view` when it ends, so a gesture costs no layout or paint for them (reading `--hg-z` per frame raised the emulated pinch gap mean from about 43 to about 50 ms). `--hg-zone-far` (1) covers the box name (`.hg-zone-title`, scaled from its left centre) and note (`.hg-zone-note`, from its bottom left, at most `--hg-zone-note-far-max` (2.5) times, so a note is readable down to 40% and shrinks further out; `--hg-zone-note-z` keeps it under the name and the corner). `.hg-zone` sets the factors as `--hg-far-k` and `--hg-far-note-k` and each label divides its `max-width` by its own, so a scaled label still ends inside its box with an ellipsis. `--hg-pack-title-far` (0.5) covers the pack name, which is its own span (`.hg-pack-title-text`, scaled from its bottom left so it grows upwards and never pushes the modules, one line with an ellipsis, no width cap of its own, so a scaled name may run past its column); the title button keeps its box and `.hg-pack-fold` sits above the scaled name (`--hg-pack-fold-z`). Setting a far token to 0 turns the effect off. `MIN_ZOOM` in `lib/geometry.ts` is 0.1.
+```
+
+Í Key Patterns, Gesture contract, á eftir setningunni sem endar á "a press that stops motion, `setView`)." kemur ný setning:
+
+```
+`sync` also writes the settled zoom `--hg-zs` on the world layer (so does a world that mounts later), which the far labels read instead of `--hg-z`.
+```
+
+### Sannreyning útfæranda
+
+`npm run test` (641 próf, öll græn) og `npm run build` grænt. Ekkert annað þarf útfærandi að athuga. Stjórnandi tekur skjámynd og mælir pinch aftur.
+
+Commit: `fix(vinnubord): far labels follow the settled zoom, note cap, full pack names` (kóði) og `docs(vinnubord): far labels read the settled zoom` (CLAUDE.md).
