@@ -34,7 +34,9 @@ import { parseDuration } from '../lib/motion'
 // `view` state: when the last pointer lifts (or the fling after it stops),
 // 120 ms after the last wheel step, at the end of a glide (animateTo), when a
 // press stops a glide or fling, and on setView. Anything that needs the
-// view every frame reads viewRef, not `view`.
+// view every frame reads viewRef, not `view`. sync() also writes the settled
+// zoom --hg-zs on the world (settle), which CSS that may only follow the zoom
+// at gesture end reads instead of --hg-z.
 //
 // Rules:
 // - Mouse and pen: pointers that start on a form control, button, link, label
@@ -244,9 +246,17 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     }
   }, [])
 
-  const sync = useCallback(() => {
-    setViewState(viewRef.current)
+  // The settled zoom (--hg-zs) for CSS that follows the zoom at gesture end
+  // only (the far labels in vinnubord.css). Never written per frame, so a
+  // pinch, a wheel run or a glide costs no layout or paint for it.
+  const settle = useCallback(() => {
+    worldRef.current?.style.setProperty('--hg-zs', String(viewRef.current.z))
   }, [])
+
+  const sync = useCallback(() => {
+    settle()
+    setViewState(viewRef.current)
+  }, [settle])
 
   // Stops a running glide or fling where it is. Returns whether one was
   // running. A stopped fling ends its gesture; the caller syncs.
@@ -277,7 +287,10 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   useLayoutEffect(() => {
     if (worldRef.current === appliedWorld.current) return
     appliedWorld.current = worldRef.current
-    if (worldRef.current) apply(viewRef.current)
+    if (worldRef.current) {
+      apply(viewRef.current)
+      settle()
+    }
   })
 
   const animateTo = useCallback(
