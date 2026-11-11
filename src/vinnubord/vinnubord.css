@@ -42,6 +42,10 @@
   --hg-pack-title-gap: 16px;
   --hg-pack-title-indent: 14px;
   --hg-pack-title-size: 30px;
+  /* Below this board zoom (--hg-z) the pack name stops shrinking on screen: it
+     is scaled back up by this over the zoom, so 0.5 keeps a 30 px name at
+     15 px. 0 turns it off. */
+  --hg-pack-title-far: 0.5;
   --hg-pack-rail-top: 71px;
   --hg-pack-fold-size: 13px;
   --hg-pack-fold-gap: 6px;
@@ -177,6 +181,10 @@
   --hg-zone-note-size: 12px;
   --hg-zone-note-inset: 8px;
   --hg-zone-note-max-w: 70%;
+  /* Below this board zoom (--hg-z) the box name and note stop shrinking on
+     screen, scaled back up by this over the zoom. 1 keeps them at their own
+     size at every zoom below 100%. 0 turns it off. */
+  --hg-zone-far: 1;
   --hg-zone-grip-size: 14px;
   --hg-zone-grip-alpha: 55%;
   --hg-zone-draft-color: var(--hg-lilac);
@@ -603,6 +611,18 @@
 .hg-pack.hg-pack-lift .hg-pack-title { cursor: grabbing; }
 .hg-pack-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-line); outline-offset: var(--hg-card-focus-offset); }
 .hg-pack-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--hg-line), transparent); }
+/* The name alone is scaled back up when the board is zoomed far out
+   (--hg-pack-title-far), from its bottom left corner: it grows upwards and to
+   the right over the hairline and never pushes the modules. The button keeps
+   its box, so the grip, the selection ring and the boxes Board measures stay
+   the same. The width cap shrinks by the same factor, so the scaled name ends
+   at the column's right edge with an ellipsis. */
+.hg-pack-title-text {
+  --hg-far-k: max(1, calc(var(--hg-pack-title-far) / var(--hg-z, 1)));
+  min-width: 0; max-width: calc((var(--hg-pack-w) - var(--hg-pack-title-indent)) / var(--hg-far-k));
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transform-origin: left bottom; scale: var(--hg-far-k);
+}
 .hg-pack-rail {
   position: absolute; left: 0; top: var(--hg-pack-rail-top); bottom: 0; width: 1px;
   background: linear-gradient(to bottom, var(--hg-line), transparent);
@@ -614,9 +634,11 @@
   margin: 0 0 var(--hg-pack-title-gap) var(--hg-pack-title-indent); width: calc(100% - var(--hg-pack-title-indent));
 }
 .hg-pack-head .hg-pack-title { margin: 0; width: auto; flex: 1; min-width: 0; }
+/* Above the pack name, which covers it when scaled up far out. */
 .hg-pack-fold {
   width: var(--hg-touch); height: var(--hg-touch); flex: none; display: grid; place-items: center; cursor: pointer;
   border: none; border-radius: var(--hg-radius-control-inner); background: none; color: var(--hg-ink-3);
+  position: relative; z-index: 1;
 }
 .hg-pack-fold svg { width: var(--hg-icon); height: var(--hg-icon); stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .hg-pack-fold:hover, .hg-pack-fold:focus-visible { color: var(--hg-ink); background: var(--hg-control-hover); outline: none; }
@@ -789,6 +811,10 @@
   background: color-mix(in oklab, var(--hg-c) var(--hg-zone-fill), transparent);
   border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-zone-border), transparent);
   font-family: var(--hg-font);
+  /* How much the name and note are scaled back up when the board is zoomed
+     far out (--hg-zone-far). Their width caps shrink by the same factor, so a
+     scaled label still ends inside the box. */
+  --hg-far-k: max(1, calc(var(--hg-zone-far) / var(--hg-z, 1)));
 }
 .hg-zone.hg-zone-lift {
   z-index: var(--hg-zone-lift-z);
@@ -797,17 +823,19 @@
 }
 .hg-zone-title {
   position: absolute; left: var(--hg-zone-title-inset); top: calc(-1 * var(--hg-zone-title-h) / 2);
-  min-height: var(--hg-zone-title-h); max-width: calc(100% - 2 * var(--hg-zone-title-inset)); padding: var(--hg-zone-title-pad);
+  min-height: var(--hg-zone-title-h); max-width: calc((100% - 2 * var(--hg-zone-title-inset)) / var(--hg-far-k)); padding: var(--hg-zone-title-pad);
   border: none; border-radius: var(--hg-radius-chip); background: var(--hg-board); color: var(--hg-c);
   font: inherit; font-size: var(--hg-zone-title-size); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  transform-origin: left center; scale: var(--hg-far-k);
 }
 .hg-zone.hg-zone-lift .hg-zone-title { cursor: grabbing; }
 .hg-zone-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
 .hg-zone-note {
-  position: absolute; left: var(--hg-zone-title-inset); bottom: var(--hg-zone-note-inset); max-width: var(--hg-zone-note-max-w);
+  position: absolute; left: var(--hg-zone-title-inset); bottom: var(--hg-zone-note-inset); max-width: calc(var(--hg-zone-note-max-w) / var(--hg-far-k));
   font-size: var(--hg-zone-note-size); color: var(--hg-ink-2); line-height: 1.35; overflow: hidden; text-overflow: ellipsis;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; pointer-events: none;
+  transform-origin: left bottom; scale: var(--hg-far-k);
 }
 .hg-zone-resize {
   position: absolute; right: 0; bottom: 0; width: var(--hg-touch); height: var(--hg-touch); cursor: nwse-resize;

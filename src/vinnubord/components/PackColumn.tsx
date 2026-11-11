@@ -71,7 +71,7 @@ export function PackColumn({
           aria-label={t('vinnubord.board.fitPack', { name: pkg.name })}
           onClick={() => onFitPack(id)}
         >
-          {pkg.name}
+          <span className="hg-pack-title-text">{pkg.name}</span>
         </button>
         <button
           type="button"

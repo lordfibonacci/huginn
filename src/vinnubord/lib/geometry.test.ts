@@ -39,24 +39,24 @@ describe('zoomAt', () => {
     expect(ay).toBeCloseTo(wy)
   })
 
-  it('clamps to 0.2 and 2.5 by default', () => {
+  it('clamps to 0.1 and 2.5 by default', () => {
     expect(zoomAt({ x: 0, y: 0, z: 1 }, 100, 0, 0).z).toBe(2.5)
-    expect(zoomAt({ x: 0, y: 0, z: 1 }, 0.01, 0, 0).z).toBe(0.2)
+    expect(zoomAt({ x: 0, y: 0, z: 1 }, 0.01, 0, 0).z).toBe(0.1)
   })
 
   it('never zooms in when zooming out from a view already below the floor', () => {
-    const view: View = { x: 40, y: 90, z: 0.1 }
+    const view: View = { x: 40, y: 90, z: 0.05 }
     const [wx, wy] = screenToWorld(view, 500, 400)
     const next = zoomAt(view, 0.8, 500, 400)
-    expect(next.z).toBe(0.1)
+    expect(next.z).toBe(0.05)
     const [ax, ay] = screenToWorld(next, 500, 400)
     expect(ax).toBeCloseTo(wx)
     expect(ay).toBeCloseTo(wy)
   })
 
   it('zooms in gradually from below the floor instead of snapping to it', () => {
-    expect(zoomAt({ x: 0, y: 0, z: 0.1 }, 1.25, 0, 0).z).toBeCloseTo(0.125)
-    expect(zoomAt({ x: 0, y: 0, z: 0.1 }, 10, 0, 0).z).toBe(1)
+    expect(zoomAt({ x: 0, y: 0, z: 0.05 }, 1.25, 0, 0).z).toBeCloseTo(0.0625)
+    expect(zoomAt({ x: 0, y: 0, z: 0.05 }, 10, 0, 0).z).toBeCloseTo(0.5)
   })
 
   it('never zooms out when zooming in from a view already above the cap', () => {
@@ -66,7 +66,7 @@ describe('zoomAt', () => {
 
   it('a fitted view of a huge board stays put on zoom out', () => {
     const fitted = fitAll([{ x: 0, y: 0, w: 20000, h: 100 }], { w: 1200, h: 800 }, { top: 90, left: 40, right: 40, bottom: 60 })
-    expect(fitted.z).toBeLessThan(0.2)
+    expect(fitted.z).toBeLessThan(0.1)
     expect(zoomAt(fitted, 0.8, 600, 400).z).toBe(fitted.z)
   })
 
@@ -217,8 +217,8 @@ describe('pinchView', () => {
   })
 
   it('never zooms in when pinching out from a view below the floor', () => {
-    const next = pinchView({ x: 0, y: 0, z: 0.1 }, { cx: 0, cy: 0, d: 100 }, { cx: 0, cy: 0, d: 50 })
-    expect(next.z).toBe(0.1)
+    const next = pinchView({ x: 0, y: 0, z: 0.05 }, { cx: 0, cy: 0, d: 100 }, { cx: 0, cy: 0, d: 50 })
+    expect(next.z).toBe(0.05)
   })
 })
 

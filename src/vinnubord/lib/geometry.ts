@@ -15,7 +15,7 @@ export type PinchPoint = { cx: number; cy: number; d: number }
 export type Padding = { top: number; left: number; right: number; bottom: number }
 export const DEFAULT_PADDING: Padding = { top: 90, left: 40, right: 40, bottom: 60 }
 
-export const MIN_ZOOM = 0.2
+export const MIN_ZOOM = 0.1
 export const MAX_ZOOM = 2.5
 // fitAll never zooms closer than this, so a near empty board does not fill the screen.
 export const FIT_MAX_ZOOM = 1.6
