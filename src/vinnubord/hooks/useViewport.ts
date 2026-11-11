@@ -35,8 +35,9 @@ import { parseDuration } from '../lib/motion'
 // 120 ms after the last wheel step, at the end of a glide (animateTo), when a
 // press stops a glide or fling, and on setView. Anything that needs the
 // view every frame reads viewRef, not `view`. sync() also writes the settled
-// zoom --hg-zs on the world (settle), which CSS that may only follow the zoom
-// at gesture end reads instead of --hg-z.
+// zoom --hg-zs on the world (settle), and apply() does once the zoom has
+// drifted SETTLE_DRIFT times from it. CSS that must not follow the zoom every
+// frame reads it instead of --hg-z.
 //
 // Rules:
 // - Mouse and pen: pointers that start on a form control, button, link, label
@@ -115,6 +116,10 @@ import { parseDuration } from '../lib/motion'
 const WHEEL_SPEED = 0.0016
 const WHEEL_SYNC_MS = 120
 const BUTTON_STEP = 1.25
+// The far labels settle in the middle of a gesture once the zoom has drifted
+// this many times from the settled one, so a long zoom in does not leave them
+// many times too big until the gesture ends.
+const SETTLE_DRIFT = 1.5
 const CLICK_SUPPRESS_MS = 500
 const NO_PAN = '[data-no-pan], button, a, input, textarea, select, label'
 const FIELD = 'input, textarea, select'
@@ -226,6 +231,17 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   const flinging = useRef(false)
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // The settled zoom (--hg-zs) for CSS that must not follow the zoom every
+  // frame (the far labels in vinnubord.css): written at gesture end by sync()
+  // and, in the middle of a gesture, each time the zoom has drifted
+  // SETTLE_DRIFT times from the last settled one (apply). A pinch, a wheel run
+  // or a glide then costs a handful of label updates, not one per frame.
+  const settledZ = useRef(START.z)
+  const settle = useCallback(() => {
+    settledZ.current = viewRef.current.z
+    worldRef.current?.style.setProperty('--hg-zs', String(viewRef.current.z))
+  }, [])
+
   const apply = useCallback((v: View) => {
     viewRef.current = v
     const world = worldRef.current
@@ -233,6 +249,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
       world.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.z})`
       world.style.setProperty('--hg-z', String(v.z))
     }
+    if (v.z > settledZ.current * SETTLE_DRIFT || v.z < settledZ.current / SETTLE_DRIFT) settle()
     // Writes React's own text node, so a later render updates the node on
     // screen. textContent would swap in a new node and leave React writing to
     // a detached one; it is only the fallback when there is no text node.
@@ -244,17 +261,21 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
         if (node.nodeValue !== text) node.nodeValue = text
       } else if (label.textContent !== text) label.textContent = text
     }
-  }, [])
+  }, [settle])
 
-  // The settled zoom (--hg-zs) for CSS that follows the zoom at gesture end
-  // only (the far labels in vinnubord.css). Never written per frame, so a
-  // pinch, a wheel run or a glide costs no layout or paint for it.
-  const settle = useCallback(() => {
-    worldRef.current?.style.setProperty('--hg-zs', String(viewRef.current.z))
-  }, [])
-
+  // Whether the far labels may animate to a new settled zoom: --hg-zs-live
+  // turns their scale transition on. It stays off until the first synced view
+  // has been styled, so the labels do not grow in when the board opens.
+  const live = useRef(false)
   const sync = useCallback(() => {
     settle()
+    const world = worldRef.current
+    if (world && !live.current) {
+      live.current = true
+      // Style the first settled zoom while the transition is still off.
+      void world.offsetWidth
+      world.style.setProperty('--hg-zs-live', '1')
+    }
     setViewState(viewRef.current)
   }, [settle])
 
@@ -290,6 +311,7 @@ export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
     if (worldRef.current) {
       apply(viewRef.current)
       settle()
+      if (live.current) worldRef.current.style.setProperty('--hg-zs-live', '1')
     }
   })
 

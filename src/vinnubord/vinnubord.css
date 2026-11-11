@@ -623,12 +623,13 @@
    (--hg-pack-title-far), from its bottom left corner: it grows upwards and to
    the right over the hairline and never pushes the modules. The button keeps
    its box, so the selection ring and the boxes Board measures stay the same.
-   It reads the settled zoom, so it scales with the board during a gesture and
-   settles when the gesture ends. */
+   It reads the settled zoom (--hg-zs), so during a gesture it scales with the
+   board and catches up in a few steps, and it settles when the gesture ends.
+   The transition is off (--hg-zs-live) until the first view is drawn. */
 .hg-pack-title-text {
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   transform-origin: left bottom; scale: max(1, calc(var(--hg-pack-title-far) / var(--hg-zs, var(--hg-z, 1))));
-  transition: scale var(--hg-dur-view) var(--hg-ease);
+  transition: scale calc(var(--hg-dur-view) * var(--hg-zs-live, 0)) var(--hg-ease);
 }
 .hg-pack-rail {
   position: absolute; left: 0; top: var(--hg-pack-rail-top); bottom: 0; width: 1px;
@@ -819,9 +820,9 @@
   border: 1px solid color-mix(in oklab, var(--hg-c) var(--hg-zone-border), transparent);
   font-family: var(--hg-font);
   /* How much the name and the note are scaled back up when the board is zoomed
-     far out (--hg-zone-far), read from the settled zoom so a gesture costs
-     nothing. Their width caps shrink by the same factor, so a scaled label
-     still ends inside the box. */
+     far out (--hg-zone-far), read from the settled zoom (--hg-zs), which
+     changes a few times in a gesture and not every frame. Their width caps
+     shrink by the same factor, so a scaled label still ends inside the box. */
   --hg-far-k: max(1, calc(var(--hg-zone-far) / var(--hg-zs, var(--hg-z, 1))));
   --hg-far-note-k: min(var(--hg-far-k), var(--hg-zone-note-far-max));
 }
@@ -836,7 +837,7 @@
   border: none; border-radius: var(--hg-radius-chip); background: var(--hg-board); color: var(--hg-c);
   font: inherit; font-size: var(--hg-zone-title-size); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-  transform-origin: left center; scale: var(--hg-far-k); transition: scale var(--hg-dur-view) var(--hg-ease);
+  transform-origin: left center; scale: var(--hg-far-k); transition: scale calc(var(--hg-dur-view) * var(--hg-zs-live, 0)) var(--hg-ease);
 }
 .hg-zone.hg-zone-lift .hg-zone-title { cursor: grabbing; }
 .hg-zone-title:focus-visible { outline: var(--hg-card-focus-ring) solid var(--hg-c); outline-offset: var(--hg-card-focus-offset); }
@@ -845,7 +846,7 @@
   z-index: var(--hg-zone-note-z);
   font-size: var(--hg-zone-note-size); color: var(--hg-ink-2); line-height: 1.35; overflow: hidden; text-overflow: ellipsis;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; pointer-events: none;
-  transform-origin: left bottom; scale: var(--hg-far-note-k); transition: scale var(--hg-dur-view) var(--hg-ease);
+  transform-origin: left bottom; scale: var(--hg-far-note-k); transition: scale calc(var(--hg-dur-view) * var(--hg-zs-live, 0)) var(--hg-ease);
 }
 .hg-zone-resize {
   position: absolute; right: 0; bottom: 0; width: var(--hg-touch); height: var(--hg-touch); cursor: nwse-resize;
