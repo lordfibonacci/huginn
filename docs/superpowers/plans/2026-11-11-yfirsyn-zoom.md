@@ -536,3 +536,23 @@ The zoom they read is `--hg-zs`, the settled zoom that `useViewport` writes on `
 `npm run test` (641 próf, öll græn) og `npm run build` grænt. Ekkert annað þarf útfærandi að athuga.
 
 Commit: `fix(vinnubord): far labels catch up mid gesture, no grow in on load` (kóði) og `docs(vinnubord): settled zoom drift and the live gate` (CLAUDE.md).
+
+### Rýni 3 (Opus á 4d00b6e og 160c4b9, lokarýni Fable á heildardiffinu)
+
+Ekkert Critical eða Important. Báðar lækningar staðfestar í kóða: fyrsta opnun á báðum slóðum (`startAtPack` og `fitAll(false)`), endurmount, StrictMode, hook dependencies, og `offsetWidth` lifir í bundlinum. Skjámyndir (tabletLand): opnun í 80% óbreytt, 13% og 10% með heilum pakkanöfnum og læsilegum kassanöfnum.
+
+Mæling á rólegri vél, sama build, pinch gap mean, tvær keyrslur hvor: far tokenin 0 gefa 49.1 og 49.7 (út), 47.6 og 47.0 (inn); lagfæring 2 gefur 47.8 og 45.6 (út), 51.1 og 49.4 (inn); p90 100 til 117 í báðum. Enginn mælanlegur munur.
+
+| # | Atriði | Niðurstaða |
+|---|---|---|
+| 1 | `SETTLE_DRIFT` 1.5 gefur sagtannarhreyfingu í hægu pinch (Minor, ekki séð í vafra) | Óbreytt: stilling á tilfinningu, á athugunarlista Heimis. 1.25 er næsta gildi að prófa |
+| 2 | `max-width` stekkur meðan `scale` líður | Þegar skráð í CLAUDE.md |
+| 3 | Gamalt Safari gæti hafnað `calc()` í transition tíma (Minor, grunur) | Óbreytt: þá stökkva miðarnir í stað þess að líða, ekkert brotnar. Á athugunarlista Heimis |
+| 4 | Token athugasemdir segja "once the zoom settles" | Hafnað: rétt eins og það stendur |
+
+### Heimir athugar
+
+1. Tölva, huginn.pro/p/metta: zooma út í 10% með hjóli og tökkum. Nöfn kassa og pakka læsileg, athugasemdir kassa læsilegar niður í um 40%.
+2. Zooma hratt inn úr 10% í 100%: nöfnin fylgja í nokkrum skrefum og enda í réttri stærð. Ef skrefin trufla er `SETTLE_DRIFT` í `useViewport.ts` stillingin (1.25 gefur fleiri og minni skref).
+3. iPhone og iPad: pinch út og inn. Nöfnin stækka þegar zoomað er út (staðfestir að Safari taki `calc` reglurnar) og pinch er jafn lipurt og áður.
+4. Stærðirnar eru token efst í `vinnubord.css`: `--hg-zone-far`, `--hg-zone-note-far-max`, `--hg-pack-title-far`.
