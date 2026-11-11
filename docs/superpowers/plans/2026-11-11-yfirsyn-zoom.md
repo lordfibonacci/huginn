@@ -371,3 +371,168 @@ Far labels (2026-11-11): three labels stop shrinking on screen below a zoom thre
 `npm run test` (641 próf, öll græn) og `npm run build` grænt. Ekkert annað þarf útfærandi að athuga. Stjórnandi tekur skjámynd og mælir pinch aftur.
 
 Commit: `fix(vinnubord): far labels follow the settled zoom, note cap, full pack names` (kóði) og `docs(vinnubord): far labels read the settled zoom` (CLAUDE.md).
+
+### Rýni 2 (Opus á c07c66a, og skjámynd og mæling stjórnanda)
+
+Skjámynd (tabletLand, 10% og 14%): pakkanöfn heil, kassanöfn læsileg, athugasemdir litlar neðst í kössum. Mæling eftir lagfæringu 1 (2 keyrslur, Opus rýni í gangi á vélinni á meðan): pinch-out@min gap mean 50.1 og 45.9, pinch-in 46.4 og 46.6, p90 100 til 117. Tölurnar þrjár (slökkt, kveikt, lagað) liggja innan suðs hermisins, svo mælingin ein sker ekki úr. Rökin fyrir lagfæringu 1 eru í kóðanum: miðarnir lesa ekki lengur gildi sem breytist í hverjum ramma.
+
+| # | Atriði | Niðurstaða |
+|---|---|---|
+| 1 | Miðar vaxa inn á 220 ms við fyrstu opnun: `Board` les stærðir (style flush með `--hg-zs` 1) áður en fyrsta sýnin sest (Important, staðfest í kóða) | Lagað: lagfæring 2, `--hg-zs-live` |
+| 2 | Miðar blása út þegar zoomað er inn úr fjarlægð, því sest zoom helst alla hreyfinguna (Important) | Lagað: lagfæring 2, `SETTLE_DRIFT` |
+| 3 | `max-width` breytist strax en `scale` á 220 ms | Hafnað: transition á `max-width` setur layout aftur í ramma hreyfingarinnar, misræmið varir eitt skref. Skráð í CLAUDE.md |
+| 4 | Pakkanöfn án kapps geta náð yfir næsta dálk í fjarlægð | Hafnað: ákvörðun S2, heil nöfn ganga fyrir. Skráð í CLAUDE.md |
+| 5 | Týnt pointerup skilur miða eftir í gamalli stærð | Hafnað: eldri veila í bendlameðferð, sama á við um `active`, næsta ýting endurstillir |
+| 6 | Athugasemd í `.hg-zone` segir "a gesture costs nothing" | Lagað í lagfæringu 2 |
+
+## Lagfæring 2
+
+Allt verbatim. Engin önnur breyting.
+
+### L2a. `src/vinnubord/hooks/useViewport.ts`
+
+Í hausathugasemdinni verður setningin
+
+```ts
+// view every frame reads viewRef, not `view`. sync() also writes the settled
+// zoom --hg-zs on the world (settle), which CSS that may only follow the zoom
+// at gesture end reads instead of --hg-z.
+```
+
+að:
+
+```ts
+// view every frame reads viewRef, not `view`. sync() also writes the settled
+// zoom --hg-zs on the world (settle), and apply() does once the zoom has
+// drifted SETTLE_DRIFT times from it. CSS that must not follow the zoom every
+// frame reads it instead of --hg-z.
+```
+
+Á eftir línunni `const BUTTON_STEP = 1.25` kemur:
+
+```ts
+// The far labels settle in the middle of a gesture once the zoom has drifted
+// this many times from the settled one, so a long zoom in does not leave them
+// many times too big until the gesture ends.
+const SETTLE_DRIFT = 1.5
+```
+
+Blokkin frá `const apply = useCallback((v: View) => {` til og með loka `sync` (`}, [settle])`) verður í heild (`settle` fer á undan `apply`, `apply` fær eina nýja línu og `[settle]`, `sync` fær `live`):
+
+```ts
+  // The settled zoom (--hg-zs) for CSS that must not follow the zoom every
+  // frame (the far labels in vinnubord.css): written at gesture end by sync()
+  // and, in the middle of a gesture, each time the zoom has drifted
+  // SETTLE_DRIFT times from the last settled one (apply). A pinch, a wheel run
+  // or a glide then costs a handful of label updates, not one per frame.
+  const settledZ = useRef(START.z)
+  const settle = useCallback(() => {
+    settledZ.current = viewRef.current.z
+    worldRef.current?.style.setProperty('--hg-zs', String(viewRef.current.z))
+  }, [])
+
+  const apply = useCallback((v: View) => {
+    viewRef.current = v
+    const world = worldRef.current
+    if (world) {
+      world.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.z})`
+      world.style.setProperty('--hg-z', String(v.z))
+    }
+    if (v.z > settledZ.current * SETTLE_DRIFT || v.z < settledZ.current / SETTLE_DRIFT) settle()
+    // Writes React's own text node, so a later render updates the node on
+    // screen. textContent would swap in a new node and leave React writing to
+    // a detached one; it is only the fallback when there is no text node.
+    const label = zoomLabelRef.current
+    if (label) {
+      const text = `${Math.round(v.z * 100)}%`
+      const node = label.firstChild
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue !== text) node.nodeValue = text
+      } else if (label.textContent !== text) label.textContent = text
+    }
+  }, [settle])
+
+  // Whether the far labels may animate to a new settled zoom: --hg-zs-live
+  // turns their scale transition on. It stays off until the first synced view
+  // has been styled, so the labels do not grow in when the board opens.
+  const live = useRef(false)
+  const sync = useCallback(() => {
+    settle()
+    const world = worldRef.current
+    if (world && !live.current) {
+      live.current = true
+      // Style the first settled zoom while the transition is still off.
+      void world.offsetWidth
+      world.style.setProperty('--hg-zs-live', '1')
+    }
+    setViewState(viewRef.current)
+  }, [settle])
+```
+
+Í `useLayoutEffect` sem setur sýnina á world sem mountast seinna verður blokkin
+
+```ts
+    if (worldRef.current) {
+      apply(viewRef.current)
+      settle()
+    }
+```
+
+að:
+
+```ts
+    if (worldRef.current) {
+      apply(viewRef.current)
+      settle()
+      if (live.current) worldRef.current.style.setProperty('--hg-zs-live', '1')
+    }
+```
+
+### L2b. `src/vinnubord/vinnubord.css`
+
+Í þremur reglum (`.hg-pack-title-text`, `.hg-zone-title`, `.hg-zone-note`) verður `transition: scale var(--hg-dur-view) var(--hg-ease);` að:
+
+```css
+transition: scale calc(var(--hg-dur-view) * var(--hg-zs-live, 0)) var(--hg-ease);
+```
+
+Athugasemdin á undan `.hg-pack-title-text` verður:
+
+```css
+/* The name alone is scaled back up when the board is zoomed far out
+   (--hg-pack-title-far), from its bottom left corner: it grows upwards and to
+   the right over the hairline and never pushes the modules. The button keeps
+   its box, so the selection ring and the boxes Board measures stay the same.
+   It reads the settled zoom (--hg-zs), so during a gesture it scales with the
+   board and catches up in a few steps, and it settles when the gesture ends.
+   The transition is off (--hg-zs-live) until the first view is drawn. */
+```
+
+Athugasemdin í `.hg-zone` verður:
+
+```css
+  /* How much the name and the note are scaled back up when the board is zoomed
+     far out (--hg-zone-far), read from the settled zoom (--hg-zs), which
+     changes a few times in a gesture and not every frame. Their width caps
+     shrink by the same factor, so a scaled label still ends inside the box. */
+```
+
+### L2c. CLAUDE.md
+
+Í málsgreininni "Far labels (2026-11-11): ..." verður setningin sem byrjar á "The zoom they read is `--hg-zs`" og endar á "about 50 ms)." að:
+
+```
+The zoom they read is `--hg-zs`, the settled zoom that `useViewport` writes on `.hg-world` in `sync()`, when the world mounts, and in the middle of a gesture each time the zoom has drifted `SETTLE_DRIFT` (1.5) times from it, never per frame: during a pinch, a wheel run or a glide the labels scale with the board, catch up in a few steps and settle when it ends, each step over `--hg-dur-view` (reading `--hg-z` instead would change `max-width` and `scale` on every label in every zoom frame). The transition is gated by `--hg-zs-live`, which `sync()` sets after the first synced view has been styled, so the labels do not grow in when the board opens; `max-width` is not transitioned, so a label can sit a little wide or short for the length of one step.
+```
+
+Í Key Patterns, Gesture contract, verður setningin sem byrjar á "`sync` also writes the settled zoom" að:
+
+```
+`sync` also writes the settled zoom `--hg-zs` on the world layer (so do a world that mounts later and `apply` once the zoom has drifted `SETTLE_DRIFT` times from it), which the far labels read instead of `--hg-z`.
+```
+
+### Sannreyning útfæranda
+
+`npm run test` (641 próf, öll græn) og `npm run build` grænt. Ekkert annað þarf útfærandi að athuga.
+
+Commit: `fix(vinnubord): far labels catch up mid gesture, no grow in on load` (kóði) og `docs(vinnubord): settled zoom drift and the live gate` (CLAUDE.md).
