@@ -26,7 +26,8 @@ export const WAKE_STALE_MS = 30000
 
 // What a wake does. show: the tab became visible, the window got focus or the
 // network came back. A press (show false) only acts on a board that is not
-// live. The times are since the last load began and since the last connect began.
+// live. The times are since the last load began (a failed load counts as
+// none) and since the last connect began.
 export function wakePlan(
   live: boolean,
   sinceLoadMs: number,

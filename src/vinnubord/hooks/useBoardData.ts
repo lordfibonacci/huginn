@@ -38,7 +38,7 @@ export function useBoardData(projectId: string | null | undefined) {
   // Only the newest request may write state, so a slow older response
   // cannot overwrite a newer board.
   const requestRef = useRef(0)
-  // When the last load began, for the wake rule.
+  // When the last load began, or 0 after one that failed, for the wake rule.
   const loadAtRef = useRef(0)
 
   const reload = useCallback(async () => {
@@ -52,6 +52,8 @@ export function useBoardData(projectId: string | null | undefined) {
       setError(null)
     } catch (e) {
       if (request !== requestRef.current) return
+      // A failed load counts as no load, so the next wake tries again.
+      loadAtRef.current = 0
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       if (request === requestRef.current) setLoading(false)
@@ -73,6 +75,7 @@ export function useBoardData(projectId: string | null | undefined) {
     let active = true
     let timer: ReturnType<typeof setTimeout> | null = null
     const scheduleReload = () => {
+      if (!active) return
       if (timer) clearTimeout(timer)
       timer = setTimeout(() => {
         timer = null
@@ -98,23 +101,50 @@ export function useBoardData(projectId: string | null | undefined) {
       if (healTimer) clearTimeout(healTimer)
       healTimer = setTimeout(() => {
         healTimer = null
-        void connect()
+        void connect(true)
       }, healDelay(healAttempt++))
     }
 
-    const connect = async () => {
+    // refresh false builds the channel in this tick, with the token realtime
+    // already holds. The first connect of an effect must do that: the cleanup
+    // before it removed the last channel, and removeChannel disconnects the
+    // socket a moment later unless a channel exists again by then. Every
+    // later connect is a rebuild and reads the session first.
+    const connect = async (refresh: boolean) => {
       const mine = ++generation
       connectAt = Date.now()
       armHeal()
-      try {
-        // A hidden tab stops refreshing the session, and realtime only gets a
-        // new token when a refresh happens: refresh first, then hand it over.
-        const { data: auth } = await supabase.auth.getSession()
-        if (auth.session) await supabase.realtime.setAuth(auth.session.access_token)
-      } catch {
-        // The join fails without a valid token and the heal timer tries again.
+      if (refresh) {
+        // The socket itself is down: a new channel could only queue its join.
+        // The client rejoins a channel that errored when the socket opens, and
+        // a closed one is replaced by the next heal once the socket is up.
+        if (channel && !supabase.realtime.isConnected()) {
+          try {
+            supabase.realtime.connect()
+          } catch {
+            // The next heal tries again.
+          }
+          return
+        }
+        try {
+          // A hidden tab stops refreshing the session, and realtime only gets a
+          // new token when a refresh happens: read the session, which
+          // refreshes an expired one, then hand the token over.
+          const { data: auth } = await supabase.auth.getSession()
+          if (auth.session) await supabase.realtime.setAuth(auth.session.access_token)
+        } catch {
+          // The join fails without a valid token and the heal timer tries again.
+        }
+        if (!active || mine !== generation) return
+        // The channel recovered by itself while the session was read.
+        if (isLive && channel) {
+          if (healTimer) {
+            clearTimeout(healTimer)
+            healTimer = null
+          }
+          return
+        }
       }
-      if (!active || mine !== generation) return
 
       const old = channel
       const next = supabase.channel(`hg_${projectId}_${crypto.randomUUID()}`)
@@ -170,7 +200,7 @@ export function useBoardData(projectId: string | null | undefined) {
       const plan = wakePlan(isLive, now - loadAtRef.current, now - connectAt, show)
       if (plan.reconnect) {
         healAttempt = 0
-        void connect()
+        void connect(true)
       }
       if (plan.reload) scheduleReload()
     }
@@ -182,7 +212,8 @@ export function useBoardData(projectId: string | null | undefined) {
     // Capture phase: the board stops some presses before they bubble.
     window.addEventListener('pointerdown', onPress, true)
 
-    void connect()
+    // No await before the first channel, see connect.
+    void connect(false)
 
     return () => {
       active = false
