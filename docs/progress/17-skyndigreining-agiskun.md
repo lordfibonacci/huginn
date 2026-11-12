@@ -4,7 +4,7 @@ Dagsetning: 2026-11-12
 Grein: `skyndigreining-agiskun` (commits b2df584 og 755e1b9 ofan á main, auk þessa skjals)
 Plan: `docs/superpowers/plans/2026-11-12-skyndigreining-agiskun.md`
 
-Staða: **hg-analyse útgáfa 13 er í loftinu** (2026-11-12). Sameining á main bíður lokayfirferðar. Eftir er að sjá fyrstu raunverulegu greininguna á útgáfu 13 (sjá Opið).
+Staða: **hg-analyse útgáfa 15 er í loftinu** (2026-11-12). Sameinað á main 2026-11-12. Eftir er að sjá fyrstu raunverulegu greininguna á útgáfu 15 (sjá Opið).
 
 ## Hvað var gert
 
@@ -29,6 +29,7 @@ Verkið `7a35df18` (Vörumóttaka, greint 2026-11-10 á útgáfu 12):
 - Sett í loftið með MCP `deploy_edge_function` (verkefni `czdjxtsjgughimlazdmu`, `verify_jwt` false), tvær skrár (`index.ts`, `lib.ts`) úr HEAD greinarinnar. Íslenskir stafir voru sendir sem `\u` kóðar eins og í útgáfum 11 og 12.
 - Svar útsetningar og `get_edge_function`: `hg-analyse` útgáfa 13, staða ACTIVE, 2026-11-12.
 - Samanburður: `get_edge_function` skilaði báðum skránum afkóðuðum og þær voru lesnar línu fyrir línu á móti repoinu. Þær eru eins (kerfisleiðbeiningin með reglum 1 til 13, fyrirsagnalistinn, `ANALYSIS_NOTICE`, `mergeIntoItem`, öll villuskilaboð í `index.ts`). Samanburðurinn var gerður með lestri, ekki með sjálfvirku diff, því MCP skilar textanum aðeins í svarinu.
+- Lokayfirferð: lýsing `summary` reitsins í tólskemanu sagði enn "hvar erum við með þetta atriði". Hún var samræmd reglu 3 ("hvað þetta er og hvar það stendur. Enginn dómur um hvort eða hvenær megi byggja."). Fyrsta upphleðslan (útgáfa 14) var skorin í miðri `lib.ts` fyrir mistök og var skipt út innan mínútna fyrir útgáfu 15 með fullum skrám. Útgáfa 15 er sú sem gildir. Samanburður: `get_edge_function` skilaði skránum afkóðuðum og þær voru bornar saman við repo með lestri (BODY_HEADINGS, reglur 3, 4, 12 og 13, ANALYSIS_NOTICE, mergeIntoItem, lýsing summary, og að allir útflutningar lib.ts séu til staðar). Ekkert sjálfvirkt diff, því MCP skilar textanum aðeins í svarinu.
 - Leyndarmál, Vault og aðrar föll voru ekki snert.
 
 ## Staðfesting
@@ -38,5 +39,5 @@ Verkið `7a35df18` (Vörumóttaka, greint 2026-11-10 á útgáfu 12):
 
 ## Opið
 
-- Lesa fyrstu raunverulegu greininguna á útgáfu 13 (næsta nýja verk frá Heimi eða Árna): hún byrjar á línunni um skyndigreiningu, síðasta fyrirsögnin er `Hvað þarf að kanna áður en byggt er`, ekkert segir að eitthvað sé byggjanlegt núna og ágiskanir um kóðann eru merktar. Skrá niðurstöðuna hér. Handtak á Claude er skráð í Huginn á verkinu 08db5a35.
-- Ef lokayfirferðin breytir `lib.ts`, þarf að setja útgáfu 14 í loftið og bera saman aftur áður en sameinað er.
+- Lesa fyrstu raunverulegu greininguna á útgáfu 15 (næsta nýja verk frá Heimi eða Árna): hún byrjar á línunni um skyndigreiningu, síðasta fyrirsögnin er `Hvað þarf að kanna áður en byggt er`, ekkert segir að eitthvað sé byggjanlegt núna og ágiskanir um kóðann eru merktar. Skrá niðurstöðuna hér. Handtak á Claude er skráð í Huginn á verkinu 08db5a35.
+- Fasta tilkynningarlínan er hluti af `item.body`, svo hún fer í leitarvísi hvers greinds verks og leit að orðum eins og ágiskun eða skyndigreining finnur þau öll. Samþykkt að sinni.
