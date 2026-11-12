@@ -325,6 +325,7 @@ describe('analysisTool and SYSTEM_PROMPT', () => {
     expect(SYSTEM_PROMPT).toContain('Þú segir aldrei að eitthvað sé byggjanlegt núna.')
     expect(SYSTEM_PROMPT).not.toContain('Byggjanlegt núna')
     expect(SYSTEM_PROMPT).not.toContain('hvort hægt sé að byggja þetta núna')
+    expect(JSON.stringify(analysisTool)).toContain('Enginn dómur um hvort eða hvenær megi byggja.')
   })
 
   it('contains no em or en dashes', () => {

@@ -247,7 +247,7 @@ export const analysisTool = {
     properties: {
       summary: {
         type: 'string',
-        description: '1 til 3 setningar á íslensku: hvar erum við með þetta atriði.',
+        description: '1 til 3 setningar á íslensku: hvað þetta er og hvar það stendur. Enginn dómur um hvort eða hvenær megi byggja.',
       },
       body: {
         type: 'string',
