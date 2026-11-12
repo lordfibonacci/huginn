@@ -390,7 +390,7 @@ export function applyAnalysis(
 export const ANALYSIS_NOTICE =
   '*Skyndigreining, skrifuð án aðgangs að kóða og gagnagrunni. Það sem hér stendur um kóðann, stærð verksins og hvað er þegar byggt er ágiskun þar til lota hefur sannreynt það.*'
 
-export const ORIGINAL_HEADING ='## Upprunalegur texti'
+export const ORIGINAL_HEADING = '## Upprunalegur texti'
 
 export type ItemFields = {
   summary: string
@@ -414,10 +414,10 @@ function dedupe(values: string[]): string[] {
 }
 
 // The notice comes first. What the author wrote wins over the analysis: their
-// text is kept verbatim under its own heading, their module stays, their tags come first. An author
-// who chose a module gets no óflokkað tag. Keywords already on the item come
-// before the analysis's, a keyword equal to a merged tag drops, and the list
-// stays within MAX_KEYWORDS.
+// text is kept verbatim under its own heading, their module stays, their tags
+// come first. An author who chose a module gets no óflokkað tag. Keywords
+// already on the item come before the analysis's, a keyword equal to a merged
+// tag drops, and the list stays within MAX_KEYWORDS.
 export function mergeIntoItem(
   item: { body: string | null; module_id: string | null; tags: string[]; keywords: string[] },
   analysis: Analysis,
