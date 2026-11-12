@@ -414,7 +414,7 @@
       "live": "Live",
       "connecting": "Connecting",
       "liveHint": "Changes from others show up as they happen",
-      "connectingHint": "Not connected yet, changes from others show up after a reload",
+      "connectingHint": "Not connected, trying again. Click the board to try at once.",
       "participants": "Participants",
       "viewerMenu": "Menu for {{name}}",
       "settings": "Project settings",

@@ -427,7 +427,7 @@
     "top": {
       "clear": "Hreinsa",
       "connecting": "Tengist",
-      "connectingHint": "Ekki tengt enn, breytingar frá öðrum birtast eftir endurhleðslu",
+      "connectingHint": "Ekki tengt, reyni aftur. Smelltu á borðið til að reyna strax.",
       "counters": "Stöðusía",
       "filters": "Síur",
       "language": "Tungumál",
