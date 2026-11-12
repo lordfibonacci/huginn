@@ -106,10 +106,11 @@ export function useBoardData(projectId: string | null | undefined) {
     }
 
     // refresh false builds the channel in this tick, with the token realtime
-    // already holds. The first connect of an effect must do that: the cleanup
-    // before it removed the last channel, and removeChannel disconnects the
-    // socket a moment later unless a channel exists again by then. Every
-    // later connect is a rebuild and reads the session first.
+    // already holds. The first connect of an effect must do that: on a project
+    // change the cleanup just before it removed the last channel, and
+    // removeChannel disconnects the socket a moment later unless a channel
+    // exists again by then. Every later connect is a rebuild and reads the
+    // session first.
     const connect = async (refresh: boolean) => {
       const mine = ++generation
       connectAt = Date.now()
