@@ -591,6 +591,73 @@ git commit -m "docs(vinnubord): the board channel heals itself"
 2. Put the PC to sleep with the board open, wake it: the board is current within a few seconds.
 3. If the dot ever reads "Tengist" for more than half a minute while the network is up, that is a bug: say when it happened.
 
-## Expiry probe
+## Expiry probe (result, 2026-11-12)
 
-Pending when the plan was written (started 2026-11-12, a listener whose token is never refreshed, a second client writing a harmless position every 30 s after expiry). The result is added here.
+A listener whose token is never refreshed (what a hidden tab is), and a second client writing a harmless position:
+
+| Time | What happened |
+|---|---|
+| 0 to 60 min | `SUBSCRIBED`, every write delivered (checked every 10 minutes and 28 s before expiry) |
+| 60 min, the token expires | the server sends the system notice `Token has expired 0 seconds ago` (status `error`) and the channel reports `CLOSED`, state `closed`, the socket stays connected |
+| 9 s past expiry | a write is not delivered |
+| 2 minutes later, nothing done | still `closed`, zero channels on the socket, no delivery |
+| the session is refreshed (a new token, what a tab that becomes visible does) | still `closed` 30 s later, no delivery |
+
+So the cause in the Diagnosis is confirmed: a tab hidden for an hour loses its channel at the moment the token expires, and neither time nor a token refresh brings it back. Only a new channel does, which is what `connect` builds.
+
+## Final review and fix round 1 (2026-11-12)
+
+The three tasks passed their task reviews (Sonnet, Opus, Sonnet). The whole branch review on Fable (range 9ffedda..4d515b0) found one Important issue and four Minor ones, and triaged the deferred minors of the task reviews.
+
+**Important: the first channel of an effect must be built with no await before it.** `removeChannel` disconnects the socket a moment after the last channel is gone. When the project changes on the same page (the project switcher), the cleanup and the next effect run in one commit; the hook as planned awaited `getSession()` before building the channel, so the channel subscribed on a socket that was closing and got `CHANNEL_ERROR` until the 4 s heal (measured by the reviewer against the live server; a channel built in the same tick does not drop). Fixed: `connect(refresh: boolean)`, the mount calls `connect(false)` and builds at once, the heal timer and the wake call `connect(true)` and read the session first.
+
+The reviewer also named the move from the board to the settings page and back. That was wrong, as the fix implementer measured: both pages take the project from `useViewer`, which loads again on mount, so for about half a second there is no project id and no channel, the client closes the socket cleanly and the next subscribe opens it again. That is how it was before this branch too, and the dot never dropped after it lit, before or after the fix.
+
+**Fixed in the same round:**
+- While the socket itself is down a rebuild builds nothing and asks the client to reopen the socket (every heal offline used to queue a join and a leave, about a thousand over a night).
+- A connect whose session read outlasts the channel's own recovery returns instead of replacing a healthy channel.
+- A failed load sets `loadAtRef` to 0, so the next wake reloads instead of waiting out the 30 s rule.
+- `scheduleReload` returns when the effect is no longer active.
+- The CLAUDE.md bullet: "at once" became "at most every 3 s", "refreshes the session" became "reads the session (that refreshes an expired one)", and it carries the same tick rule.
+
+**Rejected:**
+- `healDelay(NaN)` returns undefined: the only caller passes an integer counter from 0.
+- The first connect does not set `recheck`: closing a window of under a second would cost a second full load on every open.
+
+**The hook in Task 2 above is the plan as written, not the code as merged.** The merged `connect` is in `src/vinnubord/hooks/useBoardData.ts`.
+
+**Check E, a page change** (added in the fix round, run in `npm run dev` like checks A to D, when the dot has read "Lifandi" for 4 seconds):
+
+```js
+async () => {
+  const { supabase } = await import('/src/shared/lib/supabase.ts')
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+  const go = (path) => {
+    history.pushState({}, '', path)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+  const board = location.pathname
+  const watch = async (ms) => {
+    let socketDropped = false
+    let wentOn = false
+    let droppedAfterOn = false
+    for (let i = 0; i < ms / 100; i++) {
+      await wait(100)
+      if (!supabase.realtime.isConnected()) socketDropped = true
+      const dot = document.querySelector('.hg-live')
+      const on = !!dot && !dot.classList.contains('hg-live-off')
+      if (on) wentOn = true
+      if (wentOn && !on) droppedAfterOn = true
+    }
+    return { socketDropped, wentOn, droppedAfterOn, channels: supabase.realtime.getChannels().length }
+  }
+  go(board + '/stillingar')
+  const toSettings = await watch(2000)
+  const onSettings = { path: location.pathname, page: !!document.querySelector('.hg-set') }
+  go(board)
+  const toBoard = await watch(6000)
+  return { onSettings, toSettings, toBoard, path: location.pathname }
+}
+```
+
+Expected: `onSettings.page` is `true`, both legs end with `channels: 1`, and `toBoard` has `wentOn: true` and `droppedAfterOn: false`. `socketDropped` is `true` on both legs and that is expected (the half second without a channel). The check guards the dot on a page change; it does not exercise the same tick rule, which needs a project change on the same page.
