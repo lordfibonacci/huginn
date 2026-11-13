@@ -161,7 +161,11 @@ Built 2026-11-13 by a Sonnet implementer (ffad22d, 5f06709), no deviation from t
 Opus code review: nothing Critical or Important, three Minor.
 
 1. Fixed. The date and the clock ran together in English ("November 12 14:32"). A dated stamp now has a comma before the clock ("November 12, 14:32", "12. nóvember, 14:32"); "í dag" and "í gær" keep the plain space. A localized "kl." was not taken: it needs a new i18n key, and in Chrome the date part is English anyway.
-2. Rejected. The action row stamp (`ActionList.tsx:76`, `.hg-act-when`) keeps the long form: it is the row Heimir pointed at when he asked for the clock, and nothing overflows, the body only wraps a little earlier.
+2. Rejected at first, then fixed after the final review (see below).
 3. Fixed. The i18n stub in `dateUtils.test.ts` is hoisted and mutable, one case runs in Icelandic, and one case puts `now` just after midnight.
+
+Sonnet re-review of the fix commit (9495625): no findings that need a fix. Three notes on how the comma reads inside a sentence ("Síðast hreyft: Heimir, 12. nóvember, 14:32.", "breytt 12. nóvember, 14:32 af Á", and the English "Last moved by Heimir November 12, 14:32." which lacked an "on" before this branch too): rejected, all readable, and the reviewer advised leaving them.
+
+Fable final review, round 1: safe to deploy, one Minor finding. The stamp beside an action (`ActionList.tsx:76`, `.hg-act-when`) is the one long form site that cannot wrap and takes its width from the text beside it: on a 360 px phone an unread action older than yesterday left the body about 75 px, and about 40 px with a year in the stamp. Fixed: that stamp takes `formatStampShort` (yesterday still shows the clock, which is what Heimir asked for; the History tab has the exact time of every action event), and the edit line under the action keeps `formatStamp`. This was a second fix round in a file the plan did not name, so the task left the small profile here: the fix got its own review and the final review ran again.
 
 Outside this diff, noted by the reviewer and left alone: `src/vinnubord/lib/chat.test.ts` fails one case under `TZ=Pacific/Chatham` and `TZ=Pacific/Pago_Pago` (it passes in Reykjavik and the other zones tried). Not caused by this branch.

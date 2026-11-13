@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { formatStamp } from '../../../shared/lib/dateUtils'
+import { formatStamp, formatStampShort } from '../../../shared/lib/dateUtils'
 import { useOptimisticToggle } from '../../hooks/useOptimisticToggle'
 import { markActionDone } from '../../lib/api'
 import { isActionFresh } from '../../lib/reads'
@@ -73,7 +73,7 @@ function ActionRow({ action, owner, editor, isNew }: RowProps) {
         <span className="hg-act-body">{action.body}</span>
         <span className="hg-act-when">
           {isNew && <span className="hg-fresh-mark">{t('vinnubord.panel.fresh')} · </span>}
-          {action.created_at ? formatStamp(action.created_at) : ''}
+          {action.created_at ? formatStampShort(action.created_at) : ''}
         </span>
       </label>
       {action.updated_at && (
