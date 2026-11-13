@@ -10,7 +10,7 @@ A stamp shows the clock only when it is from today ("í dag 10:15"). Anything ol
 
 Two forms, both in `src/shared/lib/dateUtils.ts`:
 
-- `formatStamp`: always with the clock. "í dag 10:15", "í gær 14:32", "11. nóvember 23:59", "30. október 2025 16:05". Used everywhere in the panels and on the settings page (history, actions, files, questions, the "Síðast hreyft" line, module comments, the context bundle stamp). Those call sites do not change, they get the clock through the function.
+- `formatStamp`: always with the clock. "í dag 10:15", "í gær 14:32", "11. nóvember, 23:59", "30. október 2025, 16:05" (the comma came in the fix round, see Niðurstaða; the code blocks in 1a and 1b below are the first build and show the form without it). Used everywhere in the panels and on the settings page (history, actions, files, questions, the "Síðast hreyft" line, module comments, the context bundle stamp). Those call sites do not change, they get the clock through the function.
 - `formatStampShort`: the clock today and yesterday, an older day is the date alone. Used where the row is tight: the board card, the list row and the closed item row in the module panel.
 
 `formatDay` (the chat day row) keeps its output and shares the new helper.
@@ -156,4 +156,12 @@ One Opus code review after Task 1 and 2, then the Fable final review. Findings a
 
 ## Niðurstaða
 
-(filled in after the build)
+Built 2026-11-13 by a Sonnet implementer (ffad22d, 5f06709), no deviation from the plan text. 662 tests after the build, 664 after the fix round, `npm run build` green.
+
+Opus code review: nothing Critical or Important, three Minor.
+
+1. Fixed. The date and the clock ran together in English ("November 12 14:32"). A dated stamp now has a comma before the clock ("November 12, 14:32", "12. nóvember, 14:32"); "í dag" and "í gær" keep the plain space. A localized "kl." was not taken: it needs a new i18n key, and in Chrome the date part is English anyway.
+2. Rejected. The action row stamp (`ActionList.tsx:76`, `.hg-act-when`) keeps the long form: it is the row Heimir pointed at when he asked for the clock, and nothing overflows, the body only wraps a little earlier.
+3. Fixed. The i18n stub in `dateUtils.test.ts` is hoisted and mutable, one case runs in Icelandic, and one case puts `now` just after midnight.
+
+Outside this diff, noted by the reviewer and left alone: `src/vinnubord/lib/chat.test.ts` fails one case under `TZ=Pacific/Chatham` and `TZ=Pacific/Pago_Pago` (it passes in Reykjavik and the other zones tried). Not caused by this branch.

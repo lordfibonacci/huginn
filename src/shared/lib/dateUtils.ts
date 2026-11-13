@@ -37,12 +37,14 @@ export function formatDueDate(dateString: string): { text: string; urgent: boole
   return { text: i18n.t('dates.dueOn', { date: formatter.format(due) }), urgent: false }
 }
 
-// Stamp with the clock: "í dag 10:15", "í gær 14:32", "30. október 14:32"
-// earlier this year, "30. október 2025 14:32" in another year.
+// Stamp with the clock: "í dag 10:15", "í gær 14:32", "30. október, 14:32"
+// earlier this year, "30. október 2025, 14:32" in another year. The comma
+// keeps a day number and the clock apart ("November 12, 14:32").
 export function formatStamp(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
-  return `${nearDay(d, now) ?? formatDate(d, now)} ${clock(d)}`
+  const near = nearDay(d, now)
+  return near ? `${near} ${clock(d)}` : `${formatDate(d, now)}, ${clock(d)}`
 }
 
 // The same stamp where the row is tight (board card, list row): the clock
