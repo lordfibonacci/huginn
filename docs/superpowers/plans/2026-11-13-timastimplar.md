@@ -11,7 +11,7 @@ A stamp shows the clock only when it is from today ("í dag 10:15"). Anything ol
 Two forms, both in `src/shared/lib/dateUtils.ts`:
 
 - `formatStamp`: always with the clock. "í dag 10:15", "í gær 14:32", "11. nóvember, 23:59", "30. október 2025, 16:05" (the comma came in the fix round, see Niðurstaða; the code blocks in 1a and 1b below are the first build and show the form without it). Used everywhere in the panels and on the settings page (history, actions, files, questions, the "Síðast hreyft" line, module comments, the context bundle stamp). Those call sites do not change, they get the clock through the function.
-- `formatStampShort`: the clock today and yesterday, an older day is the date alone. Used where the row is tight: the board card, the list row and the closed item row in the module panel.
+- `formatStampShort`: the clock today and yesterday, an older day is the date alone. Used where the row is tight: the board card, the list row and the closed item row in the module panel. Since the final review also the stamp beside an action (`ActionList.tsx:76`), see Niðurstaða; the edit line under it keeps the long form.
 
 `formatDay` (the chat day row) keeps its output and shares the new helper.
 
@@ -125,7 +125,7 @@ export function formatDay(dateString: string, now: Date = new Date()): string {
 - `src/vinnubord/components/ListDrawer.tsx`: line 3 becomes `import { formatStampShort } from '../../shared/lib/dateUtils'`, and line 78 becomes `<span className="hg-list-when">{formatStampShort(card.item.updated_at)}</span>`.
 - `src/vinnubord/components/ModulePanel.tsx`: line 3 becomes `import { formatStamp, formatStampShort } from '../../shared/lib/dateUtils'`, and line 38 becomes ``{item.closed_at && `, ${formatStampShort(item.closed_at)}`}``. Line 89 (the comment stamp) keeps `formatStamp`.
 
-No other file changes. `ItemPanel`, `ActionList`, `FilesTab`, `HistoryTab`, `QuestionsTab` and `ProjectFields` keep `formatStamp` and get the clock through it.
+No other file changes. `ItemPanel`, `ActionList`, `FilesTab`, `HistoryTab`, `QuestionsTab` and `ProjectFields` keep `formatStamp` and get the clock through it. (After the final review the stamp beside an action in `ActionList` moved to the short form, see Niðurstaða.)
 
 ### Verification set (implementer)
 
@@ -166,6 +166,8 @@ Opus code review: nothing Critical or Important, three Minor.
 
 Sonnet re-review of the fix commit (9495625): no findings that need a fix. Three notes on how the comma reads inside a sentence ("Síðast hreyft: Heimir, 12. nóvember, 14:32.", "breytt 12. nóvember, 14:32 af Á", and the English "Last moved by Heimir November 12, 14:32." which lacked an "on" before this branch too): rejected, all readable, and the reviewer advised leaving them.
 
-Fable final review, round 1: safe to deploy, one Minor finding. The stamp beside an action (`ActionList.tsx:76`, `.hg-act-when`) is the one long form site that cannot wrap and takes its width from the text beside it: on a 360 px phone an unread action older than yesterday left the body about 75 px, and about 40 px with a year in the stamp. Fixed: that stamp takes `formatStampShort` (yesterday still shows the clock, which is what Heimir asked for; the History tab has the exact time of every action event), and the edit line under the action keeps `formatStamp`. This was a second fix round in a file the plan did not name, so the task left the small profile here: the fix got its own review and the final review ran again.
+Fable final review, round 1: safe to deploy, one Minor finding. The stamp beside an action (`ActionList.tsx:76`, `.hg-act-when`) is the one long form site that cannot wrap and takes its width from the text beside it: on a 360 px phone an unread action older than yesterday left the body an estimated 75 px, and an estimated 40 px with a year in the stamp (computed from the tokens and glyph widths, not measured in a browser). Fixed: that stamp takes `formatStampShort` (yesterday still shows the clock, which is what Heimir asked for; the History tab has the exact time of every action event), and the edit line under the action keeps `formatStamp`. This was a second fix round in a file the plan did not name, so the task left the small profile here: the fix got its own review and the final review ran again.
+
+Sonnet review of the action fix (5b3d42f) and Fable final review, round 2: code clean, safe to deploy, wording only. Fixed in one docs and comment commit: the CLAUDE.md bullet no longer says "everything in the panels" before naming two panel exceptions, the Rule section and 1c of this plan point at the action stamp change, the pixel numbers above are marked as estimates, and the comment on `formatStampShort` names all four sites.
 
 Outside this diff, noted by the reviewer and left alone: `src/vinnubord/lib/chat.test.ts` fails one case under `TZ=Pacific/Chatham` and `TZ=Pacific/Pago_Pago` (it passes in Reykjavik and the other zones tried). Not caused by this branch.

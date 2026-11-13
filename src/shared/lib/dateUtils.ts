@@ -47,8 +47,9 @@ export function formatStamp(dateString: string, now: Date = new Date()): string 
   return near ? `${near} ${clock(d)}` : `${formatDate(d, now)}, ${clock(d)}`
 }
 
-// The same stamp where the row is tight (board card, list row): the clock
-// today and yesterday, an older day is the date alone.
+// The same stamp where the row is tight (board card, list row, module panel
+// item row, the stamp beside an action): the clock today and yesterday, an
+// older day is the date alone.
 export function formatStampShort(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
