@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatStamp } from '../../shared/lib/dateUtils'
+import { formatStampShort } from '../../shared/lib/dateUtils'
 import { moduleAccent } from '../lib/layout'
 import { SORTS, type ListRow, type Sort } from '../lib/list'
 import { isTone } from '../lib/status'
@@ -75,7 +75,7 @@ export function ListDrawer({
             {moduleName && <span>{moduleName}</span>}
           </span>
         </span>
-        <span className="hg-list-when">{formatStamp(card.item.updated_at)}</span>
+        <span className="hg-list-when">{formatStampShort(card.item.updated_at)}</span>
       </button>
     )
   }

@@ -37,13 +37,31 @@ export function formatDueDate(dateString: string): { text: string; urgent: boole
   return { text: i18n.t('dates.dueOn', { date: formatter.format(due) }), urgent: false }
 }
 
-// Short stamp for "last moved": "í dag 10:15" today, "30. október" earlier
-// this year, "30. október 2025" in another year.
+// Stamp with the clock: "í dag 10:15", "í gær 14:32", "30. október 14:32"
+// earlier this year, "30. október 2025 14:32" in another year.
 export function formatStamp(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
-  if (d.toDateString() === now.toDateString()) return `${i18n.t('dates.today')} ${clock(d)}`
-  return formatDate(d, now)
+  return `${nearDay(d, now) ?? formatDate(d, now)} ${clock(d)}`
+}
+
+// The same stamp where the row is tight (board card, list row): the clock
+// today and yesterday, an older day is the date alone.
+export function formatStampShort(dateString: string, now: Date = new Date()): string {
+  const d = new Date(dateString)
+  if (Number.isNaN(d.getTime())) return ''
+  const near = nearDay(d, now)
+  return near ? `${near} ${clock(d)}` : formatDate(d, now)
+}
+
+// "í dag" or "í gær" when the date falls on that local day, else null.
+function nearDay(d: Date, now: Date): string | null {
+  const day = d.toDateString()
+  if (day === now.toDateString()) return i18n.t('dates.today')
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (day === yesterday.toDateString()) return i18n.t('dates.yesterday')
+  return null
 }
 
 // "10:15", 24 hour clock in the active locale.
@@ -66,15 +84,9 @@ function formatDate(d: Date, now: Date): string {
   return new Intl.DateTimeFormat(activeLocale(), opts).format(d)
 }
 
-// Day heading for the chat: "í dag", "í gær", else the date as formatStamp
-// writes an older day.
+// Day heading for the chat: "í dag", "í gær", else the date alone.
 export function formatDay(dateString: string, now: Date = new Date()): string {
   const d = new Date(dateString)
   if (Number.isNaN(d.getTime())) return ''
-  const day = d.toDateString()
-  if (day === now.toDateString()) return i18n.t('dates.today')
-  const yesterday = new Date(now)
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (day === yesterday.toDateString()) return i18n.t('dates.yesterday')
-  return formatDate(d, now)
+  return nearDay(d, now) ?? formatDate(d, now)
 }

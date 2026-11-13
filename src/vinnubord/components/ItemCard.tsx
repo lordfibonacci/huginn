@@ -1,6 +1,6 @@
 import { memo, useCallback, useState, type AnimationEvent, type CSSProperties, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatStamp } from '../../shared/lib/dateUtils'
+import { formatStampShort } from '../../shared/lib/dateUtils'
 import { planProgress } from '../lib/layout'
 import { freshLine, type FreshLine as FreshLineModel } from '../lib/cards'
 import type { UnreadSummary } from '../lib/reads'
@@ -131,7 +131,7 @@ export const ItemCard = memo(function ItemCard({
           <span className="hg-av" aria-hidden="true">
             {mover.short}
           </span>
-          {formatStamp(item.updated_at)}
+          {formatStampShort(item.updated_at)}
         </div>
       )}
       {(fileCount > 0 || actionsOpen > 0 || actionsMine > 0) && (

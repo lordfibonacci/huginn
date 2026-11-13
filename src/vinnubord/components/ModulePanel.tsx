@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatStamp } from '../../shared/lib/dateUtils'
+import { formatStamp, formatStampShort } from '../../shared/lib/dateUtils'
 import { addComment } from '../lib/api'
 import { moduleTone } from '../lib/layout'
 import { moduleItems } from '../lib/panel'
@@ -35,7 +35,7 @@ export function ModulePanel({ data, module, viewerId, onSelectItem }: Props) {
         <span className="hg-mod-item-title">{item.title}</span>
         <span className="hg-mod-item-st">
           {itemStatusLabel(item, viewerId, data.participants)}
-          {item.closed_at && `, ${formatStamp(item.closed_at)}`}
+          {item.closed_at && `, ${formatStampShort(item.closed_at)}`}
         </span>
       </button>
     </li>
