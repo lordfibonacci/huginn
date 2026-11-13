@@ -170,4 +170,6 @@ Fable final review, round 1: safe to deploy, one Minor finding. The stamp beside
 
 Sonnet review of the action fix (5b3d42f) and Fable final review, round 2: code clean, safe to deploy, wording only. Fixed in one docs and comment commit: the CLAUDE.md bullet no longer says "everything in the panels" before naming two panel exceptions, the Rule section and 1c of this plan point at the action stamp change, the pixel numbers above are marked as estimates, and the comment on `formatStampShort` names all four sites.
 
+Fable final review, round 3 (on 3c4c5b7): clean, no findings.
+
 Outside this diff, noted by the reviewer and left alone: `src/vinnubord/lib/chat.test.ts` fails one case under `TZ=Pacific/Chatham` and `TZ=Pacific/Pago_Pago` (it passes in Reykjavik and the other zones tried). Not caused by this branch.
