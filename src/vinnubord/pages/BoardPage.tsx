@@ -9,6 +9,7 @@ import { useFilter } from '../hooks/useFilter'
 import { useNewItemToast } from '../hooks/useNewItemToast'
 import { useListPrefs } from '../hooks/useListPrefs'
 import { useCollapsedPacks } from '../hooks/useCollapsedPacks'
+import { useRecentWindow } from '../hooks/useRecentWindow'
 import { createZone } from '../lib/api'
 import { cardModels } from '../lib/cards'
 import { packageCounts, tagCounts } from '../lib/filters'
@@ -16,6 +17,7 @@ import type { Rect } from '../lib/geometry'
 import { boardOrder } from '../lib/layout'
 import { listRows } from '../lib/list'
 import { summarizeUnread } from '../lib/reads'
+import { lastChangeByItem } from '../lib/recent'
 import { searchIndex } from '../lib/search'
 import { countsFor, isOnBoard, mineActionsByItem } from '../lib/status'
 import type { Item, View } from '../lib/types'
@@ -144,6 +146,8 @@ export function BoardPage() {
   const listPrefs = useListPrefs(project?.id ?? '', narrow)
   // Pack columns folded in this browser.
   const folds = useCollapsedPacks(project?.id ?? '')
+  // The viewer's "nýlega breytt" window, per browser.
+  const recentWindow = useRecentWindow()
 
   const loaded = data !== null && project !== null && data.project.id === project.id
   const viewerId = user?.id ?? ''
@@ -161,6 +165,8 @@ export function BoardPage() {
   const unread = loaded ? data.unread : null
   const unreadByItem = useMemo(() => summarizeUnread(unread ?? []), [unread])
   const search = useMemo(() => (loaded ? searchIndex(data) : new Map<string, string>()), [loaded, data])
+  // Last movement per item: one clock for the pill, the list sorts and the list row date.
+  const changed = useMemo(() => (loaded ? lastChangeByItem(data) : new Map<string, number>()), [loaded, data])
   const counts = useMemo(
     () => (loaded ? countsFor(visibleItems, data.actions, viewerId, new Set(unreadByItem.keys())) : null),
     [loaded, data, visibleItems, viewerId, unreadByItem],
@@ -180,9 +186,11 @@ export function BoardPage() {
             reads: data.reads,
             now,
             search,
+            changed,
+            recentHours: recentWindow.hours,
           })
         : [],
-    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search, now],
+    [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search, now, changed, recentWindow.hours],
   )
   const mineByItem = useMemo(
     () => (loaded ? mineActionsByItem(data.actions, viewerId) : new Map<string, number>()),

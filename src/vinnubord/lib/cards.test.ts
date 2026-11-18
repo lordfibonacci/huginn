@@ -37,7 +37,7 @@ const participants: Participant[] = [
 const base: CardContext = {
   viewerId: 'me', participants, actions: [], modules: [module({ id: 'm1', package_id: 'p1' })],
   unread: new Map(), filter: emptyFilter(), comments: [], reads: [], now: Date.now(),
-  search: new Map(),
+  search: new Map(), changed: new Map(), recentHours: 72,
 }
 
 describe('cardModels', () => {
@@ -93,6 +93,15 @@ describe('cardModels', () => {
     const [open] = cardModels([item({ status: 'parked' })], ctx({ filter: { ...emptyFilter(), tones: new Set<Tone>(['stone']) } }))
     expect(open.closed).toBe(false)
     expect(open.visible).toBe(true)
+  })
+  it('changedAt comes from the changed map and recent from the window', () => {
+    const now = Date.parse('2026-11-18T12:00:00Z')
+    const changed = new Map([['a', Date.parse('2026-11-17T12:00:00Z')], ['b', Date.parse('2026-11-10T12:00:00Z')]])
+    const out = cardModels([item({ id: 'a' }), item({ id: 'b' }), item({ id: 'c' })], ctx({ now, changed, recentHours: 72 }))
+    expect(out.map((c) => c.changedAt)).toEqual([changed.get('a'), changed.get('b'), 0])
+    expect(out.map((c) => c.recent)).toEqual([true, false, false])
+    expect(cardModels([item({ id: 'b' })], ctx({ now, changed, recentHours: 168 }))[0].recent).toBe(false)
+    expect(cardModels([item({ id: 'a' })], ctx({ now, changed, recentHours: 24 }))[0].recent).toBe(true)
   })
   it('mover is updated_by, else created_by', () => {
     expect(cardModels([item({ created_by: 'me', updated_by: 'other' })], ctx())[0].mover?.short).toBe('A')

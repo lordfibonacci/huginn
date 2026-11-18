@@ -1,5 +1,6 @@
 import { isActive, matches, type Filter } from './filters'
 import { freshChips, readAtOf, type UnreadKind, type UnreadSummary } from './reads'
+import { isRecent, type RecentHours } from './recent'
 import {
   BUCKET_TONE,
   countBucket,
@@ -34,6 +35,10 @@ export type CardModel = {
   showStamp: boolean
   // Newest comment by someone else since the viewer's read mark.
   freshComment: { short: string; line: string } | null
+  // Epoch ms of the last movement on the item or anything on it (lib/recent), 0 when unknown.
+  changedAt: number
+  // True when changedAt is inside the viewer's window.
+  recent: boolean
 }
 
 export type CardContext = {
@@ -48,6 +53,9 @@ export type CardContext = {
   now: number
   // Folded search text per item id (searchIndex).
   search: Map<string, string>
+  // Last movement per item id (lastChangeByItem) and the viewer's window.
+  changed: Map<string, number>
+  recentHours: RecentHours
 }
 
 // A card shows its change stamp only while the change is recent.
@@ -127,6 +135,8 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
     const packageId = item.module_id ? (packageOfModule.get(item.module_id) ?? null) : null
     const fresh = unread.get(item.id) ?? null
     const text = ctx.search.get(item.id) ?? ''
+    const changedAt = ctx.changed.get(item.id) ?? 0
+    const recent = isRecent(changedAt, ctx.now, ctx.recentHours)
     const visible =
       !filterOn ||
       matches(item, { tone: bucket !== null ? BUCKET_TONE[bucket] : null, packageId, unread: fresh !== null, text }, filter)
@@ -147,6 +157,8 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
       moduleName: item.module_id ? (nameOfModule.get(item.module_id) ?? null) : null,
       showStamp: showStamp(item.updated_at, ctx.now),
       freshComment: freshComment(ctx.comments, participants, item.id, viewerId, readAtOf(ctx.reads, item.id, viewerId)),
+      changedAt,
+      recent,
     }
   })
 }
