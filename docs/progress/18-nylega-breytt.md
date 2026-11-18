@@ -1,11 +1,11 @@
 # 18 Vinnuborð: nýlega breytt (plan 18)
 
 Date: 2026-11-18
-Branch: `feat/nylega-breytt` (commits 9c1eabe to d2dd963 and the docs commit, on top of main 18f6f89). The final whole branch review (Fable) follows this doc and its result is recorded after it.
+Branch: `feat/nylega-breytt` (commits 9c1eabe to d2dd963 and the docs commit, on top of main 18f6f89). The final whole branch review (Fable) came back clean.
 Plan: `docs/superpowers/plans/2026-11-18-nylega-breytt.md`
 Spec: `docs/superpowers/specs/2026-11-18-nylega-breytt-design.md`
 
-Status: **built, final review pending**. No migration.
+Status: **built, final review clean**. No migration.
 
 ## What was built
 
@@ -18,7 +18,7 @@ A "nýlega breytt" pill, first in the counter row, that filters the board to the
 
 ## Review rounds
 
-Each of tasks 1 to 5 had one task review (tasks 1 to 4 on Sonnet, task 5 on Opus). All approved with no Critical or Important findings, so there were no fix rounds. The final whole branch review on Fable follows; its result and any fix rounds are recorded after it.
+Each of tasks 1 to 5 had one task review (tasks 1 to 4 on Sonnet, task 5 on Opus). All approved with no Critical or Important findings, so there were no fix rounds. The final whole branch review on Fable (18f6f89 to a9e3e80) found no Critical or Important issues and said ready to merge. It rejected the three deferred Minors below with reasons and accepted the controller's rulings (the phone sheet Hreinsa, the iOS font size selector, the commit trailer). Its four Minors were handled in one docs fix: a Current state bullet in CLAUDE.md, the Design System paragraph moved after Far labels, this result recorded here, and the row cap below written down instead of changed in code.
 
 Minor notes kept, not fixed:
 - `parseRecentHours` accepts strings like " 24" (harmless, the result is always a valid window).
@@ -31,6 +31,7 @@ Minor notes kept, not fixed:
 1. On the phone the filter sheet's "Hreinsa" clears packages, tags and the view only, never the pills (the existing rule for every pill), so the recent pill is switched off on the phone by tapping it. The top bar "Hreinsa" on wider boards clears it.
 2. A plan reorder moves the plan's `updated_at` and so counts as a change, a known and accepted slip.
 3. Real phone and iPad checks have not run. The browser checks ran in Playwright at 1440x900, 1280x800 and 390x844.
+4. `loadBoard` in `lib/api.ts` reads comments, files, questions, actions and rulings with no limit in `created_at` ascending order. Past the PostgREST row cap (1000 rows of one kind) the newest rows would drop, so `changedAt`, the chat tab and the action chip would run old. Metta is far below it. The fix is to order those five queries descending; nothing in `src` depends on their order.
 
 ## What Heimir checks
 
