@@ -106,22 +106,29 @@ describe('listRows by pack', () => {
 })
 
 describe('listRows by status and by updated', () => {
+  const day = (d: number) => Date.parse(`2026-01-0${d}T00:00:00Z`)
+  // updated_at is the same everywhere on purpose: the order must come from changedAt.
   const cards = [
-    card({ item: item({ id: 'old', module_id: 'm1', updated_at: '2026-01-01T00:00:00Z' }), bucket: 'mine' }),
-    card({ item: item({ id: 'new', module_id: 'm2', updated_at: '2026-01-03T00:00:00Z' }), bucket: 'mine' }),
-    card({ item: item({ id: 'n', module_id: null, updated_at: '2026-01-02T00:00:00Z' }), bucket: 'new' }),
-    card({ item: item({ id: 'off', updated_at: '2025-12-31T00:00:00Z' }), bucket: null }),
+    card({ item: item({ id: 'old', module_id: 'm1' }), bucket: 'mine', changedAt: day(1) }),
+    card({ item: item({ id: 'new', module_id: 'm2' }), bucket: 'mine', changedAt: day(3) }),
+    card({ item: item({ id: 'n', module_id: null }), bucket: 'new', changedAt: day(2) }),
+    card({ item: item({ id: 'off' }), bucket: null, changedAt: 0 }),
   ]
-  it('status: bucket rows in pill order, newest first inside, module name on the row', () => {
+  it('status: bucket rows in pill order, last moved first inside, module name on the row', () => {
     const rows = listRows(cards, packages, modules, 'status').rows
     expect(rows.map((r) => (r.kind === 'item' ? r.card.item.id : `${r.kind}:${r.id}`))).toEqual(['bucket:new', 'n', 'bucket:mine', 'new', 'old', 'bucket:closed', 'off'])
     expect(rows[3]).toMatchObject({ kind: 'item', moduleName: 'Kiosk' })
     expect(rows[1]).toMatchObject({ kind: 'item', moduleName: null })
   })
-  it('updated: one run, newest first, ties by id', () => {
-    const tie = [card({ item: item({ id: 'b', updated_at: '2026-01-01T00:00:00Z' }) }), card({ item: item({ id: 'a', updated_at: '2026-01-01T00:00:00Z' }) })]
+  it('updated: one run, last moved first, ties by id', () => {
+    const tie = [card({ item: item({ id: 'b' }), changedAt: day(1) }), card({ item: item({ id: 'a' }), changedAt: day(1) })]
     expect(listRows(tie, packages, modules, 'updated').rows.map((r) => r.kind === 'item' && r.card.item.id)).toEqual(['a', 'b'])
     expect(listRows(cards, packages, modules, 'updated').rows.map((r) => r.kind === 'item' && r.card.item.id)).toEqual(['new', 'n', 'old', 'off'])
+  })
+  it('updated: a card whose item is old but whose chat is new goes first', () => {
+    const quiet = card({ item: item({ id: 'quiet', updated_at: '2026-01-05T00:00:00Z' }), changedAt: day(5) })
+    const chatty = card({ item: item({ id: 'chatty', updated_at: '2026-01-01T00:00:00Z' }), changedAt: day(6) })
+    expect(listRows([quiet, chatty], packages, modules, 'updated').rows.map((r) => r.kind === 'item' && r.card.item.id)).toEqual(['chatty', 'quiet'])
   })
 })
 

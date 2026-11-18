@@ -55,8 +55,9 @@ function byBucketThenTitle(a: CardModel, b: CardModel): number {
   return bucketIndex(a) - bucketIndex(b) || a.item.title.localeCompare(b.item.title, 'is')
 }
 
-function byUpdated(a: CardModel, b: CardModel): number {
-  if (a.item.updated_at !== b.item.updated_at) return a.item.updated_at < b.item.updated_at ? 1 : -1
+// Last moved first (CardModel.changedAt), ties by id.
+function byChanged(a: CardModel, b: CardModel): number {
+  if (a.changedAt !== b.changedAt) return b.changedAt - a.changedAt
   return a.item.id < b.item.id ? -1 : a.item.id > b.item.id ? 1 : 0
 }
 
@@ -67,7 +68,7 @@ export function listRows(cards: CardModel[], packages: Package[], modules: Modul
   const itemRow = (card: CardModel): ListRow => ({ kind: 'item', card, moduleName: nameOf(card) })
 
   if (sort === 'updated') {
-    const rows = [...shown].sort(byUpdated).map(itemRow)
+    const rows = [...shown].sort(byChanged).map(itemRow)
     return { rows, count: rows.length }
   }
 
@@ -75,13 +76,13 @@ export function listRows(cards: CardModel[], packages: Package[], modules: Modul
     const rows: ListRow[] = []
     let count = 0
     for (const bucket of BUCKET_ORDER) {
-      const group = shown.filter((c) => c.bucket === bucket).sort(byUpdated)
+      const group = shown.filter((c) => c.bucket === bucket).sort(byChanged)
       if (group.length === 0) continue
       rows.push({ kind: 'bucket', id: bucket, count: group.length })
       for (const c of group) rows.push(itemRow(c))
       count += group.length
     }
-    const closed = shown.filter((c) => c.bucket === null).sort(byUpdated)
+    const closed = shown.filter((c) => c.bucket === null).sort(byChanged)
     if (closed.length > 0) {
       rows.push({ kind: 'bucket', id: 'closed', count: closed.length })
       for (const c of closed) rows.push(itemRow(c))

@@ -75,7 +75,7 @@ export function ListDrawer({
             {moduleName && <span>{moduleName}</span>}
           </span>
         </span>
-        <span className="hg-list-when">{formatStampShort(card.item.updated_at)}</span>
+        <span className="hg-list-when">{card.changedAt > 0 ? formatStampShort(new Date(card.changedAt).toISOString()) : ''}</span>
       </button>
     )
   }
