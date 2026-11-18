@@ -192,6 +192,8 @@ export function BoardPage() {
         : [],
     [loaded, data, visibleItems, viewerId, unreadByItem, filterApi.filter, search, now, changed, recentWindow.hours],
   )
+  // The number on the "nýlega breytt" pill: every drawn card moved inside the window, filtered or not.
+  const recentCount = useMemo(() => cards.filter((c) => c.recent).length, [cards])
   const mineByItem = useMemo(
     () => (loaded ? mineActionsByItem(data.actions, viewerId) : new Map<string, number>()),
     [loaded, data, viewerId],
@@ -401,7 +403,7 @@ export function BoardPage() {
   const openZoneRow = openZoneId ? (data.zones.find((z) => z.id === openZoneId) ?? null) : null
   const viewerParticipant = data.participants.find((p) => p.user_id === user.id) ?? null
   // The number on the filter button: chosen packages and tags, plus one for an
-  // active view. Tones, unread and search show on the pills and in the field.
+  // active view. Tones, unread, recent and search show on the pills and in the field.
   const picks = filterApi.filter.packages.size + filterApi.filter.tags.size + (activeView.view ? 1 : 0)
   // One set of view menu props for both places it shows (the top bar and the
   // filter sheet), so the two never drift apart.
@@ -424,6 +426,7 @@ export function BoardPage() {
         project={project}
         projects={projects}
         counts={counts}
+        recent={{ count: recentCount, hours: recentWindow.hours, onHours: recentWindow.setHours }}
         filter={filterApi}
         tags={tags}
         packages={packages}

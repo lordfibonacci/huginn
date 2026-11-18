@@ -79,7 +79,8 @@
         "new": "New",
         "others": "Waiting on others",
         "parked": "On hold",
-        "unread": "Unread"
+        "unread": "Unread",
+        "recent": "Recently changed"
       },
       "loadError": "Could not load the project.",
       "noneOpen": "Nothing open",
@@ -419,6 +420,11 @@
       "viewerMenu": "Menu for {{name}}",
       "settings": "Project settings",
       "markAllRead": "Mark everything read",
+      "recent": {
+        "window": "Recently changed",
+        "hours": { "24": "24 hours", "72": "3 days", "168": "7 days" },
+        "hint": { "24": "Changed in the last 24 hours", "72": "Changed in the last 3 days", "168": "Changed in the last 7 days" }
+      },
       "language": "Language",
       "legend": {
         "title": "Colours",

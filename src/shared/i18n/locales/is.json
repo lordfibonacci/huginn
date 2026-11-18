@@ -79,6 +79,7 @@
         "new": "Nýtt",
         "others": "Bíða annarra",
         "parked": "Í bið",
+        "recent": "Nýlega breytt",
         "unread": "Ólesin"
       },
       "fit": "Sýna allt",
@@ -451,6 +452,19 @@
       "package": "Pakki",
       "participants": "Þátttakendur",
       "project": "Verkefni",
+      "recent": {
+        "hint": {
+          "24": "Hreyft síðasta sólarhringinn",
+          "72": "Hreyft síðustu 3 daga",
+          "168": "Hreyft síðustu 7 daga"
+        },
+        "hours": {
+          "24": "24 klst",
+          "72": "3 dagar",
+          "168": "7 dagar"
+        },
+        "window": "Nýlega breytt"
+      },
       "search": "Leita",
       "settings": "Stillingar verkefnis",
       "signOut": "Skrá út",

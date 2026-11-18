@@ -7,6 +7,7 @@ import { LanguageToggle } from '../../shared/components/LanguageToggle'
 import type { FilterApi } from '../hooks/useFilter'
 import { markAllRead } from '../lib/api'
 import type { FilterOption } from '../lib/filters'
+import { RECENT_HOURS, parseRecentHours, type RecentHours } from '../lib/recent'
 import { BUCKET_TONE, type Counts, type Tone } from '../lib/status'
 import type { Participant, Project } from '../lib/types'
 import { FilterMenu, useDismiss } from './FilterMenu'
@@ -17,6 +18,8 @@ type Props = {
   project: Project
   projects: Project[]
   counts: Counts
+  // The "nýlega breytt" pill: cards moved inside the viewer's window, and the window itself.
+  recent: { count: number; hours: RecentHours; onHours: (h: RecentHours) => void }
   filter: FilterApi
   tags: FilterOption[]
   packages: FilterOption[]
@@ -38,7 +41,8 @@ type Props = {
   searchRequest: number
 }
 
-// Pill order follows the mockup: unread first, then new, waiting on you, waiting on others, in build, on hold.
+// Pill order: recently changed first (drawn on its own, it is no status), then
+// unread, new, waiting on you, waiting on others, in build, on hold.
 const COUNT_ORDER: (keyof Counts)[] = ['unread', 'new', 'mine', 'others', 'build', 'parked']
 
 // The top bar above the board: brand, project switcher, the counters (which
@@ -53,6 +57,7 @@ export function TopBar({
   project,
   projects,
   counts,
+  recent,
   filter,
   tags,
   packages,
@@ -136,6 +141,22 @@ export function TopBar({
       </div>
 
       <div className="hg-counts" role="group" aria-label={t('vinnubord.top.counters')}>
+        {(recent.count > 0 || f.recent) && (
+          <button
+            type="button"
+            className={`hg-count hg-count-recent${f.recent ? ' hg-on' : ''}`}
+            aria-pressed={f.recent}
+            title={t(`vinnubord.top.recent.hint.${recent.hours}`)}
+            onClick={filter.toggleRecent}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M8 4.5V8l2.5 1.5" />
+            </svg>
+            <b>{recent.count}</b>
+            <span>{t('vinnubord.board.counts.recent').toLocaleLowerCase(i18n.language)}</span>
+          </button>
+        )}
         {pills.map((k) => {
           const tone = BUCKET_TONE[k]
           const isUnread = k === 'unread'
@@ -284,7 +305,7 @@ export function TopBar({
             ))}
           </ul>
         )}
-        <ViewerMenu slug={project.slug} projectId={project.id} viewer={viewer} />
+        <ViewerMenu slug={project.slug} projectId={project.id} viewer={viewer} recent={recent} />
         <button type="button" className="hg-new" onClick={onNewItem} aria-label={t('vinnubord.top.newItem')}>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 3v10M3 8h10" />
@@ -297,7 +318,17 @@ export function TopBar({
 }
 
 // The viewer's own avatar (ruling R4): project settings, language and sign out.
-function ViewerMenu({ slug, projectId, viewer }: { slug: string; projectId: string; viewer: Props['viewer'] }) {
+function ViewerMenu({
+  slug,
+  projectId,
+  viewer,
+  recent,
+}: {
+  slug: string
+  projectId: string
+  viewer: Props['viewer']
+  recent: Props['recent']
+}) {
   const { t } = useTranslation()
   const { signOut } = useAuth()
   const [open, setOpen] = useState(false)
@@ -358,6 +389,16 @@ function ViewerMenu({ slug, projectId, viewer }: { slug: string; projectId: stri
           <button type="button" className="hg-chip" disabled={marking} onClick={() => void handleMarkAll()}>
             {t('vinnubord.top.markAllRead')}
           </button>
+          <label className="hg-menu-row hg-recent-row">
+            <span>{t('vinnubord.top.recent.window')}</span>
+            <select value={recent.hours} onChange={(e) => recent.onHours(parseRecentHours(e.target.value))}>
+              {RECENT_HOURS.map((h) => (
+                <option key={h} value={h}>
+                  {t(`vinnubord.top.recent.hours.${h}`)}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="hg-menu-sep" />
           <ul className="hg-legend" aria-label={t('vinnubord.top.legend.title')}>
             {LEGEND.map(([tone, key]) => (
