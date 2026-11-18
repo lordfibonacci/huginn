@@ -208,7 +208,7 @@ function ViewEditor({ projectId, view, packages, tags, filter, onChoose, onReloa
     setBusy(true)
     setError(null)
     const json = normalizeViewFilter(
-      viewFilterJson({ ...draft, q: '', unread: false }),
+      viewFilterJson({ ...draft, q: '', unread: false, recent: false }),
       packages.map((o) => o.key),
       tags.map((o) => o.key),
     )

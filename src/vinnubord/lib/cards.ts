@@ -139,7 +139,7 @@ export function cardModels(items: Item[], ctx: CardContext): CardModel[] {
     const recent = isRecent(changedAt, ctx.now, ctx.recentHours)
     const visible =
       !filterOn ||
-      matches(item, { tone: bucket !== null ? BUCKET_TONE[bucket] : null, packageId, unread: fresh !== null, text }, filter)
+      matches(item, { tone: bucket !== null ? BUCKET_TONE[bucket] : null, packageId, unread: fresh !== null, recent, text }, filter)
     const moverId = item.updated_by ?? item.created_by
     const mover = participants.find((p) => p.user_id === moverId)
     const waiter = item.status === 'waiting' ? participants.find((p) => p.user_id === item.waiting_on) : undefined

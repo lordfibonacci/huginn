@@ -10,6 +10,7 @@ import {
   serializeFilter,
   tagCounts,
   toggleFilter,
+  toggleRecent,
   toggleUnread,
   withQuery,
   withoutPicks,
@@ -30,38 +31,52 @@ describe('filters', () => {
   it('empty filter is inactive and matches everything', () => {
     const f = emptyFilter()
     expect(isActive(f)).toBe(false)
-    expect(matches(item(), { tone: 'stone', packageId: null, unread: false, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'stone', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(true)
   })
   it('tone filter', () => {
     const f = emptyFilter()
     f.tones.add('gold')
     expect(isActive(f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, text: '' }, f)).toBe(true)
-    expect(matches(item(), { tone: 'teal', packageId: null, unread: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'teal', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
   })
   it('package filter does not match null packageId', () => {
     const f = emptyFilter()
     f.packages.add('pk1')
-    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, text: '' }, f)).toBe(false)
-    expect(matches(item(), { tone: 'gold', packageId: 'pk1', unread: false, text: '' }, f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: 'pk2', unread: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: 'pk1', unread: false, recent: false, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: 'pk2', unread: false, recent: false, text: '' }, f)).toBe(false)
   })
   it('tag filter', () => {
     const f = emptyFilter()
     f.tags.add('db')
-    expect(matches(item({ tags: ['db'] }), { tone: 'gold', packageId: null, unread: false, text: '' }, f)).toBe(true)
-    expect(matches(item({ tags: ['ui'] }), { tone: 'gold', packageId: null, unread: false, text: '' }, f)).toBe(false)
+    expect(matches(item({ tags: ['db'] }), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(true)
+    expect(matches(item({ tags: ['ui'] }), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
   })
   it('unread filter keeps only unread items and counts as active', () => {
     const f = toggleUnread(emptyFilter())
     expect(isActive(f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: null, unread: true, text: '' }, f)).toBe(true)
-    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: true, recent: false, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
     expect(toggleUnread(f).unread).toBe(false)
+  })
+  it('recent filter keeps only recently changed items, closed ones too', () => {
+    const f = toggleRecent(emptyFilter())
+    expect(isActive(f)).toBe(true)
+    expect(isActive(toggleRecent(f))).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: true, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: null, packageId: null, unread: false, recent: true, text: '' }, f), 'a closed card').toBe(true)
+  })
+  it('recent and a tone both have to match', () => {
+    const f = toggleFilter(toggleRecent(emptyFilter()), 'tones', 'coral')
+    expect(matches(item(), { tone: 'coral', packageId: null, unread: false, recent: true, text: '' }, f)).toBe(true)
+    expect(matches(item(), { tone: 'coral', packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: 'gold', packageId: null, unread: false, recent: true, text: '' }, f)).toBe(false)
   })
   it('query searches the folded text the caller gives, ignoring case and accents', () => {
     const f = withQuery(emptyFilter(), 'Zzz')
-    const ctx = (text: string) => ({ tone: 'gold' as Tone, packageId: null, unread: false, text })
+    const ctx = (text: string) => ({ tone: 'gold' as Tone, packageId: null, unread: false, recent: false, text })
     expect(matches(item(), ctx('abc'), f)).toBe(false)
     expect(matches(item(), ctx('og zzz'), f)).toBe(true)
     expect(matches(item(), ctx('og zzz'), withQuery(emptyFilter(), 'ZZZ')), 'case').toBe(true)
@@ -71,9 +86,9 @@ describe('filters', () => {
   })
   it('a null tone fails a tone filter and passes without one', () => {
     const f = { ...emptyFilter(), tones: new Set<Tone>(['stone']) }
-    expect(matches(item(), { tone: null, packageId: null, unread: false, text: '' }, f)).toBe(false)
-    expect(matches(item(), { tone: null, packageId: null, unread: false, text: 'lokað' }, { ...emptyFilter(), q: 'lok' })).toBe(true)
-    expect(matches(item({ tags: ['a'] }), { tone: null, packageId: 'p1', unread: false, text: '' }, { ...emptyFilter(), packages: new Set(['p1']) })).toBe(true)
+    expect(matches(item(), { tone: null, packageId: null, unread: false, recent: false, text: '' }, f)).toBe(false)
+    expect(matches(item(), { tone: null, packageId: null, unread: false, recent: false, text: 'lokað' }, { ...emptyFilter(), q: 'lok' })).toBe(true)
+    expect(matches(item({ tags: ['a'] }), { tone: null, packageId: 'p1', unread: false, recent: false, text: '' }, { ...emptyFilter(), packages: new Set(['p1']) })).toBe(true)
   })
 })
 
@@ -97,6 +112,11 @@ describe('filter storage', () => {
   it('round trips unread', () => {
     expect(parseFilter(serializeFilter(toggleUnread(emptyFilter()))).unread).toBe(true)
     expect(parseFilter('{"unread":"yes"}').unread).toBe(false)
+  })
+  it('round trips recent, and a filter stored before it existed has it off', () => {
+    expect(parseFilter(serializeFilter(toggleRecent(emptyFilter()))).recent).toBe(true)
+    expect(parseFilter('{"recent":"yes"}').recent).toBe(false)
+    expect(parseFilter('{"tones":["gold"],"packages":[],"tags":[],"q":"","unread":true}').recent).toBe(false)
   })
   it('null, garbage and wrong shapes give an empty filter', () => {
     for (const raw of [null, '', 'not json', '42', '[]', '{"tones":"gold"}']) {
@@ -207,13 +227,14 @@ describe('prunePackages', () => {
 
 describe('withoutPicks', () => {
   it('drops packages and tags and keeps the rest', () => {
-    const f = { tones: new Set<Tone>(['gold']), packages: new Set(['p']), tags: new Set(['t']), q: 'x', unread: true }
+    const f = { tones: new Set<Tone>(['gold']), packages: new Set(['p']), tags: new Set(['t']), q: 'x', unread: true, recent: true }
     const r = withoutPicks(f)
     expect([...r.packages]).toEqual([])
     expect([...r.tags]).toEqual([])
     expect([...r.tones]).toEqual(['gold'])
     expect(r.q).toBe('x')
     expect(r.unread).toBe(true)
+    expect(r.recent).toBe(true)
     const e = emptyFilter()
     expect(withoutPicks(e)).toBe(e)
   })

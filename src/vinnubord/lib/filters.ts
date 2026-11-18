@@ -8,24 +8,26 @@ export type Filter = {
   tags: Set<string>
   q: string
   unread: boolean
+  recent: boolean
 }
 
 export function emptyFilter(): Filter {
-  return { tones: new Set(), packages: new Set(), tags: new Set(), q: '', unread: false }
+  return { tones: new Set(), packages: new Set(), tags: new Set(), q: '', unread: false, recent: false }
 }
 
 export function isActive(f: Filter): boolean {
-  return f.tones.size > 0 || f.packages.size > 0 || f.tags.size > 0 || f.q.trim() !== '' || f.unread
+  return f.tones.size > 0 || f.packages.size > 0 || f.tags.size > 0 || f.q.trim() !== '' || f.unread || f.recent
 }
 
 // A null tone (a closed card, which has no count bucket) fails any tone
 // filter and passes when no tone is picked.
 export function matches(
   item: Item,
-  ctx: { tone: Tone | null; packageId: string | null; unread: boolean; text: string },
+  ctx: { tone: Tone | null; packageId: string | null; unread: boolean; recent: boolean; text: string },
   f: Filter,
 ): boolean {
   if (f.unread && !ctx.unread) return false
+  if (f.recent && !ctx.recent) return false
   if (f.tones.size > 0 && (ctx.tone === null || !f.tones.has(ctx.tone))) return false
   if (f.packages.size > 0 && (ctx.packageId === null || !f.packages.has(ctx.packageId))) return false
   if (f.tags.size > 0 && !item.tags.some((t) => f.tags.has(t))) return false
@@ -44,7 +46,7 @@ export function filterStorageKey(projectId: string): string {
 }
 
 export function serializeFilter(f: Filter): string {
-  return JSON.stringify({ tones: [...f.tones], packages: [...f.packages], tags: [...f.tags], q: f.q, unread: f.unread })
+  return JSON.stringify({ tones: [...f.tones], packages: [...f.packages], tags: [...f.tags], q: f.q, unread: f.unread, recent: f.recent })
 }
 
 function strings(v: unknown): string[] {
@@ -68,6 +70,7 @@ export function parseFilter(raw: string | null): Filter {
   for (const t of strings(o.tags)) f.tags.add(t)
   if (typeof o.q === 'string') f.q = o.q
   if (typeof o.unread === 'boolean') f.unread = o.unread
+  if (typeof o.recent === 'boolean') f.recent = o.recent
   return f
 }
 
@@ -86,12 +89,16 @@ export function toggleUnread(f: Filter): Filter {
   return { ...f, unread: !f.unread }
 }
 
+export function toggleRecent(f: Filter): Filter {
+  return { ...f, recent: !f.recent }
+}
+
 export function withQuery(f: Filter, q: string): Filter {
   return { ...f, q }
 }
 
-// The filter without its package and tag picks, keeping tones, query and
-// unread. The same object when there are no picks.
+// The filter without its package and tag picks, keeping tones, query, unread
+// and recent. The same object when there are no picks.
 export function withoutPicks(f: Filter): Filter {
   if (f.packages.size === 0 && f.tags.size === 0) return f
   return { ...f, packages: new Set(), tags: new Set() }

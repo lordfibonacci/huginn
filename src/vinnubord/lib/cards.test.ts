@@ -103,6 +103,15 @@ describe('cardModels', () => {
     expect(cardModels([item({ id: 'b' })], ctx({ now, changed, recentHours: 168 }))[0].recent).toBe(false)
     expect(cardModels([item({ id: 'a' })], ctx({ now, changed, recentHours: 24 }))[0].recent).toBe(true)
   })
+  it('the recent filter dims a card outside the window and keeps a recent closed one', () => {
+    const now = Date.parse('2026-11-18T12:00:00Z')
+    const changed = new Map([['a', Date.parse('2026-11-18T09:00:00Z')], ['c', Date.parse('2026-11-18T10:00:00Z')]])
+    const out = cardModels(
+      [item({ id: 'a' }), item({ id: 'b' }), item({ id: 'c', status: 'done', closed_at: '2026-11-18T10:00:00Z' })],
+      ctx({ now, changed, recentHours: 24, filter: { ...emptyFilter(), recent: true } }),
+    )
+    expect(out.map((c) => c.visible)).toEqual([true, false, true])
+  })
   it('mover is updated_by, else created_by', () => {
     expect(cardModels([item({ created_by: 'me', updated_by: 'other' })], ctx())[0].mover?.short).toBe('A')
     expect(cardModels([item({ created_by: 'me', updated_by: null })], ctx())[0].mover?.short).toBe('H')

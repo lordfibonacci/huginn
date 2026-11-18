@@ -7,6 +7,7 @@ import {
   prunePackages,
   serializeFilter,
   toggleFilter,
+  toggleRecent as toggleRecentFilter,
   toggleUnread as toggleUnreadFilter,
   withoutPicks,
   withQuery,
@@ -62,6 +63,7 @@ export function useFilter(projectId: string) {
   const togglePackage = useCallback((id: string) => update((f) => toggleFilter(f, 'packages', id)), [update])
   const toggleTag = useCallback((tag: string) => update((f) => toggleFilter(f, 'tags', tag)), [update])
   const toggleUnread = useCallback(() => update((f) => toggleUnreadFilter(f)), [update])
+  const toggleRecent = useCallback(() => update((f) => toggleRecentFilter(f)), [update])
   const setQuery = useCallback((q: string) => update((f) => withQuery(f, q)), [update])
   const clear = useCallback(() => update(() => emptyFilter()), [update])
   // Clear the chosen packages and tags only, what the filter button counts.
@@ -70,7 +72,7 @@ export function useFilter(projectId: string) {
   const keepPackages = useCallback((known: Set<string>) => update((f) => prunePackages(f, known)), [update])
 
   const filter = current.filter
-  return { filter, toggleTone, togglePackage, toggleTag, toggleUnread, setQuery, clear, clearPicks, keepPackages, active: isActive(filter) }
+  return { filter, toggleTone, togglePackage, toggleTag, toggleUnread, toggleRecent, setQuery, clear, clearPicks, keepPackages, active: isActive(filter) }
 }
 
 export type FilterApi = ReturnType<typeof useFilter>

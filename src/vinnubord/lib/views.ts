@@ -9,12 +9,12 @@ import type { Action, Item, Module, View, ViewFilterJson, ViewPackPosition, View
 
 type Point = { x: number; y: number }
 
-// The filter a view stores. Unknown tones drop, q is empty and unread is off.
+// The filter a view stores. Unknown tones drop, q is empty, unread and recent are off.
 export function viewFilterOf(view: View): Filter {
   return parseFilter(JSON.stringify(view.filter))
 }
 
-// The part of a filter that a view keeps. Never q or unread.
+// The part of a filter that a view keeps. Never q, unread or recent.
 export function viewFilterJson(f: Filter): ViewFilterJson {
   return { tones: [...f.tones], packages: [...f.packages], tags: [...f.tags] }
 }
@@ -56,7 +56,7 @@ export function itemsInView(
   return onBoard.filter((item) => {
     const bucket = countBucket(item, actions, viewerId)
     const packageId = item.module_id ? (packageOf.get(item.module_id) ?? null) : null
-    return matches(item, { tone: bucket ? BUCKET_TONE[bucket] : null, packageId, unread: false, text: '' }, filter)
+    return matches(item, { tone: bucket ? BUCKET_TONE[bucket] : null, packageId, unread: false, recent: false, text: '' }, filter)
   })
 }
 
