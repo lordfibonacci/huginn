@@ -9,6 +9,8 @@ import * as webTags from '../../src/vinnubord/lib/tags.ts'
 import * as webCards from '../../src/vinnubord/lib/cards.ts'
 import * as webPlacement from '../../src/vinnubord/lib/placement.ts'
 import * as webZones from '../../src/vinnubord/lib/zones.ts'
+import * as webPaging from '../../src/vinnubord/lib/paging.ts'
+import * as cliPaging from './paging.mjs'
 import {
   BOARD_SIZES,
   CARD_STAMP_DAYS,
@@ -217,5 +219,68 @@ describe('write helpers parity with the web', () => {
     expect(m).not.toBeNull()
     expect(BOARD_SIZES.cardW).toBe(Number(m[1]))
     expect(BOARD_SIZES.newCardH).toBe(Number(m[2]))
+  })
+})
+
+describe('paging parity with the web', () => {
+  it('the constants agree with paging.ts', () => {
+    for (const k of ['PAGE_SIZE', 'MAX_PAGES', 'RANGE_PAST_END', 'TOO_MANY_ROWS']) expect(cliPaging[k], k).toBe(webPaging[k])
+  })
+
+  it('every list the CLI loads has the order of the web', () => {
+    expect(Object.keys(cliPaging.BOARD_ORDER)).toHaveLength(13)
+    for (const [list, order] of Object.entries(cliPaging.BOARD_ORDER)) expect(order, list).toEqual([...webPaging.BOARD_ORDER[list]])
+  })
+
+  it('fetchAll and ordered agree with paging.ts', async () => {
+    const rows = (n, start = 0) => Array.from({ length: n }, (_, i) => ({ id: start + i }))
+    const pastEnd = { message: 'Requested range not satisfiable', code: webPaging.RANGE_PAST_END }
+    const boom = { message: 'fetch failed' }
+    // name: [the pages the server answers with (the last one repeats), rows expected]
+    const SCRIPTS = {
+      'one short page': [[{ data: rows(282), error: null, count: 282 }], 282],
+      'two pages': [[{ data: rows(1000), error: null, count: 1118 }, { data: rows(118, 1000), error: null, count: 1118 }], 1118],
+      'a cap below the page size': [
+        [
+          { data: rows(400), error: null, count: 900 },
+          { data: rows(400, 400), error: null, count: 900 },
+          { data: rows(100, 800), error: null, count: 900 },
+        ],
+        900,
+      ],
+      'no count': [[{ data: rows(1000), error: null, count: null }, { data: rows(5, 1000), error: null, count: null }], 1005],
+      'the list shrank': [[{ data: rows(1000), error: null, count: 1001 }, { data: null, error: pastEnd }], 1000],
+      'the first page fails': [[{ data: null, error: boom }], 0],
+      'a later page fails': [[{ data: rows(1000), error: null, count: 1118 }, { data: null, error: boom }], 0],
+      'a list that never ends': [[{ data: rows(1000), error: null, count: 1e9 }], 0],
+    }
+    for (const [name, [pages, expected]] of Object.entries(SCRIPTS)) {
+      const run = async (fetchAll) => {
+        const calls = []
+        const out = await fetchAll(async (from, to) => {
+          calls.push([from, to])
+          return pages[Math.min(calls.length - 1, pages.length - 1)]
+        })
+        return { out, calls }
+      }
+      const cli = await run(cliPaging.fetchAll)
+      expect(cli, name).toEqual(await run(webPaging.fetchAll))
+      expect(cli.out.data, name).toHaveLength(expected)
+    }
+
+    for (const list of Object.keys(cliPaging.BOARD_ORDER)) {
+      const trace = (ordered) => {
+        const seen = []
+        const q = {
+          order(column) {
+            seen.push(column)
+            return q
+          },
+        }
+        ordered(q, list)
+        return seen
+      }
+      expect(trace(cliPaging.ordered), list).toEqual(trace(webPaging.ordered))
+    }
   })
 })
