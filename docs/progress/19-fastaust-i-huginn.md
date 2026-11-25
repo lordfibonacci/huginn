@@ -27,8 +27,8 @@ Project `fastaust` in the shared Supabase project `czdjxtsjgughimlazdmu` (insert
 
 ## What was checked
 
-- `npm run test`: 699 tests green in 45 files (680 before this branch). `npm run build`: green. No database code in `src`, so no `smoke:hg` run.
-- Task 1: RED before the section (12 failed, 59 passed in `write.test.mjs`), then `write.test.mjs` and `parity.test.mjs` 83 passed. A read only live `pull` on fastaust returned the boxes.
+- `npm run test`: 706 tests green in 45 files (680 before this branch). `npm run build`: green. No database code in `src`, so no `smoke:hg` run.
+- Task 1: RED before the section (12 failed, 59 passed in `write.test.mjs`), then `write.test.mjs` and `parity.test.mjs` 83 passed. The read only live `pull` was on metta (fastaust did not exist yet, it came with task 2) and returned `zones`.
 - Task 3, live against `fastaust` (a test card, `e378dc80`):
   1. `item create` with `--zone`: `{"ok": true, "id": "e378dc80-..."}`, exit 0. `pull` showed it at x 24, y 40 in Óraðað.
   2. `item set --zone Tilboð`: `Verk uppfært #e378dc80: Prufa úr plani, má hunsa, Í bið`, exit 0. `pull` showed it at x 2664, y 40.
@@ -41,16 +41,23 @@ Project `fastaust` in the shared Supabase project `czdjxtsjgughimlazdmu` (insert
 - Browser checks in Playwright on the worktree dev server (1440 by 900), signed in as claude@huginn.pro:
   - Task 2: the fastaust board shows the seven boxes fitted in the view, no pack, no card, no alert, empty console. The switcher lists Fasteignasala Austurlands and Metta; picking Metta loads its board (83 cards, 5 packs). One deviation from the plan: the new item sheet has a Módúll select with the single option "Enginn módull" and opens without error. Heimir ruled on 2026-11-25 to keep it as it is (it belongs to approach B of the spec).
   - Task 4: "/" with nothing stored opens fastaust; after metta "/" opens metta; after fastaust "/" opens fastaust; with `hg.lastProject` set to `ekki-til` "/" opens fastaust. Console empty.
+- `resizeZone` was run live by the controller on 2026-11-25 on the box Afsal with the height it already had (1300): it returned without error and nothing changed; an unknown id gives the error. The growing itself has not run live.
 - Environment: `node_modules` of the main checkout is damaged (no `.bin`, 99 of 559 non optional packages missing, older than this build), so the worktree got its own `npm ci` instead of a junction. The main checkout needs an `npm ci` before its next build.
 
 ## Open
 
-1. The fastaust plan (the sync script in the fastaust repo, the `/huginn` rules for that repo) is not built. It calls `cli/huginn.mjs` from the main checkout of this repo, so it starts after the merge and push.
+1. The fastaust plan (the sync script in the fastaust repo, and by spec section 10 one paragraph in `.claude/skills/email-sweep/SKILL.md` beside its two additions to steps 1 and 6 and one paragraph in the fastaust `CLAUDE.md`) is not built. It calls `cli/huginn.mjs` from the main checkout of this repo, so it starts after the merge and push.
 2. The test card `e378dc80` on fastaust is dropped and fades from the board by itself three days after it was closed.
-3. `itemInZone` copies the centre rule of `zoneMembers` and has no parity test.
+3. `itemInZone` copies the centre rule of `zoneMembers`; `parity.test.mjs` covers it, so a change to one fails until the other follows.
 4. A card placed with `--zone` goes at the main board position only. In a saved view the card keeps whatever view position it has, and the CLI neither reads nor writes view positions.
 5. An item a participant creates by hand in `fastaust` is analysed with the software prompt (`hg-analyse`), a known gap (spec section 13).
-6. Findings the final review defers are listed here by the controller.
+6. A box never shrinks: the first fill of about 40 cards grows Óraðað from 1300 to about 3800 px and it stays so when the cards are moved out. After the moves Heimir drags the corner, or the session sets `h` back to 1300 with one UPDATE.
+7. Packs are no obstacle for `--zone` (spec 6.4 names cards only). Fastaust has no packs, but a box drawn around a pack in metta would take cards on top of its modules.
+8. A command whose item write is refused after the box grew leaves the box one row taller. The retry finds the same slot and grows no further.
+9. For the mirror: errors go to stderr as `Villa: ...` with exit 1 also under `--json`, so it decides the spec 8.7 fallback from `zones` in the one `pull --json`.
+10. For the mirror: a value that starts with `--` needs the `--flag=value` form, so it always passes `--title=`, `--summary=` and `--source-ref=` that way.
+11. Without `--zone` on fastaust a card lands left of Óraðað at y 0, never in a box.
+12. A card created before its actions is estimated about 32 px shorter than it becomes. The 40 px gap absorbs it, and a card on the last row can stick about 8 px out of the bottom.
 
 ## What Heimir checks
 
