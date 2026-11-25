@@ -155,9 +155,9 @@ Forritið á aðeins opin handtök sem byrja á `Frestur ` á spegluðu spjaldi.
 
 1. Handtak með nákvæmlega sama texta og eiganda og frestur í hausnum: óbreytt.
 2. Af því sem eftir stendur: handtak og frestur með sömu dagsetningu parast (í röð hausins) og handtakinu er breytt með `action set`. Síðan parast þau sem eftir standa með sama `label` og annarri dagsetningu á sama hátt.
-3. Handtak sem á engan frest eftir: `action done`. Frestur sem á ekkert handtak: `action add`, nema lokað handtak (gert eða fellt niður) með nákvæmlega sama texta sé til á spjaldinu. Þá er ekkert stofnað.
+3. Handtak sem á engan frest eftir: `action done`. Frestur sem á ekkert handtak: `action add`, nema lokað handtak (gert eða fellt niður) með nákvæmlega sama texta sé til á spjaldinu og annar en þjónustunotandinn hafi lokað því. Þá er ekkert stofnað.
 
-Undantekningin í lið 3 er fyrir Heimi: þegar hann hakar sjálfur við frest í vefnum á fresturinn ekki að spretta upp aftur í næstu keyrslu. Hakið fer til Austra um innhólfið (kafli 9), sem lokar frestinum í möppunni.
+Undantekningin í lið 3 er fyrir Heimi: þegar hann hakar sjálfur við frest í vefnum á fresturinn ekki að spretta upp aftur í næstu keyrslu. Hakið fer til Austra um innhólfið (kafli 9), sem lokar frestinum í möppunni. Handtak sem spegillinn lokaði sjálfur (fresturinn fór úr hausnum, eða mappan lokaðist) útilokar ekki: komi fresturinn aftur í hausinn er hann stofnaður á ný. Handtak sem enginn er skráður fyrir að hafa lokað (`done_by` tómt) telst lokað af Heimi. Reglan er `planActions` í `scripts/deals/huginn.mjs` í fastaust (`closedBodies`, `byService`). Leiðrétt 2026-11-25: liðurinn sagði áður að hvert lokað handtak útilokaði.
 
 Handtök sem Heimir bætir sjálfur við spjald (byrja ekki á `Frestur `) snertir forritið aldrei.
 
