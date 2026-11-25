@@ -456,20 +456,24 @@ export function boardRects(board) {
 // in a pack: beside the module, as on the web. Without one: the web uses the
 // centre of the view; the CLI has no view and starts at the top left corner of
 // what is on the board (the origin on an empty board). Obstacles are pack
-// columns and open cards. When every spot placeNewCard tries is taken, the
-// card goes straight below everything in that column, so it never overlaps.
+// columns, open cards and, for a card with no module to sit beside, boxes.
+// When every spot placeNewCard tries is taken, the card goes straight below
+// everything in that column, so it never overlaps.
 export function placeItem(board, moduleId, card = { title: '', tags: [] }, now = Date.now()) {
   const { packs, modules } = boardRects(board)
   const cards = (board.items ?? [])
     // a closed card still on the board is an obstacle
     .filter((i) => isOnBoard(i, now))
     .map((i) => ({ x: i.pos_x, y: i.pos_y, w: S.cardW, h: estimateCardHeight(i, board) }))
-  const obstacles = [...packs, ...cards]
+  const anchor = (moduleId && modules.get(moduleId)) || null
+  // A card with no module to sit beside keeps out of the boxes. One with a
+  // module does not: a box may be drawn around its pack.
+  const zones = anchor ? [] : (board.zones ?? []).map((z) => ({ x: z.pos_x, y: z.pos_y, w: z.w, h: z.h }))
+  const obstacles = [...packs, ...cards, ...zones]
   // A new card is just changed and sits in its module, so it gets the stamp
   // row and the module line, as on the web.
   const fresh = { ...card, module_id: card.module_id ?? moduleId ?? null, updated_at: card.updated_at ?? new Date().toISOString() }
   const size = { w: S.cardW, h: estimateCardHeight(fresh, board) }
-  const anchor = (moduleId && modules.get(moduleId)) || null
 
   let origin = { x: 0, y: 0 }
   if (obstacles.length) {
@@ -485,4 +489,75 @@ export function placeItem(board, moduleId, card = { title: '', tags: [] }, now =
     if (o.x < pos.x + size.w && o.x + o.w > pos.x) y = Math.max(y, o.y + o.h + NEW_CARD_GAP)
   }
   return { x: pos.x, y: Math.ceil(y) }
+}
+
+// ---------- boxes (kassar) ----------
+
+// Room between a box's edge and the cards the CLI places in it. The top is
+// larger: the box name sits on the top border.
+export const ZONE_PAD = 24
+export const ZONE_TOP = 40
+// Rows are tried every ZONE_SCAN px, far enough down that a slot always turns up.
+const ZONE_SCAN = 20
+const ZONE_SCAN_MAX = 2000
+
+const foldZoneName = (s) => String(s).trim().toLocaleLowerCase('is')
+
+// The one box with this name, in any case.
+export function resolveZone(zones, name) {
+  const want = foldZoneName(name)
+  if (!want) throw new Error('--zone vantar gildi.')
+  const hits = (zones ?? []).filter((z) => foldZoneName(z.title) === want)
+  if (hits.length === 1) return hits[0]
+  const shown = String(name).trim()
+  if (hits.length > 1) throw new Error(`Fleiri en einn kassi heitir ${shown}. Endurnefndu annan þeirra.`)
+  const known = (zones ?? []).map((z) => z.title).join(', ')
+  throw new Error(`Kassinn ${shown} fannst ekki. ${known ? `Kassar: ${known}.` : 'Engir kassar eru á borðinu.'}`)
+}
+
+// The first free slot for a card in a box: columns left to right, rows top
+// to bottom, NEW_CARD_GAP clear of every card. h is the height the box needs
+// to hold the card, never less than it has.
+export function placeInZone(zone, size, cards) {
+  const stepX = S.cardW + NEW_CARD_GAP
+  const cols = Math.max(1, Math.floor((zone.w - 2 * ZONE_PAD + NEW_CARD_GAP) / stepX))
+  const grown = cards.map((c) => ({
+    x: c.x - NEW_CARD_GAP,
+    y: c.y - NEW_CARD_GAP,
+    w: c.w + 2 * NEW_CARD_GAP,
+    h: c.h + 2 * NEW_CARD_GAP,
+  }))
+  const x0 = zone.pos_x + ZONE_PAD
+  const y0 = zone.pos_y + ZONE_TOP
+  let pos = { x: x0, y: y0 }
+  scan: for (let row = 0; row < ZONE_SCAN_MAX; row++) {
+    for (let col = 0; col < cols; col++) {
+      const p = { x: x0 + col * stepX, y: y0 + row * ZONE_SCAN }
+      if (!grown.some((o) => overlaps({ ...p, ...size }, o))) {
+        pos = p
+        break scan
+      }
+    }
+  }
+  return { pos, h: Math.max(zone.h, pos.y + size.h + ZONE_PAD - zone.pos_y) }
+}
+
+function cardRect(item, board) {
+  return { x: item.pos_x, y: item.pos_y, w: S.cardW, h: estimateCardHeight(item, board) }
+}
+
+// Where a card lands in a box. A card that has an id is being moved and is
+// not its own obstacle; a new one gets the stamp row, as in placeItem.
+export function placeItemInZone(board, zone, card, now = Date.now()) {
+  const cards = (board.items ?? []).filter((i) => i.id !== card.id && isOnBoard(i, now)).map((i) => cardRect(i, board))
+  const sized = card.id ? card : { ...card, updated_at: card.updated_at ?? new Date().toISOString() }
+  return placeInZone(zone, { w: S.cardW, h: estimateCardHeight(sized, board) }, cards)
+}
+
+// The web's rule for what lies in a box: the centre of the card, border included.
+export function itemInZone(board, zone, item) {
+  const r = cardRect(item, board)
+  const cx = r.x + r.w / 2
+  const cy = r.y + r.h / 2
+  return zone.pos_x <= cx && cx <= zone.pos_x + zone.w && zone.pos_y <= cy && cy <= zone.pos_y + zone.h
 }

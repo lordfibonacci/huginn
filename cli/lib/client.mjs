@@ -130,10 +130,11 @@ export async function loadBoard(client, projectId) {
     byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
     byProject('hg_reads'),
     byProject('hg_tags').order('name'),
+    byProject('hg_zones').order('created_at'),
   ])
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið', failed.error)
-  const [project, participants, packages, modules, items, plans, files, questions, actions, rulings, comments, events, reads, tags] =
+  const [project, participants, packages, modules, items, plans, files, questions, actions, rulings, comments, events, reads, tags, zones] =
     results
   if (!project.data) fail('Verkefnið fannst ekki.')
 
@@ -152,5 +153,6 @@ export async function loadBoard(client, projectId) {
     events: (events.data ?? []).reverse(),
     reads: reads.data ?? [],
     tags: tags.data ?? [],
+    zones: zones.data ?? [],
   }
 }

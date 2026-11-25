@@ -5,6 +5,7 @@ import {
   estimateCardHeight,
   guardClose,
   idRange,
+  itemInZone,
   mimeFor,
   normalizeTag,
   parseKeywords,
@@ -14,9 +15,12 @@ import {
   parseCommand,
   parseTags,
   pickOne,
+  placeInZone,
   placeItem,
+  placeItemInZone,
   placeNewCard,
   resolveModule,
+  resolveZone,
   resolveShort,
   statusPatch,
   storagePath,
@@ -461,5 +465,104 @@ describe('parseKeywords', () => {
   it('splits on commas, lowercases, trims, drops empties and duplicates', () => {
     expect(parseKeywords('Social Media, efni ,SOCIAL MEDIA,,instagram')).toEqual(['social media', 'efni', 'instagram'])
     expect(parseKeywords('')).toEqual([])
+  })
+})
+
+describe('resolveZone', () => {
+  const zones = [
+    { id: 'z1', title: 'Óraðað' },
+    { id: 'z2', title: 'Tilboð' },
+  ]
+
+  it('finds a box by name in any case and with stray spaces', () => {
+    expect(resolveZone(zones, ' óraðað ').id).toBe('z1')
+    expect(resolveZone(zones, 'TILBOÐ').id).toBe('z2')
+  })
+
+  it('names the known boxes when none matches', () => {
+    expect(() => resolveZone(zones, 'Afsal')).toThrow('Kassinn Afsal fannst ekki. Kassar: Óraðað, Tilboð.')
+    expect(() => resolveZone([], 'Afsal')).toThrow('Kassinn Afsal fannst ekki. Engir kassar eru á borðinu.')
+  })
+
+  it('refuses a name two boxes share and a blank name', () => {
+    expect(() => resolveZone([...zones, { id: 'z3', title: 'tilboð' }], 'Tilboð')).toThrow(
+      'Fleiri en einn kassi heitir Tilboð. Endurnefndu annan þeirra.',
+    )
+    expect(() => resolveZone(zones, '  ')).toThrow('--zone vantar gildi.')
+  })
+})
+
+describe('placeInZone', () => {
+  const zone = { id: 'z', pos_x: 1000, pos_y: 500, w: 600, h: 1300 }
+  const size = { w: 250, h: 120 }
+  const at = (x, y) => ({ x, y, w: 250, h: 120 })
+
+  it('starts under the box name, inside the left edge', () => {
+    expect(placeInZone(zone, size, [])).toEqual({ pos: { x: 1024, y: 540 }, h: 1300 })
+  })
+
+  it('takes the second column when the first slot holds a card', () => {
+    expect(placeInZone(zone, size, [at(1024, 540)]).pos).toEqual({ x: 1314, y: 540 })
+  })
+
+  it('goes below a full row and keeps the 40 px gap', () => {
+    expect(placeInZone(zone, size, [at(1024, 540), at(1314, 540)]).pos).toEqual({ x: 1024, y: 700 })
+  })
+
+  it('steps around a card dropped anywhere in the box', () => {
+    // The card straddles both columns, so the first free slot is below it.
+    expect(placeInZone(zone, size, [at(1100, 560)]).pos).toEqual({ x: 1024, y: 720 })
+  })
+
+  it('grows the box when no slot is left inside it', () => {
+    const r = placeInZone({ ...zone, h: 200 }, size, [at(1024, 540), at(1314, 540)])
+    expect(r.pos).toEqual({ x: 1024, y: 700 })
+    expect(r.h).toBe(344)
+  })
+
+  it('uses one column in a box narrower than a card and never shrinks the box', () => {
+    const r = placeInZone({ ...zone, w: 160 }, size, [at(1024, 540)])
+    expect(r.pos).toEqual({ x: 1024, y: 700 })
+    expect(r.h).toBe(1300)
+  })
+})
+
+describe('placeItemInZone and itemInZone', () => {
+  const zone = { id: 'z', pos_x: 0, pos_y: 0, w: 600, h: 1300 }
+  const old = '2026-01-01T00:00:00Z'
+  const now = Date.parse('2026-11-25T12:00:00Z')
+
+  it('a moved card is not its own obstacle', () => {
+    const a = card('a', 24, 40, { updated_at: old })
+    expect(placeItemInZone({ items: [a] }, zone, a, now).pos).toEqual({ x: 24, y: 40 })
+  })
+
+  it('other cards are obstacles, a card closed long ago is not', () => {
+    const a = card('a', 24, 40, { updated_at: old })
+    const gone = card('g', 314, 40, { status: 'done', closed_at: old, updated_at: old })
+    expect(placeItemInZone({ items: [a, gone] }, zone, { title: 'Ný', tags: [] }, now).pos).toEqual({ x: 314, y: 40 })
+  })
+
+  it('a card lies in a box when its centre does', () => {
+    expect(itemInZone({}, zone, card('a', 24, 40, { updated_at: old }))).toBe(true)
+    expect(itemInZone({}, zone, card('b', 590, 40, { updated_at: old }))).toBe(false)
+    expect(itemInZone({}, zone, card('c', 24, 1290, { updated_at: old }))).toBe(false)
+  })
+})
+
+describe('placeItem and boxes', () => {
+  it('without a module, a new card never lands inside a box', () => {
+    const zone = { id: 'z', pos_x: 0, pos_y: 0, w: 600, h: 1300 }
+    const b = { packages: [], modules: [], items: [], zones: [zone] }
+    const pos = placeItem(b, null, { title: 'Nýtt', tags: [] })
+    const rect = { ...pos, w: S.cardW, h: estimateCardHeight({ title: 'Nýtt', tags: [], updated_at: new Date().toISOString() }) }
+    expect(overlaps(rect, { x: 0, y: 0, w: 600, h: 1300 })).toBe(false)
+  })
+
+  it('a card for a module inside a box still lands beside its module', () => {
+    const plain = board()
+    const m2 = boardRects(plain).modules.get('m2')
+    const around = { id: 'z', pos_x: m2.x - 2000, pos_y: m2.y - 2000, w: 6000, h: 6000 }
+    expect(placeItem({ ...plain, zones: [around] }, 'm2')).toEqual(placeItem(plain, 'm2'))
   })
 })
