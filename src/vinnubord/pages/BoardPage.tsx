@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { writeLastProject } from '../lib/lastProject'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from '../../shared/hooks/useMediaQuery'
@@ -58,6 +59,11 @@ export function BoardPage() {
   const { slug } = useParams<{ slug: string }>()
   const { user, projects, loading: viewerLoading, error: viewerError, reload: reloadViewer } = useViewer()
   const project = projects.find((p) => p.slug === slug) ?? null
+  // "/" comes back to the board that was open last (lib/lastProject).
+  const projectSlug = project?.slug ?? null
+  useEffect(() => {
+    if (projectSlug) writeLastProject(projectSlug)
+  }, [projectSlug])
   const { data, loading: boardLoading, error, reload, live } = useBoardData(project?.id ?? null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [openModuleId, setOpenModuleId] = useState<string | null>(null)

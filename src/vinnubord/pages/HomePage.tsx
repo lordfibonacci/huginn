@@ -4,9 +4,11 @@ import { useViewer } from '../hooks/useViewer'
 import { Loader } from '../components/Loader'
 import { LoadError } from '../components/LoadError'
 import { Shell } from '../components/Shell'
+import { readLastProject, startSlug } from '../lib/lastProject'
 import { NoAccessPage } from './NoAccessPage'
 
-// "/" sends a participant to their first project, a signed in non participant
+// "/" sends a participant to the project this browser opened last (the first
+// by name when there is none), a signed in non participant
 // to NoAccessPage, and everyone else to /login. A failed membership load
 // shows a retry, never NoAccessPage.
 export function HomePage() {
@@ -28,7 +30,8 @@ export function HomePage() {
       </Shell>
     )
   }
-  if (projects.length > 0) return <Navigate to={`/p/${projects[0].slug}`} replace />
+  const slug = startSlug(projects, readLastProject())
+  if (slug) return <Navigate to={`/p/${slug}`} replace />
   return (
     <Shell>
       <NoAccessPage />
