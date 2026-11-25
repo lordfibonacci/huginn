@@ -32,7 +32,7 @@ PostgREST returns at most 1000 rows per request and cuts the rest without an err
 
 ## Open
 
-1. fastaust: remove the `ROW_CAP` guard in `scripts/deals/huginn.mjs` (`boardProblem`). A list of 1000 rows or more is now whole, and the guard would stop the mirror and the inbox for no reason once a fastaust list reaches 1000 rows (chat, about March 2027). Recorded as an action on the card.
+1. Done 2026-11-25: the `ROW_CAP` guard is gone from `scripts/deals/huginn.mjs` in fastaust (8e8dd70, merged and pushed; Opus review and Fable final review clean, 180 tests in `scripts/deals`, `--check` against the live board unchanged). A CLI older than 497c399 behind `HUGINN_CLI` would now cut silently: accepted, no override is set.
 2. Lists are read whole and grow with the project. Rulings of metta grow by about 60 a day, one more request per load roughly every 17 days. Bounding plans, rulings, files, actions and comments by the item window (open, or closed within 90 days) would stop that. Not built, not on a card yet: Heimir decides.
 3. Pages are not a snapshot (see "loadBoard reads every list in pages" in `CLAUDE.md`). Accepted.
 4. Rows that share created_at now come in id order on the web, as the mirror already sorted them. The questions a quick analysis writes in one insert (10 groups on metta) can show in another order than before the fix, 3 of them on open cards. The order the model gave them was never stored. Accepted.
