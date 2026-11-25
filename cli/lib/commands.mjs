@@ -21,6 +21,7 @@ import {
   openWork,
   pushBundle,
   putFile,
+  resizeZone,
   setFileNote,
   setPlanStatus,
   updateAction,
@@ -32,6 +33,7 @@ import {
   CREATE_STATUSES,
   PLAN_STATUSES,
   guardClose,
+  itemInZone,
   mimeFor,
   normalizeNote,
   normalizeRepoPath,
@@ -40,8 +42,10 @@ import {
   parseKeywords,
   parseTags,
   placeItem,
+  placeItemInZone,
   resolveModule,
   resolveShort,
+  resolveZone,
   statusPatch,
   validateUpload,
 } from './write.mjs'
@@ -128,10 +132,13 @@ const WRITE = {
   item: {
     create: {
       usage:
-        'item create --title T [--body-file f.md] [--module slug] [--tags a,b] [--keywords a,b] [--file path ...] [--status new|waiting|ready|building|parked] [--waiting-on short]',
+        'item create --title T [--summary ".."] [--body-file f.md] [--module slug] [--zone "Kassi"] [--tags a,b] [--keywords a,b] [--source-ref ".."] [--file path ...] [--status new|waiting|ready|building|parked] [--waiting-on short]',
       args: 0,
       spec: {
         title: 'value',
+        summary: 'value',
+        'source-ref': 'value',
+        zone: 'value',
         'body-file': 'value',
         module: 'value',
         tags: 'value',
@@ -153,7 +160,11 @@ const WRITE = {
         const waitingOn =
           flags['waiting-on'] !== undefined ? resolveShort(board.participants, flags['waiting-on']) : undefined
         const sp = statusPatch(flags.status, waitingOn)
-        const pos = placeItem(board, moduleId, { title, tags, fileCount: files.length })
+        const card = { title, tags, module_id: moduleId, fileCount: files.length }
+        const zone = flags.zone !== undefined ? resolveZone(board.zones, flags.zone) : null
+        const placed = zone ? placeItemInZone(board, zone, card) : null
+        const pos = placed ? placed.pos : placeItem(board, moduleId, card)
+        if (zone && placed.h > zone.h) await resizeZone(client, zone.id, placed.h)
 
         const item = await withTagHint(() =>
           createItem(client, {
@@ -161,6 +172,8 @@ const WRITE = {
             userId: user.id,
             title,
             body,
+            summary: flags.summary !== undefined ? textOrNull(flags.summary) : null,
+            sourceRef: flags['source-ref'] !== undefined ? textOrNull(flags['source-ref']) : null,
             moduleId,
             tags,
             keywords: parseKeywords(flags.keywords),
@@ -187,9 +200,11 @@ const WRITE = {
 
     set: {
       usage:
-        'item set <id> [--status ..] [--waiting-on short|none] [--summary ".."] [--body-file f.md] [--module slug|none] [--tags a,b] [--keywords a,b] [--next-step ".."] [--next-prompt-file f.txt] [--source-ref ".."] [--force]',
+        'item set <id> [--title ".."] [--status ..] [--waiting-on short|none] [--summary ".."] [--body-file f.md] [--module slug|none] [--zone "Kassi"] [--tags a,b] [--keywords a,b] [--next-step ".."] [--next-prompt-file f.txt] [--source-ref ".."] [--force]',
       args: 1,
       spec: {
+        title: 'value',
+        zone: 'value',
         status: 'value',
         'waiting-on': 'value',
         summary: 'value',
@@ -213,6 +228,11 @@ const WRITE = {
             ? resolveShort(await listParticipants(client, project.id), flags['waiting-on'])
             : undefined
         const patch = { ...statusPatch(flags.status, waitingOn) }
+        if (flags.title !== undefined) {
+          const title = String(flags.title).trim()
+          if (!title) throw new Error('--title má ekki vera tómt.')
+          patch.title = title
+        }
         if (flags.summary !== undefined) patch.summary = textOrNull(flags.summary)
         if (body !== undefined) patch.body = textOrNull(body)
         if (flags.module !== undefined) patch.module_id = resolveModule(await listModules(client, project.id), flags.module)
@@ -221,6 +241,30 @@ const WRITE = {
         if (flags['next-step'] !== undefined) patch.next_step = textOrNull(flags['next-step'])
         if (nextPrompt !== undefined) patch.next_prompt = textOrNull(nextPrompt)
         if (flags['source-ref'] !== undefined) patch.source_ref = textOrNull(flags['source-ref'])
+        let already = null
+        if (flags.zone !== undefined) {
+          const board = await loadBoard(client, project.id)
+          const zone = resolveZone(board.zones, flags.zone)
+          const current = {
+            ...(board.items.find((i) => i.id === item.id) ?? item),
+            ...(patch.title ? { title: patch.title } : {}),
+            ...(patch.module_id !== undefined ? { module_id: patch.module_id } : {}),
+          }
+          if (itemInZone(board, zone, current)) {
+            already = zone.title
+          } else {
+            const placed = placeItemInZone(board, zone, current)
+            if (placed.h > zone.h) await resizeZone(client, zone.id, placed.h)
+            patch.pos_x = placed.pos.x
+            patch.pos_y = placed.pos.y
+          }
+        }
+        if (already !== null && Object.keys(patch).length === 0) {
+          return {
+            json: { ok: true, id: item.id },
+            text: `Verk #${shortId(item.id)} er þegar í kassanum ${oneLine(already)}.`,
+          }
+        }
         if (Object.keys(patch).length === 0) throw new Error('Ekkert að breyta. Sjá huginn --help.')
 
         const updated = await withTagHint(() => guardedUpdate(client, item, patch, flags.force === true))

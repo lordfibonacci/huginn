@@ -36,7 +36,7 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 | `huginn login` | Skráir sig inn með lykilorði og prófar credentials |
 | `huginn whoami` | Notandi, verkefni og þátttakandi |
 | `huginn pull` | Sækir borðið og prentar stöðuna sem markdown |
-| `huginn pull --json` | Allt borðið sem JSON (sama lögun og `BoardData` í vefnum) |
+| `huginn pull --json` | Allt borðið sem JSON (sama lögun og `BoardData` í vefnum, kassar borðsins eru í `zones`) |
 | `huginn pull --since <ISO>` | Aðeins verk sem breyttust frá þeim tíma, með því sem þeim fylgir |
 | `huginn pull --brief` | Ein lína, t.d. `Huginn: 2 bíða Claude, 1 bíða Árna, 0 bíða Heimis`. Telur opin verk sem bíða hvers þátttakanda eftir sömu reglu og vefurinn (`waitsFor`: verkið bíður hans eða hann á opið handtak á því). Með `--json` listi af `{ short, display_name, count }`. Fer ekki saman við `--since` |
 | `huginn sync` | Speglar verkin í `docs/huginn/` og skrifar `docs/huginn/STATUS.md` (sjá Spegill) |
@@ -48,8 +48,8 @@ Með `npm link` í rót repoins verður til skipunin `huginn`. Annars `node "D:/
 
 | Skipun | Dæmi |
 |---|---|
-| `item create` | `huginn item create --title "Nýtt verk" --body-file lysing.md --module efnaskra --tags a,b --keywords "social media,efni,instagram" --file mynd.png --file skjal.pdf` |
-| `item set <id>` | `huginn item set 1a2b3c4d --status waiting --waiting-on H --summary "Bíður svars"` |
+| `item create` | `huginn item create --title "Nýtt verk" --summary "Ein lína um stöðuna" --body-file lysing.md --module efnaskra --tags a,b --keywords "social media,efni,instagram" --source-ref docs/skjal.md --zone "Óraðað" --file mynd.png --file skjal.pdf` |
+| `item set <id>` | `huginn item set 1a2b3c4d --status waiting --waiting-on H --summary "Bíður svars" --title "Nýr titill" --zone "Tilboð"` |
 | `item close <id>` | `huginn item close 1a2b3c4d` (staðan Lokið), `--dropped` fyrir Hætt við |
 | `question ask <item>` | `huginn question ask 1a2b3c4d --to Á --body "Hvaða litur?"` |
 | `question answer <qid>` | `huginn question answer 9f8e7d6c --body "Blár"` |
@@ -77,7 +77,8 @@ Með `--json` skilar hver skrifskipun `{ "ok": true, "id": "<uuid>" }`.
 - **Hreinsun.** `--module none` tekur verkið úr módúl, `--tags ""` tæmir merki, `--keywords ""` tæmir leitarorð, tómt gildi á textareit tæmir hann.
 - **Tögg og leitarorð.** `--tags` tekur aðeins tögg af listanum (`tag list`); gagnagrunnurinn skrifar stafsetningu listans á verkið og hafnar öðru. `--keywords a,b` eru falin leitarorð (lágstafir, komma á milli), 10 til 15 á verk, íslensk og ensk; `item set --keywords` skiptir listanum út, `--keywords ""` tæmir. Þau standa í `item.md` sem `Leitarorð:`.
 - **Skrár.** Sömu reglur og vefurinn: hámark 50 MB, nafn að hámarki 180 stafir, geymt í `hg-files`. `--file` má endurtaka. Skrá með --repo-path er eitt skjal á hverja slóð á hverju verki: sama slóð aftur uppfærir röðina og eintakið, sömu bæti gera ekkert, og slóðin er stöðluð (bakstrik, ./, bil).
-- **Staðsetning.** Nýtt spjald lendir við hlið módúlsins eins og í vefnum, annars efst til vinstri við það sem er á borðinu, aldrei ofan á spjaldi eða pakka.
+- **Staðsetning.** Nýtt spjald lendir við hlið módúlsins eins og í vefnum, annars efst til vinstri við það sem er á borðinu, aldrei ofan á spjaldi eða pakka. Módúllaust spjald án --zone lendir heldur aldrei inni í kassa.
+- **Kassar.** `--zone <nafn>` setur spjaldið á lausan stað í kassanum með því nafni (há- og lágstafir skipta ekki máli). Á `item create` ræður kassinn staðnum í stað módúlsins. Á `item set` færir það spjaldið, nema það liggi þegar í kassanum. Fullur kassi stækkar niður á við. Aðeins aðalborðið: staðsetning í vistaðri sýn er hvorki lesin né skrifuð. Tilfærsla hreyfir engan stimpil og ekkert verður ólesið. Nafn sem enginn kassi ber, eða fleiri en einn, er villa og ekkert er skrifað.
 - **Rofar.** Óþekktur rofi er villa. Gildi sem byrjar á `--` þarf að gefa sem `--body=--gildi`.
 
 Höfundar, tímar, saga (`hg_events`) og `closed_at` koma frá gagnagrunninum. Þegar síðustu spurningu er svarað fer verkið sjálfkrafa í bið eftir Claude.

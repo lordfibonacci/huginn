@@ -97,6 +97,14 @@ export async function updateItem(client, id, patch) {
   return data[0]
 }
 
+// A box grown to hold a card the CLI placed in it. The size is shared by
+// every view; the position is never written from here.
+export async function resizeZone(client, id, h) {
+  const { data, error } = await client.from('hg_zones').update({ h: Math.round(h) }).eq('id', id).select('id')
+  if (error) fail('Gat ekki stækkað kassann', error)
+  if (!data?.length) fail('Kassinn fannst ekki eða þú hefur ekki aðgang að honum.')
+}
+
 export async function askQuestion(client, { projectId, itemId, userId, askedTo, body }) {
   const { data, error } = await client
     .from('hg_questions')
