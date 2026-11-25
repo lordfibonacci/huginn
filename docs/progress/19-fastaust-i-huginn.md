@@ -1,15 +1,15 @@
 # 19 Vinnuborð: fastaust sem Huginn verkefni (plan 19)
 
 Date: 2026-11-25
-Branch: `feat/fastaust-cli` (commits 82ba3c7, ffcef3b, efe951a and the docs commit, on top of b9ea894). Not merged or pushed when this was written.
+Branch: `feat/fastaust-cli` (commits 82ba3c7, ffcef3b, efe951a, 9e9d2b6, 897bc46, ffcd134 and the closing docs commit, on top of b9ea894), merged to main.
 Plan: `docs/superpowers/plans/2026-11-25-fastaust-i-huginn.md`
 Spec: `docs/superpowers/specs/2026-11-25-fastaust-i-huginn-design.md`
 
-Status: **built (2026-11-25)**. No migration. Final whole branch review (Fable): pending, the controller updates this line.
+Status: **built (2026-11-25)**. No migration. The final whole branch review (Fable) found 0 Critical and 2 Important (a parity test for `itemInZone`, a test of a throwing `localStorage`); both and the Minors it kept were fixed in one round, and its re-review of that round came back clean. Tasks 1, 3 and 4 were each reviewed on Opus with no Critical or Important findings.
 
 ## What was built
 
-Fasteignasala Austurlands is the second Huginn project, slug `fastaust`. It has seven boxes as the stages of a sale and no packs or modules. Its cards are written by `scripts/sync-huginn.mjs` in the fastaust repo from the eignalog headers; that script is the fastaust plan and is not part of this branch. The task order was: CLI boxes and placement (1), the data (2), CLI flags (3), home page (4), docs (5).
+Fasteignasala Austurlands is the second Huginn project, slug `fastaust`. It has seven boxes as the stages of a sale and no packs or modules. Its cards are to be written by `scripts/sync-huginn.mjs` in the fastaust repo from the eignalog headers; that script is the fastaust plan and is not part of this branch. The task order was: CLI boxes and placement (1), the data (2), CLI flags (3), home page (4), docs (5).
 
 1. **CLI boxes (task 1).** `loadBoard` in `cli/lib/client.mjs` reads `hg_zones` into `zones` (so `pull --json` carries them). `cli/lib/write.mjs` gets `ZONE_PAD`, `ZONE_TOP`, `resolveZone` (one box by name, any case, an unknown or doubled name is an error that lists the boxes), `placeInZone` (first free slot, columns left to right and rows top to bottom, and the height the box needs), `placeItemInZone` and `itemInZone` (the centre rule of `zoneMembers` in `lib/zones.ts`, border included). `placeItem` now treats boxes as obstacles for a card with no module to sit beside, so a module less card without `--zone` never lands inside a box.
 2. **Data (task 2).** Inserted by the controller through the Supabase MCP, see the next section.
@@ -28,7 +28,7 @@ Project `fastaust` in the shared Supabase project `czdjxtsjgughimlazdmu` (insert
 ## What was checked
 
 - `npm run test`: 706 tests green in 45 files (680 before this branch). `npm run build`: green. No database code in `src`, so no `smoke:hg` run.
-- Task 1: RED before the section (12 failed, 59 passed in `write.test.mjs`), then `write.test.mjs` and `parity.test.mjs` 83 passed. The read only live `pull` was on metta (fastaust did not exist yet, it came with task 2) and returned `zones`.
+- Task 1: RED before the section (12 failed, 59 passed in `write.test.mjs`), then `write.test.mjs` and `parity.test.mjs` 83 passed. The read only live `pull` was on metta and returned `zones`.
 - Task 3, live against `fastaust` (a test card, `e378dc80`):
   1. `item create` with `--zone`: `{"ok": true, "id": "e378dc80-..."}`, exit 0. `pull` showed it at x 24, y 40 in Óraðað.
   2. `item set --zone Tilboð`: `Verk uppfært #e378dc80: Prufa úr plani, má hunsa, Í bið`, exit 0. `pull` showed it at x 2664, y 40.
