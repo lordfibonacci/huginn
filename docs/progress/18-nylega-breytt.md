@@ -31,7 +31,7 @@ Minor notes kept, not fixed:
 1. On the phone the filter sheet's "Hreinsa" clears packages, tags and the view only, never the pills (the existing rule for every pill), so the recent pill is switched off on the phone by tapping it. The top bar "Hreinsa" on wider boards clears it.
 2. A plan reorder moves the plan's `updated_at` and so counts as a change, a known and accepted slip.
 3. Real phone and iPad checks have not run. The browser checks ran in Playwright at 1440x900, 1280x800 and 390x844.
-4. `loadBoard` in `lib/api.ts` reads comments, files, questions, actions and rulings with no limit in `created_at` ascending order. Past the PostgREST row cap (1000 rows of one kind) the newest rows would drop, so `changedAt`, the chat tab and the action chip would run old. Metta is far below it. The fix is to order those five queries descending; nothing in `src` depends on their order.
+4. `loadBoard` in `lib/api.ts` reads comments, files, questions, actions and rulings with no limit in `created_at` ascending order. Past the PostgREST row cap (1000 rows of one kind) the newest rows would drop, so `changedAt`, the chat tab and the action chip would run old. Metta is far below it. The fix is to order those five queries descending; nothing in `src` depends on their order. Fixed 2026-11-25 by reading every list in pages instead of reordering, see `20-radathak.md`.
 
 ## What Heimir checks
 
