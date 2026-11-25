@@ -46,7 +46,7 @@ Project `fastaust` in the shared Supabase project `czdjxtsjgughimlazdmu` (insert
 
 ## Open
 
-1. The fastaust plan (the sync script in the fastaust repo, and by spec section 10 one paragraph in `.claude/skills/email-sweep/SKILL.md` beside its two additions to steps 1 and 6 and one paragraph in the fastaust `CLAUDE.md`) is not built. It calls `cli/huginn.mjs` from the main checkout of this repo, so it starts after the merge and push.
+1. The fastaust plan (the sync script in the fastaust repo, and by spec section 10 one paragraph in `.claude/skills/email-sweep/SKILL.md` beside its two additions to steps 1 and 6 and one paragraph in the fastaust `CLAUDE.md`) was merged to main in fastaust on 2026-11-25 (4cc352f). Its last task, the first fill with Heimir's table, was running in a fastaust session when this was written (33 open cards on the board). It calls `cli/huginn.mjs` from the main checkout of this repo, so that checkout stays on main.
 2. The test card `e378dc80` on fastaust is dropped and fades from the board by itself three days after it was closed.
 3. `itemInZone` copies the centre rule of `zoneMembers`; `parity.test.mjs` covers it, so a change to one fails until the other follows.
 4. A card placed with `--zone` goes at the main board position only. In a saved view the card keeps whatever view position it has, and the CLI neither reads nor writes view positions.
