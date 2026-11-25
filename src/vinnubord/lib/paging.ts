@@ -48,7 +48,8 @@ export async function fetchAll<T>(page: (from: number, to: number) => PromiseLik
   for (let n = 0; n < MAX_PAGES; n++) {
     const res = await page(rows.length, rows.length + PAGE_SIZE - 1)
     if (res.error) {
-      // The list shrank between two pages, so the rows already read are all of it.
+      // The list shrank between two pages: nothing is left at this offset, so
+      // the read ends. A row deleted from an earlier page hides one row this load.
       if (n > 0 && res.error.code === RANGE_PAST_END) return { data: rows, error: null }
       return { data: [], error: res.error }
     }

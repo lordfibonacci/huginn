@@ -108,6 +108,13 @@ describe('fetchAll', () => {
       { data: null, error: pastEnd, count: null },
     ])
     expect(await fetchAll(s.page)).toEqual({ data: rows(1000), error: null })
+    // The same when the server answers with an empty page instead of refusing the offset.
+    const empty = scripted([
+      { data: rows(1000), error: null, count: 1001 },
+      { data: [], error: null, count: 1001 },
+    ])
+    expect(await fetchAll(empty.page)).toEqual({ data: rows(1000), error: null })
+    expect(empty.calls).toHaveLength(2)
   })
 
   it('fails with the error of the first page, a refused offset included', async () => {

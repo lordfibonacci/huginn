@@ -637,12 +637,13 @@ try {
     for (const t of Object.keys(LISTS15)) {
       const r = await sb.from(t).select('*', { count: 'exact', head: true }).eq('project_id', projectId)
       if (r.error) throw new Fail(`count ${t}: ${r.error.message}`)
+      expect(typeof r.count === 'number', `count ${t}: the server gave no count`)
       before15[t] = r.count
     }
     expect(before15.hg_rulings > 1000, `metta holds ${before15.hg_rulings} rulings, this scenario needs more than 1000`)
     const board15 = await loadBoard(sb, projectId)
     for (const [t, key] of Object.entries(LISTS15)) {
-      // Others may write while this runs and nobody deletes, so never fewer than the count taken first.
+      // Others may add rows while this runs, so never fewer than the count taken first. A row deleted in that moment fails the run: run it again.
       expect(board15[key].length >= before15[t], `loadBoard gave ${board15[key].length} ${key}, the table holds ${before15[t]}`)
     }
     const ids15 = new Set(board15.rulings.map((r) => r.id))
