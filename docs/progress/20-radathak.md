@@ -22,7 +22,7 @@ PostgREST returns at most 1000 rows per request and cuts the rest without an err
 - Task 2 (loadBoard and smoke), Opus: approved, no Critical or Important, four Minor (smoke scenario 15 details, all in the plan's text), triaged in the final review. The browser check of Step 7 passed: 1118 rulings, all distinct, "Plan A, grunnur" runs to R17, the dot is lit.
 - Task 3 (docs), Sonnet: approved, no Critical or Important, two Minor (wording), one rejected, one confirmed against the browser check.
 - Final review of the branch, Fable: no Critical or Important. Fixed in one wave: the comment about a list that shrank, tests for an empty later page and for three parity scripts, the smoke comment and a check that the server gave a count, two sentences in CLAUDE.md, open item 4 below. Rejected: reading on without a count (it would cost 18 extra requests and only matters if the cap is lowered and the count lost), the number in the MAX_PAGES message, counting hg_items in the smoke (its query carries a time window), the wording "browser check of Task 2", and hg_unread in the BoardList type (nobody calls it as a table).
-- The fix wave: filled in by the controller.
+- The fix wave, Opus: clean, all ten items as ordered, no new findings.
 
 ## What Heimir checks
 
