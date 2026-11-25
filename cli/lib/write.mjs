@@ -497,9 +497,9 @@ export function placeItem(board, moduleId, card = { title: '', tags: [] }, now =
 // larger: the box name sits on the top border.
 export const ZONE_PAD = 24
 export const ZONE_TOP = 40
-// Rows are tried every ZONE_SCAN px, far enough down that a slot always turns up.
+// Rows are tried every ZONE_SCAN px, down to the first row below the lowest
+// card, which is always free.
 const ZONE_SCAN = 20
-const ZONE_SCAN_MAX = 2000
 
 const foldZoneName = (s) => String(s).trim().toLocaleLowerCase('is')
 
@@ -529,8 +529,10 @@ export function placeInZone(zone, size, cards) {
   }))
   const x0 = zone.pos_x + ZONE_PAD
   const y0 = zone.pos_y + ZONE_TOP
+  const bottom = Math.max(y0, ...grown.map((o) => o.y + o.h))
+  const lastRow = Math.ceil((bottom - y0) / ZONE_SCAN)
   let pos = { x: x0, y: y0 }
-  scan: for (let row = 0; row < ZONE_SCAN_MAX; row++) {
+  scan: for (let row = 0; row <= lastRow; row++) {
     for (let col = 0; col < cols; col++) {
       const p = { x: x0 + col * stepX, y: y0 + row * ZONE_SCAN }
       if (!grown.some((o) => overlaps({ ...p, ...size }, o))) {

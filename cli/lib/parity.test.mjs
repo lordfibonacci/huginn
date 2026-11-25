@@ -8,6 +8,7 @@ import * as webUpload from '../../src/vinnubord/lib/upload.ts'
 import * as webTags from '../../src/vinnubord/lib/tags.ts'
 import * as webCards from '../../src/vinnubord/lib/cards.ts'
 import * as webPlacement from '../../src/vinnubord/lib/placement.ts'
+import * as webZones from '../../src/vinnubord/lib/zones.ts'
 import {
   BOARD_SIZES,
   CARD_STAMP_DAYS,
@@ -17,6 +18,8 @@ import {
   NEW_CARD_GAP,
   NOTE_MAX,
   TAG_MAX,
+  estimateCardHeight,
+  itemInZone,
   normalizeNote,
   normalizeTag,
   placeNewCard,
@@ -149,6 +152,33 @@ describe('write helpers parity with the web', () => {
       cases.push({ anchor: a, center: { x: rand() * 1600, y: rand() * 1600 }, size: { w: 250, h: 120 }, obstacles })
     }
     for (const c of cases) expect(placeNewCard(c)).toEqual(webPlacement.placeNewCard(c))
+  })
+
+  it('itemInZone agrees with zoneMembers on, just inside and just outside each border', () => {
+    const zone = { id: 'z', pos_x: 100, pos_y: 200, w: 600, h: 1300 }
+    const zoneRect = webZones.zoneRect(zone, new Map())
+    const board = { items: [], files: [], actions: [], plans: [] }
+    const base = { id: 'i', status: 'new', title: 'Spjald', tags: [], module_id: null, updated_at: '2026-01-01T00:00:00Z' }
+    const w = BOARD_SIZES.cardW
+    const h = estimateCardHeight(base, board)
+    const mid = { x: 400, y: 850 }
+    // The centre of the card, and whether it lies in the box.
+    const borders = {
+      left: (d) => ({ ...mid, x: 100 + d }),
+      right: (d) => ({ ...mid, x: 700 - d }),
+      top: (d) => ({ ...mid, y: 200 + d }),
+      bottom: (d) => ({ ...mid, y: 1500 - d }),
+    }
+    for (const [name, centre] of Object.entries(borders)) {
+      for (const [d, inside] of [[0, true], [1, true], [-1, false]]) {
+        const c = centre(d)
+        const item = { ...base, pos_x: c.x - w / 2, pos_y: c.y - h / 2 }
+        const rect = { x: item.pos_x, y: item.pos_y, w, h: estimateCardHeight(item, board) }
+        const web = webZones.zoneMembers(zoneRect, [{ id: item.id, rect }], []).cards.length === 1
+        expect(itemInZone(board, zone, item), `${name} ${d}`).toBe(web)
+        expect(web, `${name} ${d}`).toBe(inside)
+      }
+    }
   })
 
   it('board sizes agree with the --hg-* tokens in vinnubord.css and NEW_CARD_SIZE in Board.tsx', () => {

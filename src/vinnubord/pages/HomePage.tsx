@@ -7,10 +7,10 @@ import { Shell } from '../components/Shell'
 import { readLastProject, startSlug } from '../lib/lastProject'
 import { NoAccessPage } from './NoAccessPage'
 
-// "/" sends a participant to the project this browser opened last (the first
-// by name when there is none), a signed in non participant
-// to NoAccessPage, and everyone else to /login. A failed membership load
-// shows a retry, never NoAccessPage.
+// "/" sends a participant to the project this browser opened last, or to the
+// first by name when nothing is stored or they have left that project, a
+// signed in non participant to NoAccessPage, and everyone else to /login. A
+// failed membership load shows a retry, never NoAccessPage.
 export function HomePage() {
   const { t } = useTranslation()
   const { user, projects, loading, error, reload } = useViewer()

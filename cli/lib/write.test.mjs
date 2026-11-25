@@ -525,6 +525,14 @@ describe('placeInZone', () => {
     expect(r.pos).toEqual({ x: 1024, y: 700 })
     expect(r.h).toBe(1300)
   })
+
+  it('lands below the lowest card however long the column is', () => {
+    const cards = Array.from({ length: 300 }, (_, k) => at(1024, 540 + k * 160))
+    const r = placeInZone({ ...zone, w: 300 }, size, cards)
+    for (const c of cards) expect(overlaps({ ...r.pos, ...size }, c)).toBe(false)
+    expect(r.pos).toEqual({ x: 1024, y: 540 + 300 * 160 })
+    expect(r.h).toBe(r.pos.y + 120 + 24 - 500)
+  })
 })
 
 describe('placeItemInZone and itemInZone', () => {
@@ -543,6 +551,12 @@ describe('placeItemInZone and itemInZone', () => {
     expect(placeItemInZone({ items: [a, gone] }, zone, { title: 'Ný', tags: [] }, now).pos).toEqual({ x: 314, y: 40 })
   })
 
+  it('a card closed under three days ago is still an obstacle', () => {
+    const closed_at = new Date(now - 2 * 86_400_000).toISOString()
+    const lingering = card('l', 24, 40, { status: 'done', closed_at, updated_at: old })
+    expect(placeItemInZone({ items: [lingering] }, zone, { title: 'Ný', tags: [] }, now).pos).toEqual({ x: 314, y: 40 })
+  })
+
   it('a card lies in a box when its centre does', () => {
     expect(itemInZone({}, zone, card('a', 24, 40, { updated_at: old }))).toBe(true)
     expect(itemInZone({}, zone, card('b', 590, 40, { updated_at: old }))).toBe(false)
@@ -557,6 +571,17 @@ describe('placeItem and boxes', () => {
     const pos = placeItem(b, null, { title: 'Nýtt', tags: [] })
     const rect = { ...pos, w: S.cardW, h: estimateCardHeight({ title: 'Nýtt', tags: [], updated_at: new Date().toISOString() }) }
     expect(overlaps(rect, { x: 0, y: 0, w: 600, h: 1300 })).toBe(false)
+  })
+
+  it('a card for a module in no pack keeps out of the boxes too', () => {
+    const plain = board()
+    const zone = { id: 'z', pos_x: 1000, pos_y: 0, w: 420, h: 1300 }
+    const zoneRect = { x: 1000, y: 0, w: 420, h: 1300 }
+    const h = estimateCardHeight({ title: 'Nýtt', tags: [], module_id: 'm4', updated_at: new Date().toISOString() })
+    const rectFor = (b) => ({ ...placeItem(b, 'm4', { title: 'Nýtt', tags: [] }), w: S.cardW, h })
+    // With no box there the card would land on that spot.
+    expect(overlaps(rectFor(plain), zoneRect)).toBe(true)
+    expect(overlaps(rectFor({ ...plain, zones: [zone] }), zoneRect)).toBe(false)
   })
 
   it('a card for a module inside a box still lands beside its module', () => {
