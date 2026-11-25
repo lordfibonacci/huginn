@@ -61,3 +61,5 @@ After that block:
 Opus review 2026-11-25, all Minor. Fixed: a single project name had no ellipsis, the dot came back too early (339, now 359), the dot was removed for screen readers. Rejected: the hidden brand text (neither heading nor link), WebKit on Windows cuts the select text without an ellipsis (existing, inside the box), the literal outline offset (stroke width exception).
 
 Seen and left out: with an empty open search field the first tap below the bar is lost, because the search row closes on blur and the page moves under the finger.
+
+Sonnet re-review of the fixes: clean. Fable final review: code clean, the CLAUDE.md line added. Rejected: "M…" at 320 px (the picker shows full names), and the 2 px taller select box and the dot halo, both on main before. Safari and iOS are not tested.
