@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { putFile, setFileNote } from '../cli/lib/ops.mjs'
+import { loadBoard } from '../cli/lib/client.mjs'
 
-const TOTAL = 14
+const TOTAL = 15
 
 class Fail extends Error {}
 const must = (r, what) => {
@@ -628,6 +629,24 @@ try {
     const left14b = must(await sb.from('hg_view_zone_positions').select('zone_id').eq('view_id', v14b.id), 'positions after zone delete')
     expect(left14b.length === 0, `${left14b.length} zone positions survived the zone delete`)
     expect((await readItem()).updated_at === stamp14, 'a zone write touched the item updated_at')
+    passed++
+    scenario = '15 loadBoard pages'
+    // Read only. metta holds more than 1000 rulings, so one request cannot return them all.
+    const LISTS15 = { hg_plans: 'plans', hg_files: 'files', hg_questions: 'questions', hg_actions: 'actions', hg_rulings: 'rulings', hg_comments: 'comments', hg_reads: 'reads', hg_tags: 'tags', hg_zones: 'zones' }
+    const before15 = {}
+    for (const t of Object.keys(LISTS15)) {
+      const r = await sb.from(t).select('*', { count: 'exact', head: true }).eq('project_id', projectId)
+      if (r.error) throw new Fail(`count ${t}: ${r.error.message}`)
+      before15[t] = r.count
+    }
+    expect(before15.hg_rulings > 1000, `metta holds ${before15.hg_rulings} rulings, this scenario needs more than 1000`)
+    const board15 = await loadBoard(sb, projectId)
+    for (const [t, key] of Object.entries(LISTS15)) {
+      // Others may write while this runs and nobody deletes, so never fewer than the count taken first.
+      expect(board15[key].length >= before15[t], `loadBoard gave ${board15[key].length} ${key}, the table holds ${before15[t]}`)
+    }
+    const ids15 = new Set(board15.rulings.map((r) => r.id))
+    expect(ids15.size === board15.rulings.length, `loadBoard gave ${board15.rulings.length - ids15.size} rulings twice`)
     passed++
   } finally {
     // runs even on failure so nothing is left behind

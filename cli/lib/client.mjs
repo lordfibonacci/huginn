@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { huginnDir, loadCredentials } from './config.mjs'
+import { fetchAll, ordered } from './paging.mjs'
 
 // Data access for the CLI. Signs in as the user in ~/.huginn/credentials.json
 // with the anon key, so RLS decides what the tool sees. The session is cached
@@ -108,29 +109,38 @@ export async function getMe(client, projectId) {
   return data
 }
 
-// Mirror of loadBoard in src/vinnubord/lib/api.ts: same queries, same BoardData shape.
+// Mirror of loadBoard in src/vinnubord/lib/api.ts: same queries, same pages, same BoardData shape.
 export async function loadBoard(client, projectId) {
   const since = new Date(Date.now() - CLOSED_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString()
-  const byProject = (table) => client.from(table).select('*').eq('project_id', projectId)
+  // count: 'exact' tells fetchAll when a list is whole.
+  const byProject = (table) => client.from(table).select('*', { count: 'exact' }).eq('project_id', projectId)
+  // Every list is read in pages (paging.mjs): one request returns at most 1000 rows.
+  const all = (list) => fetchAll((from, to) => ordered(byProject(list), list).range(from, to))
 
   const results = await Promise.all([
     client.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
-    byProject('hg_participants').order('created_at'),
-    byProject('hg_packages').order('position'),
-    byProject('hg_modules').order('position'),
-    byProject('hg_items')
-      .or(`status.not.in.(done,dropped),closed_at.gte."${since}"`)
-      .order('created_at'),
-    byProject('hg_plans').order('position'),
-    byProject('hg_files').order('created_at'),
-    byProject('hg_questions').order('created_at'),
-    byProject('hg_actions').order('created_at'),
-    byProject('hg_rulings').order('created_at'),
-    byProject('hg_comments').order('created_at'),
-    byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
-    byProject('hg_reads'),
-    byProject('hg_tags').order('name'),
-    byProject('hg_zones').order('created_at'),
+    all('hg_participants'),
+    all('hg_packages'),
+    all('hg_modules'),
+    fetchAll((from, to) =>
+      ordered(byProject('hg_items').or(`status.not.in.(done,dropped),closed_at.gte."${since}"`), 'hg_items').range(from, to),
+    ),
+    all('hg_plans'),
+    all('hg_files'),
+    all('hg_questions'),
+    all('hg_actions'),
+    all('hg_rulings'),
+    all('hg_comments'),
+    // The newest EVENTS_LIMIT events on purpose, never paged. Reversed below.
+    client
+      .from('hg_events')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(EVENTS_LIMIT),
+    all('hg_reads'),
+    all('hg_tags'),
+    all('hg_zones'),
   ])
   const failed = results.find((r) => r.error)
   if (failed) fail('Gat ekki sótt borðið', failed.error)

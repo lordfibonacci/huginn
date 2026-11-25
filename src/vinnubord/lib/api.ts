@@ -2,6 +2,7 @@ import { supabase } from '../../shared/lib/supabase'
 import { normalizeNote, storageSafeName, validateUpload } from './upload'
 import { tagErrorMessage } from './tags'
 import { CLOSED_HISTORY_DAYS, EVENTS_LIMIT } from './boardWindow'
+import { fetchAll, ordered, type BoardList } from './paging'
 import {
   moduleDeleteBlock,
   participantErrorMessage,
@@ -55,7 +56,10 @@ async function currentUserId(): Promise<string> {
 
 export async function loadBoard(projectId: string): Promise<BoardData> {
   const since = new Date(Date.now() - CLOSED_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString()
-  const byProject = (table: string) => supabase.from(table).select('*').eq('project_id', projectId)
+  // count: 'exact' tells fetchAll when a list is whole.
+  const byProject = (table: string) => supabase.from(table).select('*', { count: 'exact' }).eq('project_id', projectId)
+  // Every list is read in pages (lib/paging.ts): one request returns at most 1000 rows.
+  const all = (list: BoardList) => fetchAll((from, to) => ordered(byProject(list), list).range(from, to))
 
   const [
     project,
@@ -80,29 +84,36 @@ export async function loadBoard(projectId: string): Promise<BoardData> {
     viewZonePositions,
   ] = await Promise.all([
     supabase.from('hg_projects').select('*').eq('id', projectId).maybeSingle(),
-    byProject('hg_participants').order('created_at'),
-    byProject('hg_packages').order('position'),
-    byProject('hg_modules').order('position'),
+    all('hg_participants'),
+    all('hg_packages'),
+    all('hg_modules'),
     // Open items, plus items closed in the last 90 days for the module history.
-    byProject('hg_items')
-      .or(`status.not.in.(done,dropped),closed_at.gte."${since}"`)
-      .order('created_at'),
-    byProject('hg_plans').order('position'),
-    byProject('hg_files').order('created_at'),
-    byProject('hg_questions').order('created_at'),
-    byProject('hg_actions').order('created_at'),
-    byProject('hg_rulings').order('created_at'),
-    byProject('hg_comments').order('created_at'),
-    // Newest first so the row cap drops old events, reversed below.
-    byProject('hg_events').order('created_at', { ascending: false }).limit(EVENTS_LIMIT),
-    byProject('hg_reads'),
-    supabase.rpc('hg_unread', { p_project: projectId }),
-    byProject('hg_views').order('position').order('created_at'),
-    byProject('hg_tags').order('name'),
-    byProject('hg_view_positions'),
-    byProject('hg_view_pack_positions'),
-    byProject('hg_zones').order('created_at'),
-    byProject('hg_view_zone_positions'),
+    fetchAll((from, to) =>
+      ordered(byProject('hg_items').or(`status.not.in.(done,dropped),closed_at.gte."${since}"`), 'hg_items').range(from, to),
+    ),
+    all('hg_plans'),
+    all('hg_files'),
+    all('hg_questions'),
+    all('hg_actions'),
+    all('hg_rulings'),
+    all('hg_comments'),
+    // The newest EVENTS_LIMIT events on purpose, never paged. Reversed below.
+    supabase
+      .from('hg_events')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(EVENTS_LIMIT),
+    all('hg_reads'),
+    fetchAll((from, to) =>
+      ordered(supabase.rpc('hg_unread', { p_project: projectId }, { count: 'exact' }), 'hg_unread').range(from, to),
+    ),
+    all('hg_views'),
+    all('hg_tags'),
+    all('hg_view_positions'),
+    all('hg_view_pack_positions'),
+    all('hg_zones'),
+    all('hg_view_zone_positions'),
   ])
 
   const results = [
