@@ -20,11 +20,13 @@ export const MIRROR_MAX_BYTES = 10 * 1024 * 1024
 export const DONE_WINDOW_DAYS = 30
 export const STATUS_FILE = 'STATUS.md'
 export const ITEM_FILE = 'item.md'
+export const HISTORY_FILE = 'saga.md'
 export const POINTER_SUFFIX = '.pointer.json'
 
 const SLUG_MAX = 60
 const NAME_MAX = 100
 const ID_SUFFIX = 6
+const CLOSED_LINE_MAX = 140
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const SLUG_MAP = { á: 'a', ð: 'd', é: 'e', í: 'i', ó: 'o', ú: 'u', ý: 'y', þ: 'th', æ: 'ae', ö: 'o' }
@@ -167,9 +169,9 @@ export const BAD_STORAGE_PATH = 'Storage slóð skrárinnar er ekki í möppu ve
 // 'pointer' (name is the pointer file), 'repo' (already in the repo, only
 // listed) or 'invalid' (storage_path fails storagePathOk, never downloaded).
 // The earlier file by created_at keeps a name; a later one that clashes with
-// it or with item.md, ignoring case, gets the id suffix.
+// it, with item.md or with saga.md, ignoring case, gets the id suffix.
 export function fileTargets(item, files, projectId) {
-  const used = new Set([ITEM_FILE])
+  const used = new Set([ITEM_FILE, HISTORY_FILE])
   const out = []
   for (const file of files.filter((f) => f.item_id === item.id).sort(byCreated)) {
     if (file.repo_path) {
@@ -189,7 +191,7 @@ export function fileTargets(item, files, projectId) {
   return out
 }
 
-// ---------- item.md ----------
+// ---------- item.md and saga.md ----------
 
 function fileLine({ file, kind, name }) {
   const note = file.note ? ` (${oneLine(file.note)})` : ''
@@ -201,8 +203,73 @@ function fileLine({ file, kind, name }) {
   return `${head}: afrit í möppunni, ${name}${stamp}`
 }
 
-// Rows may be the whole board's arrays; they are filtered to this item. extra
-// carries the module row and the file targets from fileTargets.
+function day(stamp) {
+  return iso(stamp).slice(0, 10)
+}
+
+// One line of text, cut at max characters with three dots.
+function clip(text, max) {
+  const line = oneLine(text)
+  return line.length > max ? `${line.slice(0, max).trimEnd()}...` : line
+}
+
+function plansOf(item, plans) {
+  return plans.filter((p) => p.item_id === item.id).sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || byId(a, b))
+}
+
+function closedActionsOf(item, actions) {
+  return actions.filter((a) => a.item_id === item.id && a.done_at).sort(byCreated)
+}
+
+function actionState(a) {
+  return a.cancelled ? 'fellt niður' : a.done_at ? 'lokið' : 'opið'
+}
+
+// A plan with its rulings: an open plan in item.md, a done one in saga.md.
+function planBlock(plan, rulings) {
+  const lines = [`### ${oneLine(plan.name)}`, '', `- Staða: ${PLAN_NAMES[plan.status] ?? oneLine(plan.status)}`]
+  if (plan.path) lines.push(`- Slóð: ${oneLine(plan.path)}`)
+  lines.push('')
+  const planRulings = rulings.filter((r) => r.plan_id === plan.id).sort(byCreated)
+  if (planRulings.length) {
+    lines.push('Úrskurðir:', '')
+    for (const r of planRulings) {
+      const notes = []
+      if (r.cost) notes.push(`kostnaður: ${oneLine(r.cost)}`)
+      if (r.reversed) notes.push('snúið við')
+      const note = notes.length ? ` (${notes.join(', ')})` : ''
+      lines.push(`- ${oneLine(r.code)}${note}: ${oneLine(r.body)}`)
+    }
+    lines.push('')
+  }
+  return lines
+}
+
+// An action with its text: an open one in item.md with its payload, a closed
+// one in saga.md with the length of the payload instead of the payload.
+function actionBlock(a, participants, withPayload) {
+  const lines = [`### Handtak #${shortId(a.id)}, ${actionState(a)}`, '']
+  lines.push(`- Eigandi: ${person(a.owner, participants)}`)
+  if (a.created_at) lines.push(`- Stofnað: ${iso(a.created_at)}`)
+  if (a.updated_at) lines.push(`- Breytt: ${iso(a.updated_at)}, af ${person(a.updated_by, participants)}`)
+  if (a.cancelled) {
+    const reason = oneLine(a.cancel_reason)
+    lines.push(`- Fellt niður: ${iso(a.done_at)}, af ${person(a.done_by, participants)}${reason ? `, ástæða: ${reason}` : ''}`)
+  } else if (a.done_at) {
+    lines.push(`- Lokið: ${iso(a.done_at)}, af ${person(a.done_by, participants)}`)
+  }
+  lines.push('')
+  if (multiLine(a.body)) lines.push(multiLine(a.body), '')
+  const payload = multiLine(a.payload)
+  if (payload && withPayload) lines.push(fenced(a.payload), '')
+  if (payload && !withPayload) lines.push(`Kóði: ${payload.length} stafir, ekki speglaður. Hann er í Huginn (huginn pull --json, actions, payload).`, '')
+  return lines
+}
+
+// item.md: what is open on the item. A done plan and a closed action are one
+// line each, their full text is in saga.md. Rows may be the whole board's
+// arrays; they are filtered to this item. extra carries the module row and
+// the file targets from fileTargets.
 export function renderItemMd(item, plans, actions, questions, rulings, participants, extra = {}) {
   const { module = null, files = [] } = extra
   const lines = [`# ${oneLine(item.title)}`, '']
@@ -228,48 +295,33 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
   section('Næsta skref', item.next_step)
   if (multiLine(item.next_prompt)) lines.push('## Prompt fyrir næsta skref', '', fenced(item.next_prompt), '')
 
-  const itemPlans = plans
-    .filter((p) => p.item_id === item.id)
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || byId(a, b))
+  const itemPlans = plansOf(item, plans)
   if (itemPlans.length) {
     lines.push('## Plön', '')
-    for (const plan of itemPlans) {
-      lines.push(`### ${oneLine(plan.name)}`, '', `- Staða: ${PLAN_NAMES[plan.status] ?? oneLine(plan.status)}`)
-      if (plan.path) lines.push(`- Slóð: ${oneLine(plan.path)}`)
-      lines.push('')
-      const planRulings = rulings.filter((r) => r.plan_id === plan.id).sort(byCreated)
-      if (planRulings.length) {
-        lines.push('Úrskurðir:', '')
-        for (const r of planRulings) {
-          const notes = []
-          if (r.cost) notes.push(`kostnaður: ${oneLine(r.cost)}`)
-          if (r.reversed) notes.push('snúið við')
-          const note = notes.length ? ` (${notes.join(', ')})` : ''
-          lines.push(`- ${oneLine(r.code)}${note}: ${oneLine(r.body)}`)
-        }
-        lines.push('')
+    for (const plan of itemPlans.filter((p) => p.status !== 'done')) lines.push(...planBlock(plan, rulings))
+    const donePlans = itemPlans.filter((p) => p.status === 'done')
+    if (donePlans.length) {
+      lines.push(`Lokin plön, úrskurðir þeirra eru í ${HISTORY_FILE}:`, '')
+      for (const plan of donePlans) {
+        const path = plan.path ? `, ${oneLine(plan.path)}` : ''
+        const count = rulings.filter((r) => r.plan_id === plan.id).length
+        lines.push(`- ${oneLine(plan.name)}: ${PLAN_NAMES.done}${path}, úrskurðir: ${count}`)
       }
+      lines.push('')
     }
   }
 
-  const itemActions = actions.filter((a) => a.item_id === item.id)
-  const ordered = [...itemActions.filter((a) => !a.done_at).sort(byCreated), ...itemActions.filter((a) => a.done_at).sort(byCreated)]
-  if (ordered.length) {
+  const openActions = actions.filter((a) => a.item_id === item.id && !a.done_at).sort(byCreated)
+  const closedActions = closedActionsOf(item, actions)
+  if (openActions.length || closedActions.length) {
     lines.push('## Handtök', '')
-    for (const a of ordered) {
-      lines.push(`### Handtak #${shortId(a.id)}, ${a.cancelled ? 'fellt niður' : a.done_at ? 'lokið' : 'opið'}`, '')
-      lines.push(`- Eigandi: ${person(a.owner, participants)}`)
-      if (a.created_at) lines.push(`- Stofnað: ${iso(a.created_at)}`)
-      if (a.updated_at) lines.push(`- Breytt: ${iso(a.updated_at)}, af ${person(a.updated_by, participants)}`)
-      if (a.cancelled) {
-        const reason = oneLine(a.cancel_reason)
-        lines.push(`- Fellt niður: ${iso(a.done_at)}, af ${person(a.done_by, participants)}${reason ? `, ástæða: ${reason}` : ''}`)
-      } else if (a.done_at) {
-        lines.push(`- Lokið: ${iso(a.done_at)}, af ${person(a.done_by, participants)}`)
+    for (const a of openActions) lines.push(...actionBlock(a, participants, true))
+    if (closedActions.length) {
+      lines.push(`Lokin handtök, fullur texti er í ${HISTORY_FILE}:`, '')
+      for (const a of closedActions) {
+        lines.push(`- #${shortId(a.id)}, ${actionState(a)} ${day(a.done_at)} af ${person(a.done_by, participants)}: ${clip(a.body, CLOSED_LINE_MAX)}`)
       }
       lines.push('')
-      if (multiLine(a.body)) lines.push(multiLine(a.body), '')
-      if (multiLine(a.payload)) lines.push(fenced(a.payload), '')
     }
   }
 
@@ -305,6 +357,32 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
 
   if (files.length) lines.push('## Skrár', '', ...files.map(fileLine), '')
 
+  return `${lines.join('\n').replace(/\n+$/, '')}\n`
+}
+
+// saga.md: what is closed on the item, done plans with their rulings and
+// closed actions with their text. A payload is never written here, only its
+// length. Returns null when nothing on the item is closed.
+export function renderSagaMd(item, plans, actions, rulings, participants) {
+  const donePlans = plansOf(item, plans).filter((p) => p.status === 'done')
+  const closedActions = closedActionsOf(item, actions)
+  if (!donePlans.length && !closedActions.length) return null
+  const lines = [
+    `# Saga: ${oneLine(item.title)}`,
+    '',
+    `- Auðkenni: ${oneLine(item.id)}`,
+    '',
+    `Það sem er lokið á verkinu: lokin plön með úrskurðum og lokin handtök. Það sem er opið er í ${ITEM_FILE}, og hún ræður ef skrárnar greinir á. Lestu þessa skrá aðeins þegar þú þarft úrskurð eða handtak sem er lokið.`,
+    '',
+  ]
+  if (donePlans.length) {
+    lines.push('## Lokin plön', '')
+    for (const plan of donePlans) lines.push(...planBlock(plan, rulings))
+  }
+  if (closedActions.length) {
+    lines.push('## Lokin handtök', '')
+    for (const a of closedActions) lines.push(...actionBlock(a, participants, false))
+  }
   return `${lines.join('\n').replace(/\n+$/, '')}\n`
 }
 
@@ -353,6 +431,8 @@ function itemTargets(item, data, slug, withFiles) {
     comments: data.comments ?? [],
   })
   const targets = [{ path: `${slug}/${ITEM_FILE}`, kind: 'md', source: ITEM_FILE, content, files }]
+  const saga = renderSagaMd(item, data.plans ?? [], data.actions ?? [], data.rulings ?? [], data.participants ?? [])
+  if (saga) targets.push({ path: `${slug}/${HISTORY_FILE}`, kind: 'md', source: HISTORY_FILE, content: saga })
   if (!withFiles) return targets
   for (const f of files) {
     if (f.kind === 'repo') continue
@@ -364,14 +444,14 @@ function itemTargets(item, data, slug, withFiles) {
 }
 
 // Every path sync may write, relative to the out folder with / separators:
-// { path, kind: 'md', source: 'item.md' | 'STATUS.md', content, files? }
+// { path, kind: 'md', source: 'item.md' | 'saga.md' | 'STATUS.md', content, files? }
 // { path, kind: 'copy' | 'pointer', source: FileRow }
 // { path, kind: 'invalid', source: FileRow, reason }.
 // folders: names of the folders directly under the out folder.
 // Mirrored items come first in order of creation. Then items that left the
 // mirror set (dropped, or done too long ago) but still have a local folder
-// and are in data: their item.md is rendered one last time, with no file
-// downloads. STATUS.md last.
+// and are in data: their item.md and saga.md are rendered one last time, with
+// no file downloads. STATUS.md last.
 export function mirrorTargets(data, now, folders = []) {
   const targets = []
   const claimed = new Set()

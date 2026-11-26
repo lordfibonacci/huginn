@@ -12,6 +12,7 @@ import {
   planMirror,
   pointerJson,
   renderItemMd,
+  renderSagaMd,
   safeFileName,
   storagePathOk,
 } from './mirror.mjs'
@@ -239,11 +240,12 @@ describe('planMirror', () => {
     const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
     expect(plan.map((e) => [e.path, e.action])).toEqual([
       [`${slug}/item.md`, 'write'],
+      [`${slug}/saga.md`, 'write'],
       [`${slug}/drog.md`, 'write'],
       [`${slug}/upptaka.mp4.pointer.json`, 'pointer'],
       ['STATUS.md', 'write'],
     ])
-    expect(plan[2].source.id).toBe('f2000000-0002')
+    expect(plan[3].source.id).toBe('f2000000-0002')
     // repo_path files are not copied.
     expect(plan.some((e) => e.path.includes('skyrsla'))).toBe(false)
   })
@@ -258,7 +260,7 @@ describe('planMirror', () => {
       else existing.set(e.path, { size: e.source.size })
     }
     const second = planMirror(data, existing, { now: NOW })
-    expect(second.map((e) => e.action)).toEqual(['skip', 'skip', 'skip', 'skip'])
+    expect(second.map((e) => e.action)).toEqual(['skip', 'skip', 'skip', 'skip', 'skip'])
   })
 
   it('rewrites a rendered file whose sha differs and a Storage file whose size differs', () => {
@@ -270,7 +272,7 @@ describe('planMirror', () => {
       [`${slug}/upptaka.mp4.pointer.json`, { size: 10, pointerStoragePath: 'pr/other' }],
     ])
     const plan = planMirror(data, existing, { now: NOW })
-    expect(plan.slice(0, 3).map((e) => e.action)).toEqual(['write', 'write', 'pointer'])
+    expect(plan.slice(0, 4).map((e) => e.action)).toEqual(['write', 'write', 'write', 'pointer'])
   })
 
   it('uses size only: exactly 10 MB gets a pointer, one byte less is written whatever the type', () => {
@@ -512,7 +514,71 @@ describe('renderItemMd', () => {
     expect(md.indexOf('#d2000000')).toBeLessThan(md.indexOf('#d1000000'))
   })
 
-  it('shows a cancelled action with who and why, and an edited action after Stofnað', () => {
+  it('fences the next prompt and the payload of an open action with a fence longer than any backtick run inside', () => {
+    const data = fullBoard()
+    data.actions[1].payload = 'select 2;'
+    const md = renderFull(data).md
+    expect(md).toContain('````text\nLestu docs/huginn og ```haltu áfram```\n````')
+    expect(md).toContain('```text\nselect 2;\n```')
+  })
+
+  it('cannot be broken by a title with newlines', () => {
+    const data = board([item('i1', { title: 'Titill\n# Falskur kafli' })])
+    const md = mirrorTargets(data, NOW).find((t) => t.source === 'item.md').content
+    expect(md.split('\n')[0]).toBe('# Titill # Falskur kafli')
+  })
+})
+
+describe('saga.md', () => {
+  const sagaOf = (data) => mirrorTargets(data, NOW).find((t) => t.source === 'saga.md')
+
+  it('is not written for an item with nothing closed', () => {
+    const data = fullBoard()
+    data.actions = data.actions.filter((a) => !a.done_at)
+    expect(sagaOf(data)).toBeUndefined()
+    expect(renderSagaMd(data.items[0], data.plans, data.actions, data.rulings, participants)).toBeNull()
+  })
+
+  it('moves a done plan and its rulings out of item.md and leaves one line', () => {
+    const data = fullBoard()
+    data.plans.find((p) => p.id === PLAN_ID).status = 'done'
+    const md = renderFull(data).md
+    expect(md).toContain('### Plan B\n\n- Staða: Á eftir\n')
+    expect(md).not.toContain('### Plan A')
+    expect(md).not.toContain('Engin ný tafla')
+    expect(md).toContain('Lokin plön, úrskurðir þeirra eru í saga.md:\n\n- Plan A: Lokið, docs/plan-a.md, úrskurðir: 2\n')
+    expect(sagaOf(data).content).toContain(
+      '## Lokin plön\n\n### Plan A\n\n- Staða: Lokið\n- Slóð: docs/plan-a.md\n\nÚrskurðir:\n\n- R1 (kostnaður: Lítill): Engin ný tafla\n- R2 (snúið við): Seinni\n',
+    )
+  })
+
+  it('leaves one line per closed action in item.md and never mirrors its payload', () => {
+    const data = fullBoard()
+    data.actions[0].payload = 'select 1;\nselect 2;'
+    const md = renderFull(data).md
+    expect(md).toContain('Lokin handtök, fullur texti er í saga.md:\n\n- #c2000000, lokið 2026-10-06 af Heimir (H): Keyra SQL\n')
+    expect(md).not.toContain('select 1;')
+    expect(md).not.toContain('### Handtak #c2000000')
+    const saga = sagaOf(data).content
+    expect(saga.startsWith('# Saga: Efnaskrá A og B: endurhönnun\n\n- Auðkenni: ' + ITEM_ID + '\n')).toBe(true)
+    expect(saga).toContain('Það sem er opið er í item.md, og hún ræður ef skrárnar greinir á.')
+    expect(saga).toContain(
+      '### Handtak #c2000000, lokið\n\n- Eigandi: Heimir (H)\n- Stofnað: 2026-10-03T00:00:00.000Z\n- Lokið: 2026-10-06T00:00:00.000Z, af Heimir (H)\n\nKeyra SQL\n\nKóði: 19 stafir, ekki speglaður. Hann er í Huginn (huginn pull --json, actions, payload).\n',
+    )
+    expect(saga).not.toContain('select 1;')
+    expect(saga).not.toContain('## Lokin plön')
+    expect(saga.endsWith('\n')).toBe(true)
+    expect(saga).not.toMatch(/\r/)
+  })
+
+  it('cuts a long closed action to 140 characters on one line', () => {
+    const data = fullBoard()
+    data.actions[0].body = 'Lína eitt\n' + 'x'.repeat(200)
+    const line = renderFull(data).md.split('\n').find((l) => l.startsWith('- #c2000000'))
+    expect(line).toBe('- #c2000000, lokið 2026-10-06 af Heimir (H): Lína eitt ' + 'x'.repeat(130) + '...')
+  })
+
+  it('shows a cancelled action as one line in item.md and with who and why in saga.md', () => {
     const data = fullBoard()
     data.actions.push(
       { id: 'c3000000-gone', item_id: ITEM_ID, body: 'Hætt við', owner: 'u-h', payload: null, done_at: '2026-10-09T00:00:00Z', done_by: 'u-c', cancelled: true, cancel_reason: 'planið\nbreyttist', created_at: '2026-10-05T00:00:00Z' },
@@ -521,25 +587,38 @@ describe('renderItemMd', () => {
     data.actions[1].updated_at = '2026-10-08T00:00:00Z'
     data.actions[1].updated_by = 'u-c'
     const md = renderFull(data).md
-    expect(md).toContain('### Handtak #c3000000, fellt niður')
-    expect(md).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C), ástæða: planið breyttist')
-    expect(md).not.toContain('- Lokið: 2026-10-09')
-    expect(md).toContain('### Handtak #c4000000, fellt niður')
-    expect(md).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C)\n')
+    expect(md).toContain('- #c3000000, fellt niður 2026-10-09 af Claude (C): Hætt við\n')
     expect(md).toContain('### Handtak #c1000000, opið\n\n- Eigandi: Heimir (H)\n- Stofnað: 2026-10-04T00:00:00.000Z\n- Breytt: 2026-10-08T00:00:00.000Z, af Claude (C)\n')
-    expect(md).toContain('- Lokið: 2026-10-06T00:00:00.000Z, af Heimir (H)')
+    const saga = sagaOf(data).content
+    expect(saga).toContain('### Handtak #c3000000, fellt niður')
+    expect(saga).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C), ástæða: planið breyttist')
+    expect(saga).not.toContain('- Lokið: 2026-10-09')
+    expect(saga).toContain('### Handtak #c4000000, fellt niður')
+    expect(saga).toContain('- Fellt niður: 2026-10-09T00:00:00.000Z, af Claude (C)\n')
+    expect(saga).toContain('- Lokið: 2026-10-06T00:00:00.000Z, af Heimir (H)')
   })
 
-  it('fences the next prompt and payloads with a fence longer than any backtick run inside', () => {
-    const md = renderFull(fullBoard()).md
-    expect(md).toContain('````text\nLestu docs/huginn og ```haltu áfram```\n````')
-    expect(md).toContain('```text\nselect 1;\n```')
+  it('gives the same saga.md for shuffled input rows', () => {
+    const make = () => {
+      const data = fullBoard()
+      data.plans.find((p) => p.id === PLAN_ID).status = 'done'
+      return data
+    }
+    const shuffled = make()
+    for (const key of ['plans', 'rulings', 'actions']) shuffled[key].reverse()
+    expect(sagaOf(shuffled).content).toBe(sagaOf(make()).content)
   })
 
-  it('cannot be broken by a title with newlines', () => {
-    const data = board([item('i1', { title: 'Titill\n# Falskur kafli' })])
-    const md = mirrorTargets(data, NOW).find((t) => t.source === 'item.md').content
-    expect(md.split('\n')[0]).toBe('# Titill # Falskur kafli')
+  it('gives an uploaded file named saga.md the id suffix', () => {
+    const data = board([item('i1')], { files: [file('aaaaaa-1', 'i1', 'saga.md', 10)] })
+    expect(planMirror(data, new Map(), { now: NOW }).map((e) => e.path)).toEqual(['verk-i1-i1/item.md', 'verk-i1-i1/saga-aaaaaa.md', 'STATUS.md'])
+  })
+
+  it('renders saga.md one last time for an item that left the mirror set but has a folder', () => {
+    const data = board([item('i1', { status: 'dropped', closed_at: '2026-10-30T00:00:00Z' })], {
+      actions: [{ id: 'c9000000-x', item_id: 'i1', body: 'Gert', owner: 'u-h', payload: null, done_at: '2026-10-06T00:00:00Z', done_by: 'u-h', created_at: '2026-10-03T00:00:00Z' }],
+    })
+    expect(planMirror(data, new Map(), { now: NOW, folders: ['verk-i1-i1'] }).map((e) => e.path)).toEqual(['verk-i1-i1/item.md', 'verk-i1-i1/saga.md', 'STATUS.md'])
   })
 })
 
@@ -586,7 +665,7 @@ describe('sync on disk', () => {
     const data = fullBoard()
     const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
     const first = await run(data)
-    expect(first.written).toEqual([`${slug}/item.md`, `${slug}/drog.md`, 'STATUS.md'])
+    expect(first.written).toEqual([`${slug}/item.md`, `${slug}/saga.md`, `${slug}/drog.md`, 'STATUS.md'])
     expect(first.pointers).toEqual([`${slug}/upptaka.mp4.pointer.json`])
     expect(first.skipped).toEqual([])
     expect(downloads.length).toBe(2)
@@ -600,13 +679,13 @@ describe('sync on disk', () => {
       sha256: sha(Buffer.from('big video')),
     })
     expect(readFileSync(join(out, 'STATUS.md'), 'utf8')).toContain('# Staða: Metta')
-    expect(readdirSync(join(out, slug)).sort()).toEqual(['drog.md', 'item.md', 'upptaka.mp4.pointer.json'])
+    expect(readdirSync(join(out, slug)).sort()).toEqual(['drog.md', 'item.md', 'saga.md', 'upptaka.mp4.pointer.json'])
 
     downloads = []
     const second = await run(data)
     expect(second.written).toEqual([])
     expect(second.pointers).toEqual([])
-    expect(second.skipped.length).toBe(4)
+    expect(second.skipped.length).toBe(5)
     expect(downloads).toEqual([])
   })
 
@@ -615,7 +694,7 @@ describe('sync on disk', () => {
     const targets = mirrorTargets(data, NOW)
     const plan = planMirror(data, readExisting(out, targets), { now: NOW })
     const result = await executeMirror(out, plan, { download, dryRun: true })
-    expect(result.written.length).toBe(3)
+    expect(result.written.length).toBe(4)
     expect(result.pointers.length).toBe(1)
     expect(readdirSync(out)).toEqual([])
     expect(downloads).toEqual([])
@@ -656,7 +735,7 @@ describe('sync on disk', () => {
     const slug = 'efnaskra-a-og-b-endurhonnun-a1b2c3'
     const result = await run(data, flaky)
     expect(result.failed).toEqual([{ path: slug + '/drog.md', reason: 'HTTP 500' }])
-    expect(result.written).toEqual([slug + '/item.md', slug + '/seinni.txt', 'STATUS.md'])
+    expect(result.written).toEqual([slug + '/item.md', slug + '/saga.md', slug + '/seinni.txt', 'STATUS.md'])
     expect(result.pointers).toEqual([slug + '/upptaka.mp4.pointer.json'])
     expect(existsSync(join(out, 'STATUS.md'))).toBe(true)
     expect(existsSync(join(out, slug, 'drog.md'))).toBe(false)
@@ -683,7 +762,7 @@ describe('sync on disk', () => {
     data.items[0].title = 'Alveg nýr titill'
     downloads = []
     const again = await run(data)
-    expect(again.written).toEqual(['efnaskra-a-og-b-endurhonnun-a1b2c3/item.md', 'STATUS.md'])
+    expect(again.written).toEqual(['efnaskra-a-og-b-endurhonnun-a1b2c3/item.md', 'efnaskra-a-og-b-endurhonnun-a1b2c3/saga.md', 'STATUS.md'])
     expect(readdirSync(out).sort()).toEqual(['STATUS.md', 'efnaskra-a-og-b-endurhonnun-a1b2c3'])
     expect(readFileSync(join(out, 'efnaskra-a-og-b-endurhonnun-a1b2c3', 'item.md'), 'utf8')).toContain('# Alveg nýr titill')
     expect(downloads).toEqual([])
@@ -700,7 +779,7 @@ describe('sync on disk', () => {
     expect(again.written).toEqual([slug + '/item.md', 'STATUS.md'])
     expect(downloads).toEqual([])
     expect(readFileSync(join(out, slug, 'item.md'), 'utf8')).toContain('- Staða: Hætt við')
-    expect(readdirSync(join(out, slug)).sort()).toEqual(['drog.md', 'item.md', 'upptaka.mp4.pointer.json'])
+    expect(readdirSync(join(out, slug)).sort()).toEqual(['drog.md', 'item.md', 'saga.md', 'upptaka.mp4.pointer.json'])
   })
 
   it('gives a dropped item without a folder nothing', async () => {
@@ -721,7 +800,7 @@ describe('sync on disk', () => {
       return path.endsWith('_drog.md') ? big : download(path)
     }
     const result = await run(data, liar)
-    expect(result.written).toEqual([slug + '/item.md', 'STATUS.md'])
+    expect(result.written).toEqual([slug + '/item.md', slug + '/saga.md', 'STATUS.md'])
     expect(result.pointers).toEqual([slug + '/drog.md.pointer.json', slug + '/upptaka.mp4.pointer.json'])
     expect(result.warnings).toEqual([
       slug + '/drog.md: skráin er ' + MIRROR_MAX_BYTES + ' bæti í Storage en 120 bæti samkvæmt gagnagrunni, bendiskrá skrifuð í staðinn.',
