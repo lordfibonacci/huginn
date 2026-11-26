@@ -586,6 +586,21 @@ describe('saga.md', () => {
     expect(saga).not.toMatch(/\r/)
   })
 
+  it('cuts by code points so an emoji is never split', () => {
+    const data = fullBoard()
+    data.actions[0].body = 'x'.repeat(139) + '😀' + 'yyyy'
+    const line = renderFull(data).md.split('\n').find((l) => l.startsWith('- #c2000000'))
+    expect(line.endsWith('x'.repeat(139) + '😀...')).toBe(true)
+    expect(line).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/)
+  })
+
+  it('ends the line after the person when a closed action has no body', () => {
+    const data = fullBoard()
+    data.actions[0].body = null
+    const line = renderFull(data).md.split('\n').find((l) => l.startsWith('- #c2000000'))
+    expect(line).toBe('- #c2000000, lokið 2026-10-06 af Heimir (H)')
+  })
+
   it('cuts a long closed action to 140 characters on one line', () => {
     const data = fullBoard()
     data.actions[0].body = 'Lína eitt\n' + 'x'.repeat(200)

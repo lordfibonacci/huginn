@@ -31,4 +31,7 @@ Commits on the branch: d88ecd4, 6aa5585, cc9c1eb (code), then this docs commit.
 ## Pending
 
 - The description of a card is still free text and the three largest open cards are 22000 to 30000 characters. The skill rule that shortens them is plan B in metta2_new.
+- Not fixed: if an earlier sync copied an uploaded file named saga.md into a card folder, the rendered saga.md now replaces that copy once something on the card is closed. The upload stays in Storage and is mirrored as saga-<id>.md.
+- Not fixed: no test checks that sync adds bodyWarnings to its result. It is one line in a command that needs the network, and bodyWarnings itself is tested.
+- Not fixed: task 1 wrote the implementation before the RED run. RED was shown by reverting mirror.mjs, so the evidence holds.
 - The final review, the merge to main and the live sync run in metta2_new are done by the controller after the final review.

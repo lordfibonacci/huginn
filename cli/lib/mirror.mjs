@@ -223,7 +223,8 @@ function day(stamp) {
 // One line of text, cut at max characters with three dots.
 function clip(text, max) {
   const line = oneLine(text)
-  return line.length > max ? `${line.slice(0, max).trimEnd()}...` : line
+  const chars = Array.from(line)
+  return chars.length > max ? `${chars.slice(0, max).join('').trimEnd()}...` : line
 }
 
 function plansOf(item, plans) {
@@ -332,7 +333,8 @@ export function renderItemMd(item, plans, actions, questions, rulings, participa
     if (closedActions.length) {
       lines.push(`Lokin handtök, fullur texti er í ${HISTORY_FILE}:`, '')
       for (const a of closedActions) {
-        lines.push(`- #${shortId(a.id)}, ${actionState(a)} ${day(a.done_at)} af ${person(a.done_by, participants)}: ${clip(a.body, CLOSED_LINE_MAX)}`)
+        const text = clip(a.body, CLOSED_LINE_MAX)
+        lines.push(`- #${shortId(a.id)}, ${actionState(a)} ${day(a.done_at)} af ${person(a.done_by, participants)}${text ? `: ${text}` : ''}`)
       }
       lines.push('')
     }
