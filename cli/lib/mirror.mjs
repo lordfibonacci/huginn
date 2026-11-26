@@ -21,6 +21,7 @@ export const DONE_WINDOW_DAYS = 30
 export const STATUS_FILE = 'STATUS.md'
 export const ITEM_FILE = 'item.md'
 export const HISTORY_FILE = 'saga.md'
+export const BODY_WARN_CHARS = 15000
 export const POINTER_SUFFIX = '.pointer.json'
 
 const SLUG_MAX = 60
@@ -143,6 +144,18 @@ export function itemsToMirror(data, now) {
   return (data.items ?? []).filter(
     (i) => isOpen(i) || (i.status === 'done' && i.closed_at && stampValue(i.closed_at) >= from),
   )
+}
+
+// One warning per open item whose description has outgrown BODY_WARN_CHARS.
+// The tool never cuts a description, the session that works on the item does.
+export function bodyWarnings(data, now) {
+  return itemsToMirror(data, now)
+    .filter((i) => isOpen(i) && multiLine(i.body).length > BODY_WARN_CHARS)
+    .sort(byCreated)
+    .map(
+      (i) =>
+        `Lýsing verks #${shortId(i.id)} er ${multiLine(i.body).length} stafir, viðmiðið er ${BODY_WARN_CHARS}. Styttu kafla um lokin plön í eina línu með slóð á framvinduskjalið.`,
+    )
 }
 
 // The last segment uploads produce: a uuid, an underscore, then

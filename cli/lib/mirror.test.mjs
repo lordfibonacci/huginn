@@ -5,7 +5,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   BAD_STORAGE_PATH,
+  BODY_WARN_CHARS,
   MIRROR_MAX_BYTES,
+  bodyWarnings,
   itemSlug,
   itemsToMirror,
   mirrorTargets,
@@ -231,6 +233,19 @@ describe('itemsToMirror', () => {
       item('dropped', { status: 'dropped', closed_at: '2026-10-30T00:00:00Z' }),
     ]
     expect(itemsToMirror(board(items), NOW).map((i) => i.id)).toEqual(['open', 'done-new'])
+  })
+})
+
+describe('bodyWarnings', () => {
+  it('warns for an open item whose description is over 15000 characters, with the short id and the length', () => {
+    const data = board([
+      item('aaaaaaaa-long', { body: 'x'.repeat(BODY_WARN_CHARS + 1) }),
+      item('bbbbbbbb-edge', { body: 'x'.repeat(BODY_WARN_CHARS) }),
+      item('cccccccc-done', { status: 'done', closed_at: '2026-10-30T00:00:00Z', body: 'x'.repeat(BODY_WARN_CHARS + 1) }),
+    ])
+    expect(bodyWarnings(data, NOW)).toEqual([
+      'Lýsing verks #aaaaaaaa er 15001 stafir, viðmiðið er 15000. Styttu kafla um lokin plön í eina línu með slóð á framvinduskjalið.',
+    ])
   })
 })
 

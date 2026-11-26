@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { WRITE_GROUPS, runWrite, writeUsage } from './lib/commands.mjs'
 import { defaultMirrorDir, loadCredentials, parseArgs, redact, resolveProject } from './lib/config.mjs'
 import { briefCounts, briefLine, filterSince, oneLine, statusMarkdown, whoamiText } from './lib/format.mjs'
-import { mirrorTargets, planMirror } from './lib/mirror.mjs'
+import { bodyWarnings, mirrorTargets, planMirror } from './lib/mirror.mjs'
 import { downloadFile } from './lib/ops.mjs'
 import { executeMirror, listFolders, readExisting, syncReport } from './lib/sync.mjs'
 import { parseCommand } from './lib/write.mjs'
@@ -111,6 +111,7 @@ async function sync(argv, globalFlags) {
   const targets = mirrorTargets(data, now, folders)
   const plan = planMirror(data, readExisting(outDir, targets), { now, folders })
   const result = await executeMirror(outDir, plan, { download: (path) => downloadFile(client, path), dryRun })
+  result.warnings.push(...bodyWarnings(data, now))
 
   // Failed entries are listed and the run ends with exit code 1, after
   // everything else, STATUS.md included, has been written.
