@@ -8,13 +8,13 @@ Measured 2026-11-26 on the session that opened card 7a35df18 (Vörumóttaka): `i
 
 ## What was built
 
-- `cli/lib/mirror.mjs`: `renderItemMd` writes only what is open. A done plan is one line (name, `Lokið`, path, number of rulings) and a closed or cancelled action is one line (id, state, day, who closed it, first 140 characters). `renderSagaMd` writes done plans with rulings and closed actions with text, the payload replaced by its length.
+- `cli/lib/mirror.mjs`: `renderItemMd` writes only what is open. A done plan is one line (name, `Lokið`, path, number of rulings) and a closed or cancelled action is one line (id, state, day, who closed it, first 140 characters, counted by code points, and a closed action with an empty body ends its line after the person, with no colon). `renderSagaMd` writes done plans with rulings and closed actions with text, the payload replaced by its length.
 - `saga.md` is written only when something is closed. The sync compares `item.md`, `saga.md` and `STATUS.md` by sha256, and a file named `saga.md` is reserved like `item.md`.
 - `sync` warns for an open item whose description is over 15000 characters. The warning does not change the exit code.
 - "Halda áfram" (`buildContinuationPrompt`) names `item.md` in the mirror folder instead of the whole folder.
 - Docs: `cli/README.md` (section Spegill), `CLAUDE.md` (Current state, Key Patterns).
 
-Commits on the branch: d88ecd4, 6aa5585, cc9c1eb (code), then this docs commit.
+Commits on the branch: d88ecd4, 6aa5585, cc9c1eb (code), 7efc745 (fix: clip by code points, no trailing colon on an empty closed action), then this commit (final review fixes, docs current and a CRLF payload test).
 
 ## Decisions
 
@@ -26,7 +26,7 @@ Commits on the branch: d88ecd4, 6aa5585, cc9c1eb (code), then this docs commit.
 
 ## Verification
 
-733 vitest tests passed (46 files, 9 more than the 724 before), `npm run build` green. `npm run lint` is broken and was not run.
+735 vitest tests passed (46 files, 11 more than the 724 before), `npm run build` green. `npm run lint` is broken and was not run.
 
 ## Pending
 

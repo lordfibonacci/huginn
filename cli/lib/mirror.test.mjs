@@ -569,7 +569,7 @@ describe('saga.md', () => {
 
   it('leaves one line per closed action in item.md and never mirrors its payload', () => {
     const data = fullBoard()
-    data.actions[0].payload = 'select 1;\nselect 2;'
+    data.actions[0].payload = 'select 1;\r\nselect 2;'
     const md = renderFull(data).md
     expect(md).toContain('Lokin handtök, fullur texti er í saga.md:\n\n- #c2000000, lokið 2026-10-06 af Heimir (H): Keyra SQL\n')
     expect(md).not.toContain('select 1;')
