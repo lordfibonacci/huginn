@@ -20,12 +20,17 @@ describe('buildContinuationPrompt', () => {
   it('names the item by title and the 8 character id the CLI takes', () => {
     expect(buildContinuationPrompt(item()).split('\n')[0]).toBe('Huginn verk #1a2b3c4d: Titill')
   })
-  it('points at the mirror folder by the 6 character id suffix and says to sync first', () => {
+  it('points at item.md in the mirror folder by the 6 character id suffix and says to sync first', () => {
     const out = buildContinuationPrompt(item())
-    expect(out).toContain('huginn sync')
-    expect(out).toContain('docs/huginn sem endar á 1a2b3c:')
+    expect(out).toContain('Keyrðu huginn sync og lestu item.md í möppunni í docs/huginn sem endar á 1a2b3c.')
     expect(out).toContain('huginn file get')
     expect(out).toContain('/huginn')
+  })
+  it('keeps the session from reading the whole folder', () => {
+    const out = buildContinuationPrompt(item())
+    expect(out).toContain('Skjölin í möppunni lestu eftir /huginn: öll þegar verkið er nýtt, annars aðeins þau sem verkið kallar á.')
+    expect(out).toContain('saga.md geymir lokin plön og handtök, lestu hana aðeins þegar þú þarft þau.')
+    expect(out).not.toContain('og skjölin í henni')
   })
   it('does not repeat what item.md carries', () => {
     const out = buildContinuationPrompt(item())
@@ -38,6 +43,7 @@ describe('buildContinuationPrompt', () => {
     const out = buildContinuationPrompt(item({ source_ref: 'docs/progress/109-kiosk.md' }))
     expect(out.split('\n')[1]).toBe('Heimild: docs/progress/109-kiosk.md')
     expect(out).toContain('og heimildina')
+    expect(out).toContain('sem endar á 1a2b3c, og heimildina ef hún er skrá í repoinu.')
     expect(buildContinuationPrompt(item())).not.toContain('eimild')
   })
   it('ends with next_prompt verbatim after a blank line', () => {

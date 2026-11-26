@@ -6,16 +6,18 @@ const MIRROR_ID = 6
 const CLI_ID = 8
 
 // "Halda áfram": a short prompt that points the new session at the mirror.
-// `huginn sync` writes item.md (description, where we are, plans, rulings,
-// actions, questions, file list) and copies the files next to it, and skips
-// what is already on disk, so the prompt does not repeat any of it.
+// `huginn sync` writes item.md (description, where we are, open plans with
+// rulings, open actions, questions, chat, file list) and saga.md (done plans
+// and closed actions), copies the files next to them and skips what is
+// already on disk. The prompt names item.md only: a session that reads the
+// whole folder pays for history and for every attached document.
 export function buildContinuationPrompt(item: Item): string {
   const lines = [`Huginn verk #${item.id.slice(0, CLI_ID)}: ${item.title}`]
   if (item.source_ref) lines.push(`Heimild: ${item.source_ref}`)
   lines.push(
-    `Keyrðu huginn sync og lestu möppuna í docs/huginn sem endar á ${item.id.slice(0, MIRROR_ID)}: item.md og skjölin í henni` +
+    `Keyrðu huginn sync og lestu item.md í möppunni í docs/huginn sem endar á ${item.id.slice(0, MIRROR_ID)}` +
       (item.source_ref ? ', og heimildina ef hún er skrá í repoinu' : '') +
-      '. Skrá með .pointer.json sækirðu með huginn file get. Vinndu svo eftir /huginn.',
+      '. Skjölin í möppunni lestu eftir /huginn: öll þegar verkið er nýtt, annars aðeins þau sem verkið kallar á. saga.md geymir lokin plön og handtök, lestu hana aðeins þegar þú þarft þau. Skrá með .pointer.json sækirðu með huginn file get. Vinndu svo eftir /huginn.',
   )
   const out = lines.join('\n')
   return item.next_prompt ? `${out}\n\n${item.next_prompt}` : out
